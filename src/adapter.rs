@@ -1,4 +1,4 @@
-use windows::Win32::Graphics::Dxgi::IDXGIAdapter;
+use windows::Win32::Graphics::Dxgi::IDXGIAdapter3;
 
 
-pub struct Adapter(pub(crate) IDXGIAdapter);
+pub struct Adapter(pub(crate) IDXGIAdapter3);

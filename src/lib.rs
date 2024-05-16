@@ -3,3 +3,5 @@ pub mod device;
 pub mod error;
 pub mod factory;
 pub mod sync;
+
+mod utils;
