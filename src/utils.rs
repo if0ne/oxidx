@@ -13,9 +13,11 @@ macro_rules! create_types {
         }
 
         $(
+            #[allow(dead_code)]
             pub struct $name(Inner<$raw_type>);
 
             impl $name {
+                #[allow(dead_code)]
                 pub(crate) fn new(inner: $raw_type) -> Self {
                     Self(Inner(inner))
                 }
