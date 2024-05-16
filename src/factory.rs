@@ -3,17 +3,12 @@ use windows::Win32::Graphics::Dxgi::{
     IDXGIAdapter, IDXGIAdapter3, IDXGIFactory4, IDXGIFactory6, IDXGIFactory7,
 };
 
+use crate::create_type;
 use crate::{adapter::Adapter3, error::DxError};
-use crate::{allow_casting, create_types};
 
-create_types!(
-    (Factory4, IDXGIFactory4),
-    (Factory6, IDXGIFactory6),
-    (Factory7, IDXGIFactory7)
-);
-allow_casting!(Factory4, Factory6);
-allow_casting!(Factory4, Factory7);
-allow_casting!(Factory6, Factory7);
+create_type!(Factory4, IDXGIFactory4);
+create_type!(Factory6, IDXGIFactory6, Factory4);
+create_type!(Factory7, IDXGIFactory7, Factory6);
 
 impl Factory4 {
     pub fn enum_adapters(&self, index: usize) -> Result<Adapter3, DxError> {

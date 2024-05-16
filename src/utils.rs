@@ -1,42 +1,53 @@
 #[macro_export]
-macro_rules! create_types {
-    ($(($name:ident, $raw_type:ty)),+ $(,)?) => {
+macro_rules! create_type {
+    ($name:ident, $raw_type:ty) => {
+       
+        #[allow(dead_code)]
         #[derive(Clone, Debug, PartialEq, Eq)]
-        pub(crate) struct Inner<T: windows::core::Interface>(pub(crate) T);
+        pub struct $name($raw_type);
 
-        impl<T: windows::core::Interface> std::ops::Deref for Inner<T> {
-            type Target = T;
+        impl $name {
+            #[allow(dead_code)]
+            pub(crate) fn new(inner: $raw_type) -> Self {
+                Self(inner)
+            }
+        }
+    };
+    ($name:ident, $raw_type:ty, $base:ty) => {
+       
+        #[allow(dead_code)]
+        #[derive(Clone, Debug, PartialEq, Eq)]
+        pub struct $name($raw_type, $base);
 
-            fn deref(&self) -> &Self::Target {
-                &self.0
+        impl $name {
+            #[allow(dead_code)]
+            pub(crate) fn new(inner: $raw_type, base: $base) -> Self {
+                Self(inner, base)
             }
         }
 
-        $(
-            #[allow(dead_code)]
-            pub struct $name(Inner<$raw_type>);
+        impl TryInto<$name> for $base {
+            type Error = DxError;
 
-            impl $name {
-                #[allow(dead_code)]
-                pub(crate) fn new(inner: $raw_type) -> Self {
-                    Self(Inner(inner))
-                }
+            fn try_into(self) -> Result<$name, Self::Error> {
+                let temp = self.0.cast::<_>().map_err(|_| DxError::CastError)?;
+
+                Ok(<$name>::new(temp, self))
             }
-        )*
+        }
+
+        impl std::ops::Deref for $name {
+            type Target = $base;
+
+            fn deref(&self) -> &Self::Target {
+                &self.1
+            }
+        }
     };
 }
 
-#[macro_export]
-macro_rules! allow_casting {
-    ($src:ty, $dst:ty) => {
-        impl TryInto<$dst> for $src {
-            type Error = DxError;
-
-            fn try_into(self) -> Result<$dst, Self::Error> {
-                let temp = self.0.cast::<_>().map_err(|_| DxError::CastError)?;
-
-                Ok(<$dst>::new(temp))
-            }
-        }
+macro_rules! create_cast_sequence {
+    () => {
+        
     };
 }
