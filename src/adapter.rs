@@ -1,4 +1,5 @@
 use windows::Win32::Graphics::Dxgi::IDXGIAdapter3;
 
+use crate::create_types;
 
-pub struct Adapter(pub(crate) IDXGIAdapter3);
+create_types!((Adapter3, IDXGIAdapter3));
