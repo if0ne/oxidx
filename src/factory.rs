@@ -1,6 +1,6 @@
 use windows::core::Interface;
 use windows::Win32::Graphics::Dxgi::{
-    IDXGIAdapter, IDXGIAdapter3, IDXGIFactory4, IDXGIFactory6, IDXGIFactory7,
+    CreateDXGIFactory2, IDXGIAdapter, IDXGIAdapter3, IDXGIFactory4, IDXGIFactory6, IDXGIFactory7, DXGI_CREATE_FACTORY_DEBUG
 };
 
 use crate::{adapter::Adapter3, error::DxError};
@@ -19,7 +19,7 @@ implement_fns! {
         let adapter = unsafe {
             self.0
                 .EnumAdapters1(index as u32)
-                .map_err(|_| DxError::NotFoundAdapters)?
+                .map_err(|_| DxError::NotFoundAdaptersError)?
         }
         .cast::<IDXGIAdapter3>()
         .expect("IDXGIFactory4 should support IDXGIAdapter3");
@@ -31,11 +31,75 @@ implement_fns! {
         let adapter = unsafe {
             self.0
                 .EnumWarpAdapter::<IDXGIAdapter>()
-                .map_err(|_| DxError::NotFoundAdapters)?
+                .map_err(|_| DxError::NotFoundAdaptersError)?
         }
         .cast::<IDXGIAdapter3>()
         .expect("IDXGIFactory4 should support IDXGIAdapter3");
 
         Ok(Adapter3::new(adapter))
+    }
+}
+
+bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct FactoryCreationFlags: u32 {
+        const Debug = DXGI_CREATE_FACTORY_DEBUG;
+    }
+}
+
+pub struct Entry;
+
+impl Entry {
+    pub fn create_factory4(&self, flags: FactoryCreationFlags) -> Result<Factory4, DxError> {
+        let inner = unsafe {
+            CreateDXGIFactory2(flags.bits())
+        }.map_err(|_| DxError::FactoryCreationError)?;
+        
+        Ok(Factory4::new(inner))
+    }
+
+    pub fn create_factory6(&self, flags: FactoryCreationFlags) -> Result<Factory6, DxError> {
+        let inner = unsafe {
+            CreateDXGIFactory2(flags.bits())
+        }.map_err(|_| DxError::FactoryCreationError)?;
+        
+        Ok(Factory6::new(inner))
+    }
+
+    pub fn create_factory7(&self, flags: FactoryCreationFlags) -> Result<Factory7, DxError> {
+        let inner = unsafe {
+            CreateDXGIFactory2(flags.bits())
+        }.map_err(|_| DxError::FactoryCreationError)?;
+        
+        Ok(Factory7::new(inner))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn create_factory4_test() {
+        let entry = Entry;
+        let factory = entry.create_factory4(FactoryCreationFlags::Debug);
+
+        assert!(factory.is_ok())
+    }
+
+    #[test]
+    fn create_factory6_test() {
+        let entry = Entry;
+        let factory = entry.create_factory6(FactoryCreationFlags::Debug);
+
+        assert!(factory.is_ok())
+    }
+
+    #[test]
+    fn create_factory7_test() {
+        let entry = Entry;
+        let factory = entry.create_factory7(FactoryCreationFlags::Debug);
+
+        assert!(factory.is_ok())
     }
 }

@@ -3,7 +3,6 @@ name = "oxidx"
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
 [dependencies.windows]
 version = "0.56.0"
 features = [
@@ -11,3 +10,6 @@ features = [
     "Win32_Graphics_Direct3D12",
     "Win32_Graphics_Dxgi_Common",
 ]
+
+[dependencies.bitflags]
+version = "2.5.0"
