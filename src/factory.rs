@@ -3,14 +3,18 @@ use windows::Win32::Graphics::Dxgi::{
     IDXGIAdapter, IDXGIAdapter3, IDXGIFactory4, IDXGIFactory6, IDXGIFactory7,
 };
 
-use crate::create_type;
 use crate::{adapter::Adapter3, error::DxError};
+use crate::{create_type, implement_fns};
 
-create_type!(Factory4, IDXGIFactory4);
-create_type!(Factory6, IDXGIFactory6, Factory4);
-create_type!(Factory7, IDXGIFactory7, Factory6);
+create_type! { Factory4, IDXGIFactory4; }
+create_type! { Factory6, IDXGIFactory6; Factory4 }
+create_type! { Factory7, IDXGIFactory7; Factory4, Factory6 }
 
-impl Factory4 {
+implement_fns! {
+    Factory4,
+    Factory6,
+    Factory7;
+
     pub fn enum_adapters(&self, index: usize) -> Result<Adapter3, DxError> {
         let adapter = unsafe {
             self.0
