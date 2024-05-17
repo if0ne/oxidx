@@ -1,8 +1,11 @@
 use windows::core::Interface;
 use windows::Win32::Graphics::Dxgi::{
-    CreateDXGIFactory2, IDXGIAdapter, IDXGIAdapter3, IDXGIFactory4, IDXGIFactory6, IDXGIFactory7, DXGI_CREATE_FACTORY_DEBUG
+    CreateDXGIFactory2, IDXGIAdapter, IDXGIAdapter3, IDXGIFactory4, IDXGIFactory6, IDXGIFactory7,
+    DXGI_CREATE_FACTORY_DEBUG,
 };
 
+use crate::command_queue::CommandQueue;
+use crate::swapchain::{Swapchain1, SwapchainDesc};
 use crate::{adapter::Adapter3, error::DxError};
 use crate::{create_type, implement_fns};
 
@@ -38,6 +41,13 @@ implement_fns! {
 
         Ok(Adapter3::new(adapter))
     }
+
+    pub fn create_swapchain_for_hwnd<CQ>(&self, command_queue: &CQ, hwnd: isize, desc: SwapchainDesc) -> Result<Swapchain1, DxError>
+    where
+        CQ: Into<CommandQueue>
+    {
+        todo!()
+    }
 }
 
 bitflags::bitflags! {
@@ -51,26 +61,23 @@ pub struct Entry;
 
 impl Entry {
     pub fn create_factory4(&self, flags: FactoryCreationFlags) -> Result<Factory4, DxError> {
-        let inner = unsafe {
-            CreateDXGIFactory2(flags.bits())
-        }.map_err(|_| DxError::FactoryCreationError)?;
-        
+        let inner = unsafe { CreateDXGIFactory2(flags.bits()) }
+            .map_err(|_| DxError::FactoryCreationError)?;
+
         Ok(Factory4::new(inner))
     }
 
     pub fn create_factory6(&self, flags: FactoryCreationFlags) -> Result<Factory6, DxError> {
-        let inner = unsafe {
-            CreateDXGIFactory2(flags.bits())
-        }.map_err(|_| DxError::FactoryCreationError)?;
-        
+        let inner = unsafe { CreateDXGIFactory2(flags.bits()) }
+            .map_err(|_| DxError::FactoryCreationError)?;
+
         Ok(Factory6::new(inner))
     }
 
     pub fn create_factory7(&self, flags: FactoryCreationFlags) -> Result<Factory7, DxError> {
-        let inner = unsafe {
-            CreateDXGIFactory2(flags.bits())
-        }.map_err(|_| DxError::FactoryCreationError)?;
-        
+        let inner = unsafe { CreateDXGIFactory2(flags.bits()) }
+            .map_err(|_| DxError::FactoryCreationError)?;
+
         Ok(Factory7::new(inner))
     }
 }

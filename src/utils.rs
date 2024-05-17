@@ -15,10 +15,10 @@ macro_rules! create_type {
 
         $(
             impl TryInto<$name> for $base {
-                type Error = DxError;
+                type Error = $crate::error::DxError;
 
                 fn try_into(self) -> Result<$name, Self::Error> {
-                    let temp = self.0.cast::<_>().map_err(|_| DxError::CastError)?;
+                    let temp = self.0.cast::<_>().map_err(|_| $crate::error::DxError::CastError)?;
 
                     Ok(<$name>::new(temp))
                 }

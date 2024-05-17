@@ -3,4 +3,5 @@ pub enum DxError {
     CastError,
     NotFoundAdaptersError,
     FactoryCreationError,
+    SwapchainCreationError,
 }
