@@ -1,3 +1,5 @@
+#![feature(associated_type_bounds)]
+
 pub mod adapter;
 pub mod command_queue;
 pub mod device;
@@ -10,7 +12,9 @@ pub mod sync;
 mod conv;
 mod utils;
 
-pub(crate) trait HasInterface {
+pub trait HasInterface {
     type Raw;
-    fn as_raw(&self) -> &Self::Raw;
+    type RawRef<'a> where Self: 'a;
+
+    fn as_raw_ref(&self) -> Self::RawRef<'_>;
 }

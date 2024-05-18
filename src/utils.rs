@@ -14,14 +14,15 @@ macro_rules! create_type {
 
         impl $crate::HasInterface for $name {
             type Raw = $raw_type;
+            type RawRef<'a> = &'a $raw_type;
 
-            fn as_raw(&self) -> &Self::Raw {
+            fn as_raw_ref(&self) -> Self::RawRef<'_> {
                 &self.0
             }
         }
 
         impl $interface for $name {}
-
+        
         $(
             impl TryInto<$name> for $base {
                 type Error = $crate::error::DxError;

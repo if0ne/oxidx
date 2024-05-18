@@ -1,10 +1,9 @@
 use std::num::NonZeroIsize;
 
-use windows::core::{IUnknown, Interface, Param};
+use windows::core::{Interface, Param};
 use windows::Win32::Foundation::HWND;
 use windows::Win32::Graphics::Dxgi::{
-    CreateDXGIFactory2, IDXGIAdapter, IDXGIAdapter3, IDXGIFactory4, IDXGIFactory6, IDXGIFactory7,
-    DXGI_CREATE_FACTORY_DEBUG,
+    CreateDXGIFactory2, IDXGIAdapter, IDXGIAdapter3, IDXGIFactory4, IDXGIFactory6, IDXGIFactory7, IDXGIOutput, DXGI_CREATE_FACTORY_DEBUG
 };
 
 use crate::command_queue::CommandQueueInterface;
@@ -13,7 +12,7 @@ use crate::{adapter::Adapter3, error::DxError};
 use crate::{create_type, implement_fns, HasInterface};
 
 #[allow(dead_code)]
-pub(crate) trait FactoryInterface: HasInterface {}
+pub trait FactoryInterface: HasInterface {}
 
 create_type! { FactoryInterface => Factory4 wrap IDXGIFactory4; decorator for }
 create_type! { FactoryInterface => Factory6 wrap IDXGIFactory6; decorator for Factory4 }
@@ -48,7 +47,7 @@ implement_fns! {
         Ok(Adapter3::new(adapter))
     }
 
-    pub fn create_swapchain_for_hwnd<CQ, O>(
+    pub fn create_swapchain_for_hwnd<CQ, RTO, O>(
         &self,
         command_queue: &CQ,
         hwnd: NonZeroIsize,
@@ -59,24 +58,21 @@ implement_fns! {
     where
         CQ: CommandQueueInterface,
         O: OutputInterface,
-        for<'a> &'a <CQ as HasInterface>::Raw: Interface + Param<IUnknown>,
-        <O as HasInterface>::Raw: Interface + Param<<O as HasInterface>::Raw>,
-        for<'a> Option<&'a <O as HasInterface>::Raw>:
-            Param<windows::Win32::Graphics::Dxgi::IDXGIOutput>,
+        for<'a> Option<<O as HasInterface>::RawRef<'a>>: Param<IDXGIOutput>
     {
-        let cq = command_queue.as_raw();
-        let o = restrict_to_output.as_ref().map(|o| o.as_raw());
-    
+        let cq = command_queue.as_raw_ref();
+        let o = restrict_to_output.as_ref().map(|o| o.as_raw_ref());
+
         let desc = desc.as_raw();
         let fullscreen_desc = fullscreen_desc.map(|f| f.as_raw());
         let fullscreen_desc = fullscreen_desc.as_ref().map(|f| f as *const _);
-    
+
         let swapchain = unsafe {
             self.0
                 .CreateSwapChainForHwnd(cq, HWND(hwnd.get()), &desc, fullscreen_desc, o)
                 .map_err(|_| DxError::SwapchainCreationError)?
         };
-    
+
         Ok(Swapchain1::new(swapchain))
     }
 }

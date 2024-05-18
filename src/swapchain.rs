@@ -1,4 +1,4 @@
-use windows::core::Interface;
+use windows::core::{Interface, Param};
 use windows::Win32::Graphics::Dxgi::{
     IDXGIOutput, IDXGISwapChain1, IDXGISwapChain2, IDXGISwapChain3,
     DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH, DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING,
@@ -18,7 +18,7 @@ use crate::{
 };
 
 #[allow(dead_code)]
-pub(crate) trait SwapchainInterface: HasInterface {}
+pub trait SwapchainInterface: HasInterface {}
 
 create_type! { SwapchainInterface => Swapchain1 wrap IDXGISwapChain1; decorator for }
 create_type! { SwapchainInterface => Swapchain2 wrap IDXGISwapChain2; decorator for Swapchain1 }
@@ -79,6 +79,9 @@ pub struct SwapchainFullscreenDesc {
 }
 
 #[allow(dead_code)]
-pub(crate) trait OutputInterface: HasInterface {}
+pub trait OutputInterface:
+    for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<IDXGIOutput>>
+{
+}
 
 create_type! { OutputInterface => Output wrap IDXGIOutput; decorator for }
