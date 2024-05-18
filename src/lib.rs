@@ -14,7 +14,9 @@ mod utils;
 
 pub trait HasInterface {
     type Raw;
-    type RawRef<'a> where Self: 'a;
+    type RawRef<'a>
+    where
+        Self: 'a;
 
     fn as_raw_ref(&self) -> Self::RawRef<'_>;
 }

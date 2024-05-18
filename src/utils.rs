@@ -22,7 +22,7 @@ macro_rules! create_type {
         }
 
         impl $interface for $name {}
-        
+
         $(
             impl TryInto<$name> for $base {
                 type Error = $crate::error::DxError;
@@ -34,6 +34,20 @@ macro_rules! create_type {
                 }
             }
         )*
+    };
+}
+
+#[macro_export]
+macro_rules! create_type_with_param {
+    ($interface:ty => $name:ident wrap $raw_type:ty : input as $param:ty; decorator for $( $base:ty ),*) => {
+
+        create_type! { $interface => $name wrap $raw_type; decorator for $( $base ),* }
+
+        impl $crate::IsParam<$param> for $name {
+            fn as_raw_ref(&self) -> Self::RawRef<'_> {
+                &self.0
+            }
+        }
     };
 }
 

@@ -1,9 +1,10 @@
 use std::num::NonZeroIsize;
 
-use windows::core::{Interface, Param};
+use windows::core::Interface;
 use windows::Win32::Foundation::HWND;
 use windows::Win32::Graphics::Dxgi::{
-    CreateDXGIFactory2, IDXGIAdapter, IDXGIAdapter3, IDXGIFactory4, IDXGIFactory6, IDXGIFactory7, IDXGIOutput, DXGI_CREATE_FACTORY_DEBUG
+    CreateDXGIFactory2, IDXGIAdapter, IDXGIAdapter3, IDXGIFactory4, IDXGIFactory6, IDXGIFactory7,
+    DXGI_CREATE_FACTORY_DEBUG,
 };
 
 use crate::command_queue::CommandQueueInterface;
@@ -31,10 +32,10 @@ implement_fns! {
         }
         .cast::<IDXGIAdapter3>()
         .expect("IDXGIFactory4 should support IDXGIAdapter3");
-
+    
         Ok(Adapter3::new(adapter))
     }
-
+    
     pub fn enum_warp_adapters(&self) -> Result<Adapter3, DxError> {
         let adapter = unsafe {
             self.0
@@ -43,10 +44,10 @@ implement_fns! {
         }
         .cast::<IDXGIAdapter3>()
         .expect("IDXGIFactory4 should support IDXGIAdapter3");
-
+    
         Ok(Adapter3::new(adapter))
     }
-
+    
     pub fn create_swapchain_for_hwnd<CQ, RTO, O>(
         &self,
         command_queue: &CQ,
@@ -58,21 +59,26 @@ implement_fns! {
     where
         CQ: CommandQueueInterface,
         O: OutputInterface,
-        for<'a> Option<<O as HasInterface>::RawRef<'a>>: Param<IDXGIOutput>
     {
         let cq = command_queue.as_raw_ref();
         let o = restrict_to_output.as_ref().map(|o| o.as_raw_ref());
-
+    
         let desc = desc.as_raw();
         let fullscreen_desc = fullscreen_desc.map(|f| f.as_raw());
         let fullscreen_desc = fullscreen_desc.as_ref().map(|f| f as *const _);
-
+    
         let swapchain = unsafe {
-            self.0
-                .CreateSwapChainForHwnd(cq, HWND(hwnd.get()), &desc, fullscreen_desc, o)
-                .map_err(|_| DxError::SwapchainCreationError)?
+            if let Some(o) = o {
+                self.0
+                    .CreateSwapChainForHwnd(cq, HWND(hwnd.get()), &desc, fullscreen_desc, o)
+                    .map_err(|_| DxError::SwapchainCreationError)?
+            } else {
+                self.0
+                    .CreateSwapChainForHwnd(cq, HWND(hwnd.get()), &desc, fullscreen_desc, None)
+                    .map_err(|_| DxError::SwapchainCreationError)?
+            }
         };
-
+    
         Ok(Swapchain1::new(swapchain))
     }
 }
