@@ -1,6 +1,6 @@
 #[macro_export]
 macro_rules! create_type {
-    ($name:ident, $raw_type:ty; $( $base:ty ),*) => {
+    ($interface:ty => $name:ident wrap $raw_type:ty; decorator for $( $base:ty ),*) => {
         #[allow(dead_code)]
         #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct $name($raw_type);
@@ -10,11 +10,17 @@ macro_rules! create_type {
             pub(crate) fn new(inner: $raw_type) -> Self {
                 Self(inner)
             }
+        }
 
-            pub(crate) fn as_raw(&self) -> &$raw_type {
+        impl $crate::HasInterface for $name {
+            type Raw = $raw_type;
+
+            fn as_raw(&self) -> &Self::Raw {
                 &self.0
             }
         }
+
+        impl $interface for $name {}
 
         $(
             impl TryInto<$name> for $base {

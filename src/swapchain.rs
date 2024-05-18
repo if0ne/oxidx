@@ -11,14 +11,18 @@ use windows::Win32::Graphics::Dxgi::{
 };
 
 use crate::misc::{AlphaMode, Scaling, ScalingMode, ScanlineOrdering, SwapEffect};
+use crate::HasInterface;
 use crate::{
     create_type,
     misc::{Format, FrameBufferUsage},
 };
 
-create_type! { Swapchain1, IDXGISwapChain1; }
-create_type! { Swapchain2, IDXGISwapChain2; Swapchain1 }
-create_type! { Swapchain3, IDXGISwapChain3; Swapchain2, Swapchain1 }
+#[allow(dead_code)]
+pub(crate) trait SwapchainInterface: HasInterface {}
+
+create_type! { SwapchainInterface => Swapchain1 wrap IDXGISwapChain1; decorator for }
+create_type! { SwapchainInterface => Swapchain2 wrap IDXGISwapChain2; decorator for Swapchain1 }
+create_type! { SwapchainInterface => Swapchain3 wrap IDXGISwapChain3; decorator for Swapchain2, Swapchain1 }
 
 bitflags::bitflags! {
     #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -74,4 +78,7 @@ pub struct SwapchainFullscreenDesc {
     pub windowed: bool,
 }
 
-create_type! { Output, IDXGIOutput; }
+#[allow(dead_code)]
+pub(crate) trait OutputInterface: HasInterface {}
+
+create_type! { OutputInterface => Output wrap IDXGIOutput; decorator for }

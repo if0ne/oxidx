@@ -9,3 +9,8 @@ pub mod sync;
 
 mod conv;
 mod utils;
+
+pub(crate) trait HasInterface {
+    type Raw;
+    fn as_raw(&self) -> &Self::Raw;
+}
