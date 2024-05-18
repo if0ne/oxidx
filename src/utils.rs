@@ -1,15 +1,18 @@
 #[macro_export]
 macro_rules! create_type {
     ($name:ident, $raw_type:ty; $( $base:ty ),*) => {
-
         #[allow(dead_code)]
         #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct $name($raw_type);
 
+        #[allow(dead_code)]
         impl $name {
-            #[allow(dead_code)]
             pub(crate) fn new(inner: $raw_type) -> Self {
                 Self(inner)
+            }
+
+            pub(crate) fn as_raw(&self) -> &$raw_type {
+                &self.0
             }
         }
 

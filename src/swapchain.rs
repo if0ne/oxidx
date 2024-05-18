@@ -1,7 +1,16 @@
 use windows::core::Interface;
-use windows::Win32::Graphics::Dxgi::{IDXGISwapChain1, IDXGISwapChain2, IDXGISwapChain3};
+use windows::Win32::Graphics::Dxgi::{
+    IDXGIOutput, IDXGISwapChain1, IDXGISwapChain2, IDXGISwapChain3,
+    DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH, DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING,
+    DXGI_SWAP_CHAIN_FLAG_DISPLAY_ONLY, DXGI_SWAP_CHAIN_FLAG_FOREGROUND_LAYER,
+    DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT, DXGI_SWAP_CHAIN_FLAG_FULLSCREEN_VIDEO,
+    DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE, DXGI_SWAP_CHAIN_FLAG_HW_PROTECTED,
+    DXGI_SWAP_CHAIN_FLAG_NONPREROTATED, DXGI_SWAP_CHAIN_FLAG_RESTRICTED_CONTENT,
+    DXGI_SWAP_CHAIN_FLAG_RESTRICTED_TO_ALL_HOLOGRAPHIC_DISPLAYS,
+    DXGI_SWAP_CHAIN_FLAG_RESTRICT_SHARED_RESOURCE_DRIVER, DXGI_SWAP_CHAIN_FLAG_YUV_VIDEO,
+};
 
-use crate::misc::{AlphaMode, Scaling, SwapEffect};
+use crate::misc::{AlphaMode, Scaling, ScalingMode, ScanlineOrdering, SwapEffect};
 use crate::{
     create_type,
     misc::{Format, FrameBufferUsage},
@@ -13,8 +22,20 @@ create_type! { Swapchain3, IDXGISwapChain3; Swapchain2, Swapchain1 }
 
 bitflags::bitflags! {
     #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct SwapchainFlags: u32 {
-
+    pub struct SwapchainFlags: i32 {
+        const NonPrerotated = DXGI_SWAP_CHAIN_FLAG_NONPREROTATED.0;
+        const AllowModeSwitch = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH.0;
+        const GdiCompatible = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE.0;
+        const RestrictContent = DXGI_SWAP_CHAIN_FLAG_RESTRICTED_CONTENT.0;
+        const RestrictSharedResourceDriver = DXGI_SWAP_CHAIN_FLAG_RESTRICT_SHARED_RESOURCE_DRIVER.0;
+        const DisplayOnly = DXGI_SWAP_CHAIN_FLAG_DISPLAY_ONLY.0;
+        const FrameLatencyWaitableObject = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT.0;
+        const ForegroundLayer = DXGI_SWAP_CHAIN_FLAG_FOREGROUND_LAYER.0;
+        const FullscreenVideo = DXGI_SWAP_CHAIN_FLAG_FULLSCREEN_VIDEO.0;
+        const YuvVideo = DXGI_SWAP_CHAIN_FLAG_YUV_VIDEO.0;
+        const Protected = DXGI_SWAP_CHAIN_FLAG_HW_PROTECTED.0;
+        const AllowTearing = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING.0;
+        const RestrictedToAllHolographicDisplays = DXGI_SWAP_CHAIN_FLAG_RESTRICTED_TO_ALL_HOLOGRAPHIC_DISPLAYS.0;
     }
 }
 
@@ -25,6 +46,12 @@ pub struct SampleDesc {
 }
 
 #[derive(Debug, Clone, Copy)]
+pub struct Rational {
+    pub numerator: u32,
+    pub denominator: u32,
+}
+
+#[derive(Debug, Clone)]
 pub struct SwapchainDesc {
     pub width: u32,
     pub height: u32,
@@ -38,3 +65,13 @@ pub struct SwapchainDesc {
     pub alpha_mode: AlphaMode,
     pub flags: SwapchainFlags,
 }
+
+#[derive(Debug, Clone)]
+pub struct SwapchainFullscreenDesc {
+    pub rational: Rational,
+    pub scanline_ordering: ScanlineOrdering,
+    pub scaling: ScalingMode,
+    pub windowed: bool,
+}
+
+create_type! { Output, IDXGIOutput; }
