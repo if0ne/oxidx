@@ -1,13 +1,17 @@
-use windows::Win32::Graphics::Dxgi::{
-    Common::{
-        DXGI_ALPHA_MODE, DXGI_FORMAT, DXGI_MODE_SCALING, DXGI_MODE_SCANLINE_ORDER, DXGI_RATIONAL,
-        DXGI_SAMPLE_DESC,
+use windows::Win32::Graphics::{
+    Direct3D::D3D_FEATURE_LEVEL,
+    Dxgi::{
+        Common::{
+            DXGI_ALPHA_MODE, DXGI_FORMAT, DXGI_MODE_SCALING, DXGI_MODE_SCANLINE_ORDER,
+            DXGI_RATIONAL, DXGI_SAMPLE_DESC,
+        },
+        DXGI_SCALING, DXGI_SWAP_CHAIN_DESC1, DXGI_SWAP_CHAIN_FULLSCREEN_DESC, DXGI_SWAP_EFFECT,
+        DXGI_USAGE,
     },
-    DXGI_SCALING, DXGI_SWAP_CHAIN_DESC1, DXGI_SWAP_CHAIN_FULLSCREEN_DESC, DXGI_SWAP_EFFECT,
-    DXGI_USAGE,
 };
 
 use crate::{
+    factory::FeatureLevel,
     misc::{
         AlphaMode, Format, FrameBufferUsage, Scaling, ScalingMode, ScanlineOrdering, SwapEffect,
     },
@@ -100,5 +104,11 @@ impl ScanlineOrdering {
 impl ScalingMode {
     pub(crate) fn as_raw(&self) -> DXGI_MODE_SCALING {
         DXGI_MODE_SCALING(*self as i32)
+    }
+}
+
+impl FeatureLevel {
+    pub(crate) fn as_raw(&self) -> D3D_FEATURE_LEVEL {
+        D3D_FEATURE_LEVEL(*self as i32)
     }
 }

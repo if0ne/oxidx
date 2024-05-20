@@ -21,5 +21,7 @@ pub(crate) trait HasInterface {
     where
         Self: 'a;
 
+    fn new(raw: Self::Raw) -> Self;
+    fn as_raw(&self) -> &Self::Raw;
     fn as_raw_ref(&self) -> Self::RawRef<'_>;
 }

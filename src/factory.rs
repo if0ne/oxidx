@@ -2,12 +2,19 @@ use std::num::NonZeroIsize;
 
 use windows::core::Interface;
 use windows::Win32::Foundation::HWND;
+use windows::Win32::Graphics::Direct3D::{
+    D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_12_0, D3D_FEATURE_LEVEL_12_1,
+    D3D_FEATURE_LEVEL_12_2,
+};
+use windows::Win32::Graphics::Direct3D12::D3D12CreateDevice;
 use windows::Win32::Graphics::Dxgi::{
     CreateDXGIFactory2, IDXGIAdapter, IDXGIAdapter3, IDXGIFactory4, IDXGIFactory6, IDXGIFactory7,
     DXGI_CREATE_FACTORY_DEBUG,
 };
 
+use crate::adapter::AdapterInterface3;
 use crate::command_queue::CommandQueueInterface;
+use crate::device::DeviceInterface;
 use crate::swapchain::{OutputInterface, Swapchain1, SwapchainDesc, SwapchainFullscreenDesc};
 use crate::{adapter::Adapter3, error::DxError};
 use crate::{create_type, impl_trait, HasInterface};
@@ -144,6 +151,16 @@ bitflags::bitflags! {
     }
 }
 
+#[repr(i32)]
+#[derive(Debug, Clone, Copy)]
+pub enum FeatureLevel {
+    Level11 = D3D_FEATURE_LEVEL_11_0.0,
+    Level11_1 = D3D_FEATURE_LEVEL_11_1.0,
+    Level12 = D3D_FEATURE_LEVEL_12_0.0,
+    Level12_1 = D3D_FEATURE_LEVEL_12_1.0,
+    Level12_2 = D3D_FEATURE_LEVEL_12_2.0,
+}
+
 pub struct Entry;
 
 impl Entry {
@@ -166,6 +183,21 @@ impl Entry {
             .map_err(|_| DxError::FactoryCreationError)?;
 
         Ok(Factory7::new(inner))
+    }
+
+    pub fn create_device<A: AdapterInterface3, D: DeviceInterface>(
+        &self,
+        adapter: &A,
+        feature_level: FeatureLevel,
+    ) -> Result<D, DxError> {
+        let mut inner: Option<D::Raw> = None;
+        unsafe {
+            D3D12CreateDevice(adapter.as_raw_ref(), feature_level.as_raw(), &mut inner)
+                .map_err(|_| DxError::Dummy)?
+        };
+        let inner = inner.unwrap();
+
+        Ok(D::new(inner))
     }
 }
 

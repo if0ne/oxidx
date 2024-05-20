@@ -1,6 +1,12 @@
-use windows::Win32::Graphics::Direct3D12::ID3D12Device;
+use windows::{core::Interface, Win32::Graphics::Direct3D12::ID3D12Device};
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Device(pub(crate) ID3D12Device);
+use crate::{create_type, impl_trait, HasInterface};
 
-impl Device {}
+pub trait DeviceInterface: HasInterface<Raw: Interface> {}
+
+create_type! { Device wrap ID3D12Device }
+
+impl_trait! {
+    impl DeviceInterface =>
+    Device;
+}

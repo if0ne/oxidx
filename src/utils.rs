@@ -7,15 +7,17 @@ macro_rules! create_type {
         #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct $name($raw_type);
 
-        impl $name {
-            pub(crate) fn new(inner: $raw_type) -> Self {
-                Self(inner)
-            }
-        }
-
         impl $crate::HasInterface for $name {
             type Raw = $raw_type;
             type RawRef<'a> = &'a $raw_type;
+
+            fn new(raw: Self::Raw) -> Self {
+                Self(raw)
+            }
+
+            fn as_raw(&self) -> &Self::Raw {
+                &self.0
+            }
 
             fn as_raw_ref(&self) -> Self::RawRef<'_> {
                 &self.0
