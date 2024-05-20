@@ -3,7 +3,7 @@ use windows::{
     Win32::Graphics::Direct3D12::ID3D12CommandQueue,
 };
 
-use crate::{create_type, HasInterface};
+use crate::{create_type, impl_trait, HasInterface};
 
 #[allow(dead_code)]
 pub trait CommandQueueInterface:
@@ -11,4 +11,9 @@ pub trait CommandQueueInterface:
 {
 }
 
-create_type! { CommandQueueInterface => CommandQueue wrap ID3D12CommandQueue; decorator for }
+create_type! { CommandQueue wrap ID3D12CommandQueue }
+
+impl_trait! {
+    impl CommandQueueInterface =>
+    CommandQueue;
+}

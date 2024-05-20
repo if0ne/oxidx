@@ -1,4 +1,5 @@
 #![feature(associated_type_bounds)]
+#![allow(private_bounds)]
 
 pub mod adapter;
 pub mod command_queue;
@@ -12,7 +13,7 @@ pub mod sync;
 mod conv;
 mod utils;
 
-pub trait HasInterface {
+pub(crate) trait HasInterface {
     type Raw;
     type RawRef<'a>
     where

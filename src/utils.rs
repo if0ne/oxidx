@@ -1,6 +1,9 @@
 #[macro_export]
 macro_rules! create_type {
-    ($interface:ty => $name:ident wrap $raw_type:ty; decorator for $( $base:ty ),*) => {
+    ($name:ident wrap $raw_type:ty) => {
+        create_type! { $name wrap $raw_type; decorator for }
+    };
+    ($name:ident wrap $raw_type:ty; decorator for $( $base:ty ),*) => {
         #[allow(dead_code)]
         #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct $name($raw_type);
@@ -21,8 +24,6 @@ macro_rules! create_type {
             }
         }
 
-        impl $interface for $name {}
-
         $(
             impl TryInto<$name> for $base {
                 type Error = $crate::error::DxError;
@@ -38,32 +39,18 @@ macro_rules! create_type {
 }
 
 #[macro_export]
-macro_rules! create_type_with_param {
-    ($interface:ty => $name:ident wrap $raw_type:ty : input as $param:ty; decorator for $( $base:ty ),*) => {
-
-        create_type! { $interface => $name wrap $raw_type; decorator for $( $base ),* }
-
-        impl $crate::IsParam<$param> for $name {
-            fn as_raw_ref(&self) -> Self::RawRef<'_> {
-                &self.0
-            }
-        }
+macro_rules! impl_trait {
+    (impl $interface:ty => $( $t:ty ),+; $( $func:item )* ) => {
+        impl_trait! { @impl_tuple impl $interface => $($t),+; ($($func),*) }
     };
-}
-
-#[macro_export]
-macro_rules! implement_fns {
-    ($( $t:ty ),+; $( $func:item )+ ) => {
-        implement_fns! { @impl_tuple $($t),+; ($($func),+) }
+    (@impl_tuple impl $interface:ty => $( $t:ty ),*; $tuple:tt ) => {
+        $(impl_trait! { @impl_fn impl $interface => $t; $tuple } )+
     };
-    (@impl_tuple $( $t:ty ),+; $tuple:tt ) => {
-        $(implement_fns! { @impl_fn $t; $tuple } )+
-    };
-    (@impl_fn $t:ty; ($($func:item),+)) => {
-        impl $t {
+    (@impl_fn impl $interface:ty => $t:ty; ($($func:item),*)) => {
+        impl $interface for $t {
             $(
                 $func
-            )+
+            )*
         }
     }
 }
