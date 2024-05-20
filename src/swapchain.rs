@@ -1,5 +1,4 @@
 use windows::core::{Interface, Param};
-use windows::Win32::Graphics::Direct3D12::ID3D12Resource;
 use windows::Win32::Graphics::Dxgi::{
     IDXGIOutput, IDXGISwapChain1, IDXGISwapChain2, IDXGISwapChain3,
     DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH, DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING,
@@ -13,7 +12,7 @@ use windows::Win32::Graphics::Dxgi::{
 
 use crate::error::DxError;
 use crate::misc::{AlphaMode, PresentFlags, Scaling, ScalingMode, ScanlineOrdering, SwapEffect};
-use crate::resources::Resource;
+use crate::resources::ResourceInterface;
 use crate::{
     create_type,
     misc::{Format, FrameBufferUsage},
@@ -22,7 +21,7 @@ use crate::{impl_trait, HasInterface};
 
 pub trait SwapchainInterface1: HasInterface {
     fn present(&self, interval: u32, flags: PresentFlags) -> Result<(), DxError>;
-    fn get_buffer(&self, buffer: u32) -> Result<Resource, DxError>;
+    fn get_buffer<R: ResourceInterface>(&self, buffer: u32) -> Result<R, DxError>;
 }
 
 pub trait SwapchainInterface2: SwapchainInterface1 {}
@@ -49,12 +48,12 @@ impl_trait! {
         res.ok().map_err(|_| DxError::SwapchainPresentError)
     }
 
-    fn get_buffer(&self, buffer: u32) -> Result<Resource, DxError> {
-        let buffer: ID3D12Resource = unsafe {
+    fn get_buffer<R: ResourceInterface>(&self, buffer: u32) -> Result<R, DxError> {
+        let buffer: R::Raw = unsafe {
             self.0.GetBuffer(buffer).map_err(|_| DxError::Dummy)?
         };
 
-        Ok(Resource::new(buffer))
+        Ok(R::new(buffer))
     }
 }
 

@@ -19,7 +19,7 @@ use crate::swapchain::{OutputInterface, Swapchain1, SwapchainDesc, SwapchainFull
 use crate::{adapter::Adapter3, error::DxError};
 use crate::{create_type, impl_trait, HasInterface};
 
-pub trait FactoryInterface4: HasInterface {
+pub trait FactoryInterface4: HasInterface<Raw: Interface> {
     fn enum_adapters(&self, index: usize) -> Result<Adapter3, DxError>;
     fn enum_warp_adapters(&self) -> Result<Adapter3, DxError>;
     fn create_swapchain_for_hwnd<CQ, O>(
@@ -164,25 +164,14 @@ pub enum FeatureLevel {
 pub struct Entry;
 
 impl Entry {
-    pub fn create_factory4(&self, flags: FactoryCreationFlags) -> Result<Factory4, DxError> {
-        let inner = unsafe { CreateDXGIFactory2(flags.bits()) }
+    pub fn create_factory<F: FactoryInterface4>(
+        &self,
+        flags: FactoryCreationFlags,
+    ) -> Result<F, DxError> {
+        let inner: F::Raw = unsafe { CreateDXGIFactory2(flags.bits()) }
             .map_err(|_| DxError::FactoryCreationError)?;
 
-        Ok(Factory4::new(inner))
-    }
-
-    pub fn create_factory6(&self, flags: FactoryCreationFlags) -> Result<Factory6, DxError> {
-        let inner = unsafe { CreateDXGIFactory2(flags.bits()) }
-            .map_err(|_| DxError::FactoryCreationError)?;
-
-        Ok(Factory6::new(inner))
-    }
-
-    pub fn create_factory7(&self, flags: FactoryCreationFlags) -> Result<Factory7, DxError> {
-        let inner = unsafe { CreateDXGIFactory2(flags.bits()) }
-            .map_err(|_| DxError::FactoryCreationError)?;
-
-        Ok(Factory7::new(inner))
+        Ok(F::new(inner))
     }
 
     pub fn create_device<A: AdapterInterface3, D: DeviceInterface>(
@@ -208,7 +197,7 @@ mod test {
     #[test]
     fn create_factory4_test() {
         let entry = Entry;
-        let factory = entry.create_factory4(FactoryCreationFlags::Debug);
+        let factory = entry.create_factory::<Factory4>(FactoryCreationFlags::Debug);
 
         assert!(factory.is_ok())
     }
@@ -216,7 +205,7 @@ mod test {
     #[test]
     fn create_factory6_test() {
         let entry = Entry;
-        let factory = entry.create_factory6(FactoryCreationFlags::Debug);
+        let factory = entry.create_factory::<Factory6>(FactoryCreationFlags::Debug);
 
         assert!(factory.is_ok())
     }
@@ -224,7 +213,7 @@ mod test {
     #[test]
     fn create_factory7_test() {
         let entry = Entry;
-        let factory = entry.create_factory7(FactoryCreationFlags::Debug);
+        let factory = entry.create_factory::<Factory7>(FactoryCreationFlags::Debug);
 
         assert!(factory.is_ok())
     }
