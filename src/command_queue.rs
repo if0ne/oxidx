@@ -5,7 +5,6 @@ use windows::{
 
 use crate::{create_type, impl_trait, HasInterface};
 
-#[allow(dead_code)]
 pub trait CommandQueueInterface:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<IUnknown>>
 {

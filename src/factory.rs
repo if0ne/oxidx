@@ -12,16 +12,25 @@ use crate::swapchain::{OutputInterface, Swapchain1, SwapchainDesc, SwapchainFull
 use crate::{adapter::Adapter3, error::DxError};
 use crate::{create_type, impl_trait, HasInterface};
 
-#[allow(dead_code)]
 pub trait FactoryInterface4: HasInterface {
     fn enum_adapters(&self, index: usize) -> Result<Adapter3, DxError>;
     fn enum_warp_adapters(&self) -> Result<Adapter3, DxError>;
-    fn create_swapchain_for_hwnd<CQ, RTO, O>(
+    fn create_swapchain_for_hwnd<CQ, O>(
         &self,
         command_queue: &CQ,
         hwnd: NonZeroIsize,
         desc: &SwapchainDesc,
         fullscreen_desc: Option<&SwapchainFullscreenDesc>,
+        restrict_to_output: Option<O>,
+    ) -> Result<Swapchain1, DxError>
+    where
+        CQ: CommandQueueInterface,
+        O: OutputInterface;
+
+    fn create_swapchain_for_composition<CQ, O>(
+        &self,
+        command_queue: &CQ,
+        desc: &SwapchainDesc,
         restrict_to_output: Option<O>,
     ) -> Result<Swapchain1, DxError>
     where
@@ -63,7 +72,7 @@ impl_trait! {
         Ok(Adapter3::new(adapter))
     }
 
-    fn create_swapchain_for_hwnd<CQ, RTO, O>(
+    fn create_swapchain_for_hwnd<CQ, O>(
         &self,
         command_queue: &CQ,
         hwnd: NonZeroIsize,
@@ -90,6 +99,36 @@ impl_trait! {
             } else {
                 self.0
                     .CreateSwapChainForHwnd(cq, HWND(hwnd.get()), &desc, fullscreen_desc, None)
+                    .map_err(|_| DxError::SwapchainCreationError)?
+            }
+        };
+
+        Ok(Swapchain1::new(swapchain))
+    }
+
+    fn create_swapchain_for_composition<CQ, O>(
+        &self,
+        command_queue: &CQ,
+        desc: &SwapchainDesc,
+        restrict_to_output: Option<O>,
+    ) -> Result<Swapchain1, DxError>
+    where
+        CQ: CommandQueueInterface,
+        O: OutputInterface
+    {
+        let cq = command_queue.as_raw_ref();
+        let o = restrict_to_output.as_ref().map(|o| o.as_raw_ref());
+
+        let desc = desc.as_raw();
+
+        let swapchain = unsafe {
+            if let Some(o) = o {
+                self.0
+                    .CreateSwapChainForComposition(cq, &desc, o)
+                    .map_err(|_| DxError::SwapchainCreationError)?
+            } else {
+                self.0
+                    .CreateSwapChainForComposition(cq, &desc, None)
                     .map_err(|_| DxError::SwapchainCreationError)?
             }
         };

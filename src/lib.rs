@@ -1,5 +1,6 @@
 #![feature(associated_type_bounds)]
 #![allow(private_bounds)]
+#![allow(dead_code)]
 
 pub mod adapter;
 pub mod command_queue;
@@ -7,6 +8,7 @@ pub mod device;
 pub mod error;
 pub mod factory;
 pub mod misc;
+pub mod resources;
 pub mod swapchain;
 pub mod sync;
 

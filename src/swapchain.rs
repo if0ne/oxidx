@@ -1,4 +1,5 @@
 use windows::core::{Interface, Param};
+use windows::Win32::Graphics::Direct3D12::ID3D12Resource;
 use windows::Win32::Graphics::Dxgi::{
     IDXGIOutput, IDXGISwapChain1, IDXGISwapChain2, IDXGISwapChain3,
     DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH, DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING,
@@ -10,15 +11,25 @@ use windows::Win32::Graphics::Dxgi::{
     DXGI_SWAP_CHAIN_FLAG_RESTRICT_SHARED_RESOURCE_DRIVER, DXGI_SWAP_CHAIN_FLAG_YUV_VIDEO,
 };
 
-use crate::misc::{AlphaMode, Scaling, ScalingMode, ScanlineOrdering, SwapEffect};
+use crate::error::DxError;
+use crate::misc::{AlphaMode, PresentFlags, Scaling, ScalingMode, ScanlineOrdering, SwapEffect};
+use crate::resources::Resource;
 use crate::{
     create_type,
     misc::{Format, FrameBufferUsage},
 };
 use crate::{impl_trait, HasInterface};
 
-#[allow(dead_code)]
-pub trait SwapchainInterface1: HasInterface {}
+pub trait SwapchainInterface1: HasInterface {
+    fn present(&self, interval: u32, flags: PresentFlags) -> Result<(), DxError>;
+    fn get_buffer(&self, buffer: u32) -> Result<Resource, DxError>;
+}
+
+pub trait SwapchainInterface2: SwapchainInterface1 {}
+
+pub trait SwapchainInterface3: SwapchainInterface2 {
+    fn get_current_back_buffer_index(&self) -> u32;
+}
 
 create_type! { Swapchain1 wrap IDXGISwapChain1 }
 create_type! { Swapchain2 wrap IDXGISwapChain2; decorator for Swapchain1 }
@@ -29,6 +40,39 @@ impl_trait! {
     Swapchain1,
     Swapchain2,
     Swapchain3;
+
+    fn present(&self, interval: u32, flags: PresentFlags) -> Result<(), DxError> {
+        let res = unsafe {
+            self.0.Present(interval, flags.bits())
+        };
+
+        res.ok().map_err(|_| DxError::SwapchainPresentError)
+    }
+
+    fn get_buffer(&self, buffer: u32) -> Result<Resource, DxError> {
+        let buffer: ID3D12Resource = unsafe {
+            self.0.GetBuffer(buffer).map_err(|_| DxError::Dummy)?
+        };
+
+        Ok(Resource::new(buffer))
+    }
+}
+
+impl_trait! {
+    impl SwapchainInterface2 =>
+    Swapchain2,
+    Swapchain3;
+}
+
+impl_trait! {
+    impl SwapchainInterface3 =>
+    Swapchain3;
+
+    fn get_current_back_buffer_index(&self) -> u32 {
+        unsafe {
+            self.0.GetCurrentBackBufferIndex()
+        }
+    }
 }
 
 bitflags::bitflags! {
@@ -85,7 +129,6 @@ pub struct SwapchainFullscreenDesc {
     pub windowed: bool,
 }
 
-#[allow(dead_code)]
 pub trait OutputInterface:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<IDXGIOutput>>
 {

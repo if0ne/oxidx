@@ -4,11 +4,9 @@ macro_rules! create_type {
         create_type! { $name wrap $raw_type; decorator for }
     };
     ($name:ident wrap $raw_type:ty; decorator for $( $base:ty ),*) => {
-        #[allow(dead_code)]
         #[derive(Clone, Debug, PartialEq, Eq)]
         pub struct $name($raw_type);
 
-        #[allow(dead_code)]
         impl $name {
             pub(crate) fn new(inner: $raw_type) -> Self {
                 Self(inner)
