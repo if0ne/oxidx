@@ -192,6 +192,8 @@ impl Entry {
 
 #[cfg(test)]
 mod test {
+    use crate::{adapter, device::Device, factory};
+
     use super::*;
 
     #[test]
@@ -216,5 +218,21 @@ mod test {
         let factory = entry.create_factory::<Factory7>(FactoryCreationFlags::Debug);
 
         assert!(factory.is_ok())
+    }
+
+    #[test]
+    fn create_device_test() {
+        let entry = Entry;
+
+        let factory = entry.create_factory::<Factory4>(FactoryCreationFlags::Debug);
+        assert!(factory.is_ok());
+        let factory = factory.unwrap();
+
+        let adapter = factory.enum_adapters(0);
+        assert!(adapter.is_ok());
+        let adapter = adapter.unwrap();
+
+        let device = entry.create_device::<_, Device>(&adapter, FeatureLevel::Level11);
+        assert!(device.is_ok());
     }
 }
