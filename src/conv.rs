@@ -1,6 +1,6 @@
 use windows::Win32::Graphics::{
     Direct3D::D3D_FEATURE_LEVEL,
-    Direct3D12::D3D12_COMMAND_LIST_TYPE,
+    Direct3D12::{D3D12_COMMAND_LIST_TYPE, D3D12_FENCE_FLAGS},
     Dxgi::{
         Common::{
             DXGI_ALPHA_MODE, DXGI_FORMAT, DXGI_MODE_SCALING, DXGI_MODE_SCANLINE_ORDER,
@@ -18,6 +18,7 @@ use crate::{
         ScanlineOrdering, SwapEffect,
     },
     swapchain::{Rational, SampleDesc, SwapchainDesc, SwapchainFullscreenDesc},
+    sync::FenceFlags,
 };
 
 impl SwapchainDesc {
@@ -118,5 +119,11 @@ impl FeatureLevel {
 impl CommandListType {
     pub(crate) fn as_raw(&self) -> D3D12_COMMAND_LIST_TYPE {
         D3D12_COMMAND_LIST_TYPE(*self as i32)
+    }
+}
+
+impl FenceFlags {
+    pub(crate) fn as_raw(&self) -> D3D12_FENCE_FLAGS {
+        D3D12_FENCE_FLAGS(self.bits())
     }
 }
