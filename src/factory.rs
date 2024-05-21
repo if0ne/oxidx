@@ -28,7 +28,7 @@ pub trait FactoryInterface4: HasInterface<Raw: Interface> {
         hwnd: NonZeroIsize,
         desc: &SwapchainDesc,
         fullscreen_desc: Option<&SwapchainFullscreenDesc>,
-        restrict_to_output: Option<O>,
+        restrict_to_output: Option<&O>,
     ) -> Result<Swapchain1, DxError>
     where
         CQ: CommandQueueInterface,
@@ -38,7 +38,7 @@ pub trait FactoryInterface4: HasInterface<Raw: Interface> {
         &self,
         command_queue: &CQ,
         desc: &SwapchainDesc,
-        restrict_to_output: Option<O>,
+        restrict_to_output: Option<&O>,
     ) -> Result<Swapchain1, DxError>
     where
         CQ: CommandQueueInterface,
@@ -85,7 +85,7 @@ impl_trait! {
         hwnd: NonZeroIsize,
         desc: &SwapchainDesc,
         fullscreen_desc: Option<&SwapchainFullscreenDesc>,
-        restrict_to_output: Option<O>,
+        restrict_to_output: Option<&O>,
     ) -> Result<Swapchain1, DxError>
     where
         CQ: CommandQueueInterface,
@@ -117,7 +117,7 @@ impl_trait! {
         &self,
         command_queue: &CQ,
         desc: &SwapchainDesc,
-        restrict_to_output: Option<O>,
+        restrict_to_output: Option<&O>,
     ) -> Result<Swapchain1, DxError>
     where
         CQ: CommandQueueInterface,
