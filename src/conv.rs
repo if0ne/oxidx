@@ -1,5 +1,6 @@
 use windows::Win32::Graphics::{
     Direct3D::D3D_FEATURE_LEVEL,
+    Direct3D12::D3D12_COMMAND_LIST_TYPE,
     Dxgi::{
         Common::{
             DXGI_ALPHA_MODE, DXGI_FORMAT, DXGI_MODE_SCALING, DXGI_MODE_SCANLINE_ORDER,
@@ -13,7 +14,8 @@ use windows::Win32::Graphics::{
 use crate::{
     factory::FeatureLevel,
     misc::{
-        AlphaMode, Format, FrameBufferUsage, Scaling, ScalingMode, ScanlineOrdering, SwapEffect,
+        AlphaMode, CommandListType, Format, FrameBufferUsage, Scaling, ScalingMode,
+        ScanlineOrdering, SwapEffect,
     },
     swapchain::{Rational, SampleDesc, SwapchainDesc, SwapchainFullscreenDesc},
 };
@@ -110,5 +112,11 @@ impl ScalingMode {
 impl FeatureLevel {
     pub(crate) fn as_raw(&self) -> D3D_FEATURE_LEVEL {
         D3D_FEATURE_LEVEL(*self as i32)
+    }
+}
+
+impl CommandListType {
+    pub(crate) fn as_raw(&self) -> D3D12_COMMAND_LIST_TYPE {
+        D3D12_COMMAND_LIST_TYPE(*self as i32)
     }
 }

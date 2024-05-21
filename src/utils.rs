@@ -1,3 +1,4 @@
+#[doc(hidden)]
 #[macro_export]
 macro_rules! create_type {
     ($name:ident wrap $raw_type:ty) => {
@@ -38,6 +39,7 @@ macro_rules! create_type {
     };
 }
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! impl_trait {
     (impl $interface:ty => $( $t:ty ),+; $( $func:item )* ) => {

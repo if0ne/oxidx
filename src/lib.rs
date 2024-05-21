@@ -3,6 +3,7 @@
 #![allow(dead_code)]
 
 pub mod adapter;
+pub mod command_allocator;
 pub mod command_queue;
 pub mod device;
 pub mod error;

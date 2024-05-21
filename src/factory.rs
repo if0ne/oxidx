@@ -192,7 +192,7 @@ impl Entry {
 
 #[cfg(test)]
 mod test {
-    use crate::{adapter, device::Device, factory};
+    use crate::device::Device;
 
     use super::*;
 
