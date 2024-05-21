@@ -1,9 +1,9 @@
-#![feature(associated_type_bounds)]
 #![allow(private_bounds)]
 #![allow(dead_code)]
 
 pub mod adapter;
 pub mod command_allocator;
+pub mod command_list;
 pub mod command_queue;
 pub mod device;
 pub mod error;

@@ -1,6 +1,9 @@
 use windows::Win32::Graphics::{
     Direct3D::D3D_FEATURE_LEVEL,
-    Direct3D12::{D3D12_COMMAND_LIST_TYPE, D3D12_FENCE_FLAGS},
+    Direct3D12::{
+        D3D12_COMMAND_LIST_TYPE, D3D12_COMMAND_QUEUE_DESC, D3D12_COMMAND_QUEUE_FLAGS,
+        D3D12_FENCE_FLAGS,
+    },
     Dxgi::{
         Common::{
             DXGI_ALPHA_MODE, DXGI_FORMAT, DXGI_MODE_SCALING, DXGI_MODE_SCANLINE_ORDER,
@@ -12,6 +15,7 @@ use windows::Win32::Graphics::{
 };
 
 use crate::{
+    command_queue::CommandQueueDesc,
     factory::FeatureLevel,
     misc::{
         AlphaMode, CommandListType, Format, FrameBufferUsage, Scaling, ScalingMode,
@@ -125,5 +129,16 @@ impl CommandListType {
 impl FenceFlags {
     pub(crate) fn as_raw(&self) -> D3D12_FENCE_FLAGS {
         D3D12_FENCE_FLAGS(self.bits())
+    }
+}
+
+impl CommandQueueDesc {
+    pub(crate) fn as_raw(&self) -> D3D12_COMMAND_QUEUE_DESC {
+        D3D12_COMMAND_QUEUE_DESC {
+            Type: self.r#type.as_raw(),
+            Priority: self.priority,
+            Flags: D3D12_COMMAND_QUEUE_FLAGS(self.flags.bits()),
+            NodeMask: self.node_mask,
+        }
     }
 }

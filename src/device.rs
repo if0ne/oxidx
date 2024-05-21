@@ -2,6 +2,7 @@ use windows::{core::Interface, Win32::Graphics::Direct3D12::ID3D12Device};
 
 use crate::{
     command_allocator::CommandAllocatorInterface,
+    command_queue::{CommandQueueDesc, CommandQueueInterface},
     create_type,
     error::DxError,
     impl_trait,
@@ -15,6 +16,11 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         &self,
         r#type: CommandListType,
     ) -> Result<CA, DxError>;
+
+    fn create_command_queue<CQ: CommandQueueInterface>(
+        &self,
+        desc: CommandQueueDesc,
+    ) -> Result<CQ, DxError>;
 
     fn create_fence<F: FenceInterface>(
         &self,
@@ -35,6 +41,17 @@ impl_trait! {
         };
 
         Ok(CA::new(res))
+    }
+
+    fn create_command_queue<CQ: CommandQueueInterface>(
+        &self,
+        desc: CommandQueueDesc,
+    ) -> Result<CQ, DxError> {
+        let res: CQ::Raw  = unsafe {
+            self.0.CreateCommandQueue(&desc.as_raw()).map_err(|_| DxError::Dummy)?
+        };
+
+        Ok(CQ::new(res))
     }
 
     fn create_fence<F: FenceInterface>(
