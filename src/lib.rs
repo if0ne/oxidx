@@ -12,6 +12,7 @@ pub mod misc;
 pub mod resources;
 pub mod swapchain;
 pub mod sync;
+pub mod debug;
 
 mod conv;
 mod utils;

@@ -6,7 +6,7 @@ use windows::Win32::Graphics::Direct3D::{
     D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_12_0, D3D_FEATURE_LEVEL_12_1,
     D3D_FEATURE_LEVEL_12_2,
 };
-use windows::Win32::Graphics::Direct3D12::D3D12CreateDevice;
+use windows::Win32::Graphics::Direct3D12::{D3D12CreateDevice, D3D12GetDebugInterface};
 use windows::Win32::Graphics::Dxgi::{
     CreateDXGIFactory2, IDXGIAdapter, IDXGIAdapter3, IDXGIFactory4, IDXGIFactory6, IDXGIFactory7,
     DXGI_CREATE_FACTORY_DEBUG,
@@ -14,6 +14,7 @@ use windows::Win32::Graphics::Dxgi::{
 
 use crate::adapter::AdapterInterface3;
 use crate::command_queue::CommandQueueInterface;
+use crate::debug::DebugInterface;
 use crate::device::DeviceInterface;
 use crate::swapchain::{OutputInterface, Swapchain1, SwapchainDesc, SwapchainFullscreenDesc};
 use crate::{adapter::Adapter3, error::DxError};
@@ -186,6 +187,17 @@ impl Entry {
         };
         let inner = inner.unwrap();
 
+        Ok(D::new(inner))
+    }
+
+    pub fn create_debug<D: DebugInterface>(&self) -> Result<D, DxError> {
+        let mut inner: Option<D::Raw> = None;
+
+        unsafe {
+            D3D12GetDebugInterface(&mut inner).map_err(|_| DxError::Dummy)?
+        };
+        let inner = inner.unwrap();
+        
         Ok(D::new(inner))
     }
 }
