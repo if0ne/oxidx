@@ -1,30 +1,43 @@
 use compact_str::CompactString;
-use windows::Win32::{Foundation::RECT, Graphics::{
-    Direct3D::D3D_FEATURE_LEVEL,
-    Direct3D12::{
-        D3D12_COMMAND_LIST_TYPE, D3D12_COMMAND_QUEUE_DESC, D3D12_COMMAND_QUEUE_FLAGS,
-        D3D12_DESCRIPTOR_HEAP_DESC, D3D12_DESCRIPTOR_HEAP_FLAGS, D3D12_DESCRIPTOR_HEAP_TYPE,
-        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
-        D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_FENCE_FLAGS, D3D12_VIEWPORT,
-    },
-    Dxgi::{
-        Common::{
-            DXGI_ALPHA_MODE, DXGI_FORMAT, DXGI_MODE_SCALING, DXGI_MODE_SCANLINE_ORDER,
-            DXGI_RATIONAL, DXGI_SAMPLE_DESC,
+use windows::Win32::{
+    Foundation::RECT,
+    Graphics::{
+        Direct3D::D3D_FEATURE_LEVEL,
+        Direct3D12::{
+            D3D12_BUFFER_RTV, D3D12_COMMAND_LIST_TYPE, D3D12_COMMAND_QUEUE_DESC,
+            D3D12_COMMAND_QUEUE_FLAGS, D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_DESCRIPTOR_HEAP_DESC,
+            D3D12_DESCRIPTOR_HEAP_FLAGS, D3D12_DESCRIPTOR_HEAP_TYPE,
+            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
+            D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_FENCE_FLAGS,
+            D3D12_RENDER_TARGET_VIEW_DESC, D3D12_RENDER_TARGET_VIEW_DESC_0, D3D12_RTV_DIMENSION,
+            D3D12_RTV_DIMENSION_BUFFER, D3D12_RTV_DIMENSION_TEXTURE1D,
+            D3D12_RTV_DIMENSION_TEXTURE1DARRAY, D3D12_RTV_DIMENSION_TEXTURE2D,
+            D3D12_RTV_DIMENSION_TEXTURE2DARRAY, D3D12_RTV_DIMENSION_TEXTURE2DMS,
+            D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY, D3D12_RTV_DIMENSION_TEXTURE3D,
+            D3D12_TEX1D_ARRAY_RTV, D3D12_TEX1D_RTV, D3D12_TEX2DMS_ARRAY_RTV, D3D12_TEX2DMS_RTV,
+            D3D12_TEX2D_ARRAY_RTV, D3D12_TEX2D_RTV, D3D12_TEX3D_RTV, D3D12_VIEWPORT,
         },
-        DXGI_ADAPTER_DESC1, DXGI_SCALING, DXGI_SWAP_CHAIN_DESC1, DXGI_SWAP_CHAIN_FULLSCREEN_DESC,
-        DXGI_SWAP_EFFECT, DXGI_USAGE,
+        Dxgi::{
+            Common::{
+                DXGI_ALPHA_MODE, DXGI_FORMAT, DXGI_MODE_SCALING, DXGI_MODE_SCANLINE_ORDER,
+                DXGI_RATIONAL, DXGI_SAMPLE_DESC,
+            },
+            DXGI_ADAPTER_DESC1, DXGI_SCALING, DXGI_SWAP_CHAIN_DESC1,
+            DXGI_SWAP_CHAIN_FULLSCREEN_DESC, DXGI_SWAP_EFFECT, DXGI_USAGE,
+        },
     },
-}};
+};
 
 use crate::{
     adapter::{AdapterDesc, AdapterFlags, Luid},
     command_queue::CommandQueueDesc,
     factory::FeatureLevel,
-    heap::{DescriptorHeapDesc, DescriptorHeapFlags, DescriptorHeapType},
+    heap::{CpuDescriptorHandle, DescriptorHeapDesc, DescriptorHeapFlags, DescriptorHeapType},
     misc::{
-        AlphaMode, CommandListType, Format, FrameBufferUsage, Rect, Scaling, ScalingMode, ScanlineOrdering, SwapEffect, Viewport
+        AlphaMode, CommandListType, Format, FrameBufferUsage, Rect, Scaling, ScalingMode,
+        ScanlineOrdering, SwapEffect, Viewport,
     },
+    resources::{RenderTargetViewDesc, ViewDimension},
     swapchain::{Rational, SampleDesc, SwapchainDesc, SwapchainFullscreenDesc},
     sync::FenceFlags,
 };
@@ -215,6 +228,114 @@ impl Rect {
             top: self.top,
             right: self.right,
             bottom: self.bottom,
+        }
+    }
+}
+
+impl CpuDescriptorHandle {
+    pub(crate) fn as_raw(&self) -> D3D12_CPU_DESCRIPTOR_HANDLE {
+        D3D12_CPU_DESCRIPTOR_HANDLE { ptr: self.0 }
+    }
+}
+
+impl RenderTargetViewDesc {
+    pub(crate) fn as_raw(&self) -> D3D12_RENDER_TARGET_VIEW_DESC {
+        D3D12_RENDER_TARGET_VIEW_DESC {
+            Format: self.format.as_raw(),
+            ViewDimension: self.dimension.as_type_raw(),
+            Anonymous: self.dimension.as_raw(),
+        }
+    }
+}
+
+impl ViewDimension {
+    pub(crate) fn as_type_raw(&self) -> D3D12_RTV_DIMENSION {
+        match self {
+            ViewDimension::Buffer { .. } => D3D12_RTV_DIMENSION_BUFFER,
+            ViewDimension::Tex1D { .. } => D3D12_RTV_DIMENSION_TEXTURE1D,
+            ViewDimension::Tex2D { .. } => D3D12_RTV_DIMENSION_TEXTURE2D,
+            ViewDimension::Tex3D { .. } => D3D12_RTV_DIMENSION_TEXTURE3D,
+            ViewDimension::ArrayTex1D { .. } => D3D12_RTV_DIMENSION_TEXTURE1DARRAY,
+            ViewDimension::ArrayTex2D { .. } => D3D12_RTV_DIMENSION_TEXTURE2DARRAY,
+            ViewDimension::Tex2DMs => D3D12_RTV_DIMENSION_TEXTURE2DMS,
+            ViewDimension::Array2DMs { .. } => D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY,
+        }
+    }
+
+    pub(crate) fn as_raw(&self) -> D3D12_RENDER_TARGET_VIEW_DESC_0 {
+        match self {
+            ViewDimension::Buffer {
+                first_element,
+                num_elements,
+            } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Buffer: D3D12_BUFFER_RTV {
+                    FirstElement: *first_element,
+                    NumElements: *num_elements,
+                },
+            },
+            ViewDimension::Tex1D { mip_slice } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture1D: D3D12_TEX1D_RTV {
+                    MipSlice: *mip_slice,
+                },
+            },
+            ViewDimension::Tex2D {
+                mip_slice,
+                plane_slice,
+            } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture2D: D3D12_TEX2D_RTV {
+                    MipSlice: *mip_slice,
+                    PlaneSlice: *plane_slice,
+                },
+            },
+            ViewDimension::Tex3D {
+                mip_slice,
+                first_w_slice,
+                w_size,
+            } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture3D: D3D12_TEX3D_RTV {
+                    MipSlice: *mip_slice,
+                    FirstWSlice: *first_w_slice,
+                    WSize: *w_size,
+                },
+            },
+            ViewDimension::ArrayTex1D {
+                mip_slice,
+                first_array_slice,
+                array_size,
+            } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture1DArray: D3D12_TEX1D_ARRAY_RTV {
+                    MipSlice: *mip_slice,
+                    FirstArraySlice: *first_array_slice,
+                    ArraySize: *array_size,
+                },
+            },
+            ViewDimension::ArrayTex2D {
+                mip_slice,
+                plane_slice,
+                first_array_slice,
+                array_size,
+            } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture2DArray: D3D12_TEX2D_ARRAY_RTV {
+                    MipSlice: *mip_slice,
+                    PlaneSlice: *plane_slice,
+                    FirstArraySlice: *first_array_slice,
+                    ArraySize: *array_size,
+                },
+            },
+            ViewDimension::Tex2DMs => D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture2DMS: D3D12_TEX2DMS_RTV {
+                    UnusedField_NothingToDefine: 0,
+                },
+            },
+            ViewDimension::Array2DMs {
+                first_array_slice,
+                array_size,
+            } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture2DMSArray: D3D12_TEX2DMS_ARRAY_RTV {
+                    FirstArraySlice: *first_array_slice,
+                    ArraySize: *array_size,
+                },
+            },
         }
     }
 }

@@ -44,4 +44,10 @@ bitflags::bitflags! {
 }
 
 #[derive(Clone, Debug)]
-pub struct CpuDescriptorHandle(pub(crate) usize);
+pub struct CpuDescriptorHandle(pub usize);
+
+impl CpuDescriptorHandle {
+    pub fn offset(&self, offset: usize) -> Self {
+        Self(self.0 + offset)
+    }
+}

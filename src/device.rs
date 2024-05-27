@@ -5,9 +5,10 @@ use crate::{
     command_queue::{CommandQueueDesc, CommandQueueInterface},
     create_type,
     error::DxError,
-    heap::{DescriptorHeapDesc, DescriptorHeapInterface, DescriptorHeapType},
+    heap::{CpuDescriptorHandle, DescriptorHeapDesc, DescriptorHeapInterface, DescriptorHeapType},
     impl_trait,
     misc::CommandListType,
+    resources::{RenderTargetViewDesc, ResourceInterface},
     sync::{FenceFlags, FenceInterface},
     HasInterface,
 };
@@ -35,6 +36,13 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     ) -> Result<H, DxError>;
 
     fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32;
+
+    fn create_render_target_view(
+        &self,
+        resource: &impl ResourceInterface,
+        view_desc: Option<&RenderTargetViewDesc>,
+        handle: CpuDescriptorHandle,
+    );
 }
 
 create_type! { Device wrap ID3D12Device }
@@ -88,6 +96,15 @@ impl_trait! {
     fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32 {
         unsafe {
             self.0.GetDescriptorHandleIncrementSize(r#type.as_raw())
+        }
+    }
+
+    fn create_render_target_view(&self, resource: &impl ResourceInterface, view_desc: Option<&RenderTargetViewDesc>, handle: CpuDescriptorHandle) {
+        let desc = view_desc.map(|v| v.as_raw());
+        let desc = desc.as_ref().map(|f| f as *const _);
+
+        unsafe {
+            self.0.CreateRenderTargetView(resource.as_raw_ref(), desc, handle.as_raw());
         }
     }
 }

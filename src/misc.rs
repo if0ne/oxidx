@@ -1,6 +1,7 @@
 use windows::Win32::Graphics::{
     Direct3D12::{
-        D3D12_COMMAND_LIST_TYPE_COMPUTE, D3D12_COMMAND_LIST_TYPE_COPY, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_MAX_DEPTH, D3D12_MIN_DEPTH
+        D3D12_COMMAND_LIST_TYPE_COMPUTE, D3D12_COMMAND_LIST_TYPE_COPY,
+        D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_MAX_DEPTH, D3D12_MIN_DEPTH,
     },
     Dxgi::{
         Common::{
@@ -125,7 +126,10 @@ pub struct Viewport {
 
 impl Viewport {
     #[inline]
-    pub fn from_position_and_size(position: impl Into<(f32, f32)>, size: impl Into<(f32, f32)>) -> Self {
+    pub fn from_position_and_size(
+        position: impl Into<(f32, f32)>,
+        size: impl Into<(f32, f32)>,
+    ) -> Self {
         let (width, height) = size.into();
         let (x, y) = position.into();
 
