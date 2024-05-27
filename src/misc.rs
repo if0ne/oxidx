@@ -1,7 +1,6 @@
 use windows::Win32::Graphics::{
     Direct3D12::{
-        D3D12_COMMAND_LIST_TYPE_COMPUTE, D3D12_COMMAND_LIST_TYPE_COPY,
-        D3D12_COMMAND_LIST_TYPE_DIRECT,
+        D3D12_COMMAND_LIST_TYPE_COMPUTE, D3D12_COMMAND_LIST_TYPE_COPY, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_MAX_DEPTH, D3D12_MIN_DEPTH
     },
     Dxgi::{
         Common::{
@@ -21,6 +20,9 @@ use windows::Win32::Graphics::{
         DXGI_USAGE_UNORDERED_ACCESS,
     },
 };
+
+pub const MIN_DEPTH: f32 = D3D12_MIN_DEPTH;
+pub const MAX_DEPTH: f32 = D3D12_MAX_DEPTH;
 
 #[derive(Debug, Clone, Copy)]
 #[repr(i32)]
@@ -109,4 +111,58 @@ pub enum CommandListType {
     Direct = D3D12_COMMAND_LIST_TYPE_DIRECT.0,
     Copy = D3D12_COMMAND_LIST_TYPE_COPY.0,
     Compute = D3D12_COMMAND_LIST_TYPE_COMPUTE.0,
+}
+
+#[derive(Debug, Clone)]
+pub struct Viewport {
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+    pub min_depth: f32,
+    pub max_depth: f32,
+}
+
+impl Viewport {
+    #[inline]
+    pub fn from_position_and_size(position: impl Into<(f32, f32)>, size: impl Into<(f32, f32)>) -> Self {
+        let (width, height) = size.into();
+        let (x, y) = position.into();
+
+        Self {
+            x,
+            y,
+            width,
+            height,
+            min_depth: MIN_DEPTH,
+            max_depth: MAX_DEPTH,
+        }
+    }
+
+    #[inline]
+    pub fn from_size(size: impl Into<(f32, f32)>) -> Self {
+        Self::from_position_and_size((0.0, 0.0), size)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Rect {
+    pub left: i32,
+    pub top: i32,
+    pub right: i32,
+    pub bottom: i32,
+}
+
+impl Rect {
+    #[inline]
+    pub fn from_size(size: impl Into<(i32, i32)>) -> Self {
+        let (width, height) = size.into();
+
+        Self {
+            left: 0,
+            top: 0,
+            right: width,
+            bottom: height,
+        }
+    }
 }

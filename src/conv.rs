@@ -1,11 +1,11 @@
 use compact_str::CompactString;
-use windows::Win32::Graphics::{
+use windows::Win32::{Foundation::RECT, Graphics::{
     Direct3D::D3D_FEATURE_LEVEL,
     Direct3D12::{
         D3D12_COMMAND_LIST_TYPE, D3D12_COMMAND_QUEUE_DESC, D3D12_COMMAND_QUEUE_FLAGS,
         D3D12_DESCRIPTOR_HEAP_DESC, D3D12_DESCRIPTOR_HEAP_FLAGS, D3D12_DESCRIPTOR_HEAP_TYPE,
         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
-        D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_FENCE_FLAGS,
+        D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_FENCE_FLAGS, D3D12_VIEWPORT,
     },
     Dxgi::{
         Common::{
@@ -15,7 +15,7 @@ use windows::Win32::Graphics::{
         DXGI_ADAPTER_DESC1, DXGI_SCALING, DXGI_SWAP_CHAIN_DESC1, DXGI_SWAP_CHAIN_FULLSCREEN_DESC,
         DXGI_SWAP_EFFECT, DXGI_USAGE,
     },
-};
+}};
 
 use crate::{
     adapter::{AdapterDesc, AdapterFlags, Luid},
@@ -23,8 +23,7 @@ use crate::{
     factory::FeatureLevel,
     heap::{DescriptorHeapDesc, DescriptorHeapFlags, DescriptorHeapType},
     misc::{
-        AlphaMode, CommandListType, Format, FrameBufferUsage, Scaling, ScalingMode,
-        ScanlineOrdering, SwapEffect,
+        AlphaMode, CommandListType, Format, FrameBufferUsage, Rect, Scaling, ScalingMode, ScanlineOrdering, SwapEffect, Viewport
     },
     swapchain::{Rational, SampleDesc, SwapchainDesc, SwapchainFullscreenDesc},
     sync::FenceFlags,
@@ -192,6 +191,30 @@ impl From<DXGI_ADAPTER_DESC1> for AdapterDesc {
                 high_part: value.AdapterLuid.HighPart,
             },
             flags: AdapterFlags::from_bits(value.Flags).unwrap_or(AdapterFlags::None),
+        }
+    }
+}
+
+impl Viewport {
+    pub(crate) fn as_raw(&self) -> D3D12_VIEWPORT {
+        D3D12_VIEWPORT {
+            TopLeftX: self.x,
+            TopLeftY: self.y,
+            Width: self.width,
+            Height: self.height,
+            MinDepth: self.min_depth,
+            MaxDepth: self.max_depth,
+        }
+    }
+}
+
+impl Rect {
+    pub(crate) fn as_raw(&self) -> RECT {
+        RECT {
+            left: self.left,
+            top: self.top,
+            right: self.right,
+            bottom: self.bottom,
         }
     }
 }
