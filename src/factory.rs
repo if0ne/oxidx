@@ -9,7 +9,8 @@ use windows::Win32::Graphics::Direct3D::{
 use windows::Win32::Graphics::Direct3D12::{D3D12CreateDevice, D3D12GetDebugInterface};
 use windows::Win32::Graphics::Dxgi::{
     CreateDXGIFactory2, IDXGIAdapter, IDXGIAdapter3, IDXGIFactory4, IDXGIFactory6, IDXGIFactory7,
-    DXGI_CREATE_FACTORY_DEBUG,
+    DXGI_CREATE_FACTORY_DEBUG, DXGI_MWA_NO_ALT_ENTER, DXGI_MWA_NO_PRINT_SCREEN,
+    DXGI_MWA_NO_WINDOW_CHANGES,
 };
 
 use crate::adapter::AdapterInterface3;
@@ -44,6 +45,12 @@ pub trait FactoryInterface4: HasInterface<Raw: Interface> {
     where
         CQ: CommandQueueInterface,
         O: OutputInterface;
+
+    fn make_window_association(
+        &self,
+        hwnd: NonZeroIsize,
+        flags: WindowAssociationFlags,
+    ) -> Result<(), DxError>;
 }
 
 create_type! { Factory4 wrap IDXGIFactory4 }
@@ -143,6 +150,14 @@ impl_trait! {
 
         Ok(Swapchain1::new(swapchain))
     }
+
+    fn make_window_association(&self, hwnd: NonZeroIsize, flags: WindowAssociationFlags) -> Result<(), DxError> {
+        unsafe {
+            self.0.MakeWindowAssociation(HWND(hwnd.get()), flags.bits()).map_err(|_| DxError::Dummy)?;
+        }
+
+        Ok(())
+    }
 }
 
 bitflags::bitflags! {
@@ -197,6 +212,15 @@ impl Entry {
         let inner = inner.unwrap();
 
         Ok(D::new(inner))
+    }
+}
+
+bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct WindowAssociationFlags: u32 {
+        const NoWindowChanges = DXGI_MWA_NO_WINDOW_CHANGES;
+        const NoAltEnter = DXGI_MWA_NO_ALT_ENTER;
+        const NoPrintScreen = DXGI_MWA_NO_PRINT_SCREEN;
     }
 }
 
