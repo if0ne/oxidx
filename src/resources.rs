@@ -25,7 +25,7 @@ impl_trait! {
             Begin: r.start,
             End: r.end,
         });
-    
+
         unsafe {
             self.0
                 .Map(
@@ -35,16 +35,16 @@ impl_trait! {
                 )
                 .map_err(|_| DxError::Dummy)?;
         }
-    
+
         Ok(ptr as *mut ())
     }
-    
+
     fn unmap(&self, subresource: u32, written_range: Option<Range<usize>>) {
         let range = written_range.map(|r| D3D12_RANGE {
             Begin: r.start,
             End: r.end,
         });
-    
+
         unsafe {
             self.0
                 .Unmap(subresource, range.as_ref().map(|r| r as *const _));

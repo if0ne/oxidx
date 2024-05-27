@@ -193,11 +193,9 @@ impl Entry {
     pub fn create_debug<D: DebugInterface>(&self) -> Result<D, DxError> {
         let mut inner: Option<D::Raw> = None;
 
-        unsafe {
-            D3D12GetDebugInterface(&mut inner).map_err(|_| DxError::Dummy)?
-        };
+        unsafe { D3D12GetDebugInterface(&mut inner).map_err(|_| DxError::Dummy)? };
         let inner = inner.unwrap();
-        
+
         Ok(D::new(inner))
     }
 }

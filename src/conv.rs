@@ -1,3 +1,4 @@
+use compact_str::CompactString;
 use windows::Win32::Graphics::{
     Direct3D::D3D_FEATURE_LEVEL,
     Direct3D12::{
@@ -9,12 +10,13 @@ use windows::Win32::Graphics::{
             DXGI_ALPHA_MODE, DXGI_FORMAT, DXGI_MODE_SCALING, DXGI_MODE_SCANLINE_ORDER,
             DXGI_RATIONAL, DXGI_SAMPLE_DESC,
         },
-        DXGI_SCALING, DXGI_SWAP_CHAIN_DESC1, DXGI_SWAP_CHAIN_FULLSCREEN_DESC, DXGI_SWAP_EFFECT,
-        DXGI_USAGE,
+        DXGI_ADAPTER_DESC1, DXGI_SCALING, DXGI_SWAP_CHAIN_DESC1, DXGI_SWAP_CHAIN_FULLSCREEN_DESC,
+        DXGI_SWAP_EFFECT, DXGI_USAGE,
     },
 };
 
 use crate::{
+    adapter::{AdapterDesc, AdapterFlags, Luid},
     command_queue::CommandQueueDesc,
     factory::FeatureLevel,
     misc::{
@@ -139,6 +141,26 @@ impl CommandQueueDesc {
             Priority: self.priority,
             Flags: D3D12_COMMAND_QUEUE_FLAGS(self.flags.bits()),
             NodeMask: self.node_mask,
+        }
+    }
+}
+
+impl From<DXGI_ADAPTER_DESC1> for AdapterDesc {
+    fn from(value: DXGI_ADAPTER_DESC1) -> Self {
+        AdapterDesc {
+            description: CompactString::from_utf16_lossy(value.Description),
+            vendor_id: value.VendorId,
+            device_id: value.DeviceId,
+            sub_sys_id: value.SubSysId,
+            revision: value.Revision,
+            dedicated_video_memory: value.DedicatedVideoMemory,
+            dedicated_system_memory: value.SharedSystemMemory,
+            shared_system_memory: value.SharedSystemMemory,
+            adapter_luid: Luid {
+                low_part: value.AdapterLuid.LowPart,
+                high_part: value.AdapterLuid.HighPart,
+            },
+            flags: AdapterFlags::from_bits(value.Flags).unwrap_or(AdapterFlags::None),
         }
     }
 }

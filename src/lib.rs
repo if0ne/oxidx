@@ -5,6 +5,7 @@ pub mod adapter;
 pub mod command_allocator;
 pub mod command_list;
 pub mod command_queue;
+pub mod debug;
 pub mod device;
 pub mod error;
 pub mod factory;
@@ -12,7 +13,6 @@ pub mod misc;
 pub mod resources;
 pub mod swapchain;
 pub mod sync;
-pub mod debug;
 
 mod conv;
 mod utils;
