@@ -5,6 +5,7 @@ use crate::{
     command_queue::{CommandQueueDesc, CommandQueueInterface},
     create_type,
     error::DxError,
+    heap::{DescriptorHeapDesc, DescriptorHeapInterface},
     impl_trait,
     misc::CommandListType,
     sync::{FenceFlags, FenceInterface},
@@ -27,6 +28,11 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         initial_value: u64,
         flags: FenceFlags,
     ) -> Result<F, DxError>;
+
+    fn create_descriptor_heap<H: DescriptorHeapInterface>(
+        &self,
+        desc: DescriptorHeapDesc,
+    ) -> Result<H, DxError>;
 }
 
 create_type! { Device wrap ID3D12Device }
@@ -64,5 +70,16 @@ impl_trait! {
         };
 
         Ok(F::new(res))
+    }
+
+    fn create_descriptor_heap<H: DescriptorHeapInterface>(
+        &self,
+        desc: DescriptorHeapDesc,
+    ) -> Result<H, DxError> {
+        let res: H::Raw  = unsafe {
+            self.0.CreateDescriptorHeap(&desc.as_raw()).map_err(|_| DxError::Dummy)?
+        };
+
+        Ok(H::new(res))
     }
 }

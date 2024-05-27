@@ -9,6 +9,7 @@ pub mod debug;
 pub mod device;
 pub mod error;
 pub mod factory;
+pub mod heap;
 pub mod misc;
 pub mod resources;
 pub mod swapchain;
