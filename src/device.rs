@@ -5,7 +5,7 @@ use crate::{
     command_queue::{CommandQueueDesc, CommandQueueInterface},
     create_type,
     error::DxError,
-    heap::{DescriptorHeapDesc, DescriptorHeapInterface},
+    heap::{DescriptorHeapDesc, DescriptorHeapInterface, DescriptorHeapType},
     impl_trait,
     misc::CommandListType,
     sync::{FenceFlags, FenceInterface},
@@ -33,6 +33,8 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         &self,
         desc: DescriptorHeapDesc,
     ) -> Result<H, DxError>;
+
+    fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32;
 }
 
 create_type! { Device wrap ID3D12Device }
@@ -81,5 +83,11 @@ impl_trait! {
         };
 
         Ok(H::new(res))
+    }
+
+    fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32 {
+        unsafe {
+            self.0.GetDescriptorHandleIncrementSize(r#type.as_raw())
+        }
     }
 }

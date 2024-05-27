@@ -2,13 +2,21 @@ use windows::{core::Interface, Win32::Graphics::Direct3D12::ID3D12DescriptorHeap
 
 use crate::{create_type, impl_trait, HasInterface};
 
-pub trait DescriptorHeapInterface: HasInterface<Raw: Interface> {}
+pub trait DescriptorHeapInterface: HasInterface<Raw: Interface> {
+    fn get_cpu_descriptor_handle_for_heap_start(&self) -> CpuDescriptorHandle;
+}
 
 create_type! { DescriptorHeap wrap ID3D12DescriptorHeap }
 
 impl_trait! {
     impl DescriptorHeapInterface =>
     DescriptorHeap;
+
+    fn get_cpu_descriptor_handle_for_heap_start(&self) -> CpuDescriptorHandle {
+        unsafe {
+            CpuDescriptorHandle(self.0.GetCPUDescriptorHandleForHeapStart().ptr)
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -34,3 +42,6 @@ bitflags::bitflags! {
         const ShaderVisible = 1;
     }
 }
+
+#[derive(Clone, Debug)]
+pub struct CpuDescriptorHandle(pub(crate) usize);
