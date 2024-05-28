@@ -1,19 +1,21 @@
 #![allow(private_bounds)]
 #![allow(dead_code)]
 
-pub mod adapter;
-pub mod command_allocator;
-pub mod command_list;
-pub mod command_queue;
-pub mod debug;
-pub mod device;
-pub mod error;
-pub mod factory;
-pub mod heap;
-pub mod misc;
-pub mod resources;
-pub mod swapchain;
-pub mod sync;
+pub mod prelude;
+
+mod adapter;
+mod command_allocator;
+mod command_list;
+mod command_queue;
+mod debug;
+mod device;
+mod error;
+mod factory;
+mod heap;
+mod misc;
+mod resources;
+mod swapchain;
+mod sync;
 
 mod conv;
 mod utils;
