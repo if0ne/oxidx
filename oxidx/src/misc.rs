@@ -25,14 +25,16 @@ use windows::Win32::Graphics::{
 pub const MIN_DEPTH: f32 = D3D12_MIN_DEPTH;
 pub const MAX_DEPTH: f32 = D3D12_MAX_DEPTH;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy)]
 #[repr(i32)]
 pub enum Format {
+    #[default]
+    Less = 0,
     Bgra8Unorm = DXGI_FORMAT_B8G8R8A8_UNORM.0,
 }
 
 bitflags::bitflags! {
-    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct FrameBufferUsage: u32 {
         const BackBuffer = DXGI_USAGE_BACK_BUFFER.0;
         const ReadOnly = DXGI_USAGE_READ_ONLY.0;
@@ -106,9 +108,10 @@ bitflags::bitflags! {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy)]
 #[repr(i32)]
 pub enum CommandListType {
+    #[default]
     Direct = D3D12_COMMAND_LIST_TYPE_DIRECT.0,
     Copy = D3D12_COMMAND_LIST_TYPE_COPY.0,
     Compute = D3D12_COMMAND_LIST_TYPE_COMPUTE.0,

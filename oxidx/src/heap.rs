@@ -1,4 +1,10 @@
-use windows::{core::Interface, Win32::Graphics::Direct3D12::ID3D12DescriptorHeap};
+use windows::{
+    core::Interface,
+    Win32::Graphics::Direct3D12::{
+        ID3D12DescriptorHeap, D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+        D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+    },
+};
 
 use crate::{create_type, impl_trait, HasInterface};
 
@@ -19,7 +25,7 @@ impl_trait! {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct DescriptorHeapDesc {
     pub r#type: DescriptorHeapType,
     pub num: u32,
@@ -27,8 +33,9 @@ pub struct DescriptorHeapDesc {
     pub node_mask: u32,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub enum DescriptorHeapType {
+    #[default]
     Rtv,
     Dsv,
     CbvSrvUav,
@@ -36,10 +43,10 @@ pub enum DescriptorHeapType {
 }
 
 bitflags::bitflags! {
-    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct DescriptorHeapFlags: i32 {
-        const None = 0;
-        const ShaderVisible = 1;
+        const None = D3D12_DESCRIPTOR_HEAP_FLAG_NONE.0;
+        const ShaderVisible = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE.0;
     }
 }
 

@@ -19,6 +19,11 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         r#type: CommandListType,
     ) -> Result<CA, DxError>;
 
+    /*fn create_graphics_command_list(
+        &self,
+        desc: CommandQueueDesc,
+    ) -> Result<GraphicsCommandList, DxError>;*/
+
     fn create_command_queue<CQ: CommandQueueInterface>(
         &self,
         desc: CommandQueueDesc,

@@ -75,7 +75,7 @@ impl_trait! {
 }
 
 bitflags::bitflags! {
-    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct SwapchainFlags: i32 {
         const NonPrerotated = DXGI_SWAP_CHAIN_FLAG_NONPREROTATED.0;
         const AllowModeSwitch = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH.0;
@@ -93,7 +93,7 @@ bitflags::bitflags! {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct SampleDesc {
     pub count: u32,
     pub quality: u32,
@@ -105,7 +105,7 @@ pub struct Rational {
     pub denominator: u32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct SwapchainDesc {
     pub width: u32,
     pub height: u32,
