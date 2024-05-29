@@ -115,12 +115,10 @@ struct Resources {
     viewport: Viewport,
     scissor_rect: Rect,
     command_allocator: CommandAllocator,
-    //root_signature: ID3D12RootSignature,
-    //pso: ID3D12PipelineState,
+    root_signature: RootSignature,
+    pso: PipelineState,
     command_list: GraphicsCommandList,
 
-    // we need to keep this around to keep the reference alive, even though
-    // nothing reads from it
     #[allow(dead_code)]
     vertex_buffer: Resource,
 
@@ -213,8 +211,8 @@ impl DXSample for Sample {
             .create_command_allocator(CommandListType::Direct)
             .unwrap();
 
-        let root_signature = create_root_signature(&self.device).unwrap();
-        let pso = create_pipeline_state(&self.device, &root_signature).unwrap();
+        let root_signature = create_root_signature(&self.device);
+        let pso = create_pipeline_state(&self.device, &root_signature);
 
         let command_list: GraphicsCommandList = self
             .device
@@ -243,8 +241,8 @@ impl DXSample for Sample {
             viewport,
             scissor_rect,
             command_allocator,
-            //root_signature,
-            //pso,
+            root_signature,
+            pso,
             command_list,
             vertex_buffer,
             //vbv,
@@ -381,8 +379,6 @@ fn get_hardware_adapter(factory: &Factory4) -> Adapter3 {
             continue;
         }
 
-        // Check to see whether the adapter supports Direct3D 12, but don't
-        // create the actual device yet.
         if entry
             .create_device::<_, Device>(&adapter, FeatureLevel::Level11)
             .is_ok()
@@ -394,34 +390,18 @@ fn get_hardware_adapter(factory: &Factory4) -> Adapter3 {
     unreachable!()
 }
 
-fn create_root_signature(device: &ID3D12Device) -> Result<ID3D12RootSignature> {
-    let desc = D3D12_ROOT_SIGNATURE_DESC {
-        Flags: D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT,
+fn create_root_signature(device: &Device) -> RootSignature {
+    let desc = RootSignatureDesc {
+        flags: RootSignatureFlags::AllowInputAssemblerInputLayout,
         ..Default::default()
     };
 
-    let mut signature = None;
-
-    let signature = unsafe {
-        D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &mut signature, None)
-    }
-    .map(|()| signature.unwrap())?;
-
-    unsafe {
-        device.CreateRootSignature(
-            0,
-            std::slice::from_raw_parts(
-                signature.GetBufferPointer() as _,
-                signature.GetBufferSize(),
-            ),
-        )
-    }
+    device
+        .create_root_signature(&desc, RootSignatureVersion::V1_0, 0)
+        .unwrap()
 }
 
-fn create_pipeline_state(
-    device: &Device,
-    root_signature: &ID3D12RootSignature,
-) -> Result<ID3D12PipelineState> {
+fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> PipelineState {
     let compile_flags = if cfg!(debug_assertions) {
         D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION
     } else {
@@ -549,7 +529,7 @@ fn create_pipeline_state(
 fn create_vertex_buffer(
     device: &Device,
     aspect_ratio: f32,
-) -> Result<(Resource, D3D12_VERTEX_BUFFER_VIEW)> {
+) -> (Resource, D3D12_VERTEX_BUFFER_VIEW) {
     let vertices = [
         Vertex {
             position: [0.0, 0.25 * aspect_ratio, 0.0],
@@ -606,7 +586,7 @@ fn create_vertex_buffer(
         SizeInBytes: std::mem::size_of_val(&vertices) as u32,
     };
 
-    Ok((vertex_buffer, vbv))
+    (vertex_buffer, vbv)
 }
 
 #[repr(C)]

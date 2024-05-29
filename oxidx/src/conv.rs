@@ -9,13 +9,19 @@ use windows::Win32::{
             D3D12_DESCRIPTOR_HEAP_FLAGS, D3D12_DESCRIPTOR_HEAP_TYPE,
             D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
             D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_FENCE_FLAGS,
-            D3D12_RENDER_TARGET_VIEW_DESC, D3D12_RENDER_TARGET_VIEW_DESC_0, D3D12_RTV_DIMENSION,
+            D3D12_RENDER_TARGET_VIEW_DESC, D3D12_RENDER_TARGET_VIEW_DESC_0, D3D12_ROOT_CONSTANTS,
+            D3D12_ROOT_DESCRIPTOR, D3D12_ROOT_DESCRIPTOR_TABLE, D3D12_ROOT_PARAMETER,
+            D3D12_ROOT_PARAMETER_0, D3D12_ROOT_PARAMETER_TYPE,
+            D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS, D3D12_ROOT_PARAMETER_TYPE_CBV,
+            D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, D3D12_ROOT_PARAMETER_TYPE_SRV,
+            D3D12_ROOT_PARAMETER_TYPE_UAV, D3D12_ROOT_SIGNATURE_FLAGS, D3D12_RTV_DIMENSION,
             D3D12_RTV_DIMENSION_BUFFER, D3D12_RTV_DIMENSION_TEXTURE1D,
             D3D12_RTV_DIMENSION_TEXTURE1DARRAY, D3D12_RTV_DIMENSION_TEXTURE2D,
             D3D12_RTV_DIMENSION_TEXTURE2DARRAY, D3D12_RTV_DIMENSION_TEXTURE2DMS,
             D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY, D3D12_RTV_DIMENSION_TEXTURE3D,
-            D3D12_TEX1D_ARRAY_RTV, D3D12_TEX1D_RTV, D3D12_TEX2DMS_ARRAY_RTV, D3D12_TEX2DMS_RTV,
-            D3D12_TEX2D_ARRAY_RTV, D3D12_TEX2D_RTV, D3D12_TEX3D_RTV, D3D12_VIEWPORT,
+            D3D12_SHADER_VISIBILITY, D3D12_STATIC_SAMPLER_DESC, D3D12_TEX1D_ARRAY_RTV,
+            D3D12_TEX1D_RTV, D3D12_TEX2DMS_ARRAY_RTV, D3D12_TEX2DMS_RTV, D3D12_TEX2D_ARRAY_RTV,
+            D3D12_TEX2D_RTV, D3D12_TEX3D_RTV, D3D12_VIEWPORT, D3D_ROOT_SIGNATURE_VERSION,
         },
         Dxgi::{
             Common::{
@@ -36,6 +42,10 @@ use crate::{
     misc::{
         AlphaMode, CommandListType, Format, FrameBufferUsage, Rect, Scaling, ScalingMode,
         ScanlineOrdering, SwapEffect, Viewport,
+    },
+    pso::{
+        RootParameter, RootParameterType, RootSignatureFlags, RootSignatureVersion,
+        ShaderVisibility, StaticSamplerDesc,
     },
     resources::{RenderTargetViewDesc, ViewDimension},
     swapchain::{Rational, SampleDesc, SwapchainDesc, SwapchainFullscreenDesc},
@@ -334,6 +344,101 @@ impl ViewDimension {
                 Texture2DMSArray: D3D12_TEX2DMS_ARRAY_RTV {
                     FirstArraySlice: *first_array_slice,
                     ArraySize: *array_size,
+                },
+            },
+        }
+    }
+}
+
+impl RootSignatureVersion {
+    pub(crate) fn as_raw(&self) -> D3D_ROOT_SIGNATURE_VERSION {
+        D3D_ROOT_SIGNATURE_VERSION(*self as i32)
+    }
+}
+
+impl RootSignatureFlags {
+    pub(crate) fn as_raw(&self) -> D3D12_ROOT_SIGNATURE_FLAGS {
+        D3D12_ROOT_SIGNATURE_FLAGS(self.bits())
+    }
+}
+
+impl StaticSamplerDesc {
+    pub(crate) fn as_raw(&self) -> D3D12_STATIC_SAMPLER_DESC {
+        todo!()
+    }
+}
+
+impl<'a> RootParameter<'a> {
+    pub(crate) fn as_raw(&self) -> D3D12_ROOT_PARAMETER {
+        D3D12_ROOT_PARAMETER {
+            ParameterType: self.r#type.as_type_raw(),
+            Anonymous: self.r#type.as_raw(),
+            ShaderVisibility: self.visibility.as_raw(),
+        }
+    }
+}
+
+impl ShaderVisibility {
+    pub(crate) fn as_raw(&self) -> D3D12_SHADER_VISIBILITY {
+        D3D12_SHADER_VISIBILITY(*self as i32)
+    }
+}
+
+impl<'a> RootParameterType<'a> {
+    pub(crate) fn as_type_raw(&self) -> D3D12_ROOT_PARAMETER_TYPE {
+        match self {
+            RootParameterType::DescriptorTable { .. } => D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+            RootParameterType::Constants { .. } => D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
+            RootParameterType::Cbv { .. } => D3D12_ROOT_PARAMETER_TYPE_CBV,
+            RootParameterType::Srv { .. } => D3D12_ROOT_PARAMETER_TYPE_SRV,
+            RootParameterType::Uav { .. } => D3D12_ROOT_PARAMETER_TYPE_UAV,
+        }
+    }
+
+    pub(crate) fn as_raw(&self) -> D3D12_ROOT_PARAMETER_0 {
+        match self {
+            RootParameterType::Cbv {
+                shader_register,
+                register_space,
+            } => D3D12_ROOT_PARAMETER_0 {
+                Descriptor: D3D12_ROOT_DESCRIPTOR {
+                    ShaderRegister: *shader_register,
+                    RegisterSpace: *register_space,
+                },
+            },
+            RootParameterType::Srv {
+                shader_register,
+                register_space,
+            } => D3D12_ROOT_PARAMETER_0 {
+                Descriptor: D3D12_ROOT_DESCRIPTOR {
+                    ShaderRegister: *shader_register,
+                    RegisterSpace: *register_space,
+                },
+            },
+            RootParameterType::Uav {
+                shader_register,
+                register_space,
+            } => D3D12_ROOT_PARAMETER_0 {
+                Descriptor: D3D12_ROOT_DESCRIPTOR {
+                    ShaderRegister: *shader_register,
+                    RegisterSpace: *register_space,
+                },
+            },
+            RootParameterType::DescriptorTable { ranges } => D3D12_ROOT_PARAMETER_0 {
+                DescriptorTable: D3D12_ROOT_DESCRIPTOR_TABLE {
+                    NumDescriptorRanges: ranges.len() as u32,
+                    pDescriptorRanges: ranges.as_ptr() as *const _,
+                },
+            },
+            RootParameterType::Constants {
+                shader_register,
+                register_space,
+                num_32bit_values,
+            } => D3D12_ROOT_PARAMETER_0 {
+                Constants: D3D12_ROOT_CONSTANTS {
+                    ShaderRegister: *shader_register,
+                    RegisterSpace: *register_space,
+                    Num32BitValues: *num_32bit_values,
                 },
             },
         }
