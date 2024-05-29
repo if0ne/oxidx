@@ -2,12 +2,14 @@ use windows::{core::Interface, Win32::Graphics::Direct3D12::ID3D12Device};
 
 use crate::{
     command_allocator::CommandAllocatorInterface,
+    command_list::CommandListInterface,
     command_queue::{CommandQueueDesc, CommandQueueInterface},
     create_type,
     error::DxError,
     heap::{CpuDescriptorHandle, DescriptorHeapDesc, DescriptorHeapInterface, DescriptorHeapType},
     impl_trait,
     misc::CommandListType,
+    pso::PipelineInterface,
     resources::{RenderTargetViewDesc, ResourceInterface},
     sync::{FenceFlags, FenceInterface},
     HasInterface,
@@ -19,10 +21,17 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         r#type: CommandListType,
     ) -> Result<CA, DxError>;
 
-    /*fn create_graphics_command_list(
+    fn create_command_list<
+        CL: CommandListInterface,
+        CA: CommandAllocatorInterface,
+        PSO: PipelineInterface,
+    >(
         &self,
-        desc: CommandQueueDesc,
-    ) -> Result<GraphicsCommandList, DxError>;*/
+        nodemask: u32,
+        r#type: CommandListType,
+        command_allocator: &CA,
+        pso: &PSO,
+    ) -> Result<CL, DxError>;
 
     fn create_command_queue<CQ: CommandQueueInterface>(
         &self,
@@ -111,5 +120,23 @@ impl_trait! {
         unsafe {
             self.0.CreateRenderTargetView(resource.as_raw_ref(), desc, handle.as_raw());
         }
+    }
+
+    fn create_command_list<
+        CL: CommandListInterface,
+        CA: CommandAllocatorInterface,
+        PSO: PipelineInterface,
+    >(
+        &self,
+        nodemask: u32,
+        r#type: CommandListType,
+        command_allocator: &CA,
+        pso: &PSO,
+    ) -> Result<CL, DxError> {
+        let res: CL::Raw = unsafe {
+            self.0.CreateCommandList(nodemask, r#type.as_raw(), command_allocator.as_raw_ref(), pso.as_raw_ref()).map_err(|_| DxError::Dummy)?
+        };
+
+        Ok(CL::new(res))
     }
 }

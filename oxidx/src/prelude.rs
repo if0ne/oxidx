@@ -8,6 +8,7 @@ pub use crate::error::*;
 pub use crate::factory::*;
 pub use crate::heap::*;
 pub use crate::misc::*;
+pub use crate::pso::*;
 pub use crate::resources::*;
 pub use crate::swapchain::*;
 pub use crate::sync::*;

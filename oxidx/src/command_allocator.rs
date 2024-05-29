@@ -1,8 +1,13 @@
-use windows::{core::Interface, Win32::Graphics::Direct3D12::ID3D12CommandAllocator};
+use windows::{
+    core::{Interface, Param},
+    Win32::Graphics::Direct3D12::ID3D12CommandAllocator,
+};
 
 use crate::{create_type, impl_trait, HasInterface};
 
-pub trait CommandAllocatorInterface: HasInterface<Raw: Interface> {
+pub trait CommandAllocatorInterface:
+    for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12CommandAllocator>>
+{
     fn reset(&self);
 }
 

@@ -13,6 +13,7 @@ mod error;
 mod factory;
 mod heap;
 mod misc;
+mod pso;
 mod resources;
 mod swapchain;
 mod sync;

@@ -213,20 +213,15 @@ impl DXSample for Sample {
             .create_command_allocator(CommandListType::Direct)
             .unwrap();
 
-        let root_signature = create_root_signature(&self.device)?;
-        let pso = create_pipeline_state(&self.device, &root_signature)?;
+        let root_signature = create_root_signature(&self.device).unwrap();
+        let pso = create_pipeline_state(&self.device, &root_signature).unwrap();
 
-        let command_list: GraphicsCommandList = unsafe {
-            self.device.CreateCommandList(
-                0,
-                D3D12_COMMAND_LIST_TYPE_DIRECT,
-                &command_allocator,
-                &pso,
-            )
-        }?;
-        unsafe {
-            command_list.Close()?;
-        };
+        let command_list: GraphicsCommandList = self
+            .device
+            .create_command_list(0, CommandListType::Direct, &command_allocator, &pso)
+            .unwrap();
+
+        command_list.close();
 
         let aspect_ratio = width as f32 / height as f32;
 
@@ -269,14 +264,18 @@ impl DXSample for Sample {
 
     fn render(&mut self) {
         if let Some(resources) = &mut self.resources {
-            populate_command_list(resources).unwrap();
+            populate_command_list(resources);
 
-            // Execute the command list.
-            let command_list = Some(resources.command_list.cast().unwrap());
-            unsafe { resources.command_queue.ExecuteCommandLists(&[command_list]) };
+            let command_list = &resources.command_list;
+            resources
+                .command_queue
+                .execute_command_lists([command_list].into_iter());
 
-            // Present the frame.
-            unsafe { resources.swap_chain.Present(1, 0) }.ok().unwrap();
+            resources
+                .swap_chain
+                .present(1, PresentFlags::empty())
+                .ok()
+                .unwrap();
 
             wait_for_previous_frame(resources);
         }
@@ -320,7 +319,7 @@ fn populate_command_list(resources: &Resources) {
         D3D12_RESOURCE_STATE_PRESENT,
     )]);
 
-    command_list.Close();
+    command_list.close();
 }
 
 fn transition_barrier(
