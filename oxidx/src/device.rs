@@ -10,8 +10,8 @@ use crate::{
     impl_trait,
     misc::CommandListType,
     pso::{
-        BlobInterface, PipelineStateInterface, RootSignatureDesc, RootSignatureInterface,
-        RootSignatureVersion,
+        BlobInterface, GraphicsPipelineDesc, PipelineStateInterface, RootSignatureDesc,
+        RootSignatureInterface, RootSignatureVersion,
     },
     resources::{RenderTargetViewDesc, ResourceInterface},
     sync::{FenceFlags, FenceInterface},
@@ -73,6 +73,11 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         version: RootSignatureVersion,
         nodemask: u32,
     ) -> Result<RS, DxError>;
+
+    fn create_graphics_pipeline<'a, const RTV_NUM: usize, G: PipelineStateInterface>(
+        &self,
+        desc: &GraphicsPipelineDesc<'a, RTV_NUM>,
+    ) -> Result<G, DxError>;
 }
 
 create_type! { Device wrap ID3D12Device }
@@ -182,5 +187,16 @@ impl_trait! {
                 blob.get_buffer_size(),
             ))
         }
+    }
+
+    fn create_graphics_pipeline<'a, const RTV_NUM: usize, G: PipelineStateInterface>(
+        &self,
+        desc: &GraphicsPipelineDesc<'a, RTV_NUM>,
+    ) -> Result<G, DxError> {
+        let res: G::Raw  = unsafe {
+            self.0.CreateGraphicsPipelineState(&desc.as_raw()).map_err(|_| DxError::Dummy)?
+        };
+
+        Ok(G::new(res))
     }
 }

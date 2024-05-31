@@ -416,7 +416,7 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
         Blob::compile_from_file(&shaders_hlsl_path, c"PSMain", c"ps_5_0", compile_flags, 0)
             .unwrap();
 
-    let mut input_element_descs: [InputElementDesc; 2] = [
+    let input_element_descs: [InputElementDesc; 2] = [
         InputElementDesc {
             semantic_name: c"POSITION",
             semantic_index: 0,
@@ -437,7 +437,7 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
         },
     ];
 
-    let mut desc = GraphicsPipelineDesc {
+    let desc = GraphicsPipelineDesc {
         root_signature,
         input_layout: &input_element_descs,
         vs: &vertex_shader,
@@ -481,7 +481,7 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
         flags: PipelineFlags::empty(),
     };
 
-    unsafe { device.CreateGraphicsPipelineState(&desc) }
+    device.create_graphics_pipeline(&desc).unwrap()
 }
 
 fn create_vertex_buffer(

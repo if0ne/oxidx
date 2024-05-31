@@ -1,3 +1,5 @@
+use std::{mem::ManuallyDrop, usize};
+
 use compact_str::CompactString;
 use windows::Win32::{
     Foundation::RECT,
@@ -9,19 +11,20 @@ use windows::Win32::{
             D3D12_DESCRIPTOR_HEAP_FLAGS, D3D12_DESCRIPTOR_HEAP_TYPE,
             D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
             D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_FENCE_FLAGS,
-            D3D12_RENDER_TARGET_VIEW_DESC, D3D12_RENDER_TARGET_VIEW_DESC_0, D3D12_ROOT_CONSTANTS,
-            D3D12_ROOT_DESCRIPTOR, D3D12_ROOT_DESCRIPTOR_TABLE, D3D12_ROOT_PARAMETER,
-            D3D12_ROOT_PARAMETER_0, D3D12_ROOT_PARAMETER_TYPE,
-            D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS, D3D12_ROOT_PARAMETER_TYPE_CBV,
-            D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, D3D12_ROOT_PARAMETER_TYPE_SRV,
-            D3D12_ROOT_PARAMETER_TYPE_UAV, D3D12_ROOT_SIGNATURE_FLAGS, D3D12_RTV_DIMENSION,
-            D3D12_RTV_DIMENSION_BUFFER, D3D12_RTV_DIMENSION_TEXTURE1D,
-            D3D12_RTV_DIMENSION_TEXTURE1DARRAY, D3D12_RTV_DIMENSION_TEXTURE2D,
-            D3D12_RTV_DIMENSION_TEXTURE2DARRAY, D3D12_RTV_DIMENSION_TEXTURE2DMS,
-            D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY, D3D12_RTV_DIMENSION_TEXTURE3D,
-            D3D12_SHADER_VISIBILITY, D3D12_STATIC_SAMPLER_DESC, D3D12_TEX1D_ARRAY_RTV,
-            D3D12_TEX1D_RTV, D3D12_TEX2DMS_ARRAY_RTV, D3D12_TEX2DMS_RTV, D3D12_TEX2D_ARRAY_RTV,
-            D3D12_TEX2D_RTV, D3D12_TEX3D_RTV, D3D12_VIEWPORT, D3D_ROOT_SIGNATURE_VERSION,
+            D3D12_GRAPHICS_PIPELINE_STATE_DESC, D3D12_RENDER_TARGET_VIEW_DESC,
+            D3D12_RENDER_TARGET_VIEW_DESC_0, D3D12_ROOT_CONSTANTS, D3D12_ROOT_DESCRIPTOR,
+            D3D12_ROOT_DESCRIPTOR_TABLE, D3D12_ROOT_PARAMETER, D3D12_ROOT_PARAMETER_0,
+            D3D12_ROOT_PARAMETER_TYPE, D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
+            D3D12_ROOT_PARAMETER_TYPE_CBV, D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+            D3D12_ROOT_PARAMETER_TYPE_SRV, D3D12_ROOT_PARAMETER_TYPE_UAV,
+            D3D12_ROOT_SIGNATURE_FLAGS, D3D12_RTV_DIMENSION, D3D12_RTV_DIMENSION_BUFFER,
+            D3D12_RTV_DIMENSION_TEXTURE1D, D3D12_RTV_DIMENSION_TEXTURE1DARRAY,
+            D3D12_RTV_DIMENSION_TEXTURE2D, D3D12_RTV_DIMENSION_TEXTURE2DARRAY,
+            D3D12_RTV_DIMENSION_TEXTURE2DMS, D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY,
+            D3D12_RTV_DIMENSION_TEXTURE3D, D3D12_SHADER_VISIBILITY, D3D12_STATIC_SAMPLER_DESC,
+            D3D12_TEX1D_ARRAY_RTV, D3D12_TEX1D_RTV, D3D12_TEX2DMS_ARRAY_RTV, D3D12_TEX2DMS_RTV,
+            D3D12_TEX2D_ARRAY_RTV, D3D12_TEX2D_RTV, D3D12_TEX3D_RTV, D3D12_VIEWPORT,
+            D3D_ROOT_SIGNATURE_VERSION,
         },
         Dxgi::{
             Common::{
@@ -44,12 +47,13 @@ use crate::{
         ScanlineOrdering, SwapEffect, Viewport,
     },
     pso::{
-        RootParameter, RootParameterType, RootSignatureFlags, RootSignatureVersion,
-        ShaderVisibility, StaticSamplerDesc,
+        GraphicsPipelineDesc, RootParameter, RootParameterType, RootSignatureFlags,
+        RootSignatureVersion, ShaderVisibility, StaticSamplerDesc,
     },
     resources::{RenderTargetViewDesc, ViewDimension},
     swapchain::{Rational, SampleDesc, SwapchainDesc, SwapchainFullscreenDesc},
     sync::FenceFlags,
+    HasInterface,
 };
 
 impl SwapchainDesc {
@@ -441,6 +445,34 @@ impl<'a> RootParameterType<'a> {
                     Num32BitValues: *num_32bit_values,
                 },
             },
+        }
+    }
+}
+
+impl<'a, const RTV_NUM: usize> GraphicsPipelineDesc<'a, RTV_NUM> {
+    pub(crate) fn as_raw(&self) -> D3D12_GRAPHICS_PIPELINE_STATE_DESC {
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC {
+            pRootSignature: ManuallyDrop::new(Some(self.root_signature.as_raw().clone())),
+            VS: todo!(),
+            PS: todo!(),
+            DS: todo!(),
+            HS: todo!(),
+            GS: todo!(),
+            StreamOutput: todo!(),
+            BlendState: todo!(),
+            SampleMask: todo!(),
+            RasterizerState: todo!(),
+            DepthStencilState: todo!(),
+            InputLayout: todo!(),
+            IBStripCutValue: todo!(),
+            PrimitiveTopologyType: todo!(),
+            NumRenderTargets: todo!(),
+            RTVFormats: todo!(),
+            DSVFormat: todo!(),
+            SampleDesc: todo!(),
+            NodeMask: todo!(),
+            CachedPSO: todo!(),
+            Flags: todo!(),
         }
     }
 }
