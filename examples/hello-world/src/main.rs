@@ -400,7 +400,7 @@ fn create_root_signature(device: &Device) -> RootSignature {
 
 fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> PipelineState {
     let compile_flags = if cfg!(debug_assertions) {
-        D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION
+        COMPILE_DEBUG | COMPILE_SKIP_OPT
     } else {
         0
     };
@@ -408,40 +408,13 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
     let exe_path = std::env::current_exe().ok().unwrap();
     let asset_path = exe_path.parent().unwrap();
     let shaders_hlsl_path = asset_path.join("shaders.hlsl");
-    let shaders_hlsl = shaders_hlsl_path.to_str().unwrap();
-    let shaders_hlsl: HSTRING = shaders_hlsl.into();
 
-    let mut vertex_shader = None;
-    let vertex_shader = unsafe {
-        D3DCompileFromFile(
-            &shaders_hlsl,
-            None,
-            None,
-            s!("VSMain"),
-            s!("vs_5_0"),
-            compile_flags,
-            0,
-            &mut vertex_shader,
-            None,
-        )
-    }
-    .map(|()| vertex_shader.unwrap())?;
-
-    let mut pixel_shader = None;
-    let pixel_shader = unsafe {
-        D3DCompileFromFile(
-            &shaders_hlsl,
-            None,
-            None,
-            s!("PSMain"),
-            s!("ps_5_0"),
-            compile_flags,
-            0,
-            &mut pixel_shader,
-            None,
-        )
-    }
-    .map(|()| pixel_shader.unwrap())?;
+    let vertex_shader =
+        Blob::compile_from_file(&shaders_hlsl_path, c"VSMain", c"vs_5_0", compile_flags, 0)
+            .unwrap();
+    let pixel_shader =
+        Blob::compile_from_file(&shaders_hlsl_path, c"PSMain", c"ps_5_0", compile_flags, 0)
+            .unwrap();
 
     let mut input_element_descs: [D3D12_INPUT_ELEMENT_DESC; 2] = [
         D3D12_INPUT_ELEMENT_DESC {

@@ -1,42 +1,11 @@
+use std::{ffi::CStr, path::Path};
+
 use smallvec::SmallVec;
 use windows::{
-    core::{Interface, Param},
+    core::{Interface, Param, HSTRING, PCSTR},
     Win32::Graphics::{
-        Direct3D::ID3DBlob,
-        Direct3D12::{
-            D3D12SerializeRootSignature, ID3D12PipelineState, ID3D12RootSignature,
-            D3D12_COMPARISON_FUNC_ALWAYS, D3D12_COMPARISON_FUNC_EQUAL,
-            D3D12_COMPARISON_FUNC_GREATER, D3D12_COMPARISON_FUNC_GREATER_EQUAL,
-            D3D12_COMPARISON_FUNC_LESS, D3D12_COMPARISON_FUNC_LESS_EQUAL,
-            D3D12_COMPARISON_FUNC_NEVER, D3D12_COMPARISON_FUNC_NONE,
-            D3D12_COMPARISON_FUNC_NOT_EQUAL, D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
-            D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-            D3D12_DESCRIPTOR_RANGE_TYPE_UAV, D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR,
-            D3D12_ROOT_SIGNATURE_DESC,
-            D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT,
-            D3D12_ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT,
-            D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED,
-            D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS,
-            D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS,
-            D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS,
-            D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS,
-            D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS,
-            D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS,
-            D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS,
-            D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE, D3D12_ROOT_SIGNATURE_FLAG_NONE,
-            D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED, D3D12_SHADER_VISIBILITY_ALL,
-            D3D12_SHADER_VISIBILITY_AMPLIFICATION, D3D12_SHADER_VISIBILITY_DOMAIN,
-            D3D12_SHADER_VISIBILITY_GEOMETRY, D3D12_SHADER_VISIBILITY_HULL,
-            D3D12_SHADER_VISIBILITY_MESH, D3D12_SHADER_VISIBILITY_PIXEL,
-            D3D12_SHADER_VISIBILITY_VERTEX, D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK,
-            D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK_UINT, D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE,
-            D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE_UINT,
-            D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, D3D12_TEXTURE_ADDRESS_MODE_BORDER,
-            D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_MIRROR,
-            D3D12_TEXTURE_ADDRESS_MODE_MIRROR_ONCE, D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-            D3D_ROOT_SIGNATURE_VERSION_1_0, D3D_ROOT_SIGNATURE_VERSION_1_1,
-            D3D_ROOT_SIGNATURE_VERSION_1_2,
-        },
+        Direct3D::{Fxc::D3DCompileFromFile, ID3DBlob},
+        Direct3D12::*,
     },
 };
 
@@ -99,6 +68,18 @@ impl_trait! {
 }
 
 pub trait BlobInterface: HasInterface<Raw: Interface> {
+    // TODO: type for target
+    fn compile_from_file(
+        filename: impl AsRef<Path>,
+        /*defines, includes,*/
+        entry_point: impl AsRef<CStr>,
+        target: impl AsRef<CStr>,
+        flags1: u32,
+        flags2: u32,
+    ) -> Result<Self, DxError>
+    where
+        Self: Sized;
+
     fn get_buffer_ptr(&self) -> *mut ();
     fn get_buffer_size(&self) -> usize;
 }
@@ -108,6 +89,44 @@ create_type! { Blob wrap ID3DBlob }
 impl_trait! {
     impl BlobInterface =>
     Blob;
+
+    fn compile_from_file(
+        filename: impl AsRef<Path>,
+        /*defines, includes,*/
+        entry_point: impl AsRef<CStr>,
+        target: impl AsRef<CStr>,
+        flags1: u32,
+        flags2: u32,
+    ) -> Result<Self, DxError>
+    where
+        Self: Sized,
+    {
+        let filename: HSTRING = filename.as_ref().to_str().unwrap_or("").into();
+        let entry_point = PCSTR::from_raw(entry_point.as_ref().as_ptr() as *const _);
+        let target = PCSTR::from_raw(target.as_ref().as_ptr() as *const _);
+
+        let mut shader = None;
+        let mut error = None;
+
+        unsafe {
+            D3DCompileFromFile(
+                &filename,
+                None,
+                None,
+                entry_point,
+                target,
+                flags1,
+                flags2,
+                &mut shader,
+                Some(&mut error),
+            )
+            .map_err(|_| DxError::Dummy)?;
+        }
+
+        //TODO: Error message to error
+        Ok(Blob::new(shader.unwrap()))
+    }
+
 
     fn get_buffer_ptr(&self) -> *mut () {
         unsafe {
