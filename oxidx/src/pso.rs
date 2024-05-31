@@ -9,7 +9,12 @@ use windows::{
     },
 };
 
-use crate::{create_type, impl_trait, prelude::DxError, HasInterface};
+use crate::{
+    create_type, impl_trait,
+    misc::Format,
+    prelude::{DxError, SampleDesc},
+    HasInterface,
+};
 
 pub trait PipelineStateInterface:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12PipelineState>>
@@ -174,7 +179,6 @@ pub struct StaticSamplerDesc {
 bitflags::bitflags! {
     #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct RootSignatureFlags: i32 {
-        const None = D3D12_ROOT_SIGNATURE_FLAG_NONE.0;
         const AllowInputAssemblerInputLayout = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT.0;
         const DenyVertexShaderAccess = D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS.0;
         const DenyHullShaderAccess = D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS.0;
@@ -293,4 +297,148 @@ pub enum RootSignatureVersion {
     V1_0 = D3D_ROOT_SIGNATURE_VERSION_1_0.0,
     V1_1 = D3D_ROOT_SIGNATURE_VERSION_1_1.0,
     V1_2 = D3D_ROOT_SIGNATURE_VERSION_1_2.0,
+}
+
+#[derive(Clone, Debug)]
+pub struct InputElementDesc {
+    pub semantic_name: &'static CStr,
+    pub semantic_index: u32,
+    pub format: Format,
+    pub input_slot: u32,
+    pub offset: u32,
+    pub slot_class: InputSlotClass,
+    pub instance_data_step_rate: u32,
+}
+
+#[derive(Clone, Copy, Debug)]
+#[repr(i32)]
+pub enum InputSlotClass {
+    PerVertex = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA.0,
+}
+
+#[derive(Debug)]
+pub struct GraphicsPipelineDesc<'a, const RTV_NUM: usize> {
+    pub root_signature: &'a RootSignature,
+    pub input_layout: &'a [InputElementDesc],
+    pub vs: &'a Blob,
+    pub ps: Option<&'a Blob>,
+    pub ds: Option<&'a Blob>,
+    pub hs: Option<&'a Blob>,
+    pub gs: Option<&'a Blob>,
+    pub stream_output: Option<StreamOutputDesc<'a>>,
+    pub blend_state: BlendDesc<RTV_NUM>,
+    pub sample_mask: u32,
+    pub rasterizer_state: RasterizerDesc,
+    pub depth_stencil: Option<DepthStencilDesc>,
+    pub ib_strip_cut_value: Option<IndexBufferStripCutValue>,
+    pub primitive_topology: PrimitiveTopology,
+    pub rtv_formats: [Format; RTV_NUM],
+    pub dsv_format: Option<Format>,
+    pub sampler_desc: SampleDesc,
+    pub node_mask: u32,
+    pub cached_pso: Option<CachedPipeline>,
+    pub flags: PipelineFlags,
+}
+
+#[derive(Clone, Debug)]
+pub struct StreamOutputDesc<'a> {
+    pub entries: &'a [DeclarationEntry],
+    pub buffer_strides: &'a [u32],
+    pub rasterized_stream: u32,
+}
+
+#[derive(Clone, Debug)]
+pub struct DeclarationEntry {
+    pub stream: u32,
+    pub semantic_name: &'static CStr,
+    pub semantic_index: u32,
+    pub start_component: u8,
+    pub component_count: u8,
+    pub output_slot: u8,
+}
+
+#[derive(Clone, Debug)]
+pub struct BlendDesc<const RTV_NUM: usize> {
+    pub render_targets: [RenderTargetBlendDesc; RTV_NUM],
+    pub alpha_to_coverage_enable: bool,
+    pub independent_blend_enable: bool,
+}
+
+#[derive(Clone, Debug)]
+pub struct RenderTargetBlendDesc {
+    pub blend_enable: bool,
+    pub logic_op_enable: bool,
+    pub src_blend: Blend,
+    pub dst_blend: Blend,
+    pub blend_op: BlendOp,
+    pub src_blend_alpha: Blend,
+    pub dst_blend_alpha: Blend,
+    pub blend_op_alpha: BlendOp,
+    pub logic_op: LogicOp,
+    pub mask: BlendMask,
+}
+
+#[derive(Clone, Debug)]
+pub enum Blend {
+    One,
+    Zero,
+}
+
+#[derive(Clone, Debug)]
+pub enum BlendOp {
+    Add,
+}
+
+bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct BlendMask: i32 {
+        const R = 1;
+        const G = 2;
+        const B = 4;
+        const A = 8;
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum LogicOp {
+    Noop,
+}
+
+#[derive(Clone, Debug)]
+pub struct RasterizerDesc {
+    pub fill_mode: FillMode,
+    pub cull_mode: CullMode,
+}
+
+#[derive(Clone, Debug)]
+pub enum FillMode {
+    Solid,
+    Wireframe,
+}
+
+#[derive(Clone, Debug)]
+pub enum CullMode {
+    None,
+}
+
+#[derive(Clone, Debug)]
+pub struct DepthStencilDesc {}
+
+#[derive(Clone, Debug)]
+pub struct IndexBufferStripCutValue {}
+
+#[derive(Clone, Debug)]
+pub enum PrimitiveTopology {
+    Triangle,
+    PointList,
+}
+
+#[derive(Clone, Debug)]
+pub struct CachedPipeline {}
+
+bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct PipelineFlags: i32 {
+
+    }
 }

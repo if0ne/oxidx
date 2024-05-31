@@ -416,82 +416,70 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
         Blob::compile_from_file(&shaders_hlsl_path, c"PSMain", c"ps_5_0", compile_flags, 0)
             .unwrap();
 
-    let mut input_element_descs: [D3D12_INPUT_ELEMENT_DESC; 2] = [
-        D3D12_INPUT_ELEMENT_DESC {
-            SemanticName: s!("POSITION"),
-            SemanticIndex: 0,
-            Format: DXGI_FORMAT_R32G32B32_FLOAT,
-            InputSlot: 0,
-            AlignedByteOffset: 0,
-            InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-            InstanceDataStepRate: 0,
+    let mut input_element_descs: [InputElementDesc; 2] = [
+        InputElementDesc {
+            semantic_name: c"POSITION",
+            semantic_index: 0,
+            format: Format::Rgb32Float,
+            input_slot: 0,
+            offset: 0,
+            slot_class: InputSlotClass::PerVertex,
+            instance_data_step_rate: 0,
         },
-        D3D12_INPUT_ELEMENT_DESC {
-            SemanticName: s!("COLOR"),
-            SemanticIndex: 0,
-            Format: DXGI_FORMAT_R32G32B32A32_FLOAT,
-            InputSlot: 0,
-            AlignedByteOffset: 12,
-            InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-            InstanceDataStepRate: 0,
+        InputElementDesc {
+            semantic_name: c"COLOR",
+            semantic_index: 0,
+            format: Format::Rgba32Float,
+            input_slot: 0,
+            offset: 12,
+            slot_class: InputSlotClass::PerVertex,
+            instance_data_step_rate: 0,
         },
     ];
 
-    let mut desc = D3D12_GRAPHICS_PIPELINE_STATE_DESC {
-        InputLayout: D3D12_INPUT_LAYOUT_DESC {
-            pInputElementDescs: input_element_descs.as_mut_ptr(),
-            NumElements: input_element_descs.len() as u32,
+    let mut desc = GraphicsPipelineDesc {
+        root_signature,
+        input_layout: &input_element_descs,
+        vs: &vertex_shader,
+        ps: Some(&pixel_shader),
+        ds: None,
+        hs: None,
+        gs: None,
+        stream_output: None,
+        sample_mask: u32::MAX,
+        rasterizer_state: RasterizerDesc {
+            fill_mode: FillMode::Solid,
+            cull_mode: CullMode::None,
         },
-        pRootSignature: unsafe { std::mem::transmute_copy(root_signature) },
-        VS: D3D12_SHADER_BYTECODE {
-            pShaderBytecode: unsafe { vertex_shader.GetBufferPointer() },
-            BytecodeLength: unsafe { vertex_shader.GetBufferSize() },
+        blend_state: BlendDesc {
+            alpha_to_coverage_enable: false,
+            independent_blend_enable: false,
+            render_targets: [RenderTargetBlendDesc {
+                blend_enable: false,
+                logic_op_enable: false.into(),
+                src_blend: Blend::One,
+                dst_blend: Blend::Zero,
+                blend_op: BlendOp::Add,
+                src_blend_alpha: Blend::One,
+                dst_blend_alpha: Blend::Zero,
+                blend_op_alpha: BlendOp::Add,
+                logic_op: LogicOp::Noop,
+                mask: BlendMask::all(),
+            }],
         },
-        PS: D3D12_SHADER_BYTECODE {
-            pShaderBytecode: unsafe { pixel_shader.GetBufferPointer() },
-            BytecodeLength: unsafe { pixel_shader.GetBufferSize() },
-        },
-        RasterizerState: D3D12_RASTERIZER_DESC {
-            FillMode: D3D12_FILL_MODE_SOLID,
-            CullMode: D3D12_CULL_MODE_NONE,
-            ..Default::default()
-        },
-        BlendState: D3D12_BLEND_DESC {
-            AlphaToCoverageEnable: false.into(),
-            IndependentBlendEnable: false.into(),
-            RenderTarget: [
-                D3D12_RENDER_TARGET_BLEND_DESC {
-                    BlendEnable: false.into(),
-                    LogicOpEnable: false.into(),
-                    SrcBlend: D3D12_BLEND_ONE,
-                    DestBlend: D3D12_BLEND_ZERO,
-                    BlendOp: D3D12_BLEND_OP_ADD,
-                    SrcBlendAlpha: D3D12_BLEND_ONE,
-                    DestBlendAlpha: D3D12_BLEND_ZERO,
-                    BlendOpAlpha: D3D12_BLEND_OP_ADD,
-                    LogicOp: D3D12_LOGIC_OP_NOOP,
-                    RenderTargetWriteMask: D3D12_COLOR_WRITE_ENABLE_ALL.0 as u8,
-                },
-                D3D12_RENDER_TARGET_BLEND_DESC::default(),
-                D3D12_RENDER_TARGET_BLEND_DESC::default(),
-                D3D12_RENDER_TARGET_BLEND_DESC::default(),
-                D3D12_RENDER_TARGET_BLEND_DESC::default(),
-                D3D12_RENDER_TARGET_BLEND_DESC::default(),
-                D3D12_RENDER_TARGET_BLEND_DESC::default(),
-                D3D12_RENDER_TARGET_BLEND_DESC::default(),
-            ],
-        },
-        DepthStencilState: D3D12_DEPTH_STENCIL_DESC::default(),
-        SampleMask: u32::MAX,
-        PrimitiveTopologyType: D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-        NumRenderTargets: 1,
-        SampleDesc: SampleDesc {
+        depth_stencil: None,
+        primitive_topology: PrimitiveTopology::Triangle,
+        sampler_desc: SampleDesc {
             count: 1,
             ..Default::default()
         },
-        ..Default::default()
+        ib_strip_cut_value: None,
+        rtv_formats: [Format::Bgra8Unorm],
+        dsv_format: None,
+        node_mask: 0,
+        cached_pso: None,
+        flags: PipelineFlags::empty(),
     };
-    desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 
     unsafe { device.CreateGraphicsPipelineState(&desc) }
 }
