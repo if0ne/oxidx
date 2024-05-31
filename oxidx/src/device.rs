@@ -1,10 +1,4 @@
-use smallvec::SmallVec;
-use windows::{
-    core::Interface,
-    Win32::Graphics::Direct3D12::{
-        D3D12SerializeRootSignature, ID3D12Device, D3D12_ROOT_SIGNATURE_DESC,
-    },
-};
+use windows::{core::Interface, Win32::Graphics::Direct3D12::ID3D12Device};
 
 use crate::{
     command_allocator::CommandAllocatorInterface,
@@ -16,7 +10,8 @@ use crate::{
     impl_trait,
     misc::CommandListType,
     pso::{
-        PipelineStateInterface, RootSignatureDesc, RootSignatureInterface, RootSignatureVersion,
+        BlobInterface, PipelineStateInterface, RootSignatureDesc, RootSignatureInterface,
+        RootSignatureVersion,
     },
     resources::{RenderTargetViewDesc, ResourceInterface},
     sync::{FenceFlags, FenceInterface},
@@ -67,6 +62,12 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     );
 
     fn create_root_signature<RS: RootSignatureInterface>(
+        &self,
+        nodemask: u32,
+        blob: &[u8],
+    ) -> Result<RS, DxError>;
+
+    fn serialize_create_root_signature<RS: RootSignatureInterface>(
         &self,
         desc: &RootSignatureDesc<'_>,
         version: RootSignatureVersion,
@@ -155,48 +156,31 @@ impl_trait! {
         Ok(CL::new(res))
     }
 
-    fn create_root_signature<RS: RootSignatureInterface>(
-        &self,
-        desc: &RootSignatureDesc<'_>,
-        version: RootSignatureVersion,
-        nodemask: u32,
-    ) -> Result<RS, DxError> {
-        let mut signature = None;
-
-        let parameters = desc.parameters.iter().map(|param| param.as_raw()).collect::<SmallVec<[_; 16]>>();
-        let sampler = desc.samplers.iter().map(|sampler| sampler.as_raw()).collect::<SmallVec<[_; 16]>>();
-
-        let desc = D3D12_ROOT_SIGNATURE_DESC {
-            NumParameters: desc.parameters.len() as u32,
-            pParameters: parameters.as_ptr(),
-            NumStaticSamplers: desc.samplers.len() as u32,
-            pStaticSamplers: sampler.as_ptr(),
-            Flags: desc.flags.as_raw(),
-        };
-
-        let signature = unsafe {
-            D3D12SerializeRootSignature(
-                &desc,
-                version.as_raw(),
-                &mut signature,
-                None,
-            )
-        }
-        .map(|()| signature.unwrap())
-        .map_err(|_| DxError::Dummy)?;
-
+    fn create_root_signature<RS: RootSignatureInterface>(&self, nodemask: u32, blob: &[u8]) -> Result<RS, DxError> {
         let res: RS::Raw = unsafe {
             self.0
                 .CreateRootSignature(
                     nodemask,
-                    std::slice::from_raw_parts(
-                        signature.GetBufferPointer() as _,
-                        signature.GetBufferSize(),
-                    ),
+                    blob,
                 )
                 .map_err(|_| DxError::Dummy)?
         };
 
         Ok(RS::new(res))
+    }
+
+    fn serialize_create_root_signature<RS: RootSignatureInterface>(
+        &self,
+        desc: &RootSignatureDesc<'_>,
+        version: RootSignatureVersion,
+        nodemask: u32,
+    ) -> Result<RS, DxError> {
+        let blob = RS::serialize(desc, version)?;
+        unsafe {
+        self.create_root_signature(nodemask, std::slice::from_raw_parts(
+                blob.get_buffer_ptr() as _,
+                blob.get_buffer_size(),
+            ))
+        }
     }
 }

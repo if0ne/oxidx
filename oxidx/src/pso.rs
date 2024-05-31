@@ -1,39 +1,46 @@
+use smallvec::SmallVec;
 use windows::{
     core::{Interface, Param},
-    Win32::Graphics::Direct3D12::{
-        ID3D12PipelineState, ID3D12RootSignature, D3D12_COMPARISON_FUNC_ALWAYS,
-        D3D12_COMPARISON_FUNC_EQUAL, D3D12_COMPARISON_FUNC_GREATER,
-        D3D12_COMPARISON_FUNC_GREATER_EQUAL, D3D12_COMPARISON_FUNC_LESS,
-        D3D12_COMPARISON_FUNC_LESS_EQUAL, D3D12_COMPARISON_FUNC_NEVER, D3D12_COMPARISON_FUNC_NONE,
-        D3D12_COMPARISON_FUNC_NOT_EQUAL, D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
-        D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-        D3D12_DESCRIPTOR_RANGE_TYPE_UAV, D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR,
-        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT,
-        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT,
-        D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED,
-        D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS,
-        D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS,
-        D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS,
-        D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS,
-        D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS,
-        D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS,
-        D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS,
-        D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE, D3D12_ROOT_SIGNATURE_FLAG_NONE,
-        D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED, D3D12_SHADER_VISIBILITY_ALL,
-        D3D12_SHADER_VISIBILITY_AMPLIFICATION, D3D12_SHADER_VISIBILITY_DOMAIN,
-        D3D12_SHADER_VISIBILITY_GEOMETRY, D3D12_SHADER_VISIBILITY_HULL,
-        D3D12_SHADER_VISIBILITY_MESH, D3D12_SHADER_VISIBILITY_PIXEL,
-        D3D12_SHADER_VISIBILITY_VERTEX, D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK,
-        D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK_UINT, D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE,
-        D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE_UINT, D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK,
-        D3D12_TEXTURE_ADDRESS_MODE_BORDER, D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
-        D3D12_TEXTURE_ADDRESS_MODE_MIRROR, D3D12_TEXTURE_ADDRESS_MODE_MIRROR_ONCE,
-        D3D12_TEXTURE_ADDRESS_MODE_WRAP, D3D_ROOT_SIGNATURE_VERSION_1_0,
-        D3D_ROOT_SIGNATURE_VERSION_1_1, D3D_ROOT_SIGNATURE_VERSION_1_2,
+    Win32::Graphics::{
+        Direct3D::ID3DBlob,
+        Direct3D12::{
+            D3D12SerializeRootSignature, ID3D12PipelineState, ID3D12RootSignature,
+            D3D12_COMPARISON_FUNC_ALWAYS, D3D12_COMPARISON_FUNC_EQUAL,
+            D3D12_COMPARISON_FUNC_GREATER, D3D12_COMPARISON_FUNC_GREATER_EQUAL,
+            D3D12_COMPARISON_FUNC_LESS, D3D12_COMPARISON_FUNC_LESS_EQUAL,
+            D3D12_COMPARISON_FUNC_NEVER, D3D12_COMPARISON_FUNC_NONE,
+            D3D12_COMPARISON_FUNC_NOT_EQUAL, D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+            D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+            D3D12_DESCRIPTOR_RANGE_TYPE_UAV, D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR,
+            D3D12_ROOT_SIGNATURE_DESC,
+            D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT,
+            D3D12_ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT,
+            D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED,
+            D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS,
+            D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS,
+            D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS,
+            D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS,
+            D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS,
+            D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS,
+            D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS,
+            D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE, D3D12_ROOT_SIGNATURE_FLAG_NONE,
+            D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED, D3D12_SHADER_VISIBILITY_ALL,
+            D3D12_SHADER_VISIBILITY_AMPLIFICATION, D3D12_SHADER_VISIBILITY_DOMAIN,
+            D3D12_SHADER_VISIBILITY_GEOMETRY, D3D12_SHADER_VISIBILITY_HULL,
+            D3D12_SHADER_VISIBILITY_MESH, D3D12_SHADER_VISIBILITY_PIXEL,
+            D3D12_SHADER_VISIBILITY_VERTEX, D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK,
+            D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK_UINT, D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE,
+            D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE_UINT,
+            D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, D3D12_TEXTURE_ADDRESS_MODE_BORDER,
+            D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_MIRROR,
+            D3D12_TEXTURE_ADDRESS_MODE_MIRROR_ONCE, D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+            D3D_ROOT_SIGNATURE_VERSION_1_0, D3D_ROOT_SIGNATURE_VERSION_1_1,
+            D3D_ROOT_SIGNATURE_VERSION_1_2,
+        },
     },
 };
 
-use crate::{create_type, impl_trait, HasInterface};
+use crate::{create_type, impl_trait, prelude::DxError, HasInterface};
 
 pub trait PipelineStateInterface:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12PipelineState>>
@@ -50,7 +57,10 @@ impl_trait! {
 pub trait RootSignatureInterface:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12RootSignature>>
 {
-    //fn serialize(desc: &RootSignatureDesc<'_>, );
+    fn serialize(
+        desc: &RootSignatureDesc<'_>,
+        version: RootSignatureVersion,
+    ) -> Result<Blob, DxError>;
 }
 
 create_type! { RootSignature wrap ID3D12RootSignature }
@@ -58,6 +68,58 @@ create_type! { RootSignature wrap ID3D12RootSignature }
 impl_trait! {
     impl RootSignatureInterface =>
     RootSignature;
+
+    fn serialize(desc: &RootSignatureDesc<'_>, version: RootSignatureVersion) -> Result<Blob, DxError> {
+        let mut signature = None;
+
+        let parameters = desc.parameters.iter().map(|param| param.as_raw()).collect::<SmallVec<[_; 16]>>();
+        let sampler = desc.samplers.iter().map(|sampler| sampler.as_raw()).collect::<SmallVec<[_; 16]>>();
+
+        let desc = D3D12_ROOT_SIGNATURE_DESC {
+            NumParameters: desc.parameters.len() as u32,
+            pParameters: parameters.as_ptr(),
+            NumStaticSamplers: desc.samplers.len() as u32,
+            pStaticSamplers: sampler.as_ptr(),
+            Flags: desc.flags.as_raw(),
+        };
+
+        let signature = unsafe {
+            D3D12SerializeRootSignature(
+                &desc,
+                version.as_raw(),
+                &mut signature,
+                None,
+            )
+        }
+        .map(|()| signature.unwrap())
+        .map_err(|_| DxError::Dummy)?;
+
+        Ok(Blob::new(signature))
+    }
+}
+
+pub trait BlobInterface: HasInterface<Raw: Interface> {
+    fn get_buffer_ptr(&self) -> *mut ();
+    fn get_buffer_size(&self) -> usize;
+}
+
+create_type! { Blob wrap ID3DBlob }
+
+impl_trait! {
+    impl BlobInterface =>
+    Blob;
+
+    fn get_buffer_ptr(&self) -> *mut () {
+        unsafe {
+            self.0.GetBufferPointer() as *mut _
+        }
+    }
+
+    fn get_buffer_size(&self) -> usize {
+        unsafe {
+            self.0.GetBufferSize()
+        }
+    }
 }
 
 #[derive(Debug, Default)]

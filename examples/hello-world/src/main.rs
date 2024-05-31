@@ -397,7 +397,7 @@ fn create_root_signature(device: &Device) -> RootSignature {
     };
 
     device
-        .create_root_signature(&desc, RootSignatureVersion::V1_0, 0)
+        .serialize_create_root_signature(&desc, RootSignatureVersion::V1_0, 0)
         .unwrap()
 }
 
