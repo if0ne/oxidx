@@ -2,7 +2,10 @@ use std::ops::Range;
 
 use windows::{
     core::{Interface, Param},
-    Win32::Graphics::Direct3D12::{ID3D12Resource, D3D12_RANGE},
+    Win32::Graphics::Direct3D12::{
+        ID3D12Resource, D3D12_RANGE, D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY,
+        D3D12_RESOURCE_BARRIER_FLAG_END_ONLY, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET,
+    },
 };
 
 use crate::{create_type, error::DxError, impl_trait, misc::Format, HasInterface};
@@ -54,10 +57,49 @@ impl_trait! {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct Barrier<'a> {
+    pub r#type: BarrierType<'a>,
+    pub flags: BarrierFlags,
+}
+
+#[derive(Clone, Debug)]
+pub enum BarrierType<'a> {
+    Transition {
+        resource: &'a Resource,
+        subresource: u32,
+        before: ResourceState,
+        after: ResourceState,
+    },
+    Aliasing {
+        before: &'a Resource,
+        after: &'a Resource,
+    },
+    Uav {
+        resource: &'a Resource,
+    },
+}
+
+bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct BarrierFlags: i32 {
+        const BeginOnly = D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY.0;
+        const EndOnly = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY.0;
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct RenderTargetViewDesc {
     pub format: Format,
     pub dimension: ViewDimension,
+}
+
+bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct ResourceState: i32 {
+        const Present = D3D12_RESOURCE_STATE_PRESENT.0;
+        const RenderTarget = D3D12_RESOURCE_STATE_RENDER_TARGET.0;
+    }
 }
 
 #[derive(Debug, Clone)]

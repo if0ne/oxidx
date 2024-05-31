@@ -213,7 +213,7 @@ impl From<DXGI_ADAPTER_DESC1> for AdapterDesc {
                 low_part: value.AdapterLuid.LowPart,
                 high_part: value.AdapterLuid.HighPart,
             },
-            flags: AdapterFlags::from_bits(value.Flags).unwrap_or(AdapterFlags::None),
+            flags: AdapterFlags::from_bits(value.Flags).unwrap_or(AdapterFlags::empty()),
         }
     }
 }

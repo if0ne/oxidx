@@ -293,8 +293,8 @@ fn populate_command_list(resources: &Resources) {
 
     let barrier = transition_barrier(
         &resources.render_targets[resources.frame_index as usize],
-        D3D12_RESOURCE_STATE_PRESENT,
-        D3D12_RESOURCE_STATE_RENDER_TARGET,
+        ResourceState::Present,
+        ResourceState::RenderTarget,
     );
     command_list.ResourceBarrier(&[barrier]);
 
@@ -313,8 +313,8 @@ fn populate_command_list(resources: &Resources) {
     // Indicate that the back buffer will now be used to present.
     command_list.ResourceBarrier(&[transition_barrier(
         &resources.render_targets[resources.frame_index as usize],
-        D3D12_RESOURCE_STATE_RENDER_TARGET,
-        D3D12_RESOURCE_STATE_PRESENT,
+        ResourceState::RenderTarget,
+        ResourceState::Present,
     )]);
 
     command_list.close();
@@ -322,20 +322,17 @@ fn populate_command_list(resources: &Resources) {
 
 fn transition_barrier(
     resource: &Resource,
-    state_before: D3D12_RESOURCE_STATES,
-    state_after: D3D12_RESOURCE_STATES,
-) -> D3D12_RESOURCE_BARRIER {
-    D3D12_RESOURCE_BARRIER {
-        Type: D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-        Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
-        Anonymous: D3D12_RESOURCE_BARRIER_0 {
-            Transition: std::mem::ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
-                pResource: unsafe { std::mem::transmute_copy(resource) },
-                StateBefore: state_before,
-                StateAfter: state_after,
-                Subresource: D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-            }),
+    state_before: ResourceState,
+    state_after: ResourceState,
+) -> Barrier {
+    Barrier {
+        r#type: BarrierType::Transition {
+            resource: resource,
+            subresource: BARRIER_ALL_SUBRESOURCES,
+            before: state_before,
+            after: state_after,
         },
+        flags: BarrierFlags::empty(),
     }
 }
 
@@ -375,7 +372,7 @@ fn get_hardware_adapter(factory: &Factory4) -> Adapter3 {
 
         let desc = adapter.get_desc1();
 
-        if (desc.flags & AdapterFlags::Sofware) != AdapterFlags::None {
+        if (desc.flags & AdapterFlags::Sofware) != AdapterFlags::empty() {
             continue;
         }
 
@@ -516,7 +513,7 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
         PrimitiveTopologyType: D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
         NumRenderTargets: 1,
         SampleDesc: SampleDesc {
-            Count: 1,
+            count: 1,
             ..Default::default()
         },
         ..Default::default()

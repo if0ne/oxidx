@@ -44,7 +44,6 @@ pub struct AdapterDesc {
 bitflags::bitflags! {
     #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct AdapterFlags: u32 {
-        const None = 0;
         const Remote = 1;
         const Sofware = 2;
     }

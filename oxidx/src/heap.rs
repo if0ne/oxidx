@@ -1,8 +1,7 @@
 use windows::{
     core::Interface,
     Win32::Graphics::Direct3D12::{
-        ID3D12DescriptorHeap, D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
-        D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+        ID3D12DescriptorHeap, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
     },
 };
 
@@ -45,7 +44,6 @@ pub enum DescriptorHeapType {
 bitflags::bitflags! {
     #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct DescriptorHeapFlags: i32 {
-        const None = D3D12_DESCRIPTOR_HEAP_FLAG_NONE.0;
         const ShaderVisible = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE.0;
     }
 }

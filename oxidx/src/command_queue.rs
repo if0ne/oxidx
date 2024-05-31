@@ -3,7 +3,6 @@ use windows::{
     core::{IUnknown, Interface, Param},
     Win32::Graphics::Direct3D12::{
         ID3D12CommandList, ID3D12CommandQueue, D3D12_COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT,
-        D3D12_COMMAND_QUEUE_FLAG_NONE,
     },
 };
 
@@ -61,7 +60,6 @@ pub struct CommandQueueDesc {
 bitflags::bitflags! {
     #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct CommandQueueFlags: i32 {
-        const None = D3D12_COMMAND_QUEUE_FLAG_NONE.0;
         const DisableGpuTimeout = D3D12_COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT.0;
     }
 }

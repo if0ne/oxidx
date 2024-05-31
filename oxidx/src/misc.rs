@@ -1,7 +1,7 @@
 use windows::Win32::Graphics::{
     Direct3D12::{
         D3D12_COMMAND_LIST_TYPE_COMPUTE, D3D12_COMMAND_LIST_TYPE_COPY,
-        D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_MAX_DEPTH, D3D12_MIN_DEPTH,
+        D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_MAX_DEPTH, D3D12_MIN_DEPTH, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
     },
     Dxgi::{
         Common::{
@@ -24,6 +24,7 @@ use windows::Win32::Graphics::{
 
 pub const MIN_DEPTH: f32 = D3D12_MIN_DEPTH;
 pub const MAX_DEPTH: f32 = D3D12_MAX_DEPTH;
+pub const BARRIER_ALL_SUBRESOURCES: u32 = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
 #[derive(Debug, Default, Clone, Copy)]
 #[repr(i32)]
