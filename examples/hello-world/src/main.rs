@@ -2,6 +2,7 @@ use std::num::NonZeroIsize;
 
 use oxidx::prelude::*;
 
+use smallvec::smallvec;
 use winit::{
     dpi::PhysicalSize,
     event::{Event as EventWin, WindowEvent},
@@ -454,7 +455,7 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
         blend_state: BlendDesc {
             alpha_to_coverage_enable: false,
             independent_blend_enable: false,
-            render_targets: [RenderTargetBlendDesc {
+            render_targets: smallvec![RenderTargetBlendDesc {
                 blend_enable: false,
                 logic_op_enable: false.into(),
                 src_blend: Blend::One,
@@ -474,7 +475,7 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
             ..Default::default()
         },
         ib_strip_cut_value: None,
-        rtv_formats: [Format::Bgra8Unorm],
+        rtv_formats: smallvec![Format::Bgra8Unorm],
         dsv_format: None,
         node_mask: 0,
         cached_pso: None,
