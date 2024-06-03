@@ -1,38 +1,19 @@
-use std::{mem::ManuallyDrop, usize};
-
 use compact_str::CompactString;
-use windows::Win32::{
-    Foundation::RECT,
-    Graphics::{
-        Direct3D::D3D_FEATURE_LEVEL,
-        Direct3D12::{
-            D3D12_BUFFER_RTV, D3D12_COMMAND_LIST_TYPE, D3D12_COMMAND_QUEUE_DESC,
-            D3D12_COMMAND_QUEUE_FLAGS, D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_DESCRIPTOR_HEAP_DESC,
-            D3D12_DESCRIPTOR_HEAP_FLAGS, D3D12_DESCRIPTOR_HEAP_TYPE,
-            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
-            D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_FENCE_FLAGS,
-            D3D12_GRAPHICS_PIPELINE_STATE_DESC, D3D12_RENDER_TARGET_VIEW_DESC,
-            D3D12_RENDER_TARGET_VIEW_DESC_0, D3D12_ROOT_CONSTANTS, D3D12_ROOT_DESCRIPTOR,
-            D3D12_ROOT_DESCRIPTOR_TABLE, D3D12_ROOT_PARAMETER, D3D12_ROOT_PARAMETER_0,
-            D3D12_ROOT_PARAMETER_TYPE, D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
-            D3D12_ROOT_PARAMETER_TYPE_CBV, D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
-            D3D12_ROOT_PARAMETER_TYPE_SRV, D3D12_ROOT_PARAMETER_TYPE_UAV,
-            D3D12_ROOT_SIGNATURE_FLAGS, D3D12_RTV_DIMENSION, D3D12_RTV_DIMENSION_BUFFER,
-            D3D12_RTV_DIMENSION_TEXTURE1D, D3D12_RTV_DIMENSION_TEXTURE1DARRAY,
-            D3D12_RTV_DIMENSION_TEXTURE2D, D3D12_RTV_DIMENSION_TEXTURE2DARRAY,
-            D3D12_RTV_DIMENSION_TEXTURE2DMS, D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY,
-            D3D12_RTV_DIMENSION_TEXTURE3D, D3D12_SHADER_VISIBILITY, D3D12_STATIC_SAMPLER_DESC,
-            D3D12_TEX1D_ARRAY_RTV, D3D12_TEX1D_RTV, D3D12_TEX2DMS_ARRAY_RTV, D3D12_TEX2DMS_RTV,
-            D3D12_TEX2D_ARRAY_RTV, D3D12_TEX2D_RTV, D3D12_TEX3D_RTV, D3D12_VIEWPORT,
-            D3D_ROOT_SIGNATURE_VERSION,
-        },
-        Dxgi::{
-            Common::{
-                DXGI_ALPHA_MODE, DXGI_FORMAT, DXGI_MODE_SCALING, DXGI_MODE_SCANLINE_ORDER,
-                DXGI_RATIONAL, DXGI_SAMPLE_DESC,
+use windows::{
+    core::PCSTR,
+    Win32::{
+        Foundation::RECT,
+        Graphics::{
+            Direct3D::D3D_FEATURE_LEVEL,
+            Direct3D12::*,
+            Dxgi::{
+                Common::{
+                    DXGI_ALPHA_MODE, DXGI_FORMAT, DXGI_MODE_SCALING, DXGI_MODE_SCANLINE_ORDER,
+                    DXGI_RATIONAL, DXGI_SAMPLE_DESC,
+                },
+                DXGI_ADAPTER_DESC1, DXGI_SCALING, DXGI_SWAP_CHAIN_DESC1,
+                DXGI_SWAP_CHAIN_FULLSCREEN_DESC, DXGI_SWAP_EFFECT, DXGI_USAGE,
             },
-            DXGI_ADAPTER_DESC1, DXGI_SCALING, DXGI_SWAP_CHAIN_DESC1,
-            DXGI_SWAP_CHAIN_FULLSCREEN_DESC, DXGI_SWAP_EFFECT, DXGI_USAGE,
         },
     },
 };
@@ -47,13 +28,15 @@ use crate::{
         ScanlineOrdering, SwapEffect, Viewport,
     },
     pso::{
-        GraphicsPipelineDesc, RootParameter, RootParameterType, RootSignatureFlags,
-        RootSignatureVersion, ShaderVisibility, StaticSamplerDesc,
+        Blend, BlendOp, Blob, BlobInterface, CachedPipeline, CullMode, DeclarationEntry,
+        DepthStencilDesc, FillMode, IndexBufferStripCutValue, InputElementDesc, InputSlotClass,
+        LogicOp, PrimitiveTopology, RasterizerDesc, RenderTargetBlendDesc, RootParameter,
+        RootParameterType, RootSignatureFlags, RootSignatureVersion, ShaderVisibility,
+        StaticSamplerDesc,
     },
     resources::{RenderTargetViewDesc, ViewDimension},
     swapchain::{Rational, SampleDesc, SwapchainDesc, SwapchainFullscreenDesc},
     sync::FenceFlags,
-    HasInterface,
 };
 
 impl SwapchainDesc {
@@ -449,30 +432,136 @@ impl<'a> RootParameterType<'a> {
     }
 }
 
-impl<'a, const RTV_NUM: usize> GraphicsPipelineDesc<'a, RTV_NUM> {
-    pub(crate) fn as_raw(&self) -> D3D12_GRAPHICS_PIPELINE_STATE_DESC {
-        D3D12_GRAPHICS_PIPELINE_STATE_DESC {
-            pRootSignature: ManuallyDrop::new(Some(self.root_signature.as_raw().clone())),
-            VS: todo!(),
-            PS: todo!(),
-            DS: todo!(),
-            HS: todo!(),
-            GS: todo!(),
-            StreamOutput: todo!(),
-            BlendState: todo!(),
-            SampleMask: todo!(),
-            RasterizerState: todo!(),
-            DepthStencilState: todo!(),
-            InputLayout: todo!(),
-            IBStripCutValue: todo!(),
-            PrimitiveTopologyType: todo!(),
-            NumRenderTargets: todo!(),
-            RTVFormats: todo!(),
-            DSVFormat: todo!(),
-            SampleDesc: todo!(),
-            NodeMask: todo!(),
-            CachedPSO: todo!(),
-            Flags: todo!(),
+impl Blob {
+    pub(crate) fn as_raw(&self) -> D3D12_SHADER_BYTECODE {
+        D3D12_SHADER_BYTECODE {
+            pShaderBytecode: self.get_buffer_ptr() as *const _,
+            BytecodeLength: self.get_buffer_size(),
         }
+    }
+}
+
+impl InputElementDesc {
+    pub(crate) fn as_raw(&self) -> D3D12_INPUT_ELEMENT_DESC {
+        let semantic_name = PCSTR::from_raw(self.semantic_name.as_ref().as_ptr() as *const _);
+        D3D12_INPUT_ELEMENT_DESC {
+            SemanticName: semantic_name,
+            SemanticIndex: self.semantic_index,
+            Format: self.format.as_raw(),
+            InputSlot: self.input_slot,
+            AlignedByteOffset: self.offset,
+            InputSlotClass: self.slot_class.as_raw(),
+            InstanceDataStepRate: self.instance_data_step_rate,
+        }
+    }
+}
+
+impl InputSlotClass {
+    pub(crate) fn as_raw(&self) -> D3D12_INPUT_CLASSIFICATION {
+        D3D12_INPUT_CLASSIFICATION(*self as i32)
+    }
+}
+
+impl DeclarationEntry {
+    pub(crate) fn as_raw(&self) -> D3D12_SO_DECLARATION_ENTRY {
+        let semantic_name = PCSTR::from_raw(self.semantic_name.as_ref().as_ptr() as *const _);
+
+        D3D12_SO_DECLARATION_ENTRY {
+            Stream: self.stream,
+            SemanticName: semantic_name,
+            SemanticIndex: self.semantic_index,
+            StartComponent: self.start_component,
+            ComponentCount: self.component_count,
+            OutputSlot: self.output_slot,
+        }
+    }
+}
+
+impl RasterizerDesc {
+    pub(crate) fn as_raw(&self) -> D3D12_RASTERIZER_DESC {
+        D3D12_RASTERIZER_DESC {
+            FillMode: self.fill_mode.as_raw(),
+            CullMode: self.cull_mode.as_raw(),
+            ..Default::default()
+        }
+    }
+}
+
+impl FillMode {
+    pub(crate) fn as_raw(&self) -> D3D12_FILL_MODE {
+        match *self {
+            FillMode::Solid => D3D12_FILL_MODE_SOLID,
+            FillMode::Wireframe => D3D12_FILL_MODE_WIREFRAME,
+        }
+    }
+}
+
+impl CullMode {
+    pub(crate) fn as_raw(&self) -> D3D12_CULL_MODE {
+        match *self {
+            CullMode::None => D3D12_CULL_MODE_NONE,
+        }
+    }
+}
+
+impl DepthStencilDesc {
+    pub(crate) fn as_raw(&self) -> D3D12_DEPTH_STENCIL_DESC {
+        D3D12_DEPTH_STENCIL_DESC::default()
+    }
+}
+
+impl PrimitiveTopology {
+    pub(crate) fn as_raw(&self) -> D3D12_PRIMITIVE_TOPOLOGY_TYPE {
+        match *self {
+            PrimitiveTopology::Triangle => D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+            PrimitiveTopology::Point => D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT,
+        }
+    }
+}
+
+impl IndexBufferStripCutValue {
+    pub(crate) fn as_raw(&self) -> D3D12_INDEX_BUFFER_STRIP_CUT_VALUE {
+        D3D12_INDEX_BUFFER_STRIP_CUT_VALUE(*self as i32)
+    }
+}
+
+impl CachedPipeline {
+    pub(crate) fn as_raw(&self) -> D3D12_CACHED_PIPELINE_STATE {
+        D3D12_CACHED_PIPELINE_STATE::default()
+    }
+}
+
+impl RenderTargetBlendDesc {
+    pub(crate) fn as_raw(&self) -> D3D12_RENDER_TARGET_BLEND_DESC {
+        D3D12_RENDER_TARGET_BLEND_DESC {
+            BlendEnable: self.blend_enable.into(),
+            LogicOpEnable: self.logic_op_enable.into(),
+            SrcBlend: self.src_blend.as_raw(),
+            DestBlend: self.dst_blend.as_raw(),
+            BlendOp: self.blend_op.as_raw(),
+            SrcBlendAlpha: self.src_blend_alpha.as_raw(),
+            DestBlendAlpha: self.dst_blend_alpha.as_raw(),
+            BlendOpAlpha: self.blend_op_alpha.as_raw(),
+            LogicOp: self.logic_op.as_raw(),
+            RenderTargetWriteMask: self.mask.bits(),
+        }
+    }
+}
+
+impl Blend {
+    pub(crate) fn as_raw(&self) -> D3D12_BLEND {
+        D3D12_BLEND(*self as i32)
+    }
+}
+
+impl BlendOp {
+    pub(crate) fn as_raw(&self) -> D3D12_BLEND_OP {
+        D3D12_BLEND_OP(*self as i32)
+    }
+}
+
+impl LogicOp {
+    pub(crate) fn as_raw(&self) -> D3D12_LOGIC_OP {
+        D3D12_LOGIC_OP(*self as i32)
     }
 }

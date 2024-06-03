@@ -317,7 +317,7 @@ pub enum InputSlotClass {
 }
 
 #[derive(Debug)]
-pub struct GraphicsPipelineDesc<'a, const RTV_NUM: usize> {
+pub struct GraphicsPipelineDesc<'a> {
     pub root_signature: &'a RootSignature,
     pub input_layout: &'a [InputElementDesc],
     pub vs: &'a Blob,
@@ -326,13 +326,13 @@ pub struct GraphicsPipelineDesc<'a, const RTV_NUM: usize> {
     pub hs: Option<&'a Blob>,
     pub gs: Option<&'a Blob>,
     pub stream_output: Option<StreamOutputDesc<'a>>,
-    pub blend_state: BlendDesc<RTV_NUM>,
+    pub blend_state: BlendDesc,
     pub sample_mask: u32,
     pub rasterizer_state: RasterizerDesc,
     pub depth_stencil: Option<DepthStencilDesc>,
     pub ib_strip_cut_value: Option<IndexBufferStripCutValue>,
     pub primitive_topology: PrimitiveTopology,
-    pub rtv_formats: [Format; RTV_NUM],
+    pub rtv_formats: SmallVec<[Format; 8]>, // TODO: Custom Type
     pub dsv_format: Option<Format>,
     pub sampler_desc: SampleDesc,
     pub node_mask: u32,
@@ -358,8 +358,8 @@ pub struct DeclarationEntry {
 }
 
 #[derive(Clone, Debug)]
-pub struct BlendDesc<const RTV_NUM: usize> {
-    pub render_targets: [RenderTargetBlendDesc; RTV_NUM],
+pub struct BlendDesc {
+    pub render_targets: SmallVec<[RenderTargetBlendDesc; 8]>,
     pub alpha_to_coverage_enable: bool,
     pub independent_blend_enable: bool,
 }
@@ -378,20 +378,22 @@ pub struct RenderTargetBlendDesc {
     pub mask: BlendMask,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
+#[repr(i32)]
 pub enum Blend {
-    One,
-    Zero,
+    One = D3D12_BLEND_ONE.0,
+    Zero = D3D12_BLEND_ZERO.0,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
+#[repr(i32)]
 pub enum BlendOp {
-    Add,
+    Add = D3D12_BLEND_OP_ADD.0,
 }
 
 bitflags::bitflags! {
     #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct BlendMask: i32 {
+    pub struct BlendMask: u8 {
         const R = 1;
         const G = 2;
         const B = 4;
@@ -399,9 +401,10 @@ bitflags::bitflags! {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
+#[repr(i32)]
 pub enum LogicOp {
-    Noop,
+    Noop = D3D12_LOGIC_OP_NOOP.0,
 }
 
 #[derive(Clone, Debug)]
@@ -424,13 +427,16 @@ pub enum CullMode {
 #[derive(Clone, Debug)]
 pub struct DepthStencilDesc {}
 
-#[derive(Clone, Debug)]
-pub struct IndexBufferStripCutValue {}
+#[derive(Clone, Copy, Debug)]
+#[repr(i32)]
+pub enum IndexBufferStripCutValue {
+    Disabled = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED.0,
+}
 
 #[derive(Clone, Debug)]
 pub enum PrimitiveTopology {
     Triangle,
-    PointList,
+    Point,
 }
 
 #[derive(Clone, Debug)]

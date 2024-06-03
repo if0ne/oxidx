@@ -1,4 +1,15 @@
-use windows::{core::Interface, Win32::Graphics::Direct3D12::ID3D12Device};
+use smallvec::SmallVec;
+use windows::{
+    core::Interface,
+    Win32::Graphics::{
+        Direct3D12::{
+            ID3D12Device, D3D12_BLEND_DESC, D3D12_GRAPHICS_PIPELINE_STATE_DESC,
+            D3D12_INPUT_LAYOUT_DESC, D3D12_PIPELINE_STATE_FLAGS, D3D12_RENDER_TARGET_BLEND_DESC,
+            D3D12_STREAM_OUTPUT_DESC,
+        },
+        Dxgi::Common::DXGI_FORMAT,
+    },
+};
 
 use crate::{
     command_allocator::CommandAllocatorInterface,
@@ -74,9 +85,9 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         nodemask: u32,
     ) -> Result<RS, DxError>;
 
-    fn create_graphics_pipeline<'a, const RTV_NUM: usize, G: PipelineStateInterface>(
+    fn create_graphics_pipeline<'a, G: PipelineStateInterface>(
         &self,
-        desc: &GraphicsPipelineDesc<'a, RTV_NUM>,
+        desc: &GraphicsPipelineDesc<'a>,
     ) -> Result<G, DxError>;
 }
 
@@ -189,14 +200,92 @@ impl_trait! {
         }
     }
 
-    fn create_graphics_pipeline<'a, const RTV_NUM: usize, G: PipelineStateInterface>(
+    fn create_graphics_pipeline<'a, G: PipelineStateInterface>(
         &self,
-        desc: &GraphicsPipelineDesc<'a, RTV_NUM>,
+        desc: &GraphicsPipelineDesc<'a>,
     ) -> Result<G, DxError> {
-        let res: G::Raw  = unsafe {
-            self.0.CreateGraphicsPipelineState(&desc.as_raw()).map_err(|_| DxError::Dummy)?
+        let mut rtv_formats = [DXGI_FORMAT::default(); 8];
+    
+        for (i, format) in desc.rtv_formats.iter().enumerate() {
+            rtv_formats[i] = format.as_raw();
+        }
+    
+        let input_layouts = desc
+            .input_layout
+            .iter()
+            .map(|il| il.as_raw())
+            .collect::<SmallVec<[_; 8]>>();
+    
+        let so_entries: SmallVec<[_; 8]> = if let Some(ref so) = desc.stream_output {
+            so.entries.iter().map(|e| e.as_raw()).collect()
+        } else {
+            smallvec::smallvec![]
         };
-
+    
+        let mut rtv_blend = [D3D12_RENDER_TARGET_BLEND_DESC::default(); 8];
+    
+        for (i, desc) in desc.blend_state.render_targets.iter().enumerate() {
+            rtv_blend[i] = desc.as_raw();
+        }
+    
+        let desc = D3D12_GRAPHICS_PIPELINE_STATE_DESC {
+            pRootSignature: unsafe { std::mem::transmute_copy(desc.root_signature.as_raw_ref()) },
+            VS: desc.vs.as_raw(),
+            PS: desc.ps.map(|ps| ps.as_raw()).unwrap_or_default(),
+            DS: desc.ds.map(|ds| ds.as_raw()).unwrap_or_default(),
+            HS: desc.hs.map(|hs| hs.as_raw()).unwrap_or_default(),
+            GS: desc.gs.map(|gs| gs.as_raw()).unwrap_or_default(),
+            StreamOutput: desc
+                .stream_output
+                .as_ref()
+                .map(|so| D3D12_STREAM_OUTPUT_DESC {
+                    pSODeclaration: so_entries.as_ptr() as *const _,
+                    NumEntries: so_entries.len() as u32,
+                    pBufferStrides: so.buffer_strides.as_ptr() as *const _,
+                    NumStrides: so.buffer_strides.len() as u32,
+                    RasterizedStream: so.rasterized_stream,
+                })
+                .unwrap_or_default(),
+            BlendState: D3D12_BLEND_DESC {
+                AlphaToCoverageEnable: desc.blend_state.alpha_to_coverage_enable.into(),
+                IndependentBlendEnable: desc.blend_state.independent_blend_enable.into(),
+                RenderTarget: rtv_blend,
+            },
+            SampleMask: desc.sample_mask,
+            RasterizerState: desc.rasterizer_state.as_raw(),
+            DepthStencilState: desc
+                .depth_stencil
+                .as_ref()
+                .map(|ds| ds.as_raw())
+                .unwrap_or_default(),
+            InputLayout: D3D12_INPUT_LAYOUT_DESC {
+                pInputElementDescs: input_layouts.as_ptr() as *const _,
+                NumElements: input_layouts.len() as u32,
+            },
+            IBStripCutValue: desc
+                .ib_strip_cut_value
+                .map(|ib| ib.as_raw())
+                .unwrap_or_default(),
+            PrimitiveTopologyType: desc.primitive_topology.as_raw(),
+            NumRenderTargets: desc.rtv_formats.len() as u32,
+            RTVFormats: rtv_formats,
+            DSVFormat: desc.dsv_format.map(|f| f.as_raw()).unwrap_or_default(),
+            SampleDesc: desc.sampler_desc.as_raw(),
+            NodeMask: desc.node_mask,
+            CachedPSO: desc
+                .cached_pso
+                .as_ref()
+                .map(|pso| pso.as_raw())
+                .unwrap_or_default(),
+            Flags: D3D12_PIPELINE_STATE_FLAGS(desc.flags.bits()),
+        };
+    
+        let res: G::Raw = unsafe {
+            self.0
+                .CreateGraphicsPipelineState(&desc)
+                .map_err(|_| DxError::Dummy)?
+        };
+    
         Ok(G::new(res))
-    }
+    }    
 }
