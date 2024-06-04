@@ -64,7 +64,7 @@ impl_trait! {
 }
 
 #[derive(Clone, Debug)]
-pub struct Barrier<'a> {
+pub struct ResourceBarrier<'a> {
     pub r#type: BarrierType<'a>,
     pub flags: BarrierFlags,
 }

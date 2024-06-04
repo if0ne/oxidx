@@ -292,37 +292,39 @@ fn populate_command_list(resources: &Resources) {
 
     let command_list = &resources.command_list;
 
-    command_list.Reset(&resources.command_allocator, &resources.pso)?;
+    command_list
+        .reset(&resources.command_allocator, &resources.pso)
+        .unwrap();
 
-    command_list.SetGraphicsRootSignature(&resources.root_signature);
-    command_list.RSSetViewports(&[resources.viewport]);
-    command_list.RSSetScissorRects(&[resources.scissor_rect]);
+    command_list.set_graphics_root_signature(&resources.root_signature);
+    command_list.rs_set_viewports([&resources.viewport]);
+    command_list.rs_set_scissor_rects([&resources.scissor_rect]);
 
     let barrier = transition_barrier(
         &resources.render_targets[resources.frame_index as usize],
         ResourceState::Present,
         ResourceState::RenderTarget,
     );
-    command_list.ResourceBarrier(&[barrier]);
+    command_list.resource_barrier(&[barrier]);
 
     let rtv_handle = resources
         .rtv_heap
         .get_cpu_descriptor_handle_for_heap_start()
         .offset(resources.frame_index as usize * resources.rtv_descriptor_size);
 
-    command_list.OMSetRenderTargets(1, Some(&rtv_handle), false, None);
+    command_list.om_set_render_targets([&rtv_handle], false, None);
 
-    command_list.ClearRenderTargetView(rtv_handle, &[0.0_f32, 0.2_f32, 0.4_f32, 1.0_f32], None);
-    command_list.IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    command_list.IASetVertexBuffers(0, Some(&[resources.vbv]));
-    command_list.DrawInstanced(3, 1, 0, 0);
+    command_list.clear_render_target_view(rtv_handle, [0.0_f32, 0.2_f32, 0.4_f32, 1.0_f32], []);
+    command_list.ia_set_primitive_topology(PrimitiveTopology::Triangle);
+    command_list.ia_set_vertex_buffers(0, [&resources.vbv]);
+    command_list.draw_instanced(3, 1, 0, 0);
 
-    // Indicate that the back buffer will now be used to present.
-    command_list.ResourceBarrier(&[transition_barrier(
+    let barrier = transition_barrier(
         &resources.render_targets[resources.frame_index as usize],
         ResourceState::RenderTarget,
         ResourceState::Present,
-    )]);
+    );
+    command_list.resource_barrier(&[barrier]);
 
     command_list.close();
 }
@@ -331,10 +333,10 @@ fn transition_barrier(
     resource: &Resource,
     state_before: ResourceState,
     state_after: ResourceState,
-) -> Barrier {
-    Barrier {
+) -> ResourceBarrier {
+    ResourceBarrier {
         r#type: BarrierType::Transition {
-            resource: resource,
+            resource,
             subresource: BARRIER_ALL_SUBRESOURCES,
             before: state_before,
             after: state_after,
@@ -463,7 +465,7 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
             independent_blend_enable: false,
             render_targets: smallvec![RenderTargetBlendDesc {
                 blend_enable: false,
-                logic_op_enable: false.into(),
+                logic_op_enable: false,
                 src_blend: Blend::One,
                 dst_blend: Blend::Zero,
                 blend_op: BlendOp::Add,

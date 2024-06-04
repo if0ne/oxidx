@@ -88,9 +88,9 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         nodemask: u32,
     ) -> Result<RS, DxError>;
 
-    fn create_graphics_pipeline<'a, G: PipelineStateInterface>(
+    fn create_graphics_pipeline<G: PipelineStateInterface>(
         &self,
-        desc: &GraphicsPipelineDesc<'a>,
+        desc: &GraphicsPipelineDesc<'_>,
     ) -> Result<G, DxError>;
 
     fn create_committed_resource<R: ResourceInterface>(
@@ -212,9 +212,9 @@ impl_trait! {
         }
     }
 
-    fn create_graphics_pipeline<'a, G: PipelineStateInterface>(
+    fn create_graphics_pipeline<G: PipelineStateInterface>(
         &self,
-        desc: &GraphicsPipelineDesc<'a>,
+        desc: &GraphicsPipelineDesc<'_>,
     ) -> Result<G, DxError> {
         let mut rtv_formats = [DXGI_FORMAT::default(); 8];
 

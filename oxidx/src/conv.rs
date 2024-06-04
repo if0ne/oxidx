@@ -1,10 +1,15 @@
+use std::mem::ManuallyDrop;
+
 use compact_str::CompactString;
 use windows::{
     core::PCSTR,
     Win32::{
         Foundation::RECT,
         Graphics::{
-            Direct3D::D3D_FEATURE_LEVEL,
+            Direct3D::{
+                D3D_FEATURE_LEVEL, D3D_PRIMITIVE_TOPOLOGY, D3D_PRIMITIVE_TOPOLOGY_POINTLIST,
+                D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
+            },
             Direct3D12::*,
             Dxgi::{
                 Common::{
@@ -37,9 +42,13 @@ use crate::{
         RootParameterType, RootSignatureFlags, RootSignatureVersion, ShaderVisibility,
         StaticSamplerDesc,
     },
-    resources::{RenderTargetViewDesc, ResourceDesc, ResourceState, ViewDimension},
+    resources::{
+        BarrierType, RenderTargetViewDesc, ResourceBarrier, ResourceDesc, ResourceState,
+        VertexBufferView, ViewDimension,
+    },
     swapchain::{Rational, SampleDesc, SwapchainDesc, SwapchainFullscreenDesc},
     sync::FenceFlags,
+    HasInterface,
 };
 
 impl SwapchainDesc {
@@ -520,6 +529,13 @@ impl PrimitiveTopology {
             PrimitiveTopology::Point => D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT,
         }
     }
+
+    pub(crate) fn as_raw_d3d(&self) -> D3D_PRIMITIVE_TOPOLOGY {
+        match *self {
+            PrimitiveTopology::Triangle => D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
+            PrimitiveTopology::Point => D3D_PRIMITIVE_TOPOLOGY_POINTLIST,
+        }
+    }
 }
 
 impl IndexBufferStripCutValue {
@@ -631,5 +647,64 @@ impl ResourceDesc {
 impl ResourceState {
     pub(crate) fn as_raw(&self) -> D3D12_RESOURCE_STATES {
         D3D12_RESOURCE_STATES(self.bits())
+    }
+}
+
+impl VertexBufferView {
+    pub(crate) fn as_raw(&self) -> D3D12_VERTEX_BUFFER_VIEW {
+        D3D12_VERTEX_BUFFER_VIEW {
+            BufferLocation: self.buffer_location,
+            SizeInBytes: self.size_in_bytes,
+            StrideInBytes: self.stride_in_bytes,
+        }
+    }
+}
+
+impl<'a> ResourceBarrier<'a> {
+    pub(crate) fn as_raw(&self) -> D3D12_RESOURCE_BARRIER {
+        D3D12_RESOURCE_BARRIER {
+            Type: self.r#type.as_type_raw(),
+            Flags: D3D12_RESOURCE_BARRIER_FLAGS(self.flags.bits()),
+            Anonymous: self.r#type.as_raw(),
+        }
+    }
+}
+
+impl<'a> BarrierType<'a> {
+    pub(crate) fn as_raw(&self) -> D3D12_RESOURCE_BARRIER_0 {
+        match self {
+            BarrierType::Transition {
+                resource,
+                subresource,
+                before,
+                after,
+            } => D3D12_RESOURCE_BARRIER_0 {
+                Transition: ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
+                    pResource: unsafe { std::mem::transmute_copy(resource.as_raw_ref()) },
+                    Subresource: *subresource,
+                    StateBefore: before.as_raw(),
+                    StateAfter: after.as_raw(),
+                }),
+            },
+            BarrierType::Aliasing { before, after } => D3D12_RESOURCE_BARRIER_0 {
+                Aliasing: ManuallyDrop::new(D3D12_RESOURCE_ALIASING_BARRIER {
+                    pResourceBefore: unsafe { std::mem::transmute_copy(before.as_raw_ref()) },
+                    pResourceAfter: unsafe { std::mem::transmute_copy(after.as_raw_ref()) },
+                }),
+            },
+            BarrierType::Uav { resource } => D3D12_RESOURCE_BARRIER_0 {
+                UAV: ManuallyDrop::new(D3D12_RESOURCE_UAV_BARRIER {
+                    pResource: unsafe { std::mem::transmute_copy(resource.as_raw_ref()) },
+                }),
+            },
+        }
+    }
+
+    pub(crate) fn as_type_raw(&self) -> D3D12_RESOURCE_BARRIER_TYPE {
+        match self {
+            BarrierType::Transition { .. } => D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+            BarrierType::Aliasing { .. } => D3D12_RESOURCE_BARRIER_TYPE_ALIASING,
+            BarrierType::Uav { .. } => D3D12_RESOURCE_BARRIER_TYPE_UAV,
+        }
     }
 }
