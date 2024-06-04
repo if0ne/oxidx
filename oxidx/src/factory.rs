@@ -24,27 +24,25 @@ use crate::{create_type, impl_trait, HasInterface};
 pub trait FactoryInterface4: HasInterface<Raw: Interface> {
     fn enum_adapters(&self, index: usize) -> Result<Adapter3, DxError>;
     fn enum_warp_adapters(&self) -> Result<Adapter3, DxError>;
-    fn create_swapchain_for_hwnd<CQ, O>(
+    fn create_swapchain_for_hwnd<CQ>(
         &self,
         command_queue: &CQ,
         hwnd: NonZeroIsize,
         desc: &SwapchainDesc,
         fullscreen_desc: Option<&SwapchainFullscreenDesc>,
-        restrict_to_output: Option<&O>,
+        restrict_to_output: Option<&impl OutputInterface>,
     ) -> Result<Swapchain1, DxError>
     where
-        CQ: CommandQueueInterface,
-        O: OutputInterface;
+        CQ: CommandQueueInterface;
 
-    fn create_swapchain_for_composition<CQ, O>(
+    fn create_swapchain_for_composition<CQ>(
         &self,
         command_queue: &CQ,
         desc: &SwapchainDesc,
-        restrict_to_output: Option<&O>,
+        restrict_to_output: Option<&impl OutputInterface>,
     ) -> Result<Swapchain1, DxError>
     where
-        CQ: CommandQueueInterface,
-        O: OutputInterface;
+        CQ: CommandQueueInterface;
 
     fn make_window_association(
         &self,
@@ -87,17 +85,16 @@ impl_trait! {
         Ok(Adapter3::new(adapter))
     }
 
-    fn create_swapchain_for_hwnd<CQ, O>(
+    fn create_swapchain_for_hwnd<CQ>(
         &self,
         command_queue: &CQ,
         hwnd: NonZeroIsize,
         desc: &SwapchainDesc,
         fullscreen_desc: Option<&SwapchainFullscreenDesc>,
-        restrict_to_output: Option<&O>,
+        restrict_to_output: Option<&impl OutputInterface>,
     ) -> Result<Swapchain1, DxError>
     where
-        CQ: CommandQueueInterface,
-        O: OutputInterface,
+        CQ: CommandQueueInterface
     {
         let cq = command_queue.as_raw_ref();
         let o = restrict_to_output.as_ref().map(|o| o.as_raw_ref());
@@ -121,15 +118,14 @@ impl_trait! {
         Ok(Swapchain1::new(swapchain))
     }
 
-    fn create_swapchain_for_composition<CQ, O>(
+    fn create_swapchain_for_composition<CQ>(
         &self,
         command_queue: &CQ,
         desc: &SwapchainDesc,
-        restrict_to_output: Option<&O>,
+        restrict_to_output: Option<&impl OutputInterface>,
     ) -> Result<Swapchain1, DxError>
     where
-        CQ: CommandQueueInterface,
-        O: OutputInterface
+        CQ: CommandQueueInterface
     {
         let cq = command_queue.as_raw_ref();
         let o = restrict_to_output.as_ref().map(|o| o.as_raw_ref());

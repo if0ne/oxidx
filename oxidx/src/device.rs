@@ -17,14 +17,17 @@ use crate::{
     command_queue::{CommandQueueDesc, CommandQueueInterface},
     create_type,
     error::DxError,
-    heap::{CpuDescriptorHandle, DescriptorHeapDesc, DescriptorHeapInterface, DescriptorHeapType},
+    heap::{
+        CpuDescriptorHandle, DescriptorHeapDesc, DescriptorHeapInterface, DescriptorHeapType,
+        HeapFlags, HeapProperties,
+    },
     impl_trait,
-    misc::CommandListType,
+    misc::{ClearValue, CommandListType},
     pso::{
         BlobInterface, GraphicsPipelineDesc, PipelineStateInterface, RootSignatureDesc,
         RootSignatureInterface, RootSignatureVersion,
     },
-    resources::{RenderTargetViewDesc, ResourceInterface},
+    resources::{RenderTargetViewDesc, ResourceDesc, ResourceInterface, ResourceState},
     sync::{FenceFlags, FenceInterface},
     HasInterface,
 };
@@ -89,6 +92,15 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         &self,
         desc: &GraphicsPipelineDesc<'a>,
     ) -> Result<G, DxError>;
+
+    fn create_committed_resource<R: ResourceInterface>(
+        &self,
+        heap_properties: HeapProperties,
+        heap_flags: HeapFlags,
+        desc: ResourceDesc,
+        init_state: ResourceState,
+        optimized_clear_value: Option<ClearValue>,
+    ) -> Result<R, DxError>;
 }
 
 create_type! { Device wrap ID3D12Device }
@@ -205,29 +217,29 @@ impl_trait! {
         desc: &GraphicsPipelineDesc<'a>,
     ) -> Result<G, DxError> {
         let mut rtv_formats = [DXGI_FORMAT::default(); 8];
-    
+
         for (i, format) in desc.rtv_formats.iter().enumerate() {
             rtv_formats[i] = format.as_raw();
         }
-    
+
         let input_layouts = desc
             .input_layout
             .iter()
             .map(|il| il.as_raw())
             .collect::<SmallVec<[_; 8]>>();
-    
+
         let so_entries: SmallVec<[_; 8]> = if let Some(ref so) = desc.stream_output {
             so.entries.iter().map(|e| e.as_raw()).collect()
         } else {
             smallvec::smallvec![]
         };
-    
+
         let mut rtv_blend = [D3D12_RENDER_TARGET_BLEND_DESC::default(); 8];
-    
+
         for (i, desc) in desc.blend_state.render_targets.iter().enumerate() {
             rtv_blend[i] = desc.as_raw();
         }
-    
+
         let desc = D3D12_GRAPHICS_PIPELINE_STATE_DESC {
             pRootSignature: unsafe { std::mem::transmute_copy(desc.root_signature.as_raw_ref()) },
             VS: desc.vs.as_raw(),
@@ -279,13 +291,40 @@ impl_trait! {
                 .unwrap_or_default(),
             Flags: D3D12_PIPELINE_STATE_FLAGS(desc.flags.bits()),
         };
-    
+
         let res: G::Raw = unsafe {
             self.0
                 .CreateGraphicsPipelineState(&desc)
                 .map_err(|_| DxError::Dummy)?
         };
-    
+
         Ok(G::new(res))
-    }    
+    }
+
+    fn create_committed_resource<R: ResourceInterface>(
+        &self,
+        heap_properties: HeapProperties,
+        heap_flags: HeapFlags,
+        desc: ResourceDesc,
+        init_state: ResourceState,
+        optimized_clear_value: Option<ClearValue>,
+    ) -> Result<R, DxError> {
+        let clear_value = optimized_clear_value.as_ref().map(|c| c.as_raw());
+        let clear_value = clear_value.as_ref().map(|c| c as *const _);
+
+        let mut resource = None;
+        unsafe {
+            self.0.CreateCommittedResource(
+                &heap_properties.as_raw(),
+                heap_flags.as_raw(),
+                &desc.as_raw(),
+                init_state.as_raw(),
+                clear_value,
+                &mut resource,
+            ).map_err(|_| DxError::Dummy)?;
+        }
+        let resource = resource.unwrap();
+
+        Ok(R::new(resource))
+    }
 }

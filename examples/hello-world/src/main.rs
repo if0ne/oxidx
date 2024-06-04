@@ -123,7 +123,7 @@ struct Resources {
     #[allow(dead_code)]
     vertex_buffer: Resource,
 
-    //;vbv: D3D12_VERTEX_BUFFER_VIEW,
+    vbv: VertexBufferView,
     fence: Fence,
     fence_value: u64,
     fence_event: Event,
@@ -167,7 +167,13 @@ impl DXSample for Sample {
 
         let swap_chain: Swapchain3 = self
             .dxgi_factory
-            .create_swapchain_for_hwnd(&command_queue, hwnd, &swap_chain_desc, None, None)
+            .create_swapchain_for_hwnd(
+                &command_queue,
+                hwnd,
+                &swap_chain_desc,
+                None,
+                None::<&Output>,
+            )
             .unwrap()
             .try_into()
             .unwrap();
@@ -224,7 +230,7 @@ impl DXSample for Sample {
 
         let aspect_ratio = width as f32 / height as f32;
 
-        let (vertex_buffer, vbv) = create_vertex_buffer(&self.device, aspect_ratio)?;
+        let (vertex_buffer, vbv) = create_vertex_buffer(&self.device, aspect_ratio);
 
         let fence = self.device.create_fence(0, FenceFlags::empty()).unwrap();
 
@@ -246,7 +252,7 @@ impl DXSample for Sample {
             pso,
             command_list,
             vertex_buffer,
-            //vbv,
+            vbv,
             fence,
             fence_value,
             fence_event,
@@ -485,10 +491,7 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
     device.create_graphics_pipeline(&desc).unwrap()
 }
 
-fn create_vertex_buffer(
-    device: &Device,
-    aspect_ratio: f32,
-) -> (Resource, D3D12_VERTEX_BUFFER_VIEW) {
+fn create_vertex_buffer(device: &Device, aspect_ratio: f32) -> (Resource, VertexBufferView) {
     let vertices = [
         Vertex {
             position: [0.0, 0.25 * aspect_ratio, 0.0],
@@ -504,45 +507,46 @@ fn create_vertex_buffer(
         },
     ];
 
-    let mut vertex_buffer: Option<ID3D12Resource> = None;
-    unsafe {
-        device.CreateCommittedResource(
-            &D3D12_HEAP_PROPERTIES {
-                Type: D3D12_HEAP_TYPE_UPLOAD,
-                ..Default::default()
+    let vertex_buffer: Resource = device
+        .create_committed_resource(
+            HeapProperties {
+                r#type: HeapType::Upload,
+                cpu_page_propery: CpuPageProperty::Unknown,
+                memory_pool_preference: MemoryPool::Unknown,
+                creation_node_mask: 0,
+                visible_node_mask: 0,
             },
-            D3D12_HEAP_FLAG_NONE,
-            &D3D12_RESOURCE_DESC {
-                Dimension: D3D12_RESOURCE_DIMENSION_BUFFER,
-                Width: std::mem::size_of_val(&vertices) as u64,
-                Height: 1,
-                DepthOrArraySize: 1,
-                MipLevels: 1,
-                SampleDesc: DXGI_SAMPLE_DESC {
-                    Count: 1,
-                    Quality: 0,
+            HeapFlags::empty(),
+            ResourceDesc {
+                dimension: ResourceDimension::Buffer,
+                alignment: 0,
+                width: std::mem::size_of_val(&vertices) as u64,
+                height: 1,
+                depth_or_array_size: 1,
+                mip_levels: 1,
+                sample_desc: SampleDesc {
+                    count: 1,
+                    quality: 0,
                 },
-                Layout: D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
-                ..Default::default()
+                format: Format::Less,
+                layout: TextureLayout::RowMajor,
+                flags: ResourceFlags::empty(),
             },
-            D3D12_RESOURCE_STATE_GENERIC_READ,
+            ResourceState::GenericRead,
             None,
-            &mut vertex_buffer,
-        )?
-    };
-    let vertex_buffer = vertex_buffer.unwrap();
+        )
+        .unwrap();
 
     unsafe {
-        let mut data = std::ptr::null_mut();
-        vertex_buffer.Map(0, None, Some(&mut data))?;
+        let data = vertex_buffer.map(0, None).unwrap();
         std::ptr::copy_nonoverlapping(vertices.as_ptr(), data as *mut Vertex, vertices.len());
-        vertex_buffer.Unmap(0, None);
+        vertex_buffer.unmap(0, None);
     }
 
-    let vbv = D3D12_VERTEX_BUFFER_VIEW {
-        BufferLocation: unsafe { vertex_buffer.GetGPUVirtualAddress() },
-        StrideInBytes: std::mem::size_of::<Vertex>() as u32,
-        SizeInBytes: std::mem::size_of_val(&vertices) as u32,
+    let vbv = VertexBufferView {
+        buffer_location: vertex_buffer.get_gpu_virtual_address(),
+        stride_in_bytes: std::mem::size_of::<Vertex>() as u32,
+        size_in_bytes: std::mem::size_of_val(&vertices) as u32,
     };
 
     (vertex_buffer, vbv)

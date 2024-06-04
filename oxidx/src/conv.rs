@@ -22,10 +22,13 @@ use crate::{
     adapter::{AdapterDesc, AdapterFlags, Luid},
     command_queue::CommandQueueDesc,
     factory::FeatureLevel,
-    heap::{CpuDescriptorHandle, DescriptorHeapDesc, DescriptorHeapFlags, DescriptorHeapType},
+    heap::{
+        CpuDescriptorHandle, DescriptorHeapDesc, DescriptorHeapFlags, DescriptorHeapType,
+        HeapFlags, HeapProperties,
+    },
     misc::{
-        AlphaMode, CommandListType, Format, FrameBufferUsage, Rect, Scaling, ScalingMode,
-        ScanlineOrdering, SwapEffect, Viewport,
+        AlphaMode, ClearValue, CommandListType, Format, FrameBufferUsage, Rect, Scaling,
+        ScalingMode, ScanlineOrdering, SwapEffect, Viewport,
     },
     pso::{
         Blend, BlendOp, Blob, BlobInterface, CachedPipeline, CullMode, DeclarationEntry,
@@ -34,7 +37,7 @@ use crate::{
         RootParameterType, RootSignatureFlags, RootSignatureVersion, ShaderVisibility,
         StaticSamplerDesc,
     },
-    resources::{RenderTargetViewDesc, ViewDimension},
+    resources::{RenderTargetViewDesc, ResourceDesc, ResourceState, ViewDimension},
     swapchain::{Rational, SampleDesc, SwapchainDesc, SwapchainFullscreenDesc},
     sync::FenceFlags,
 };
@@ -563,5 +566,70 @@ impl BlendOp {
 impl LogicOp {
     pub(crate) fn as_raw(&self) -> D3D12_LOGIC_OP {
         D3D12_LOGIC_OP(*self as i32)
+    }
+}
+
+impl ClearValue {
+    pub(crate) fn as_raw(&self) -> D3D12_CLEAR_VALUE {
+        match *self {
+            ClearValue::Color { format, value } => D3D12_CLEAR_VALUE {
+                Format: format.as_raw(),
+                Anonymous: D3D12_CLEAR_VALUE_0 { Color: value },
+            },
+            ClearValue::Depth {
+                format,
+                depth,
+                stencil,
+            } => D3D12_CLEAR_VALUE {
+                Format: format.as_raw(),
+                Anonymous: D3D12_CLEAR_VALUE_0 {
+                    DepthStencil: D3D12_DEPTH_STENCIL_VALUE {
+                        Depth: depth,
+                        Stencil: stencil,
+                    },
+                },
+            },
+        }
+    }
+}
+
+impl HeapProperties {
+    pub(crate) fn as_raw(&self) -> D3D12_HEAP_PROPERTIES {
+        D3D12_HEAP_PROPERTIES {
+            Type: D3D12_HEAP_TYPE(self.r#type as i32),
+            CPUPageProperty: D3D12_CPU_PAGE_PROPERTY(self.cpu_page_propery as i32),
+            MemoryPoolPreference: D3D12_MEMORY_POOL(self.memory_pool_preference as i32),
+            CreationNodeMask: self.creation_node_mask,
+            VisibleNodeMask: self.visible_node_mask,
+        }
+    }
+}
+
+impl HeapFlags {
+    pub(crate) fn as_raw(&self) -> D3D12_HEAP_FLAGS {
+        D3D12_HEAP_FLAGS(self.bits())
+    }
+}
+
+impl ResourceDesc {
+    pub(crate) fn as_raw(&self) -> D3D12_RESOURCE_DESC {
+        D3D12_RESOURCE_DESC {
+            Dimension: D3D12_RESOURCE_DIMENSION(self.dimension as i32),
+            Alignment: self.alignment,
+            Width: self.width,
+            Height: self.height,
+            DepthOrArraySize: self.depth_or_array_size,
+            MipLevels: self.mip_levels,
+            Format: self.format.as_raw(),
+            SampleDesc: self.sample_desc.as_raw(),
+            Layout: D3D12_TEXTURE_LAYOUT(self.layout as i32),
+            Flags: D3D12_RESOURCE_FLAGS(self.flags.bits()),
+        }
+    }
+}
+
+impl ResourceState {
+    pub(crate) fn as_raw(&self) -> D3D12_RESOURCE_STATES {
+        D3D12_RESOURCE_STATES(self.bits())
     }
 }
