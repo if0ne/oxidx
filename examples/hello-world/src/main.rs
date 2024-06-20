@@ -288,7 +288,7 @@ impl DXSample for Sample {
 }
 
 fn populate_command_list(resources: &Resources) {
-    resources.command_allocator.reset();
+    resources.command_allocator.reset().unwrap();
 
     let command_list = &resources.command_list;
 

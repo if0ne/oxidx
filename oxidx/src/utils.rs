@@ -1,19 +1,29 @@
+use std::cell::Cell;
+use std::marker::PhantomData;
+use std::sync::MutexGuard;
+
 #[doc(hidden)]
 #[macro_export]
 macro_rules! create_type {
     ($name:ident wrap $raw_type:ty) => {
         create_type! { $name wrap $raw_type; decorator for }
     };
+    ($name:ident wrap $raw_type:ty; auto impl $( $trait:ty ),* ) => {
+        create_type! { $name wrap $raw_type; decorator for }
+        $(
+            unsafe impl $trait for $name {}
+        )*
+    };
     ($name:ident wrap $raw_type:ty; decorator for $( $base:ty ),*) => {
         #[derive(Clone, Debug, PartialEq, Eq)]
-        pub struct $name($raw_type);
+        pub struct $name($raw_type, $crate::utils::PhantomUnsync, $crate::utils::PhantomUnsend);
 
         impl $crate::HasInterface for $name {
             type Raw = $raw_type;
             type RawRef<'a> = &'a $raw_type;
 
             fn new(raw: Self::Raw) -> Self {
-                Self(raw)
+                Self(raw, Default::default(), Default::default())
             }
 
             fn as_raw(&self) -> &Self::Raw {
@@ -56,3 +66,14 @@ macro_rules! impl_trait {
         }
     }
 }
+
+pub(crate) fn is_send<T: Send>() {}
+
+pub(crate) fn is_sync<T: Sync>() {}
+
+// pub(crate) fn is_not_send<T: !Send>() {}
+
+// pub(crate) fn is_not_sync<T: !Sync>() {}
+
+pub(crate) type PhantomUnsync = PhantomData<Cell<()>>;
+pub(crate) type PhantomUnsend = PhantomData<MutexGuard<'static, ()>>;

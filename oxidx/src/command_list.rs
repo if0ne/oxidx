@@ -90,33 +90,33 @@ impl_trait! {
         }
         Ok(())
     }
-    
+
     fn set_graphics_root_signature(&self, root_signature: &impl RootSignatureInterface) {
         unsafe { self.0.SetGraphicsRootSignature(root_signature.as_raw_ref()) }
     }
-    
+
     fn rs_set_viewports<'a>(&self, viewport: impl IntoIterator<Item = &'a Viewport>) {
         let viewports = viewport
             .into_iter()
             .map(|v| v.as_raw())
             .collect::<SmallVec<[_; 8]>>();
-    
+
         unsafe {
             self.0.RSSetViewports(&viewports);
         }
     }
-    
+
     fn rs_set_scissor_rects<'a>(&self, rects: impl IntoIterator<Item = &'a Rect>) {
         let rects = rects
             .into_iter()
             .map(|v| v.as_raw())
             .collect::<SmallVec<[_; 8]>>();
-    
+
         unsafe {
             self.0.RSSetScissorRects(&rects);
         }
     }
-    
+
     fn om_set_render_targets<'a>(
         &self,
         render_targets: impl IntoIterator<Item = &'a CpuDescriptorHandle>,
@@ -127,16 +127,16 @@ impl_trait! {
             .into_iter()
             .map(|rt| rt.as_raw())
             .collect::<SmallVec<[_; 8]>>();
-    
+
         let render_targets_raw = if !render_targets.is_empty() {
             Some(render_targets.as_ptr() as *const _)
         } else {
             None
         };
-    
+
         let depth_stencil = depth_stencil.map(|ds| ds.as_raw());
         let depth_stencil = depth_stencil.as_ref().map(|ds| ds as *const _);
-    
+
         unsafe {
             self.0.OMSetRenderTargets(
                 render_targets.len() as u32,
@@ -146,7 +146,7 @@ impl_trait! {
             );
         }
     }
-    
+
     fn clear_render_target_view<'a>(
         &self,
         rtv_handle: CpuDescriptorHandle,
@@ -157,25 +157,25 @@ impl_trait! {
             .into_iter()
             .map(|r| r.as_raw())
             .collect::<SmallVec<[_; 8]>>();
-    
+
         let rects = if !rects.is_empty() {
             Some(rects.as_slice())
         } else {
             None
         };
-    
+
         unsafe {
             self.0
                 .ClearRenderTargetView(rtv_handle.as_raw(), &color, rects);
         }
     }
-    
+
     fn ia_set_primitive_topology(&self, topology: PrimitiveTopology) {
         unsafe {
             self.0.IASetPrimitiveTopology(topology.as_raw_d3d());
         }
     }
-    
+
     fn ia_set_vertex_buffers<'a>(
         &self,
         slot: u32,
@@ -185,16 +185,16 @@ impl_trait! {
             .into_iter()
             .map(|r| r.as_raw())
             .collect::<SmallVec<[_; 8]>>();
-    
+
         let buffers = if !buffers.is_empty() {
             Some(buffers.as_slice())
         } else {
             None
         };
-    
+
         unsafe { self.0.IASetVertexBuffers(slot, buffers) }
     }
-    
+
     fn draw_instanced(
         &self,
         vertex_count_per_instance: u32,
@@ -211,15 +211,13 @@ impl_trait! {
             )
         }
     }
-    
+
     fn resource_barrier<'a>(&self, barriers: impl IntoIterator<Item = &'a ResourceBarrier<'a>>) {
         let barriers = barriers
             .into_iter()
             .map(|r| r.as_raw())
             .collect::<SmallVec<[_; 8]>>();
-    
+
         unsafe { self.0.ResourceBarrier(barriers.as_slice()) }
     }
 }
-
-
