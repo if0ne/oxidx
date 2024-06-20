@@ -26,7 +26,10 @@ pub trait CommandAllocatorInterface:
     fn reset(&self) -> Result<(), DxError>;
 }
 
-create_type! { CommandAllocator wrap ID3D12CommandAllocator }
+create_type! {
+    /// Represents the allocations of storage for graphics processing unit (GPU) commands.
+    CommandAllocator wrap ID3D12CommandAllocator 
+}
 
 impl_trait! {
     impl CommandAllocatorInterface =>

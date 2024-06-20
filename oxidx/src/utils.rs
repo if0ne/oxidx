@@ -5,17 +5,18 @@ use std::sync::MutexGuard;
 #[doc(hidden)]
 #[macro_export]
 macro_rules! create_type {
-    ($name:ident wrap $raw_type:ty) => {
-        create_type! { $name wrap $raw_type; decorator for }
+    ($(#[$attr:meta])* $name:ident wrap $raw_type:ty) => {
+        create_type! { $(#[$attr])* $name wrap $raw_type; decorator for }
     };
-    ($name:ident wrap $raw_type:ty; auto impl $( $trait:ty ),* ) => {
-        create_type! { $name wrap $raw_type; decorator for }
+    ($(#[$attr:meta])* $name:ident wrap $raw_type:ty; auto impl $( $trait:ty ),* ) => {
+        create_type! { $(#[$attr])* $name wrap $raw_type; decorator for }
         $(
             unsafe impl $trait for $name {}
         )*
     };
-    ($name:ident wrap $raw_type:ty; decorator for $( $base:ty ),*) => {
+    ($(#[$attr:meta])* $name:ident wrap $raw_type:ty; decorator for $( $base:ty ),*) => {
         #[derive(Clone, Debug, PartialEq, Eq)]
+        $(#[$attr])*
         pub struct $name($raw_type, $crate::utils::PhantomUnsync, $crate::utils::PhantomUnsend);
 
         impl $crate::HasInterface for $name {
