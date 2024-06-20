@@ -11,7 +11,7 @@ pub trait CommandAllocatorInterface:
     /// Indicates to re-use the memory that is associated with the command allocator.
     ///
     /// # Errors
-    /// This method returns Err(fail) if there is an actively recording command list referencing the command allocator.
+    /// This method returns [`DxError::Fail`](crate::error::DxError::Fail) if there is an actively recording command list referencing the command allocator.
     /// The debug layer will also issue an error in this case.
     ///
     /// # Remarks
@@ -28,7 +28,7 @@ pub trait CommandAllocatorInterface:
 
 create_type! {
     /// Represents the allocations of storage for graphics processing unit (GPU) commands.
-    CommandAllocator wrap ID3D12CommandAllocator 
+    CommandAllocator wrap ID3D12CommandAllocator
 }
 
 impl_trait! {

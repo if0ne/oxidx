@@ -107,11 +107,11 @@ impl_trait! {
             if let Some(o) = o {
                 self.0
                     .CreateSwapChainForHwnd(cq, HWND(hwnd.get()), &desc, fullscreen_desc, o)
-                    .map_err(|_| DxError::SwapchainCreation)?
+                    .map_err(DxError::from)?
             } else {
                 self.0
                     .CreateSwapChainForHwnd(cq, HWND(hwnd.get()), &desc, fullscreen_desc, None)
-                    .map_err(|_| DxError::SwapchainCreation)?
+                    .map_err(DxError::from)?
             }
         };
 
@@ -136,11 +136,11 @@ impl_trait! {
             if let Some(o) = o {
                 self.0
                     .CreateSwapChainForComposition(cq, &desc, o)
-                    .map_err(|_| DxError::SwapchainCreation)?
+                    .map_err(DxError::from)?
             } else {
                 self.0
                     .CreateSwapChainForComposition(cq, &desc, None)
-                    .map_err(|_| DxError::SwapchainCreation)?
+                    .map_err(DxError::from)?
             }
         };
 
