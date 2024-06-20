@@ -6,11 +6,14 @@ edition = "2021"
 [dependencies.bitflags]
 version = "2.5.0"
 
+[dependencies.compact_str]
+version = "0.7.1"
+
 [dependencies.smallvec]
 version = "1.13.2"
 
-[dependencies.compact_str]
-version = "0.7.1"
+[dependencies.thiserror]
+version = "1.0.61"
 
 [dependencies.windows]
 version = "0.56.0"

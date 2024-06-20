@@ -40,7 +40,12 @@ macro_rules! create_type {
                 type Error = $crate::error::DxError;
 
                 fn try_into(self) -> Result<$name, Self::Error> {
-                    let temp = self.0.cast::<_>().map_err(|_| $crate::error::DxError::CastError)?;
+                    let temp = self.0.cast::<_>()
+                        .map_err(|_|
+                            $crate::error::DxError::Cast(
+                                std::any::type_name::<$base>(),
+                                std::any::type_name::<$name>()
+                            ))?;
 
                     Ok(<$name>::new(temp))
                 }

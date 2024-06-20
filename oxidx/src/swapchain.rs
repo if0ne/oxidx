@@ -45,7 +45,7 @@ impl_trait! {
             self.0.Present(interval, flags.bits())
         };
 
-        res.ok().map_err(|_| DxError::SwapchainPresentError)
+        res.ok().map_err(|_| DxError::SwapchainPresent)
     }
 
     fn get_buffer<R: ResourceInterface>(&self, buffer: u32) -> Result<R, DxError> {

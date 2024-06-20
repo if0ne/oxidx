@@ -6,19 +6,9 @@ use windows::{
     Win32::{
         Foundation::RECT,
         Graphics::{
-            Direct3D::{
-                D3D_FEATURE_LEVEL, D3D_PRIMITIVE_TOPOLOGY, D3D_PRIMITIVE_TOPOLOGY_POINTLIST,
-                D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
-            },
+            Direct3D::*,
             Direct3D12::*,
-            Dxgi::{
-                Common::{
-                    DXGI_ALPHA_MODE, DXGI_FORMAT, DXGI_MODE_SCALING, DXGI_MODE_SCANLINE_ORDER,
-                    DXGI_RATIONAL, DXGI_SAMPLE_DESC,
-                },
-                DXGI_ADAPTER_DESC1, DXGI_SCALING, DXGI_SWAP_CHAIN_DESC1,
-                DXGI_SWAP_CHAIN_FULLSCREEN_DESC, DXGI_SWAP_EFFECT, DXGI_USAGE,
-            },
+            Dxgi::{Common::*, *},
         },
     },
 };
@@ -35,6 +25,7 @@ use crate::{
         AlphaMode, ClearValue, CommandListType, Format, FrameBufferUsage, Rect, Scaling,
         ScalingMode, ScanlineOrdering, SwapEffect, Viewport,
     },
+    prelude::DxError,
     pso::{
         Blend, BlendOp, Blob, BlobInterface, CachedPipeline, CullMode, DeclarationEntry,
         DepthStencilDesc, FillMode, IndexBufferStripCutValue, InputElementDesc, InputSlotClass,
@@ -706,5 +697,11 @@ impl<'a> BarrierType<'a> {
             BarrierType::Aliasing { .. } => D3D12_RESOURCE_BARRIER_TYPE_ALIASING,
             BarrierType::Uav { .. } => D3D12_RESOURCE_BARRIER_TYPE_UAV,
         }
+    }
+}
+
+impl From<windows::core::Error> for DxError {
+    fn from(value: windows::core::Error) -> Self {
+        DxError::Dxgi(value.message())
     }
 }

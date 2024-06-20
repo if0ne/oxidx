@@ -65,7 +65,7 @@ impl_trait! {
         let adapter = unsafe {
             self.0
                 .EnumAdapters1(index as u32)
-                .map_err(|_| DxError::NotFoundAdaptersError)?
+                .map_err(DxError::from)?
         }
         .cast::<IDXGIAdapter3>()
         .expect("IDXGIFactory4 should support IDXGIAdapter3");
@@ -77,7 +77,7 @@ impl_trait! {
         let adapter = unsafe {
             self.0
                 .EnumWarpAdapter::<IDXGIAdapter>()
-                .map_err(|_| DxError::NotFoundAdaptersError)?
+                .map_err(DxError::from)?
         }
         .cast::<IDXGIAdapter3>()
         .expect("IDXGIFactory4 should support IDXGIAdapter3");
@@ -107,11 +107,11 @@ impl_trait! {
             if let Some(o) = o {
                 self.0
                     .CreateSwapChainForHwnd(cq, HWND(hwnd.get()), &desc, fullscreen_desc, o)
-                    .map_err(|_| DxError::SwapchainCreationError)?
+                    .map_err(|_| DxError::SwapchainCreation)?
             } else {
                 self.0
                     .CreateSwapChainForHwnd(cq, HWND(hwnd.get()), &desc, fullscreen_desc, None)
-                    .map_err(|_| DxError::SwapchainCreationError)?
+                    .map_err(|_| DxError::SwapchainCreation)?
             }
         };
 
@@ -136,11 +136,11 @@ impl_trait! {
             if let Some(o) = o {
                 self.0
                     .CreateSwapChainForComposition(cq, &desc, o)
-                    .map_err(|_| DxError::SwapchainCreationError)?
+                    .map_err(|_| DxError::SwapchainCreation)?
             } else {
                 self.0
                     .CreateSwapChainForComposition(cq, &desc, None)
-                    .map_err(|_| DxError::SwapchainCreationError)?
+                    .map_err(|_| DxError::SwapchainCreation)?
             }
         };
 
@@ -180,8 +180,7 @@ impl Entry {
         &self,
         flags: FactoryCreationFlags,
     ) -> Result<F, DxError> {
-        let inner: F::Raw = unsafe { CreateDXGIFactory2(flags.bits()) }
-            .map_err(|_| DxError::FactoryCreationError)?;
+        let inner: F::Raw = unsafe { CreateDXGIFactory2(flags.bits()) }.map_err(DxError::from)?;
 
         Ok(F::new(inner))
     }
@@ -194,7 +193,7 @@ impl Entry {
         let mut inner: Option<D::Raw> = None;
         unsafe {
             D3D12CreateDevice(adapter.as_raw_ref(), feature_level.as_raw(), &mut inner)
-                .map_err(|_| DxError::Dummy)?
+                .map_err(DxError::from)?
         };
         let inner = inner.unwrap();
 
@@ -204,7 +203,7 @@ impl Entry {
     pub fn create_debug<D: DebugInterface>(&self) -> Result<D, DxError> {
         let mut inner: Option<D::Raw> = None;
 
-        unsafe { D3D12GetDebugInterface(&mut inner).map_err(|_| DxError::Dummy)? };
+        unsafe { D3D12GetDebugInterface(&mut inner).map_err(DxError::from)? };
         let inner = inner.unwrap();
 
         Ok(D::new(inner))
