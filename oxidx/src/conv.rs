@@ -4,7 +4,7 @@ use compact_str::CompactString;
 use windows::{
     core::PCSTR,
     Win32::{
-        Foundation::RECT,
+        Foundation::*,
         Graphics::{
             Direct3D::*,
             Direct3D12::*,
@@ -714,7 +714,15 @@ impl<'a> BarrierType<'a> {
 
 impl From<windows::core::Error> for DxError {
     fn from(value: windows::core::Error) -> Self {
-        DxError::Dxgi(value.message())
+        match value.code() {
+            D3D12_ERROR_ADAPTER_NOT_FOUND => DxError::AdapterNotFound,
+            D3D12_ERROR_DRIVER_VERSION_MISMATCH => DxError::DriverVersionMismatch,
+            E_FAIL => DxError::Fail,
+            E_INVALIDARG => DxError::InvalidArgs,
+            E_OUTOFMEMORY => DxError::Oom,
+            E_NOTIMPL => DxError::NotImpl,
+            _ => DxError::Dxgi(value.message()),
+        }
     }
 }
 

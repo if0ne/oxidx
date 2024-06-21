@@ -92,6 +92,16 @@ pub trait CommandQueueInterface:
     where
         I: IntoIterator<Item = &'cl CL>,
         CL: CommandListInterface + 'cl;
+
+    /// This method samples the CPU and GPU timestamp counters at the same moment in time.
+    ///
+    /// # Returns
+    /// * `(u64, u64)` - (The value of the GPU timestamp counter, the value of the CPU timestamp counter)
+    ///
+    /// # Remarks
+    /// For more information, refer to [`Timing`](https://learn.microsoft.com/en-us/windows/win32/direct3d12/timing).
+    fn get_clock_calibration(&self) -> Result<(u64, u64), DxError>;
+
     fn signal(&self, fence: &Fence, value: u64) -> Result<(), DxError>;
 }
 
@@ -147,6 +157,17 @@ impl_trait! {
             })
             .collect::<SmallVec<[_; 16]>>();
         unsafe { self.0.ExecuteCommandLists(command_lists.as_slice()) }
+    }
+
+    fn get_clock_calibration(&self) -> Result<(u64, u64), DxError> {
+        let mut gpu = 0;
+        let mut cpu = 0;
+
+        unsafe {
+            self.0.GetClockCalibration(&mut gpu, &mut cpu).map_err(DxError::from)?;
+        }
+
+        Ok((gpu, cpu))
     }
 
     fn signal(&self, fence: &Fence, value: u64) -> Result<(), DxError> {

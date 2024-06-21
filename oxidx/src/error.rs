@@ -41,10 +41,6 @@ pub enum DxError {
     #[error("The method call isn't implemented with the passed parameter combination.")]
     NotImpl,
 
-    /// Alternate success value, indicating a successful but nonstandard completion (the precise meaning depends on context)
-    #[error("Alternate success value, indicating a successful but nonstandard completion (the precise meaning depends on context).")]
-    False,
-
     // DXGI
     /// Generic DXGI error
     #[error("{0}")]
