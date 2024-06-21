@@ -43,17 +43,3 @@ impl_trait! {
         Ok(())
     }
 }
-
-/*
-#[cfg(test)]
-mod tests {
-    use crate::command_allocator::CommandAllocator;
-    use crate::utils::*;
-
-    #[test]
-    fn check_send_sync() {
-        is_not_send::<CommandAllocator>();
-        is_not_sync::<CommandAllocator>();
-    }
-}
-*/
