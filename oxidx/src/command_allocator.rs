@@ -5,6 +5,7 @@ use windows::{
 
 use crate::{create_type, impl_trait, prelude::DxError, HasInterface};
 
+/// Represents the allocations of storage for graphics processing unit (GPU) commands.
 pub trait CommandAllocatorInterface:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12CommandAllocator>>
 {

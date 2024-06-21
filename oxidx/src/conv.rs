@@ -15,6 +15,7 @@ use windows::{
 
 use crate::{
     adapter::{AdapterDesc, AdapterFlags, Luid},
+    command_list::CommandListType,
     command_queue::CommandQueueDesc,
     factory::FeatureLevel,
     heap::{
@@ -22,8 +23,8 @@ use crate::{
         HeapFlags, HeapProperties,
     },
     misc::{
-        AlphaMode, ClearValue, CommandListType, Format, FrameBufferUsage, Rect, Scaling,
-        ScalingMode, ScanlineOrdering, SwapEffect, Viewport,
+        AlphaMode, ClearValue, Format, FrameBufferUsage, Rect, Scaling, ScalingMode,
+        ScanlineOrdering, SwapEffect, Viewport,
     },
     prelude::DxError,
     pso::{
@@ -140,6 +141,21 @@ impl FeatureLevel {
 impl CommandListType {
     pub(crate) fn as_raw(&self) -> D3D12_COMMAND_LIST_TYPE {
         D3D12_COMMAND_LIST_TYPE(*self as i32)
+    }
+}
+
+impl From<D3D12_COMMAND_LIST_TYPE> for CommandListType {
+    fn from(value: D3D12_COMMAND_LIST_TYPE) -> Self {
+        match value {
+            D3D12_COMMAND_LIST_TYPE_DIRECT => CommandListType::Direct,
+            D3D12_COMMAND_LIST_TYPE_BUNDLE => CommandListType::Bundle,
+            D3D12_COMMAND_LIST_TYPE_COMPUTE => CommandListType::Compute,
+            D3D12_COMMAND_LIST_TYPE_COPY => CommandListType::Copy,
+            D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE => CommandListType::VideoDecode,
+            D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS => CommandListType::VideoProcess,
+            D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE => CommandListType::VideoEncode,
+            _ => unreachable!(),
+        }
     }
 }
 

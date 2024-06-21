@@ -13,7 +13,7 @@ use windows::{
 
 use crate::{
     command_allocator::CommandAllocatorInterface,
-    command_list::CommandListInterface,
+    command_list::{CommandListInterface, CommandListType},
     command_queue::{CommandQueueDesc, CommandQueueInterface},
     create_type,
     error::DxError,
@@ -22,7 +22,7 @@ use crate::{
         HeapFlags, HeapProperties,
     },
     impl_trait,
-    misc::{ClearValue, CommandListType},
+    misc::ClearValue,
     pso::{
         BlobInterface, GraphicsPipelineDesc, PipelineStateInterface, RootSignatureDesc,
         RootSignatureInterface, RootSignatureVersion,

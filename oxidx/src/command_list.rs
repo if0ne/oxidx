@@ -1,7 +1,7 @@
 use smallvec::SmallVec;
 use windows::{
     core::Interface,
-    Win32::{Foundation::BOOL, Graphics::Direct3D12::ID3D12GraphicsCommandList},
+    Win32::{Foundation::BOOL, Graphics::Direct3D12::*},
 };
 
 use crate::{
@@ -16,11 +16,18 @@ use crate::{
     HasInterface,
 };
 
+/// An interface from which [`GraphicsCommandListInterface`] inherits.
+///
+/// It represents an ordered set of commands that the GPU executes,
+/// while allowing for extension to support other command lists than just those for graphics (such as compute and copy).
 pub trait CommandListInterface: HasInterface<Raw: Interface> {
-    fn close(&self);
+    /// Gets the type of the command list, such as direct, bundle, compute, or copy.
+    fn get_type(&self) -> CommandListType;
 }
 
 pub trait GraphicsCommandListInterface: CommandListInterface {
+    fn close(&self);
+
     fn reset(
         &self,
         command_allocator: &impl CommandAllocatorInterface,
@@ -67,9 +74,9 @@ impl_trait! {
     impl CommandListInterface =>
     GraphicsCommandList;
 
-    fn close(&self) {
+    fn get_type(&self) -> CommandListType {
         unsafe {
-            self.0.Close().unwrap(/*TODO: Error*/);
+            self.0.GetType().into()
         }
     }
 }
@@ -77,6 +84,12 @@ impl_trait! {
 impl_trait! {
     impl GraphicsCommandListInterface =>
     GraphicsCommandList;
+
+    fn close(&self) {
+        unsafe {
+            self.0.Close().unwrap(/*TODO: Error*/);
+        }
+    }
 
     fn reset(
         &self,
@@ -220,4 +233,32 @@ impl_trait! {
 
         unsafe { self.0.ResourceBarrier(barriers.as_slice()) }
     }
+}
+
+/// Specifies the type of a command list.
+#[derive(Debug, Default, Clone, Copy)]
+#[repr(i32)]
+pub enum CommandListType {
+    #[default]
+    /// Specifies a command buffer that the GPU can execute. A direct command list doesn't inherit any GPU state.
+    Direct = D3D12_COMMAND_LIST_TYPE_DIRECT.0,
+
+    /// Specifies a command buffer that can be executed only directly via a direct command list.
+    /// A bundle command list inherits all GPU state (except for the currently set pipeline state object and primitive topology).
+    Bundle = D3D12_COMMAND_LIST_TYPE_BUNDLE.0,
+
+    /// Specifies a command buffer for computing.
+    Compute = D3D12_COMMAND_LIST_TYPE_COMPUTE.0,
+
+    /// Specifies a command buffer for copying.
+    Copy = D3D12_COMMAND_LIST_TYPE_COPY.0,
+
+    /// Specifies a command buffer for video decoding.
+    VideoDecode = D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE.0,
+
+    /// Specifies a command buffer for video processing.
+    VideoProcess = D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS.0,
+
+    /// Specifies a command buffer for video encoding.
+    VideoEncode = D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE.0,
 }

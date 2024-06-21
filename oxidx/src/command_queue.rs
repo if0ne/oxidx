@@ -7,8 +7,12 @@ use windows::{
 };
 
 use crate::{
-    command_list::CommandListInterface, create_type, error::DxError, impl_trait,
-    misc::CommandListType, sync::Fence, HasInterface,
+    command_list::{CommandListInterface, CommandListType},
+    create_type,
+    error::DxError,
+    impl_trait,
+    sync::Fence,
+    HasInterface,
 };
 
 pub trait CommandQueueInterface:

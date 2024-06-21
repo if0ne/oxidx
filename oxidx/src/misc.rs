@@ -96,15 +96,6 @@ bitflags::bitflags! {
     }
 }
 
-#[derive(Debug, Default, Clone, Copy)]
-#[repr(i32)]
-pub enum CommandListType {
-    #[default]
-    Direct = D3D12_COMMAND_LIST_TYPE_DIRECT.0,
-    Copy = D3D12_COMMAND_LIST_TYPE_COPY.0,
-    Compute = D3D12_COMMAND_LIST_TYPE_COMPUTE.0,
-}
-
 #[derive(Debug, Clone)]
 pub struct Viewport {
     pub x: f32,
