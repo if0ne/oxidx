@@ -11,11 +11,11 @@ use windows::Win32::Graphics::Dxgi::{
 };
 
 use crate::error::DxError;
-use crate::misc::{AlphaMode, PresentFlags, Scaling, ScalingMode, ScanlineOrdering, SwapEffect};
 use crate::resources::ResourceInterface;
+use crate::types::{AlphaMode, PresentFlags, Scaling, ScalingMode, ScanlineOrdering, SwapEffect};
 use crate::{
     create_type,
-    misc::{Format, FrameBufferUsage},
+    types::{Format, FrameBufferUsage},
 };
 use crate::{impl_trait, HasInterface};
 

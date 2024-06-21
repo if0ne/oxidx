@@ -15,16 +15,11 @@ use windows::{
 
 use crate::{
     adapter::{AdapterDesc, AdapterFlags, Luid},
-    command_list::CommandListType,
     command_queue::CommandQueueDesc,
     factory::FeatureLevel,
     heap::{
         CpuDescriptorHandle, DescriptorHeapDesc, DescriptorHeapFlags, DescriptorHeapType,
         HeapFlags, HeapProperties,
-    },
-    misc::{
-        AlphaMode, ClearValue, Format, FrameBufferUsage, Rect, Scaling, ScalingMode,
-        ScanlineOrdering, SwapEffect, Viewport,
     },
     prelude::DxError,
     pso::{
@@ -40,6 +35,7 @@ use crate::{
     },
     swapchain::{Rational, SampleDesc, SwapchainDesc, SwapchainFullscreenDesc},
     sync::FenceFlags,
+    types::*,
     HasInterface,
 };
 
@@ -139,7 +135,7 @@ impl FeatureLevel {
 }
 
 impl CommandListType {
-    pub(crate) fn as_raw(&self) -> D3D12_COMMAND_LIST_TYPE {
+    pub(crate) fn to_raw(&self) -> D3D12_COMMAND_LIST_TYPE {
         D3D12_COMMAND_LIST_TYPE(*self as i32)
     }
 }
@@ -168,7 +164,7 @@ impl FenceFlags {
 impl CommandQueueDesc {
     pub(crate) fn as_raw(&self) -> D3D12_COMMAND_QUEUE_DESC {
         D3D12_COMMAND_QUEUE_DESC {
-            Type: self.r#type.as_raw(),
+            Type: self.r#type.to_raw(),
             Priority: self.priority,
             Flags: D3D12_COMMAND_QUEUE_FLAGS(self.flags.bits()),
             NodeMask: self.node_mask,
@@ -719,5 +715,28 @@ impl<'a> BarrierType<'a> {
 impl From<windows::core::Error> for DxError {
     fn from(value: windows::core::Error) -> Self {
         DxError::Dxgi(value.message())
+    }
+}
+
+impl TiledResourceCoordinate {
+    pub(crate) fn to_raw(&self) -> D3D12_TILED_RESOURCE_COORDINATE {
+        D3D12_TILED_RESOURCE_COORDINATE {
+            X: self.x,
+            Y: self.y,
+            Z: self.z,
+            Subresource: self.subresource,
+        }
+    }
+}
+
+impl TileRegionSize {
+    pub(crate) fn to_raw(&self) -> D3D12_TILE_REGION_SIZE {
+        D3D12_TILE_REGION_SIZE {
+            NumTiles: self.num_tiles,
+            UseBox: self.use_box.into(),
+            Width: self.width,
+            Height: self.height,
+            Depth: self.depth,
+        }
     }
 }

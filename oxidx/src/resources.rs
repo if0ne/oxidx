@@ -6,7 +6,7 @@ use windows::{
 };
 
 use crate::{
-    create_type, error::DxError, impl_trait, misc::Format, prelude::SampleDesc, HasInterface,
+    create_type, error::DxError, impl_trait, prelude::SampleDesc, types::Format, HasInterface,
 };
 
 pub trait ResourceInterface:

@@ -29,6 +29,13 @@ pub trait CommandAllocatorInterface:
 
 create_type! {
     /// Represents the allocations of storage for graphics processing unit (GPU) commands.
+    ///
+    /// # Remarks
+    /// Use [DeviceInterface::create_command_allocator](`crate::device::DeviceInterface::create_command_allocator`) to create a command allocator object.
+    ///
+    /// The command allocator object corresponds to the underlying allocations in which GPU commands are stored.
+    /// The command allocator object applies to both direct command lists and bundles.
+    /// You must use a command allocator object in a DirectX 12 app.
     CommandAllocator wrap ID3D12CommandAllocator
 }
 

@@ -11,8 +11,8 @@ use windows::{
 
 use crate::{
     create_type, impl_trait,
-    misc::Format,
     prelude::{DxError, SampleDesc},
+    types::Format,
     HasInterface,
 };
 

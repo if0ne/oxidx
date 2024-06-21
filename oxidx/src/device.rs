@@ -13,7 +13,7 @@ use windows::{
 
 use crate::{
     command_allocator::CommandAllocatorInterface,
-    command_list::{CommandListInterface, CommandListType},
+    command_list::CommandListInterface,
     command_queue::{CommandQueueDesc, CommandQueueInterface},
     create_type,
     error::DxError,
@@ -22,13 +22,13 @@ use crate::{
         HeapFlags, HeapProperties,
     },
     impl_trait,
-    misc::ClearValue,
     pso::{
         BlobInterface, GraphicsPipelineDesc, PipelineStateInterface, RootSignatureDesc,
         RootSignatureInterface, RootSignatureVersion,
     },
     resources::{RenderTargetViewDesc, ResourceDesc, ResourceInterface, ResourceState},
     sync::{FenceFlags, FenceInterface},
+    types::{ClearValue, CommandListType},
     HasInterface,
 };
 
@@ -111,7 +111,7 @@ impl_trait! {
 
     fn create_command_allocator<CA: CommandAllocatorInterface>(&self, r#type: CommandListType) -> Result<CA, DxError> {
         let res: CA::Raw  = unsafe {
-            self.0.CreateCommandAllocator(r#type.as_raw()).map_err(|_| DxError::Dummy)?
+            self.0.CreateCommandAllocator(r#type.to_raw()).map_err(|_| DxError::Dummy)?
         };
 
         Ok(CA::new(res))
@@ -178,7 +178,7 @@ impl_trait! {
         pso: &PSO,
     ) -> Result<CL, DxError> {
         let res: CL::Raw = unsafe {
-            self.0.CreateCommandList(nodemask, r#type.as_raw(), command_allocator.as_raw_ref(), pso.as_raw_ref()).map_err(|_| DxError::Dummy)?
+            self.0.CreateCommandList(nodemask, r#type.to_raw(), command_allocator.as_raw_ref(), pso.as_raw_ref()).map_err(|_| DxError::Dummy)?
         };
 
         Ok(CL::new(res))

@@ -12,11 +12,11 @@ pub mod device;
 pub mod error;
 pub mod factory;
 pub mod heap;
-pub mod misc;
 pub mod pso;
 pub mod resources;
 pub mod swapchain;
 pub mod sync;
+pub mod types;
 
 mod conv;
 mod utils;

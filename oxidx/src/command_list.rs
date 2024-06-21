@@ -9,10 +9,10 @@ use crate::{
     create_type,
     heap::CpuDescriptorHandle,
     impl_trait,
-    misc::{Rect, Viewport},
     prelude::DxError,
     pso::{PipelineStateInterface, PrimitiveTopology, RootSignatureInterface},
     resources::{ResourceBarrier, VertexBufferView},
+    types::{CommandListType, Rect, Viewport},
     HasInterface,
 };
 
@@ -21,6 +21,11 @@ use crate::{
 /// It represents an ordered set of commands that the GPU executes,
 /// while allowing for extension to support other command lists than just those for graphics (such as compute and copy).
 pub trait CommandListInterface: HasInterface<Raw: Interface> {
+    // TODO: PIX FUNCTIONS
+    // fn begin_event<'a>(&self, color: impl Into<u64>, label: &'a str);
+    // fn end_event(&self);
+    // fn set_marker<'a>(&self, color: impl Into<u64>, label: &'a str)
+
     /// Gets the type of the command list, such as direct, bundle, compute, or copy.
     fn get_type(&self) -> CommandListType;
 }
@@ -233,32 +238,4 @@ impl_trait! {
 
         unsafe { self.0.ResourceBarrier(barriers.as_slice()) }
     }
-}
-
-/// Specifies the type of a command list.
-#[derive(Debug, Default, Clone, Copy)]
-#[repr(i32)]
-pub enum CommandListType {
-    #[default]
-    /// Specifies a command buffer that the GPU can execute. A direct command list doesn't inherit any GPU state.
-    Direct = D3D12_COMMAND_LIST_TYPE_DIRECT.0,
-
-    /// Specifies a command buffer that can be executed only directly via a direct command list.
-    /// A bundle command list inherits all GPU state (except for the currently set pipeline state object and primitive topology).
-    Bundle = D3D12_COMMAND_LIST_TYPE_BUNDLE.0,
-
-    /// Specifies a command buffer for computing.
-    Compute = D3D12_COMMAND_LIST_TYPE_COMPUTE.0,
-
-    /// Specifies a command buffer for copying.
-    Copy = D3D12_COMMAND_LIST_TYPE_COPY.0,
-
-    /// Specifies a command buffer for video decoding.
-    VideoDecode = D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE.0,
-
-    /// Specifies a command buffer for video processing.
-    VideoProcess = D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS.0,
-
-    /// Specifies a command buffer for video encoding.
-    VideoEncode = D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE.0,
 }
