@@ -1,3 +1,11 @@
+mod enums;
+mod flags;
+mod structs;
+
+pub use enums::*;
+pub use flags::*;
+pub use structs::*;
+
 use windows::Win32::Graphics::{
     Direct3D::Fxc::{D3DCOMPILE_DEBUG, D3DCOMPILE_SKIP_OPTIMIZATION},
     Direct3D12::*,
@@ -164,89 +172,4 @@ pub enum ClearValue {
         depth: f32,
         stencil: u8,
     },
-}
-
-/// Specifies the type of a command list.
-#[derive(Debug, Default, Clone, Copy)]
-#[repr(i32)]
-pub enum CommandListType {
-    #[default]
-    /// Specifies a command buffer that the GPU can execute. A direct command list doesn't inherit any GPU state.
-    Direct = D3D12_COMMAND_LIST_TYPE_DIRECT.0,
-
-    /// Specifies a command buffer that can be executed only directly via a direct command list.
-    /// A bundle command list inherits all GPU state (except for the currently set pipeline state object and primitive topology).
-    Bundle = D3D12_COMMAND_LIST_TYPE_BUNDLE.0,
-
-    /// Specifies a command buffer for computing.
-    Compute = D3D12_COMMAND_LIST_TYPE_COMPUTE.0,
-
-    /// Specifies a command buffer for copying.
-    Copy = D3D12_COMMAND_LIST_TYPE_COPY.0,
-
-    /// Specifies a command buffer for video decoding.
-    VideoDecode = D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE.0,
-
-    /// Specifies a command buffer for video processing.
-    VideoProcess = D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS.0,
-
-    /// Specifies a command buffer for video encoding.
-    VideoEncode = D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE.0,
-}
-
-/// Describes the coordinates of a tiled resource.
-#[derive(Clone, Copy, Debug)]
-pub struct TiledResourceCoordinate {
-    /// The x-coordinate of the tiled resource.
-    pub x: u32,
-
-    /// The y-coordinate of the tiled resource.
-    pub y: u32,
-
-    /// The z-coordinate of the tiled resource.
-    pub z: u32,
-
-    /// The index of the subresource for the tiled resource.
-    ///
-    /// For mipmaps that use nonstandard tiling, or are packed, or both use nonstandard tiling and are packed,
-    /// any subresource value that indicates any of the packed mipmaps all refer to the same tile.
-    /// Additionally, the X coordinate is used to indicate a tile within the packed mip region, rather than a logical region of a single subresource.
-    /// The Y and Z coordinates must be zero.
-    pub subresource: u32,
-}
-
-/// Describes the size of a tiled region.
-#[derive(Clone, Copy, Debug)]
-pub struct TileRegionSize {
-    /// The number of tiles in the tiled region.
-    pub num_tiles: u32,
-
-    /// Specifies whether the runtime uses the **width**, **height**, and **depth** members to define the region.
-    ///
-    /// If **true**, the runtime uses the **width**, **height**, and **depth** members to define the region.
-    /// In this case, **num_tiles** should be equal to **width * height * depth**.
-    ///
-    /// If **false**, the runtime ignores the **width**, **height**, and **depth** members and uses the **num_tiles** member to
-    /// traverse tiles in the resource linearly across x, then y, then z (as applicable) and then spills over mipmaps/arrays in subresource order.
-    /// For example, use this technique to map an entire resource at once.
-    ///
-    /// Regardless of whether you specify **true** or **false** for **use_box**, you use a [`TiledResourceCoordinate`] structure to specify
-    /// the starting location for the region within the resource as a separate parameter outside of this structure by using x, y, and z coordinates.
-    ///
-    /// When the region includes mipmaps that are packed with nonstandard tiling, **use_box** must be **false** because
-    /// tile dimensions are not standard and the app only knows a count of how many tiles are consumed by the packed area,
-    /// which is per array slice. The corresponding (separate) starting location parameter uses x to offset into the flat range of tiles in this case,
-    /// and y and z coordinates must each be 0.
-    pub use_box: bool,
-
-    /// The width of the tiled region, in tiles. Used for buffer and 1D, 2D, and 3D textures.
-    pub width: u32,
-
-    /// The height of the tiled region, in tiles. Used for 2D and 3D textures.
-    pub height: u16,
-
-    /// The depth of the tiled region, in tiles. Used for 3D textures or arrays.
-    /// For arrays, used for advancing in depth jumps to next slice of same mipmap size, which isn't contiguous in the subresource counting space
-    /// if there are multiple mipmaps.
-    pub depth: u16,
 }

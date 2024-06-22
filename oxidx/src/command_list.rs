@@ -20,6 +20,8 @@ use crate::{
 ///
 /// It represents an ordered set of commands that the GPU executes,
 /// while allowing for extension to support other command lists than just those for graphics (such as compute and copy).
+///
+/// For more information: [`ID3D12CommandList interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12commandlist)
 pub trait CommandListInterface: HasInterface<Raw: Interface> {
     // TODO: PIX FUNCTIONS
     // fn begin_event<'a>(&self, color: impl Into<u64>, label: &'a str);
@@ -27,6 +29,8 @@ pub trait CommandListInterface: HasInterface<Raw: Interface> {
     // fn set_marker<'a>(&self, color: impl Into<u64>, label: &'a str)
 
     /// Gets the type of the command list, such as direct, bundle, compute, or copy.
+    ///
+    /// For more information: [`ID3D12CommandList::GetType method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandlist-gettype)
     fn get_type(&self) -> CommandListType;
 }
 
