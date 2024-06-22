@@ -272,9 +272,13 @@ impl DXSample for Sample {
             populate_command_list(resources);
 
             let command_list = &resources.command_list;
+            resources.command_queue.begin_event(0u64, c"Test");
+
             resources
                 .command_queue
-                .execute_command_lists([command_list].into_iter());
+                .execute_command_lists([command_list]);
+
+            resources.command_queue.end_event();
 
             resources
                 .swap_chain

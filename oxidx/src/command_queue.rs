@@ -1,6 +1,8 @@
+use std::ffi::CStr;
+
 use smallvec::SmallVec;
 use windows::{
-    core::{IUnknown, Interface, Param},
+    core::{IUnknown, Interface, Param, PCSTR},
     Win32::Graphics::Direct3D12::*,
 };
 
@@ -9,6 +11,7 @@ use crate::{
     create_type,
     error::DxError,
     impl_trait,
+    pix::{WinPixEventRuntime, WIN_PIX_EVENT_RUNTIME},
     resources::ResourceInterface,
     sync::Fence,
     types::{CommandListType, TileRegionSize, TiledResourceCoordinate},
@@ -21,10 +24,12 @@ use crate::{
 pub trait CommandQueueInterface:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<IUnknown>>
 {
-    // TODO: PIX FUNCTIONS
-    // fn begin_event<'a>(&self, color: impl Into<u64>, label: &'a str);
-    // fn end_event(&self);
-    // fn set_marker<'a>(&self, color: impl Into<u64>, label: &'a str)
+    /// Marks the start of a user-defined region of work
+    ///
+    /// # Arguments
+    /// * `color` - label's color
+    /// * `label` - label's text
+    fn begin_event(&self, color: impl Into<u64>, label: &CStr);
 
     /// Copies mappings from a source reserved resource to a destination reserved resource.
     ///
@@ -45,6 +50,9 @@ pub trait CommandQueueInterface:
         region_size: &TileRegionSize,
     );
 
+    /// Marks the end of a user-defined region of work
+    fn end_event(&self);
+
     /// Submits an iterator of command lists for execution.
     ///
     /// # Arguments
@@ -64,6 +72,13 @@ pub trait CommandQueueInterface:
     /// For more information: [`ID3D12CommandQueue::GetClockCalibration method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-getclockcalibration)
     fn get_clock_calibration(&self) -> Result<(u64, u64), DxError>;
 
+    /// Inserts a user-defined marker into timeline
+    ///
+    /// # Arguments
+    /// * `color` - label's color
+    /// * `label` - label's text
+    fn set_marker(&self, color: impl Into<u64>, label: &CStr);
+
     fn signal(&self, fence: &Fence, value: u64) -> Result<(), DxError>;
 }
 
@@ -79,6 +94,17 @@ impl_trait! {
     impl CommandQueueInterface =>
     CommandQueue;
 
+    fn begin_event(&self, color: impl Into<u64>, label: &CStr) {
+        let color = color.into();
+        let label = PCSTR::from_raw(label.as_ptr() as *const _);
+
+        let pix = WIN_PIX_EVENT_RUNTIME.get_or_init(WinPixEventRuntime::new);
+
+        unsafe {
+            (pix.begin_event_cmd_queue)(std::mem::transmute_copy(&self.0), color, label);
+        }
+    }
+
     fn copy_tile_mappings(
         &self,
         dst_resource: &impl ResourceInterface,
@@ -87,9 +113,9 @@ impl_trait! {
         src_region_start_coordinate: &TiledResourceCoordinate,
         region_size: &TileRegionSize,
     ) {
-        let dst_region_start_coordinate = dst_region_start_coordinate.to_raw();
-        let src_region_start_coordinate = src_region_start_coordinate.to_raw();
-        let region_size = region_size.to_raw();
+        let dst_region_start_coordinate = dst_region_start_coordinate.as_raw();
+        let src_region_start_coordinate = src_region_start_coordinate.as_raw();
+        let region_size = region_size.as_raw();
 
         unsafe {
             self.0.CopyTileMappings(
@@ -100,6 +126,14 @@ impl_trait! {
                 &region_size,
                 D3D12_TILE_MAPPING_FLAG_NONE
             );
+        }
+    }
+
+    fn end_event(&self) {
+        let pix = WIN_PIX_EVENT_RUNTIME.get_or_init(WinPixEventRuntime::new);
+
+        unsafe {
+            (pix.end_event_cmd_queue)(std::mem::transmute_copy(&self.0));
         }
     }
 
@@ -130,6 +164,17 @@ impl_trait! {
         }
 
         Ok((gpu, cpu))
+    }
+
+    fn set_marker(&self, color: impl Into<u64>, label: &CStr) {
+        let color = color.into();
+        let label = PCSTR::from_raw(label.as_ptr() as *const _);
+
+        let pix = WIN_PIX_EVENT_RUNTIME.get_or_init(WinPixEventRuntime::new);
+
+        unsafe {
+            (pix.set_marker_cmd_queue)(std::mem::transmute_copy(&self.0), color, label);
+        }
     }
 
     fn signal(&self, fence: &Fence, value: u64) -> Result<(), DxError> {

@@ -135,7 +135,7 @@ impl FeatureLevel {
 }
 
 impl CommandListType {
-    pub(crate) fn to_raw(&self) -> D3D12_COMMAND_LIST_TYPE {
+    pub(crate) fn as_raw(&self) -> D3D12_COMMAND_LIST_TYPE {
         D3D12_COMMAND_LIST_TYPE(*self as i32)
     }
 }
@@ -164,7 +164,7 @@ impl FenceFlags {
 impl CommandQueueDesc {
     pub(crate) fn as_raw(&self) -> D3D12_COMMAND_QUEUE_DESC {
         D3D12_COMMAND_QUEUE_DESC {
-            Type: self.r#type.to_raw(),
+            Type: self.r#type.as_raw(),
             Priority: self.priority,
             Flags: D3D12_COMMAND_QUEUE_FLAGS(self.flags.bits()),
             NodeMask: self.node_mask,
@@ -727,7 +727,7 @@ impl From<windows::core::Error> for DxError {
 }
 
 impl TiledResourceCoordinate {
-    pub(crate) fn to_raw(&self) -> D3D12_TILED_RESOURCE_COORDINATE {
+    pub(crate) fn as_raw(&self) -> D3D12_TILED_RESOURCE_COORDINATE {
         D3D12_TILED_RESOURCE_COORDINATE {
             X: self.x,
             Y: self.y,
@@ -738,7 +738,7 @@ impl TiledResourceCoordinate {
 }
 
 impl TileRegionSize {
-    pub(crate) fn to_raw(&self) -> D3D12_TILE_REGION_SIZE {
+    pub(crate) fn as_raw(&self) -> D3D12_TILE_REGION_SIZE {
         D3D12_TILE_REGION_SIZE {
             NumTiles: self.num_tiles,
             UseBox: self.use_box.into(),

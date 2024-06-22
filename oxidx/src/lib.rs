@@ -18,6 +18,8 @@ pub mod swapchain;
 pub mod sync;
 pub mod types;
 
+pub(crate) mod pix;
+
 mod conv;
 mod utils;
 
