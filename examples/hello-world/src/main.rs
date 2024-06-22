@@ -575,7 +575,7 @@ fn wait_for_previous_frame(resources: &mut Resources) {
 
     resources.fence_value += 1;
 
-    if resources.fence.get_value() < fence {
+    if resources.fence.get_completed_value() < fence {
         resources
             .fence
             .set_event_on_completion(resources.fence_event, fence)

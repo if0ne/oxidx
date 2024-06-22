@@ -11,6 +11,7 @@ version = "0.7.1"
 
 [dependencies.smallvec]
 version = "1.13.2"
+features = ["const_generics"]
 
 [dependencies.thiserror]
 version = "1.0.61"

@@ -1,5 +1,5 @@
 use windows::{
-    core::Interface,
+    core::{Interface, Param},
     Win32::{
         Foundation::HANDLE,
         Graphics::Direct3D12::ID3D12Fence,
@@ -9,9 +9,11 @@ use windows::{
 
 use crate::{create_type, error::DxError, impl_trait, HasInterface};
 
-pub trait FenceInterface: HasInterface<Raw: Interface> {
+pub trait FenceInterface:
+    for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12Fence>>
+{
     fn set_event_on_completion(&self, event: Event, value: u64) -> Result<(), DxError>;
-    fn get_value(&self) -> u64;
+    fn get_completed_value(&self) -> u64;
     fn signal(&self, value: u64) -> Result<(), DxError>;
 }
 
@@ -27,7 +29,7 @@ impl_trait! {
         Ok(())
     }
 
-    fn get_value(&self) -> u64 {
+    fn get_completed_value(&self) -> u64 {
         unsafe { self.0.GetCompletedValue() }
     }
 

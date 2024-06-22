@@ -1,6 +1,21 @@
-use windows::{core::Interface, Win32::Graphics::Direct3D12::*};
+use windows::{
+    core::{Interface, Param},
+    Win32::Graphics::Direct3D12::*,
+};
 
 use crate::{create_type, impl_trait, HasInterface};
+
+pub trait HeapInterface:
+    for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12Heap>>
+{
+}
+
+create_type! { Heap wrap ID3D12Heap }
+
+impl_trait! {
+    impl HeapInterface =>
+    Heap;
+}
 
 pub trait DescriptorHeapInterface: HasInterface<Raw: Interface> {
     fn get_cpu_descriptor_handle_for_heap_start(&self) -> CpuDescriptorHandle;

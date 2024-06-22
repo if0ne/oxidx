@@ -1,6 +1,8 @@
 #![allow(private_bounds)]
 #![allow(dead_code)]
 
+#![allow(clippy::too_many_arguments)]
+
 pub mod prelude;
 
 pub mod adapter;

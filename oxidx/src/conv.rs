@@ -21,7 +21,7 @@ use crate::{
         CpuDescriptorHandle, DescriptorHeapDesc, DescriptorHeapFlags, DescriptorHeapType,
         HeapFlags, HeapProperties,
     },
-    prelude::DxError,
+    prelude::{CommandQueueFlags, DxError},
     pso::{
         Blend, BlendOp, Blob, BlobInterface, CachedPipeline, CullMode, DeclarationEntry,
         DepthStencilDesc, FillMode, IndexBufferStripCutValue, InputElementDesc, InputSlotClass,
@@ -168,6 +168,17 @@ impl CommandQueueDesc {
             Priority: self.priority,
             Flags: D3D12_COMMAND_QUEUE_FLAGS(self.flags.bits()),
             NodeMask: self.node_mask,
+        }
+    }
+}
+
+impl From<D3D12_COMMAND_QUEUE_DESC> for CommandQueueDesc {
+    fn from(value: D3D12_COMMAND_QUEUE_DESC) -> Self {
+        Self {
+            r#type: value.Type.into(),
+            priority: value.Priority,
+            flags: CommandQueueFlags::from_bits(value.Flags.0).unwrap(),
+            node_mask: value.NodeMask,
         }
     }
 }
@@ -746,5 +757,11 @@ impl TileRegionSize {
             Height: self.height,
             Depth: self.depth,
         }
+    }
+}
+
+impl TileRangeFlags {
+    pub(crate) fn as_raw(&self) -> D3D12_TILE_RANGE_FLAGS {
+        D3D12_TILE_RANGE_FLAGS(self.bits())
     }
 }
