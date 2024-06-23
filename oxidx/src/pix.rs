@@ -1,4 +1,4 @@
-use std::sync::OnceLock;
+use std::{mem::ManuallyDrop, sync::OnceLock};
 
 use windows::{
     core::PCSTR,
@@ -10,13 +10,13 @@ use windows::{
 
 pub(crate) static WIN_PIX_EVENT_RUNTIME: OnceLock<WinPixEventRuntime> = OnceLock::new();
 
-type BeginEventOnCommandList = fn(ID3D12GraphicsCommandList, u64, PCSTR);
-type EndEventOnCommandList = fn(ID3D12GraphicsCommandList);
-type SetMarkerOnCommandList = fn(ID3D12GraphicsCommandList, u64, PCSTR);
+type BeginEventOnCommandList = fn(ManuallyDrop<ID3D12GraphicsCommandList>, u64, PCSTR);
+type EndEventOnCommandList = fn(ManuallyDrop<ID3D12GraphicsCommandList>);
+type SetMarkerOnCommandList = fn(ManuallyDrop<ID3D12GraphicsCommandList>, u64, PCSTR);
 
-type BeginEventOnCommandQueue = fn(ID3D12CommandQueue, u64, PCSTR);
-type EndEventOnCommandQueue = fn(ID3D12CommandQueue);
-type SetMarkerOnCommandQueue = fn(ID3D12CommandQueue, u64, PCSTR);
+type BeginEventOnCommandQueue = fn(ManuallyDrop<ID3D12CommandQueue>, u64, PCSTR);
+type EndEventOnCommandQueue = fn(ManuallyDrop<ID3D12CommandQueue>);
+type SetMarkerOnCommandQueue = fn(ManuallyDrop<ID3D12CommandQueue>, u64, PCSTR);
 
 #[derive(Debug)]
 pub(crate) struct WinPixEventRuntime {
