@@ -6,13 +6,11 @@ use windows::{
 
 use crate::{
     command_allocator::CommandAllocatorInterface,
-    create_type,
-    heap::CpuDescriptorHandle,
-    impl_trait,
+    create_type, impl_trait,
     prelude::DxError,
     pso::{PipelineStateInterface, PrimitiveTopology, RootSignatureInterface},
     resources::{ResourceBarrier, VertexBufferView},
-    types::{CommandListType, Rect, Viewport},
+    types::{CommandListType, CpuDescriptorHandle, Rect, Viewport},
     HasInterface,
 };
 

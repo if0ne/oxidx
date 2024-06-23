@@ -18,6 +18,18 @@ pub struct CommandQueueDesc {
     pub node_mask: u32,
 }
 
+/// Describes a CPU descriptor handle.
+///
+/// For more information: [`D3D12_CPU_DESCRIPTOR_HANDLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_cpu_descriptor_handle)
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct CpuDescriptorHandle(pub(crate) usize);
+
+impl CpuDescriptorHandle {
+    pub fn offset(&self, offset: usize) -> Self {
+        Self(self.0 + offset)
+    }
+}
+
 /// Describes the size of a tiled region.
 ///
 /// For more information: [`D3D12_TILE_REGION_SIZE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_tile_region_size)

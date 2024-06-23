@@ -13,6 +13,12 @@ impl CommandQueueDesc {
     }
 }
 
+impl CpuDescriptorHandle {
+    pub(crate) fn as_raw(&self) -> D3D12_CPU_DESCRIPTOR_HANDLE {
+        D3D12_CPU_DESCRIPTOR_HANDLE { ptr: self.0 }
+    }
+}
+
 impl From<D3D12_COMMAND_QUEUE_DESC> for CommandQueueDesc {
     fn from(value: D3D12_COMMAND_QUEUE_DESC) -> Self {
         Self {

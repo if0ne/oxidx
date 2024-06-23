@@ -21,8 +21,7 @@ use crate::{
     adapter::{AdapterDesc, AdapterFlags, Luid},
     factory::FeatureLevel,
     heap::{
-        CpuDescriptorHandle, DescriptorHeapDesc, DescriptorHeapFlags, DescriptorHeapType,
-        HeapFlags, HeapProperties,
+        DescriptorHeapDesc, DescriptorHeapFlags, DescriptorHeapType, HeapFlags, HeapProperties,
     },
     prelude::DxError,
     pso::{
@@ -212,12 +211,6 @@ impl Rect {
             right: self.right,
             bottom: self.bottom,
         }
-    }
-}
-
-impl CpuDescriptorHandle {
-    pub(crate) fn as_raw(&self) -> D3D12_CPU_DESCRIPTOR_HANDLE {
-        D3D12_CPU_DESCRIPTOR_HANDLE { ptr: self.0 }
     }
 }
 
