@@ -15,7 +15,7 @@ use crate::{
     pix::{WinPixEventRuntime, WIN_PIX_EVENT_RUNTIME},
     prelude::FenceInterface,
     resources::ResourceInterface,
-    types::{CommandListType, TileRangeFlags, TileRegionSize, TiledResourceCoordinate},
+    types::{CommandQueueDesc, TileRangeFlags, TileRegionSize, TiledResourceCoordinate},
     HasInterface,
 };
 
@@ -30,7 +30,7 @@ pub trait CommandQueueInterface:
     /// # Arguments
     /// * `color` - label's color
     /// * `label` - label's text
-    fn begin_event(&self, color: impl Into<u64>, label: &CStr);
+    fn begin_event(&self, color: impl Into<u64>, label: impl AsRef<CStr>);
 
     /// Copies mappings from a source reserved resource to a destination reserved resource.
     ///
@@ -92,7 +92,7 @@ pub trait CommandQueueInterface:
     /// # Arguments
     /// * `color` - label's color
     /// * `label` - label's text
-    fn set_marker(&self, color: impl Into<u64>, label: &CStr);
+    fn set_marker(&self, color: impl Into<u64>, label: impl AsRef<CStr>);
 
     /// Updates a fence to a specified value.
     ///
@@ -113,15 +113,15 @@ pub trait CommandQueueInterface:
     /// * `range_flags` - A pointer to an array of [`TileRangeFlags`] values that describes each tile range.
     /// * `heap_range_start_offsets` - An array of offsets into the resource heap. These are 0-based tile offsets, counting in tiles (not bytes).
     /// * `range_tile_counts` - An array of tiles. An array of values that specify the number of tiles in each tile range.
-    /// 
+    ///
     /// For more information: [`ID3D12CommandQueue::UpdateTileMappings method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-updatetilemappings)
     fn update_tile_mappings<const REGIONS: usize, const RANGES: usize>(
         &self,
         resource: &impl ResourceInterface,
-        resource_region_start_coordinates: Option<[TiledResourceCoordinate; REGIONS]>,
-        resource_region_sizes: Option<[TileRegionSize; REGIONS]>,
+        resource_region_start_coordinates: Option<[impl AsRef<TiledResourceCoordinate>; REGIONS]>,
+        resource_region_sizes: Option<[impl AsRef<TileRegionSize>; REGIONS]>,
         heap: &impl HeapInterface,
-        range_flags: Option<[TileRangeFlags; RANGES]>,
+        range_flags: Option<[impl AsRef<TileRangeFlags>; RANGES]>,
         heap_range_start_offsets: Option<[u32; RANGES]>,
         range_tile_counts: Option<[u32; RANGES]>,
     );
@@ -147,17 +147,17 @@ impl_trait! {
     impl CommandQueueInterface =>
     CommandQueue;
 
-    fn begin_event(&self, color: impl Into<u64>, label: &CStr) {
+    fn begin_event(&self, color: impl Into<u64>, label: impl AsRef<CStr>) {
         let color = color.into();
-        let label = PCSTR::from_raw(label.as_ptr() as *const _);
-    
+        let label = PCSTR::from_raw(label.as_ref().as_ptr() as *const _);
+
         let pix = WIN_PIX_EVENT_RUNTIME.get_or_init(WinPixEventRuntime::new);
-    
+
         unsafe {
             (pix.begin_event_cmd_queue)(std::mem::transmute_copy(&self.0), color, label);
         }
     }
-    
+
     fn copy_tile_mappings(
         &self,
         dst_resource: &impl ResourceInterface,
@@ -169,7 +169,7 @@ impl_trait! {
         let dst_region_start_coordinate = dst_region_start_coordinate.as_raw();
         let src_region_start_coordinate = src_region_start_coordinate.as_raw();
         let region_size = region_size.as_raw();
-    
+
         unsafe {
             self.0.CopyTileMappings(
                 dst_resource.as_raw_ref(),
@@ -181,15 +181,15 @@ impl_trait! {
             );
         }
     }
-    
+
     fn end_event(&self) {
         let pix = WIN_PIX_EVENT_RUNTIME.get_or_init(WinPixEventRuntime::new);
-    
+
         unsafe {
             (pix.end_event_cmd_queue)(std::mem::transmute_copy(&self.0));
         }
     }
-    
+
     fn execute_command_lists<'cl>(
         &self,
         command_lists: impl IntoIterator<Item = &'cl (impl CommandListInterface + 'cl)>,
@@ -206,39 +206,39 @@ impl_trait! {
             .collect::<SmallVec<[_; 16]>>();
         unsafe { self.0.ExecuteCommandLists(command_lists.as_slice()) }
     }
-    
+
     fn get_clock_calibration(&self) -> Result<(u64, u64), DxError> {
         let mut gpu = 0;
         let mut cpu = 0;
-    
+
         unsafe {
             self.0
                 .GetClockCalibration(&mut gpu, &mut cpu)
                 .map_err(DxError::from)?;
         }
-    
+
         Ok((gpu, cpu))
     }
-    
+
     fn get_desc(&self) -> CommandQueueDesc {
         unsafe { self.0.GetDesc().into() }
     }
-    
+
     fn get_timestamp_frequency(&self) -> Result<u64, DxError> {
         unsafe { self.0.GetTimestampFrequency().map_err(DxError::from) }
     }
-    
-    fn set_marker(&self, color: impl Into<u64>, label: &CStr) {
+
+    fn set_marker(&self, color: impl Into<u64>, label: impl AsRef<CStr>) {
         let color = color.into();
-        let label = PCSTR::from_raw(label.as_ptr() as *const _);
-    
+        let label = PCSTR::from_raw(label.as_ref().as_ptr() as *const _);
+
         let pix = WIN_PIX_EVENT_RUNTIME.get_or_init(WinPixEventRuntime::new);
-    
+
         unsafe {
             (pix.set_marker_cmd_queue)(std::mem::transmute_copy(&self.0), color, label);
         }
     }
-    
+
     fn signal(&self, fence: &impl FenceInterface, value: u64) -> Result<(), DxError> {
         unsafe {
             self.0
@@ -246,41 +246,41 @@ impl_trait! {
                 .map_err(DxError::from)
         }
     }
-    
+
     fn update_tile_mappings<const REGIONS: usize, const RANGES: usize>(
         &self,
         resource: &impl ResourceInterface,
-        resource_region_start_coordinates: Option<[TiledResourceCoordinate; REGIONS]>,
-        resource_region_sizes: Option<[TileRegionSize; REGIONS]>,
+        resource_region_start_coordinates: Option<[impl AsRef<TiledResourceCoordinate>; REGIONS]>,
+        resource_region_sizes: Option<[impl AsRef<TileRegionSize>; REGIONS]>,
         heap: &impl HeapInterface,
-        range_flags: Option<[TileRangeFlags; RANGES]>,
+        range_flags: Option<[impl AsRef<TileRangeFlags>; RANGES]>,
         heap_range_start_offsets: Option<[u32; RANGES]>,
         range_tile_counts: Option<[u32; RANGES]>,
     ) {
         let resource_region_start_coordinates = resource_region_start_coordinates.map(|r| {
             r.into_iter()
-                .map(|r| r.as_raw())
+                .map(|r| r.as_ref().as_raw())
                 .collect::<SmallVec<[_; REGIONS]>>()
         });
         let resource_region_start_coordinates = resource_region_start_coordinates.map(|r| r.as_ptr());
-    
+
         let resource_region_sizes = resource_region_sizes.map(|r| {
             r.into_iter()
-                .map(|r| r.as_raw())
+                .map(|r| r.as_ref().as_raw())
                 .collect::<SmallVec<[_; REGIONS]>>()
         });
         let resource_region_sizes = resource_region_sizes.map(|r| r.as_ptr());
-    
+
         let range_flags = range_flags.map(|r| {
             r.into_iter()
-                .map(|r| r.as_raw())
+                .map(|r| r.as_ref().as_raw())
                 .collect::<SmallVec<[_; REGIONS]>>()
         });
         let range_flags = range_flags.map(|r| r.as_ptr());
-    
+
         let heap_range_start_offsets = heap_range_start_offsets.map(|r| r.as_ptr());
         let range_tile_counts = range_tile_counts.map(|r| r.as_ptr());
-    
+
         unsafe {
             self.0.UpdateTileMappings(
                 resource.as_raw_ref(),
@@ -296,27 +296,12 @@ impl_trait! {
             );
         }
     }
-    
+
     fn wait(&self, fence: &impl FenceInterface, value: u64) -> Result<(), DxError> {
         unsafe {
             self.0
                 .Wait(fence.as_raw_ref(), value)
                 .map_err(DxError::from)
         }
-    }
-}
-
-#[derive(Debug, Default, Clone)]
-pub struct CommandQueueDesc {
-    pub r#type: CommandListType,
-    pub priority: i32,
-    pub flags: CommandQueueFlags,
-    pub node_mask: u32,
-}
-
-bitflags::bitflags! {
-    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct CommandQueueFlags: i32 {
-        const DisableGpuTimeout = D3D12_COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT.0;
     }
 }

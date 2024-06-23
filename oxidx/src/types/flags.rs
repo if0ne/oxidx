@@ -1,6 +1,19 @@
 use windows::Win32::Graphics::Direct3D12::*;
 
 bitflags::bitflags! {
+    /// Specifies flags to be used when creating a command queue.
+    ///
+    /// Empty flag - Indicates a default command queue.
+    ///
+    /// For more information: [`D3D12_COMMAND_QUEUE_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_command_queue_flags)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct CommandQueueFlags: i32 {
+        /// Indicates that the GPU timeout should be disabled for this command queue.
+        const DisableGpuTimeout = D3D12_COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Specifies a range of tile mappings.
     ///
     /// Empty flag - No tile-mapping flags are specified.

@@ -1,3 +1,23 @@
+use super::*;
+
+/// Describes a command queue.
+///
+/// For more information: [`D3D12_COMMAND_QUEUE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_command_queue_desc)
+#[derive(Debug, Default, Clone)]
+pub struct CommandQueueDesc {
+    /// Specifies one member of [`CommandListType`].
+    pub r#type: CommandListType,
+
+    /// The priority for the command queue, as a [`CommandQueuePriority`] enumeration constant to select normal or high priority.
+    pub priority: CommandQueuePriority,
+
+    /// Specifies any flags from the [`CommandQueueFlags`] enumeration.
+    pub flags: CommandQueueFlags,
+
+    /// For single GPU operation, set this to zero. If there are multiple GPU nodes, set a bit to identify the node (the device's physical adapter) to which the command queue applies. Each bit in the mask corresponds to a single node. Only 1 bit must be set.
+    pub node_mask: u32,
+}
+
 /// Describes the size of a tiled region.
 ///
 /// For more information: [`D3D12_TILE_REGION_SIZE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_tile_region_size)

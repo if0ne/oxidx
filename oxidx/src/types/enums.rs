@@ -1,5 +1,22 @@
 use windows::Win32::Graphics::Direct3D12::*;
 
+/// Defines priority levels for a command queue.
+///
+/// For more information: [`D3D12_COMMAND_QUEUE_PRIORITY enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_command_queue_priority)
+#[derive(Debug, Default, Clone, Copy)]
+#[repr(i32)]
+pub enum CommandQueuePriority {
+    #[default]
+    /// Normal priority.
+    Normal = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL.0,
+
+    /// High priority.
+    High = D3D12_COMMAND_QUEUE_PRIORITY_HIGH.0,
+
+    /// Global realtime priority.
+    GlobalRealtime = D3D12_COMMAND_QUEUE_PRIORITY_GLOBAL_REALTIME.0,
+}
+
 /// Specifies the type of a command list.
 ///
 /// For more information: [`D3D12_COMMAND_LIST_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_command_list_type)

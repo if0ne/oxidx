@@ -1,3 +1,7 @@
+mod enums;
+mod flags;
+mod structs;
+
 use std::mem::ManuallyDrop;
 
 use compact_str::CompactString;
@@ -15,13 +19,12 @@ use windows::{
 
 use crate::{
     adapter::{AdapterDesc, AdapterFlags, Luid},
-    command_queue::CommandQueueDesc,
     factory::FeatureLevel,
     heap::{
         CpuDescriptorHandle, DescriptorHeapDesc, DescriptorHeapFlags, DescriptorHeapType,
         HeapFlags, HeapProperties,
     },
-    prelude::{CommandQueueFlags, DxError},
+    prelude::DxError,
     pso::{
         Blend, BlendOp, Blob, BlobInterface, CachedPipeline, CullMode, DeclarationEntry,
         DepthStencilDesc, FillMode, IndexBufferStripCutValue, InputElementDesc, InputSlotClass,
@@ -134,52 +137,9 @@ impl FeatureLevel {
     }
 }
 
-impl CommandListType {
-    pub(crate) fn as_raw(&self) -> D3D12_COMMAND_LIST_TYPE {
-        D3D12_COMMAND_LIST_TYPE(*self as i32)
-    }
-}
-
-impl From<D3D12_COMMAND_LIST_TYPE> for CommandListType {
-    fn from(value: D3D12_COMMAND_LIST_TYPE) -> Self {
-        match value {
-            D3D12_COMMAND_LIST_TYPE_DIRECT => CommandListType::Direct,
-            D3D12_COMMAND_LIST_TYPE_BUNDLE => CommandListType::Bundle,
-            D3D12_COMMAND_LIST_TYPE_COMPUTE => CommandListType::Compute,
-            D3D12_COMMAND_LIST_TYPE_COPY => CommandListType::Copy,
-            D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE => CommandListType::VideoDecode,
-            D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS => CommandListType::VideoProcess,
-            D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE => CommandListType::VideoEncode,
-            _ => unreachable!(),
-        }
-    }
-}
-
 impl FenceFlags {
     pub(crate) fn as_raw(&self) -> D3D12_FENCE_FLAGS {
         D3D12_FENCE_FLAGS(self.bits())
-    }
-}
-
-impl CommandQueueDesc {
-    pub(crate) fn as_raw(&self) -> D3D12_COMMAND_QUEUE_DESC {
-        D3D12_COMMAND_QUEUE_DESC {
-            Type: self.r#type.as_raw(),
-            Priority: self.priority,
-            Flags: D3D12_COMMAND_QUEUE_FLAGS(self.flags.bits()),
-            NodeMask: self.node_mask,
-        }
-    }
-}
-
-impl From<D3D12_COMMAND_QUEUE_DESC> for CommandQueueDesc {
-    fn from(value: D3D12_COMMAND_QUEUE_DESC) -> Self {
-        Self {
-            r#type: value.Type.into(),
-            priority: value.Priority,
-            flags: CommandQueueFlags::from_bits(value.Flags.0).unwrap(),
-            node_mask: value.NodeMask,
-        }
     }
 }
 
@@ -734,34 +694,5 @@ impl From<windows::core::Error> for DxError {
             E_NOTIMPL => DxError::NotImpl,
             _ => DxError::Dxgi(value.message()),
         }
-    }
-}
-
-impl TiledResourceCoordinate {
-    pub(crate) fn as_raw(&self) -> D3D12_TILED_RESOURCE_COORDINATE {
-        D3D12_TILED_RESOURCE_COORDINATE {
-            X: self.x,
-            Y: self.y,
-            Z: self.z,
-            Subresource: self.subresource,
-        }
-    }
-}
-
-impl TileRegionSize {
-    pub(crate) fn as_raw(&self) -> D3D12_TILE_REGION_SIZE {
-        D3D12_TILE_REGION_SIZE {
-            NumTiles: self.num_tiles,
-            UseBox: self.use_box.into(),
-            Width: self.width,
-            Height: self.height,
-            Depth: self.depth,
-        }
-    }
-}
-
-impl TileRangeFlags {
-    pub(crate) fn as_raw(&self) -> D3D12_TILE_RANGE_FLAGS {
-        D3D12_TILE_RANGE_FLAGS(self.bits())
     }
 }

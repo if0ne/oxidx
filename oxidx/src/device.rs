@@ -14,7 +14,7 @@ use windows::{
 use crate::{
     command_allocator::CommandAllocatorInterface,
     command_list::CommandListInterface,
-    command_queue::{CommandQueueDesc, CommandQueueInterface},
+    command_queue::CommandQueueInterface,
     create_type,
     error::DxError,
     heap::{
@@ -28,7 +28,7 @@ use crate::{
     },
     resources::{RenderTargetViewDesc, ResourceDesc, ResourceInterface, ResourceState},
     sync::{FenceFlags, FenceInterface},
-    types::{ClearValue, CommandListType},
+    types::{ClearValue, CommandListType, CommandQueueDesc},
     HasInterface,
 };
 
