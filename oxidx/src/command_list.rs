@@ -6,8 +6,9 @@ use windows::{
 
 use crate::{
     command_allocator::CommandAllocatorInterface,
-    create_type, impl_trait,
-    prelude::DxError,
+    create_type,
+    error::DxError,
+    impl_trait,
     pso::{PipelineStateInterface, PrimitiveTopology, RootSignatureInterface},
     resources::{ResourceBarrier, VertexBufferView},
     types::{CommandListType, CpuDescriptorHandle, Rect, Viewport},

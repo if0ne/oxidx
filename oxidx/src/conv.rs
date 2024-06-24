@@ -19,11 +19,11 @@ use windows::{
 
 use crate::{
     adapter::{AdapterDesc, AdapterFlags, Luid},
+    error::DxError,
     factory::FeatureLevel,
     heap::{
         DescriptorHeapDesc, DescriptorHeapFlags, DescriptorHeapType, HeapFlags, HeapProperties,
     },
-    prelude::DxError,
     pso::{
         Blend, BlendOp, Blob, BlobInterface, CachedPipeline, CullMode, DeclarationEntry,
         DepthStencilDesc, FillMode, IndexBufferStripCutValue, InputElementDesc, InputSlotClass,

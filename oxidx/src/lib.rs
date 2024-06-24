@@ -2,14 +2,13 @@
 #![allow(dead_code)]
 #![allow(clippy::too_many_arguments)]
 
-pub mod prelude;
-
 pub mod adapter;
 pub mod command_allocator;
 pub mod command_list;
 pub mod command_queue;
 pub mod command_signature;
 pub mod debug;
+pub mod descriptor_heap;
 pub mod device;
 pub mod error;
 pub mod factory;

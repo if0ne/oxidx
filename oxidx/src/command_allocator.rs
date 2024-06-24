@@ -3,7 +3,7 @@ use windows::{
     Win32::Graphics::Direct3D12::ID3D12CommandAllocator,
 };
 
-use crate::{create_type, impl_trait, prelude::DxError, HasInterface};
+use crate::{create_type, error::DxError, impl_trait, HasInterface};
 
 /// Represents the allocations of storage for graphics processing unit (GPU) commands.
 ///

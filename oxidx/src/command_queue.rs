@@ -13,8 +13,8 @@ use crate::{
     heap::HeapInterface,
     impl_trait,
     pix::{WinPixEventRuntime, WIN_PIX_EVENT_RUNTIME},
-    prelude::FenceInterface,
     resources::ResourceInterface,
+    sync::FenceInterface,
     types::{CommandQueueDesc, TileRangeFlags, TileRegionSize, TiledResourceCoordinate},
     HasInterface,
 };

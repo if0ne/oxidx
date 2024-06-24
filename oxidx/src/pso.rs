@@ -10,10 +10,7 @@ use windows::{
 };
 
 use crate::{
-    create_type, impl_trait,
-    prelude::{DxError, SampleDesc},
-    types::Format,
-    HasInterface,
+    create_type, error::DxError, impl_trait, swapchain::SampleDesc, types::Format, HasInterface,
 };
 
 pub trait PipelineStateInterface:

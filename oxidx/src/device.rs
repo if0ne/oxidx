@@ -16,10 +16,9 @@ use crate::{
     command_list::CommandListInterface,
     command_queue::CommandQueueInterface,
     create_type,
+    descriptor_heap::DescriptorHeapInterface,
     error::DxError,
-    heap::{
-        DescriptorHeapDesc, DescriptorHeapInterface, DescriptorHeapType, HeapFlags, HeapProperties,
-    },
+    heap::{DescriptorHeapDesc, DescriptorHeapType, HeapFlags, HeapProperties},
     impl_trait,
     pso::{
         BlobInterface, GraphicsPipelineDesc, PipelineStateInterface, RootSignatureDesc,
