@@ -46,7 +46,7 @@ pub trait Debug2Interface: HasInterface<Raw: Interface> {
     fn set_gpu_based_validation_flags(&self, flags: GpuBasedValidationFlags);
 }
 
-/// Disables the debug layer.
+/// Adds the ability to disable the debug layer.
 ///
 /// For more information: [`ID3D12Debug4 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug4)
 pub trait Debug4Interface: HasInterface<Raw: Interface> {
@@ -54,6 +54,19 @@ pub trait Debug4Interface: HasInterface<Raw: Interface> {
     ///
     /// For more information: [`ID3D12Debug4::DisableDebugLayer method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug4-disabledebuglayer)
     fn disable_debug_layer(&self);
+}
+
+/// Adds to the debug layer the ability to configure the auto-naming of objects.
+///
+/// For more information: [`ID3D12Debug5 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug5)
+pub trait Debug5Interface: HasInterface<Raw: Interface> {
+    /// Configures the auto-naming of objects.
+    ///
+    /// # Arguments
+    /// * `enable` - TRUE to enable Dependent Command Queue Synchronization, otherwise FALSE.
+    ///
+    /// For more information: [`ID3D12Debug5::SetEnableAutoName method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug5-setenableautoname)
+    fn set_enable_auto_name(&self, enable: bool);
 }
 
 create_type! {
@@ -84,12 +97,20 @@ create_type! {
     Debug4 wrap ID3D12Debug4; decorator for Debug3, Debug1, Debug
 }
 
+create_type! {
+   /// Adds to the debug layer the ability to configure the auto-naming of objects.
+    ///
+    /// For more information: [`ID3D12Debug5 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug5)
+    Debug5 wrap ID3D12Debug5; decorator for Debug4, Debug3, Debug1, Debug
+}
+
 impl_trait! {
     impl DebugInterface =>
     Debug,
     Debug1,
     Debug3,
-    Debug4;
+    Debug4,
+    Debug5;
 
     fn enable_debug_layer(&self) {
         unsafe {
@@ -102,7 +123,8 @@ impl_trait! {
     impl Debug1Interface =>
     Debug1,
     Debug3,
-    Debug4;
+    Debug4,
+    Debug5;
 
     fn set_enable_gpu_based_validation(&self, enable: bool) {
         unsafe {
@@ -120,7 +142,8 @@ impl_trait! {
 impl_trait! {
     impl Debug2Interface =>
     Debug3,
-    Debug4;
+    Debug4,
+    Debug5;
 
     fn set_gpu_based_validation_flags(&self, flags: GpuBasedValidationFlags) {
         unsafe {
@@ -131,11 +154,23 @@ impl_trait! {
 
 impl_trait! {
     impl Debug4Interface =>
-    Debug4;
+    Debug4,
+    Debug5;
 
     fn disable_debug_layer(&self) {
         unsafe {
             self.0.DisableDebugLayer();
+        }
+    }
+}
+
+impl_trait! {
+    impl Debug5Interface =>
+    Debug5;
+
+    fn set_enable_auto_name(&self, enable: bool) {
+        unsafe {
+            self.0.SetEnableAutoName(enable);
         }
     }
 }
