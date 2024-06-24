@@ -63,14 +63,15 @@ create_type! {
 create_type! {
     /// Adds configurable levels of GPU-based validation to the debug layer.
     ///
-    /// For more information: [`ID3D12Debug2 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug2)
-    Debug2 wrap ID3D12Debug2; decorator for Debug1, Debug
+    /// For more information: [`ID3D12Debug3 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug3)
+    Debug3 wrap ID3D12Debug3; decorator for Debug1, Debug
 }
 
 impl_trait! {
     impl DebugInterface =>
     Debug,
-    Debug1;
+    Debug1,
+    Debug3;
 
     fn enable_debug_layer(&self) {
         unsafe {
@@ -81,7 +82,8 @@ impl_trait! {
 
 impl_trait! {
     impl Debug1Interface =>
-    Debug1;
+    Debug1,
+    Debug3;
 
     fn set_enable_gpu_based_validation(&self, enable: bool) {
         unsafe {
@@ -92,6 +94,17 @@ impl_trait! {
     fn set_enable_synchronized_command_queue_validation(&self, enable: bool) {
         unsafe {
             self.0.SetEnableSynchronizedCommandQueueValidation(enable);
+        }
+    }
+}
+
+impl_trait! {
+    impl Debug2Interface =>
+    Debug3;
+
+    fn set_gpu_based_validation_flags(&self, flags: GpuBasedValidationFlags) {
+        unsafe {
+            self.0.SetGPUBasedValidationFlags(flags.as_raw());
         }
     }
 }
