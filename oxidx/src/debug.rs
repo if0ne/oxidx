@@ -15,7 +15,7 @@ pub trait DebugInterface: HasInterface<Raw: Interface> {
 /// Adds GPU-Based Validation and Dependent Command Queue Synchronization to the debug layer.
 ///
 /// For more information: [`ID3D12Debug1 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug1)
-pub trait Debug1Interface: HasInterface<Raw: Interface> {
+pub trait Debug1Interface: DebugInterface {
     /// This method enables or disables GPU-Based Validation (GBV) before creating a device with the debug layer enabled.
     ///
     /// # Arguments
@@ -36,7 +36,7 @@ pub trait Debug1Interface: HasInterface<Raw: Interface> {
 /// Adds configurable levels of GPU-based validation to the debug layer.
 ///
 /// For more information: [`ID3D12Debug2 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug2)
-pub trait Debug2Interface: HasInterface<Raw: Interface> {
+pub trait Debug2Interface: Debug1Interface {
     /// This method configures the level of GPU-based validation that the debug device is to perform at runtime.
     ///
     /// # Arguments
@@ -49,7 +49,7 @@ pub trait Debug2Interface: HasInterface<Raw: Interface> {
 /// Adds the ability to disable the debug layer.
 ///
 /// For more information: [`ID3D12Debug4 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug4)
-pub trait Debug4Interface: HasInterface<Raw: Interface> {
+pub trait Debug4Interface: Debug2Interface {
     /// Disables the debug layer.
     ///
     /// For more information: [`ID3D12Debug4::DisableDebugLayer method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug4-disabledebuglayer)
@@ -59,7 +59,7 @@ pub trait Debug4Interface: HasInterface<Raw: Interface> {
 /// Adds to the debug layer the ability to configure the auto-naming of objects.
 ///
 /// For more information: [`ID3D12Debug5 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug5)
-pub trait Debug5Interface: HasInterface<Raw: Interface> {
+pub trait Debug5Interface: Debug4Interface {
     /// Configures the auto-naming of objects.
     ///
     /// # Arguments
@@ -67,6 +67,19 @@ pub trait Debug5Interface: HasInterface<Raw: Interface> {
     ///
     /// For more information: [`ID3D12Debug5::SetEnableAutoName method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug5-setenableautoname)
     fn set_enable_auto_name(&self, enable: bool);
+}
+
+/// Adds to the debug layer the ability to configure the auto-naming of objects.
+///
+/// For more information: [`ID3D12Debug5 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug5)
+pub trait Debug6Interface: Debug5Interface {
+    /// TBD
+    ///
+    /// # Arguments
+    /// * `enable` - TBD
+    ///
+    /// For more information: [`ID3D12Debug6::SetForceLegacyBarrierValidation method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug6-setforcelegacybarriervalidation)
+    fn set_force_legacy_barrier_validation(&self, enable: bool);
 }
 
 create_type! {
@@ -98,10 +111,17 @@ create_type! {
 }
 
 create_type! {
-   /// Adds to the debug layer the ability to configure the auto-naming of objects.
+    /// Adds to the debug layer the ability to configure the auto-naming of objects.
     ///
     /// For more information: [`ID3D12Debug5 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug5)
     Debug5 wrap ID3D12Debug5; decorator for Debug4, Debug3, Debug1, Debug
+}
+
+create_type! {
+   /// A debug interface controls debug settings.
+   ///
+   /// For more information: [`ID3D12Debug6 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug6)
+   Debug6 wrap ID3D12Debug6; decorator for Debug5, Debug4, Debug3, Debug1, Debug
 }
 
 impl_trait! {
@@ -110,7 +130,8 @@ impl_trait! {
     Debug1,
     Debug3,
     Debug4,
-    Debug5;
+    Debug5,
+    Debug6;
 
     fn enable_debug_layer(&self) {
         unsafe {
@@ -124,7 +145,8 @@ impl_trait! {
     Debug1,
     Debug3,
     Debug4,
-    Debug5;
+    Debug5,
+    Debug6;
 
     fn set_enable_gpu_based_validation(&self, enable: bool) {
         unsafe {
@@ -143,7 +165,8 @@ impl_trait! {
     impl Debug2Interface =>
     Debug3,
     Debug4,
-    Debug5;
+    Debug5,
+    Debug6;
 
     fn set_gpu_based_validation_flags(&self, flags: GpuBasedValidationFlags) {
         unsafe {
@@ -155,7 +178,8 @@ impl_trait! {
 impl_trait! {
     impl Debug4Interface =>
     Debug4,
-    Debug5;
+    Debug5,
+    Debug6;
 
     fn disable_debug_layer(&self) {
         unsafe {
@@ -166,11 +190,23 @@ impl_trait! {
 
 impl_trait! {
     impl Debug5Interface =>
-    Debug5;
+    Debug5,
+    Debug6;
 
     fn set_enable_auto_name(&self, enable: bool) {
         unsafe {
             self.0.SetEnableAutoName(enable);
+        }
+    }
+}
+
+impl_trait! {
+    impl Debug6Interface =>
+    Debug6;
+
+    fn set_force_legacy_barrier_validation(&self, enable: bool) {
+        unsafe {
+            self.0.SetForceLegacyBarrierValidation(enable);
         }
     }
 }
