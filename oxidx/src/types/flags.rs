@@ -30,6 +30,26 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Specifies fence options.
+    ///
+    /// Empty flag - No options are specified.
+    ///
+    /// For more information: [`D3D12_FENCE_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_fence_flags)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct FenceFlags: i32 {
+        /// The fence is shared.
+        const Shared = D3D12_FENCE_FLAG_SHARED.0;
+
+        /// The fence is shared with another GPU adapter.
+        const SharedCrossAdapter = D3D12_FENCE_FLAG_SHARED_CROSS_ADAPTER.0;
+
+        /// The fence is of the non-monitored type. Non-monitored fences should only be used when the adapter doesn't support monitored fences, 
+        /// or when a fence is shared with an adapter that doesn't support monitored fences.
+        const NonMonitored = D3D12_FENCE_FLAG_NON_MONITORED.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Describes the level of GPU-based validation to perform at runtime.
     ///
     /// Empty flag - Default behavior; resource states, descriptors, and descriptor tables are all validated.

@@ -2,7 +2,7 @@ use windows::Win32::Graphics::Direct3D12::*;
 
 use crate::types::CommandQueueFlags;
 
-use super::{DescriptorHeapFlags, GpuBasedValidationFlags, TileRangeFlags};
+use super::{DescriptorHeapFlags, FenceFlags, GpuBasedValidationFlags, TileRangeFlags};
 
 impl CommandQueueFlags {
     #[inline]
@@ -20,6 +20,19 @@ impl DescriptorHeapFlags {
 impl From<D3D12_DESCRIPTOR_HEAP_FLAGS> for DescriptorHeapFlags {
     #[inline]
     fn from(value: D3D12_DESCRIPTOR_HEAP_FLAGS) -> Self {
+        Self::from_bits(value.0).unwrap()
+    }
+}
+
+impl FenceFlags {
+    pub(crate) fn as_raw(&self) -> D3D12_FENCE_FLAGS {
+        D3D12_FENCE_FLAGS(self.bits())
+    }
+}
+
+impl From<D3D12_FENCE_FLAGS> for FenceFlags {
+    #[inline]
+    fn from(value: D3D12_FENCE_FLAGS) -> Self {
         Self::from_bits(value.0).unwrap()
     }
 }

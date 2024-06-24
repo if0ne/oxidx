@@ -2,12 +2,12 @@ use windows::{
     core::{Interface, Param},
     Win32::{
         Foundation::HANDLE,
-        Graphics::Direct3D12::ID3D12Fence,
+        Graphics::Direct3D12::{ID3D12Fence, ID3D12Fence1},
         System::Threading::{CreateEventA, ResetEvent, WaitForSingleObject},
     },
 };
 
-use crate::{create_type, error::DxError, impl_trait, HasInterface};
+use crate::{create_type, error::DxError, impl_trait, types::FenceFlags, HasInterface};
 
 /// Represents a fence, an object used for synchronization of the CPU and one or more GPUs.
 ///
@@ -41,6 +41,20 @@ pub trait FenceInterface:
     fn signal(&self, value: u64) -> Result<(), DxError>;
 }
 
+/// Represents a fence. This interface extends [`FenceInterface1`], and supports the retrieval of the flags used to create the original fence. 
+/// This new feature is useful primarily for opening shared fences.
+///
+/// For more information: [`ID3D12Fence1 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12fence1)
+pub trait Fence1Interface: FenceInterface {
+    /// Gets the flags used to create the fence represented by the current instance.
+    /// 
+    /// # Returns
+    /// The flags used to create the fence.
+    /// 
+    /// For more information: [`ID3D12Fence1::GetCreationFlags method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12fence1-getcreationflags)
+    fn get_creation_flags(&self) -> FenceFlags;
+}
+
 create_type! {
     /// Represents a fence, an object used for synchronization of the CPU and one or more GPUs.
     ///
@@ -48,9 +62,18 @@ create_type! {
     Fence wrap ID3D12Fence
 }
 
+create_type! {
+    /// Represents a fence. This interface extends [`FenceInterface1`], and supports the retrieval of the flags used to create the original fence. 
+    /// This new feature is useful primarily for opening shared fences.
+    ///
+    /// For more information: [`ID3D12Fence1 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12fence1)
+    Fence1 wrap ID3D12Fence1
+}
+
 impl_trait! {
     impl FenceInterface =>
-    Fence;
+    Fence,
+    Fence1;
 
     fn get_completed_value(&self) -> u64 {
         unsafe { self.0.GetCompletedValue() }
@@ -64,6 +87,17 @@ impl_trait! {
 
     fn signal(&self, value: u64) -> Result<(), DxError> {
         unsafe { self.0.Signal(value).map_err(DxError::from) }
+    }
+}
+
+impl_trait! {
+    impl Fence1Interface =>
+    Fence1;
+
+    fn get_creation_flags(&self) -> FenceFlags {
+        unsafe {
+            self.0.GetCreationFlags().into()
+        }
     }
 }
 
