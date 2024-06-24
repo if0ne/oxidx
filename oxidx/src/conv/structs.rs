@@ -3,6 +3,7 @@ use windows::Win32::Graphics::Direct3D12::*;
 use super::*;
 
 impl CommandQueueDesc {
+    #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_COMMAND_QUEUE_DESC {
         D3D12_COMMAND_QUEUE_DESC {
             Type: self.r#type.as_raw(),
@@ -14,12 +15,14 @@ impl CommandQueueDesc {
 }
 
 impl CpuDescriptorHandle {
+    #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_CPU_DESCRIPTOR_HANDLE {
         D3D12_CPU_DESCRIPTOR_HANDLE { ptr: self.0 }
     }
 }
 
 impl From<D3D12_COMMAND_QUEUE_DESC> for CommandQueueDesc {
+    #[inline]
     fn from(value: D3D12_COMMAND_QUEUE_DESC) -> Self {
         Self {
             r#type: value.Type.into(),
@@ -31,6 +34,7 @@ impl From<D3D12_COMMAND_QUEUE_DESC> for CommandQueueDesc {
 }
 
 impl TileRegionSize {
+    #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_TILE_REGION_SIZE {
         D3D12_TILE_REGION_SIZE {
             NumTiles: self.num_tiles,
@@ -43,6 +47,7 @@ impl TileRegionSize {
 }
 
 impl TiledResourceCoordinate {
+    #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_TILED_RESOURCE_COORDINATE {
         D3D12_TILED_RESOURCE_COORDINATE {
             X: self.x,
