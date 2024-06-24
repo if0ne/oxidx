@@ -2,12 +2,19 @@ use windows::Win32::Graphics::Direct3D12::*;
 
 use crate::types::CommandQueueFlags;
 
-use super::TileRangeFlags;
+use super::{GpuBasedValidationFlags, TileRangeFlags};
 
 impl CommandQueueFlags {
     #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_COMMAND_QUEUE_FLAGS {
         D3D12_COMMAND_QUEUE_FLAGS(self.bits())
+    }
+}
+
+impl GpuBasedValidationFlags {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_GPU_BASED_VALIDATION_FLAGS {
+        D3D12_GPU_BASED_VALIDATION_FLAGS(self.bits())
     }
 }
 

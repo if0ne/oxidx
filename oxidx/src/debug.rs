@@ -1,6 +1,6 @@
 use windows::{core::Interface, Win32::Graphics::Direct3D12::*};
 
-use crate::{create_type, impl_trait, HasInterface};
+use crate::{create_type, impl_trait, types::GpuBasedValidationFlags, HasInterface};
 
 /// An interface used to turn on the debug layer.
 ///
@@ -33,6 +33,19 @@ pub trait Debug1Interface: HasInterface<Raw: Interface> {
     fn set_enable_synchronized_command_queue_validation(&self, enable: bool);
 }
 
+/// Adds configurable levels of GPU-based validation to the debug layer.
+///
+/// For more information: [`ID3D12Debug2 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug2)
+pub trait Debug2Interface: HasInterface<Raw: Interface> {
+    /// This method configures the level of GPU-based validation that the debug device is to perform at runtime.
+    ///
+    /// # Arguments
+    /// * `flags` - Specifies the level of GPU-based validation to perform at runtime.
+    ///
+    /// For more information: [`ID3D12Debug2::SetGPUBasedValidationFlags method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug2-setgpubasedvalidationflags)
+    fn set_gpu_based_validation_flags(&self, flags: GpuBasedValidationFlags);
+}
+
 create_type! {
     /// An interface used to turn on the debug layer.
     ///
@@ -43,8 +56,15 @@ create_type! {
 create_type! {
     /// An interface used to turn on the debug layer.
     ///
-    /// For more information: [`ID3D12Debug interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug)
+    /// For more information: [`ID3D12Debug1 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug1)
     Debug1 wrap ID3D12Debug1; decorator for Debug
+}
+
+create_type! {
+    /// Adds configurable levels of GPU-based validation to the debug layer.
+    ///
+    /// For more information: [`ID3D12Debug2 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug2)
+    Debug2 wrap ID3D12Debug2; decorator for Debug1, Debug
 }
 
 impl_trait! {

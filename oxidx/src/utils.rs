@@ -27,6 +27,7 @@ macro_rules! create_type {
         }
 
         $(
+            /// Upcast
             impl TryInto<$name> for $base {
                 type Error = $crate::error::DxError;
 
@@ -39,6 +40,22 @@ macro_rules! create_type {
                             ))?;
 
                     Ok(<$name>::new(temp))
+                }
+            }
+
+            /// Downcast
+            impl TryInto<$base> for $name {
+                type Error = $crate::error::DxError;
+
+                fn try_into(self) -> Result<$base, Self::Error> {
+                    let temp = self.0.cast::<_>()
+                        .map_err(|_|
+                            $crate::error::DxError::Cast(
+                                std::any::type_name::<$name>(),
+                                std::any::type_name::<$base>()
+                            ))?;
+
+                    Ok(<$base>::new(temp))
                 }
             }
         )*

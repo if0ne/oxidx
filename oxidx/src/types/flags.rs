@@ -14,6 +14,19 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Describes the level of GPU-based validation to perform at runtime.
+    ///
+    /// Empty flag - Default behavior; resource states, descriptors, and descriptor tables are all validated.
+    ///
+    /// For more information: [`D3D12_GPU_BASED_VALIDATION_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/ne-d3d12sdklayers-d3d12_gpu_based_validation_flags)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct GpuBasedValidationFlags: i32 {
+        /// Indicates that the GPU timeout should be disabled for this command queue.
+        const DisableStateTracking = D3D12_GPU_BASED_VALIDATION_FLAGS_DISABLE_STATE_TRACKING.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Specifies a range of tile mappings.
     ///
     /// Empty flag - No tile-mapping flags are specified.
