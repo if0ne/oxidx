@@ -34,7 +34,6 @@ use crate::{
         VertexBufferView, ViewDimension,
     },
     swapchain::{Rational, SampleDesc, SwapchainDesc, SwapchainFullscreenDesc},
-    sync::FenceFlags,
     types::*,
     HasInterface,
 };
@@ -131,12 +130,6 @@ impl ScalingMode {
 impl FeatureLevel {
     pub(crate) fn as_raw(&self) -> D3D_FEATURE_LEVEL {
         D3D_FEATURE_LEVEL(*self as i32)
-    }
-}
-
-impl FenceFlags {
-    pub(crate) fn as_raw(&self) -> D3D12_FENCE_FLAGS {
-        D3D12_FENCE_FLAGS(self.bits())
     }
 }
 

@@ -3,9 +3,9 @@ use windows::{
     core::Interface,
     Win32::Graphics::{
         Direct3D12::{
-            ID3D12Device, D3D12_BLEND_DESC, D3D12_GRAPHICS_PIPELINE_STATE_DESC,
-            D3D12_INPUT_LAYOUT_DESC, D3D12_PIPELINE_STATE_FLAGS, D3D12_RENDER_TARGET_BLEND_DESC,
-            D3D12_STREAM_OUTPUT_DESC,
+            ID3D12Device, D3D12_BLEND_DESC, D3D12_FENCE_FLAG_NONE,
+            D3D12_GRAPHICS_PIPELINE_STATE_DESC, D3D12_INPUT_LAYOUT_DESC,
+            D3D12_PIPELINE_STATE_FLAGS, D3D12_RENDER_TARGET_BLEND_DESC, D3D12_STREAM_OUTPUT_DESC,
         },
         Dxgi::Common::DXGI_FORMAT,
     },
@@ -25,7 +25,7 @@ use crate::{
         RootSignatureInterface, RootSignatureVersion,
     },
     resources::{RenderTargetViewDesc, ResourceDesc, ResourceInterface, ResourceState},
-    sync::{FenceFlags, FenceInterface},
+    sync::FenceInterface,
     types::{
         ClearValue, CommandListType, CommandQueueDesc, CpuDescriptorHandle, DescriptorHeapDesc,
         DescriptorHeapType,
@@ -56,11 +56,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         desc: CommandQueueDesc,
     ) -> Result<CQ, DxError>;
 
-    fn create_fence<F: FenceInterface>(
-        &self,
-        initial_value: u64,
-        flags: FenceFlags,
-    ) -> Result<F, DxError>;
+    fn create_fence<F: FenceInterface>(&self, initial_value: u64) -> Result<F, DxError>;
 
     fn create_descriptor_heap<H: DescriptorHeapInterface>(
         &self,
@@ -132,10 +128,9 @@ impl_trait! {
     fn create_fence<F: FenceInterface>(
         &self,
         initial_value: u64,
-        flags: FenceFlags,
     ) -> Result<F, DxError> {
         let res: F::Raw  = unsafe {
-            self.0.CreateFence(initial_value, flags.as_raw()).map_err(|_| DxError::Dummy)?
+            self.0.CreateFence(initial_value, D3D12_FENCE_FLAG_NONE).map_err(|_| DxError::Dummy)?
         };
 
         Ok(F::new(res))

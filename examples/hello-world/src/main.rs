@@ -235,7 +235,7 @@ impl DXSample for Sample {
 
         let (vertex_buffer, vbv) = create_vertex_buffer(&self.device, aspect_ratio);
 
-        let fence = self.device.create_fence(0, FenceFlags::empty()).unwrap();
+        let fence = self.device.create_fence(0).unwrap();
 
         let fence_value = 1;
 
@@ -581,7 +581,7 @@ fn wait_for_previous_frame(resources: &mut Resources) {
     if resources.fence.get_completed_value() < fence {
         resources
             .fence
-            .set_event_on_completion(resources.fence_event, fence)
+            .set_event_on_completion(fence, resources.fence_event)
             .ok()
             .unwrap();
 
