@@ -1,6 +1,6 @@
 use windows::Win32::Graphics::Direct3D12::*;
 
-use super::{CommandListType, CommandQueuePriority};
+use super::{CommandListType, CommandQueuePriority, DescriptorHeapType};
 
 impl CommandQueuePriority {
     #[inline]
@@ -40,6 +40,26 @@ impl From<D3D12_COMMAND_LIST_TYPE> for CommandListType {
             D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE => CommandListType::VideoDecode,
             D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS => CommandListType::VideoProcess,
             D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE => CommandListType::VideoEncode,
+            _ => unreachable!(),
+        }
+    }
+}
+
+impl DescriptorHeapType {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_DESCRIPTOR_HEAP_TYPE {
+        D3D12_DESCRIPTOR_HEAP_TYPE(*self as i32)
+    }
+}
+
+impl From<D3D12_DESCRIPTOR_HEAP_TYPE> for DescriptorHeapType {
+    #[inline]
+    fn from(value: D3D12_DESCRIPTOR_HEAP_TYPE) -> Self {
+        match value {
+            D3D12_DESCRIPTOR_HEAP_TYPE_RTV => DescriptorHeapType::Rtv,
+            D3D12_DESCRIPTOR_HEAP_TYPE_DSV => DescriptorHeapType::Dsv,
+            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV => DescriptorHeapType::CbvSrvUav,
+            D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER => DescriptorHeapType::Sampler,
             _ => unreachable!(),
         }
     }

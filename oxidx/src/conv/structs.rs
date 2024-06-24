@@ -21,12 +21,57 @@ impl CpuDescriptorHandle {
     }
 }
 
+impl From<D3D12_CPU_DESCRIPTOR_HANDLE> for CpuDescriptorHandle {
+    #[inline]
+    fn from(value: D3D12_CPU_DESCRIPTOR_HANDLE) -> Self {
+        Self(value.ptr)
+    }
+}
+
+impl GpuDescriptorHandle {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_GPU_DESCRIPTOR_HANDLE {
+        D3D12_GPU_DESCRIPTOR_HANDLE { ptr: self.0 as u64 }
+    }
+}
+
+impl From<D3D12_GPU_DESCRIPTOR_HANDLE> for GpuDescriptorHandle {
+    #[inline]
+    fn from(value: D3D12_GPU_DESCRIPTOR_HANDLE) -> Self {
+        Self(value.ptr as usize)
+    }
+}
+
 impl From<D3D12_COMMAND_QUEUE_DESC> for CommandQueueDesc {
     #[inline]
     fn from(value: D3D12_COMMAND_QUEUE_DESC) -> Self {
         Self {
             r#type: value.Type.into(),
             priority: value.Priority.into(),
+            flags: value.Flags.into(),
+            node_mask: value.NodeMask,
+        }
+    }
+}
+
+impl DescriptorHeapDesc {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_DESCRIPTOR_HEAP_DESC {
+        D3D12_DESCRIPTOR_HEAP_DESC {
+            Type: self.r#type.as_raw(),
+            NumDescriptors: self.num,
+            Flags: self.flags.as_raw(),
+            NodeMask: self.node_mask,
+        }
+    }
+}
+
+impl From<D3D12_DESCRIPTOR_HEAP_DESC> for DescriptorHeapDesc {
+    #[inline]
+    fn from(value: D3D12_DESCRIPTOR_HEAP_DESC) -> Self {
+        Self {
+            r#type: value.Type.into(),
+            num: value.NumDescriptors,
             flags: value.Flags.into(),
             node_mask: value.NodeMask,
         }

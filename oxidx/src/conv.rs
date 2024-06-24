@@ -21,9 +21,7 @@ use crate::{
     adapter::{AdapterDesc, AdapterFlags, Luid},
     error::DxError,
     factory::FeatureLevel,
-    heap::{
-        DescriptorHeapDesc, DescriptorHeapFlags, DescriptorHeapType, HeapFlags, HeapProperties,
-    },
+    heap::{HeapFlags, HeapProperties},
     pso::{
         Blend, BlendOp, Blob, BlobInterface, CachedPipeline, CullMode, DeclarationEntry,
         DepthStencilDesc, FillMode, IndexBufferStripCutValue, InputElementDesc, InputSlotClass,
@@ -139,34 +137,6 @@ impl FeatureLevel {
 impl FenceFlags {
     pub(crate) fn as_raw(&self) -> D3D12_FENCE_FLAGS {
         D3D12_FENCE_FLAGS(self.bits())
-    }
-}
-
-impl DescriptorHeapDesc {
-    pub(crate) fn as_raw(&self) -> D3D12_DESCRIPTOR_HEAP_DESC {
-        D3D12_DESCRIPTOR_HEAP_DESC {
-            Type: self.r#type.as_raw(),
-            NumDescriptors: self.num,
-            Flags: self.flags.as_raw(),
-            NodeMask: self.node_mask,
-        }
-    }
-}
-
-impl DescriptorHeapFlags {
-    pub(crate) fn as_raw(&self) -> D3D12_DESCRIPTOR_HEAP_FLAGS {
-        D3D12_DESCRIPTOR_HEAP_FLAGS(self.bits())
-    }
-}
-
-impl DescriptorHeapType {
-    pub(crate) fn as_raw(&self) -> D3D12_DESCRIPTOR_HEAP_TYPE {
-        match self {
-            DescriptorHeapType::Rtv => D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-            DescriptorHeapType::Dsv => D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
-            DescriptorHeapType::CbvSrvUav => D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-            DescriptorHeapType::Sampler => D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER,
-        }
     }
 }
 

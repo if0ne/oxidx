@@ -46,3 +46,23 @@ pub enum CommandListType {
     /// Specifies a command buffer for video encoding.
     VideoEncode = D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE.0,
 }
+
+/// Specifies a type of descriptor heap.
+///
+/// For more information: [`D3D12_DESCRIPTOR_HEAP_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_descriptor_heap_type)
+#[derive(Clone, Copy, Debug, Default)]
+#[repr(i32)]
+pub enum DescriptorHeapType {
+    /// The descriptor heap for the render-target view.
+    #[default]
+    Rtv = D3D12_DESCRIPTOR_HEAP_TYPE_RTV.0,
+
+    /// The descriptor heap for the depth-stencil view.
+    Dsv = D3D12_DESCRIPTOR_HEAP_TYPE_DSV.0,
+
+    /// The descriptor heap for the combination of constant-buffer, shader-resource, and unordered-access views.
+    CbvSrvUav = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV.0,
+
+    /// The descriptor heap for the sampler.
+    Sampler = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER.0,
+}

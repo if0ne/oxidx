@@ -30,6 +30,36 @@ impl CpuDescriptorHandle {
     }
 }
 
+/// Describes a GPU descriptor handle.
+///
+/// For more information: [`D3D12_GPU_DESCRIPTOR_HANDLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_gpu_descriptor_handle)
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct GpuDescriptorHandle(pub(crate) usize);
+
+impl GpuDescriptorHandle {
+    pub fn offset(&self, offset: usize) -> Self {
+        Self(self.0 + offset)
+    }
+}
+
+/// Describes the descriptor heap.
+///
+/// For more information: [`D3D12_DESCRIPTOR_HEAP_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_descriptor_heap_desc)
+#[derive(Clone, Debug, Default)]
+pub struct DescriptorHeapDesc {
+    /// A [`DescriptorHeapType`]-typed value that specifies the types of descriptors in the heap.
+    pub r#type: DescriptorHeapType,
+
+    /// The number of descriptors in the heap.
+    pub num: u32,
+
+    /// A combination of [`DescriptorHeapFlags]-typed values that are combined by using a bitwise OR operation. The resulting value specifies options for the heap.
+    pub flags: DescriptorHeapFlags,
+
+    /// For single-adapter operation, set this to zero. If there are multiple adapter nodes, set a bit to identify the node (one of the device's physical adapters) to which the descriptor heap applies. Each bit in the mask corresponds to a single node. Only one bit must be set.
+    pub node_mask: u32,
+}
+
 /// Describes the size of a tiled region.
 ///
 /// For more information: [`D3D12_TILE_REGION_SIZE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_tile_region_size)

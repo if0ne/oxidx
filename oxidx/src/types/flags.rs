@@ -14,6 +14,22 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Specifies options for a heap.
+    ///
+    /// Empty flag - Indicates default usage of a heap.
+    ///
+    /// For more information: [`D3D12_DESCRIPTOR_HEAP_FLAG enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_descriptor_heap_flags)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct DescriptorHeapFlags: i32 {
+        /// The flag [`DescriptorHeapFlags::ShaderVisible`] can optionally be set on a descriptor heap to indicate it is be bound on a command list
+        /// for reference by shaders. Descriptor heaps created without this flag allow applications the option to stage descriptors in CPU memory
+        /// before copying them to a shader visible descriptor heap, as a convenience. But it is also fine for applications to directly create
+        /// descriptors into shader visible descriptor heaps with no requirement to stage anything on the CPU.
+        const ShaderVisible = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Describes the level of GPU-based validation to perform at runtime.
     ///
     /// Empty flag - Default behavior; resource states, descriptors, and descriptor tables are all validated.

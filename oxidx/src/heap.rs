@@ -17,30 +17,6 @@ impl_trait! {
     Heap;
 }
 
-#[derive(Clone, Debug, Default)]
-pub struct DescriptorHeapDesc {
-    pub r#type: DescriptorHeapType,
-    pub num: u32,
-    pub flags: DescriptorHeapFlags,
-    pub node_mask: u32,
-}
-
-#[derive(Clone, Debug, Default)]
-pub enum DescriptorHeapType {
-    #[default]
-    Rtv,
-    Dsv,
-    CbvSrvUav,
-    Sampler,
-}
-
-bitflags::bitflags! {
-    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct DescriptorHeapFlags: i32 {
-        const ShaderVisible = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE.0;
-    }
-}
-
 #[derive(Clone, Debug)]
 pub struct HeapProperties {
     pub r#type: HeapType,
