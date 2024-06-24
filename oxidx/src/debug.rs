@@ -46,6 +46,16 @@ pub trait Debug2Interface: HasInterface<Raw: Interface> {
     fn set_gpu_based_validation_flags(&self, flags: GpuBasedValidationFlags);
 }
 
+/// Disables the debug layer.
+///
+/// For more information: [`ID3D12Debug4 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug4)
+pub trait Debug4Interface: HasInterface<Raw: Interface> {
+    /// Disables the debug layer.
+    ///
+    /// For more information: [`ID3D12Debug4::DisableDebugLayer method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug4-disabledebuglayer)
+    fn disable_debug_layer(&self);
+}
+
 create_type! {
     /// An interface used to turn on the debug layer.
     ///
@@ -67,11 +77,19 @@ create_type! {
     Debug3 wrap ID3D12Debug3; decorator for Debug1, Debug
 }
 
+create_type! {
+    /// Adds the ability to disable the debug layer.
+    ///
+    /// For more information: [`ID3D12Debug4 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug4)
+    Debug4 wrap ID3D12Debug4; decorator for Debug3, Debug1, Debug
+}
+
 impl_trait! {
     impl DebugInterface =>
     Debug,
     Debug1,
-    Debug3;
+    Debug3,
+    Debug4;
 
     fn enable_debug_layer(&self) {
         unsafe {
@@ -83,7 +101,8 @@ impl_trait! {
 impl_trait! {
     impl Debug1Interface =>
     Debug1,
-    Debug3;
+    Debug3,
+    Debug4;
 
     fn set_enable_gpu_based_validation(&self, enable: bool) {
         unsafe {
@@ -100,11 +119,23 @@ impl_trait! {
 
 impl_trait! {
     impl Debug2Interface =>
-    Debug3;
+    Debug3,
+    Debug4;
 
     fn set_gpu_based_validation_flags(&self, flags: GpuBasedValidationFlags) {
         unsafe {
             self.0.SetGPUBasedValidationFlags(flags.as_raw());
+        }
+    }
+}
+
+impl_trait! {
+    impl Debug4Interface =>
+    Debug4;
+
+    fn disable_debug_layer(&self) {
+        unsafe {
+            self.0.DisableDebugLayer();
         }
     }
 }
