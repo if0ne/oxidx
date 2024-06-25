@@ -41,16 +41,16 @@ pub trait FenceInterface:
     fn signal(&self, value: u64) -> Result<(), DxError>;
 }
 
-/// Represents a fence. This interface extends [`FenceInterface1`], and supports the retrieval of the flags used to create the original fence. 
+/// Represents a fence. This interface extends [`FenceInterface1`], and supports the retrieval of the flags used to create the original fence.
 /// This new feature is useful primarily for opening shared fences.
 ///
 /// For more information: [`ID3D12Fence1 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12fence1)
 pub trait Fence1Interface: FenceInterface {
     /// Gets the flags used to create the fence represented by the current instance.
-    /// 
+    ///
     /// # Returns
     /// The flags used to create the fence.
-    /// 
+    ///
     /// For more information: [`ID3D12Fence1::GetCreationFlags method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12fence1-getcreationflags)
     fn get_creation_flags(&self) -> FenceFlags;
 }
@@ -63,7 +63,7 @@ create_type! {
 }
 
 create_type! {
-    /// Represents a fence. This interface extends [`FenceInterface1`], and supports the retrieval of the flags used to create the original fence. 
+    /// Represents a fence. This interface extends [`FenceInterface1`], and supports the retrieval of the flags used to create the original fence.
     /// This new feature is useful primarily for opening shared fences.
     ///
     /// For more information: [`ID3D12Fence1 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12fence1)
@@ -109,8 +109,8 @@ impl Event {
     ///
     /// # Arguments
     /// * `manual_reset` - If this parameter is true, the function creates a manual-reset event object, which requires the use of the [`Event::reset`]
-    /// function to set the event state to nonsignaled. If this parameter is FALSE, the function creates an auto-reset event object, and the
-    /// system automatically resets the event state to nonsignaled after a single waiting thread has been released.
+    ///   function to set the event state to nonsignaled. If this parameter is FALSE, the function creates an auto-reset event object, and the
+    ///   system automatically resets the event state to nonsignaled after a single waiting thread has been released.
     /// * `initial_state` - If this parameter is true, the initial state of the event object is signaled; otherwise, it is nonsignaled.
     ///
     /// # Returns
@@ -134,8 +134,8 @@ impl Event {
     ///
     /// # Arguments
     /// * `timeout_ms` - The time-out interval, in milliseconds. If a nonzero value is specified, the function waits until the object is signaled
-    /// or the interval elapses. If timeout_ms is zero, the function does not enter a wait state if the object is not signaled;
-    /// it always returns immediately. If timeout_ms is [`u32::MAX`], the function will return only when the object is signaled.
+    ///   or the interval elapses. If timeout_ms is zero, the function does not enter a wait state if the object is not signaled;
+    ///   it always returns immediately. If timeout_ms is [`u32::MAX`], the function will return only when the object is signaled.
     ///
     /// For more information: [`WaitForSingleObject`](https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject)
     pub fn wait(&self, timeout_ms: u32) -> u32 {

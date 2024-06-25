@@ -3,7 +3,7 @@ use super::*;
 /// Describes a command queue.
 ///
 /// For more information: [`D3D12_COMMAND_QUEUE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_command_queue_desc)
-#[derive(Debug, Default, Clone)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct CommandQueueDesc {
     /// Specifies one member of [`CommandListType`].
     pub r#type: CommandListType,
@@ -45,7 +45,7 @@ impl GpuDescriptorHandle {
 /// Describes the descriptor heap.
 ///
 /// For more information: [`D3D12_DESCRIPTOR_HEAP_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_descriptor_heap_desc)
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct DescriptorHeapDesc {
     /// A [`DescriptorHeapType`]-typed value that specifies the types of descriptors in the heap.
     pub r#type: DescriptorHeapType,
@@ -58,6 +58,56 @@ pub struct DescriptorHeapDesc {
 
     /// For single-adapter operation, set this to zero. If there are multiple adapter nodes, set a bit to identify the node (one of the device's physical adapters) to which the descriptor heap applies. Each bit in the mask corresponds to a single node. Only one bit must be set.
     pub node_mask: u32,
+}
+
+/// Describes a heap.
+///
+/// For more information: [`D3D12_HEAP_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_heap_desc)
+#[derive(Clone, Copy, Debug)]
+pub struct HeapDesc {
+    /// The size, in bytes, of the heap. To avoid wasting memory, applications should pass size values which are multiples of the effective Alignment;
+    /// but non-aligned size is also supported, for convenience.
+    /// To find out how large a heap must be to support textures with undefined layouts and adapter-specific sizes, call [`get_resource_allocation_info`](crate::device::DeviceInterface::get_resource_allocation_info)
+    pub size: u64,
+
+    /// A [`HeapProperties`] structure that describes the heap properties.
+    pub props: HeapProperties,
+
+    /// The alignment value for the heap.
+    pub alignment: HeapAlignment,
+
+    /// A combination of [`HeapFlags`]-typed values that are combined by using a bitwise-OR operation.
+    /// The resulting value identifies heap options. When creating heaps to support adapters with resource heap tier 1, an application must choose some flags.
+    pub flags: HeapFlags,
+}
+
+/// Describes heap properties.
+///
+/// For more information: [`D3D12_HEAP_PROPERTIES structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_heap_properties)
+#[derive(Clone, Copy, Debug)]
+pub struct HeapProperties {
+    /// A [`HeapType`]-typed value that specifies the type of heap.
+    pub r#type: HeapType,
+
+    /// A [`CpuPageProperty`]-typed value that specifies the CPU-page properties for the heap.
+    pub cpu_page_propery: CpuPageProperty,
+
+    /// A [`MemoryPool`]-typed value that specifies the memory pool for the heap.
+    pub memory_pool_preference: MemoryPool,
+
+    /// For multi-adapter operation, this indicates the node where the resource should be created.
+    ///
+    /// Exactly one bit of this UINT must be set.
+    ///
+    /// Passing zero is equivalent to passing one, in order to simplify the usage of single-GPU adapters.
+    pub creation_node_mask: u32,
+
+    /// For multi-adapter operation, this indicates the set of nodes where the resource is visible.
+    ///
+    /// VisibleNodeMask must have the same bit set that is set in CreationNodeMask. VisibleNodeMask can also have additional bits set for cross-node resources, but doing so can potentially reduce performance for resource accesses, so you should do so only when needed.
+    ///
+    /// Passing zero is equivalent to passing one, in order to simplify the usage of single-GPU adapters.
+    pub visible_node_mask: u32,
 }
 
 /// Describes the size of a tiled region.

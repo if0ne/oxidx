@@ -43,7 +43,7 @@ bitflags::bitflags! {
         /// The fence is shared with another GPU adapter.
         const SharedCrossAdapter = D3D12_FENCE_FLAG_SHARED_CROSS_ADAPTER.0;
 
-        /// The fence is of the non-monitored type. Non-monitored fences should only be used when the adapter doesn't support monitored fences, 
+        /// The fence is of the non-monitored type. Non-monitored fences should only be used when the adapter doesn't support monitored fences,
         /// or when a fence is shared with an adapter that doesn't support monitored fences.
         const NonMonitored = D3D12_FENCE_FLAG_NON_MONITORED.0;
     }
@@ -59,6 +59,67 @@ bitflags::bitflags! {
     pub struct GpuBasedValidationFlags: i32 {
         /// Indicates that the GPU timeout should be disabled for this command queue.
         const DisableStateTracking = D3D12_GPU_BASED_VALIDATION_FLAGS_DISABLE_STATE_TRACKING.0;
+    }
+}
+
+bitflags::bitflags! {
+    /// Specifies heap options, such as whether the heap can contain textures, and whether resources are shared across adapters.
+    ///
+    /// Empty flag - No options are specified.
+    ///
+    /// For more information: [`D3D12_HEAP_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_heap_flags)
+    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct HeapFlags: i32 {
+        /// No options are specified.
+        const Shared = D3D12_HEAP_FLAG_SHARED.0;
+
+        /// The heap isn't allowed to contain buffers.
+        const DenyBuffers = D3D12_HEAP_FLAG_DENY_BUFFERS.0;
+
+        /// The heap is allowed to contain swap-chain surfaces.
+        const AllowDisplay = D3D12_HEAP_FLAG_ALLOW_DISPLAY.0;
+
+        /// The heap is allowed to share resources across adapters. A protected session cannot be mixed with resources that are shared across adapters.
+        const SharedCrossAdapter = D3D12_HEAP_FLAG_SHARED_CROSS_ADAPTER.0;
+
+        /// The heap is not allowed to store Render Target (RT) and/or Depth-Stencil (DS) textures.
+        const DenyRtDsTextures = D3D12_HEAP_FLAG_DENY_RT_DS_TEXTURES.0;
+
+        /// The heap is not allowed to contain resources with D3D12_RESOURCE_DIMENSION_TEXTURE1D, D3D12_RESOURCE_DIMENSION_TEXTURE2D, or
+        /// D3D12_RESOURCE_DIMENSION_TEXTURE3D unless either D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET or D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL are present.
+        const DenyNonRtDsTextures = D3D12_HEAP_FLAG_DENY_NON_RT_DS_TEXTURES.0;
+
+        /// The heap supports MEM_WRITE_WATCH functionality, which causes the system to track the pages that are written to in the committed memory region.
+        /// This flag can't be combined with the D3D12_HEAP_TYPE_DEFAULT or D3D12_CPU_PAGE_PROPERTY_UNKNOWN flags.
+        /// Applications are discouraged from using this flag themselves because it prevents tools from using this functionality.
+        const AllowWriteWatch = D3D12_HEAP_FLAG_ALLOW_WRITE_WATCH.0;
+
+        /// Ensures that atomic operations will be atomic on this heap's memory, according to components able to see the memory.
+        const AllowSharedAtomics = D3D12_HEAP_FLAG_ALLOW_SHADER_ATOMICS.0;
+
+        /// The heap is created in a non-resident state and must be made resident using ID3D12Device::MakeResident or ID3D12Device3::EnqueueMakeResident.
+        const CreateNotResident = D3D12_HEAP_FLAG_CREATE_NOT_RESIDENT.0;
+
+        /// Allows the OS to not zero the heap created. By default, committed resources and heaps are almost always zeroed upon creation.
+        /// This flag allows this to be elided in some scenarios. However, it doesn't guarantee it.
+        /// For example, memory coming from other processes still needs to be zeroed for data protection and process isolation.
+        /// This can lower the overhead of creating the heap.
+        const CreateNotZeroed = D3D12_HEAP_FLAG_CREATE_NOT_ZEROED.0;
+
+        /// TBD
+        const ToolsUseManualWriteTracking = D3D12_HEAP_FLAG_TOOLS_USE_MANUAL_WRITE_TRACKING.0;
+
+        /// The heap is allowed to store all types of buffers and/or textures.
+        const AllowAllBuffersAndTextures = D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES.0;
+
+        /// The heap is only allowed to store buffers.
+        const AllowOnlyBuffers = D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS.0;
+
+        /// The heap is only allowed to store non-RT, non-DS textures.
+        const AllowOnlyNonRtDsTextures = D3D12_HEAP_FLAG_ALLOW_ONLY_NON_RT_DS_TEXTURES.0;
+
+        /// The heap is only allowed to store RT and/or DS textures.
+        const AllowOnlyRtDsTextures = D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES.0;
     }
 }
 

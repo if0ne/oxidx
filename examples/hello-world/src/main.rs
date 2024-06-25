@@ -2,8 +2,8 @@ use std::num::NonZeroIsize;
 
 use oxidx::{
     adapter::*, command_allocator::*, command_list::*, command_queue::*, debug::*,
-    descriptor_heap::*, device::*, factory::*, heap::*, pso::*, resources::*, swapchain::*,
-    sync::*, types::*,
+    descriptor_heap::*, device::*, factory::*, pso::*, resources::*, swapchain::*, sync::*,
+    types::*,
 };
 use smallvec::smallvec;
 use winit::{

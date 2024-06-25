@@ -18,7 +18,6 @@ use crate::{
     create_type,
     descriptor_heap::DescriptorHeapInterface,
     error::DxError,
-    heap::{HeapFlags, HeapProperties},
     impl_trait,
     pso::{
         BlobInterface, GraphicsPipelineDesc, PipelineStateInterface, RootSignatureDesc,
@@ -26,10 +25,7 @@ use crate::{
     },
     resources::{RenderTargetViewDesc, ResourceDesc, ResourceInterface, ResourceState},
     sync::FenceInterface,
-    types::{
-        ClearValue, CommandListType, CommandQueueDesc, CpuDescriptorHandle, DescriptorHeapDesc,
-        DescriptorHeapType,
-    },
+    types::*,
     HasInterface,
 };
 

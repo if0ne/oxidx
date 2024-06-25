@@ -78,6 +78,56 @@ impl From<D3D12_DESCRIPTOR_HEAP_DESC> for DescriptorHeapDesc {
     }
 }
 
+impl HeapDesc {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_HEAP_DESC {
+        D3D12_HEAP_DESC {
+            SizeInBytes: self.size,
+            Properties: self.props.as_raw(),
+            Alignment: self.alignment.as_raw(),
+            Flags: self.flags.as_raw(),
+        }
+    }
+}
+
+impl From<D3D12_HEAP_DESC> for HeapDesc {
+    #[inline]
+    fn from(value: D3D12_HEAP_DESC) -> Self {
+        Self {
+            size: value.SizeInBytes,
+            props: value.Properties.into(),
+            alignment: value.Alignment.into(),
+            flags: value.Flags.into(),
+        }
+    }
+}
+
+impl HeapProperties {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_HEAP_PROPERTIES {
+        D3D12_HEAP_PROPERTIES {
+            Type: self.r#type.as_raw(),
+            CPUPageProperty: self.cpu_page_propery.as_raw(),
+            MemoryPoolPreference: self.memory_pool_preference.as_raw(),
+            CreationNodeMask: self.creation_node_mask,
+            VisibleNodeMask: self.visible_node_mask,
+        }
+    }
+}
+
+impl From<D3D12_HEAP_PROPERTIES> for HeapProperties {
+    #[inline]
+    fn from(value: D3D12_HEAP_PROPERTIES) -> Self {
+        Self {
+            r#type: value.Type.into(),
+            cpu_page_propery: value.CPUPageProperty.into(),
+            memory_pool_preference: value.MemoryPoolPreference.into(),
+            creation_node_mask: value.CreationNodeMask,
+            visible_node_mask: value.VisibleNodeMask,
+        }
+    }
+}
+
 impl TileRegionSize {
     #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_TILE_REGION_SIZE {

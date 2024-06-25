@@ -21,7 +21,6 @@ use crate::{
     adapter::{AdapterDesc, AdapterFlags, Luid},
     error::DxError,
     factory::FeatureLevel,
-    heap::{HeapFlags, HeapProperties},
     pso::{
         Blend, BlendOp, Blob, BlobInterface, CachedPipeline, CullMode, DeclarationEntry,
         DepthStencilDesc, FillMode, IndexBufferStripCutValue, InputElementDesc, InputSlotClass,
@@ -536,24 +535,6 @@ impl ClearValue {
                 },
             },
         }
-    }
-}
-
-impl HeapProperties {
-    pub(crate) fn as_raw(&self) -> D3D12_HEAP_PROPERTIES {
-        D3D12_HEAP_PROPERTIES {
-            Type: D3D12_HEAP_TYPE(self.r#type as i32),
-            CPUPageProperty: D3D12_CPU_PAGE_PROPERTY(self.cpu_page_propery as i32),
-            MemoryPoolPreference: D3D12_MEMORY_POOL(self.memory_pool_preference as i32),
-            CreationNodeMask: self.creation_node_mask,
-            VisibleNodeMask: self.visible_node_mask,
-        }
-    }
-}
-
-impl HeapFlags {
-    pub(crate) fn as_raw(&self) -> D3D12_HEAP_FLAGS {
-        D3D12_HEAP_FLAGS(self.bits())
     }
 }
 
