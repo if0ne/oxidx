@@ -1,5 +1,8 @@
 use windows::Win32::Graphics::Direct3D12::*;
 
+#[allow(unused_imports)]
+use super::*;
+
 bitflags::bitflags! {
     /// Specifies flags to be used when creating a command queue.
     ///
@@ -85,19 +88,19 @@ bitflags::bitflags! {
         /// The heap is not allowed to store Render Target (RT) and/or Depth-Stencil (DS) textures.
         const DenyRtDsTextures = D3D12_HEAP_FLAG_DENY_RT_DS_TEXTURES.0;
 
-        /// The heap is not allowed to contain resources with D3D12_RESOURCE_DIMENSION_TEXTURE1D, D3D12_RESOURCE_DIMENSION_TEXTURE2D, or
-        /// D3D12_RESOURCE_DIMENSION_TEXTURE3D unless either D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET or D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL are present.
+        /// The heap is not allowed to contain resources with [`ResourceDimension::Texture1D`], [`ResourceDimension::Texture2D`], or
+        /// [`ResourceDimension::Texture3D`] unless either [`ResourceFlags::AllowRenderTarget`] or [`ResourceFlags::AllowDepthStencil`] are present.
         const DenyNonRtDsTextures = D3D12_HEAP_FLAG_DENY_NON_RT_DS_TEXTURES.0;
 
         /// The heap supports MEM_WRITE_WATCH functionality, which causes the system to track the pages that are written to in the committed memory region.
-        /// This flag can't be combined with the D3D12_HEAP_TYPE_DEFAULT or D3D12_CPU_PAGE_PROPERTY_UNKNOWN flags.
+        /// This flag can't be combined with the [`HeapType::Default`] or [`CpuPageProperty::Unknown`] flags.
         /// Applications are discouraged from using this flag themselves because it prevents tools from using this functionality.
         const AllowWriteWatch = D3D12_HEAP_FLAG_ALLOW_WRITE_WATCH.0;
 
         /// Ensures that atomic operations will be atomic on this heap's memory, according to components able to see the memory.
         const AllowSharedAtomics = D3D12_HEAP_FLAG_ALLOW_SHADER_ATOMICS.0;
 
-        /// The heap is created in a non-resident state and must be made resident using ID3D12Device::MakeResident or ID3D12Device3::EnqueueMakeResident.
+        /// The heap is created in a non-resident state and must be made resident using [`DeviceInterface::make_resident`](crate::device::DeviceInterface::make_resident) or [`Device3Interface::enqueue_make_resident`](crate::device::Device3Interface::enqueue_make_resident).
         const CreateNotResident = D3D12_HEAP_FLAG_CREATE_NOT_RESIDENT.0;
 
         /// Allows the OS to not zero the heap created. By default, committed resources and heaps are almost always zeroed upon creation.
