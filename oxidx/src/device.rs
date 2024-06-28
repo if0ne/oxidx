@@ -46,7 +46,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// Gets information about the features that are supported by the current graphics driver.
     ///
     /// # Arguments
-    /// * `feature` - A data structure that implement [`FeatureObject`]`.
+    /// * `feature` - A data structure that implement [`FeatureObject`].
     ///
     /// For more information: [`ID3D12Device::CheckFeatureSupport method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-checkfeaturesupport)
     fn check_feature_support<F: FeatureObject>(&self, feature: F) -> Result<F, DxError>;

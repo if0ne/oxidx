@@ -1,4 +1,4 @@
-use crate::{FeatureObject, __Sealed};
+use crate::{FeatureObject};
 
 use super::*;
 
@@ -57,8 +57,6 @@ pub struct Options {
     /// The runtime sets this member to a [`ResourceHeapTier`] enumeration constant.
     pub resource_heap_tier: ResourceHeapTier,
 }
-
-impl __Sealed for Options {}
 
 impl FeatureObject for Options {
     const TYPE: FeatureType = FeatureType::Options;
