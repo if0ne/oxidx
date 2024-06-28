@@ -1,6 +1,9 @@
 use strum::FromRepr;
 use windows::Win32::Graphics::Direct3D12::*;
 
+#[allow(unused_imports)]
+use super::*;
+
 /// Defines priority levels for a command queue.
 ///
 /// For more information: [`D3D12_COMMAND_QUEUE_PRIORITY enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_command_queue_priority)
@@ -48,6 +51,30 @@ pub enum CommandListType {
     VideoEncode = D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE.0,
 }
 
+/// Identifies the tier level of conservative rasterization.
+///
+/// For more information: [`D3D12_CONSERVATIVE_RASTERIZATION_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_conservative_rasterization_tier)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum ConservativeRasterizationTier {
+    /// Conservative rasterization is not supported.
+    #[default]
+    NotSupported = D3D12_CONSERVATIVE_RASTERIZATION_TIER_NOT_SUPPORTED.0,
+
+    /// Tier 1 enforces a maximum 1/2 pixel uncertainty region and does not support post-snap degenerates. 
+    /// This is good for tiled rendering, a texture atlas, light map generation and sub-pixel shadow maps.
+    Tier1 = D3D12_CONSERVATIVE_RASTERIZATION_TIER_1.0,
+
+    /// Tier 2 reduces the maximum uncertainty region to 1/256 and requires post-snap degenerates not be culled. 
+    /// This tier is helpful for CPU-based algorithm acceleration (such as voxelization).
+    Tier2 = D3D12_CONSERVATIVE_RASTERIZATION_TIER_2.0,
+
+    /// Tier 3 maintains a maximum 1/256 uncertainty region and adds support for inner input coverage. Inner input coverage adds the new value `SV_InnerCoverage` to 
+    /// High Level Shading Language (HLSL). This is a 32-bit scalar integer that can be specified on input to a pixel shader, and represents the underestimated conservative 
+    /// rasterization information (that is, whether a pixel is guaranteed-to-be-fully covered). This tier is helpful for occlusion culling.
+    Tier3 = D3D12_CONSERVATIVE_RASTERIZATION_TIER_3.0,
+}
+
 /// Specifies the CPU-page properties for the heap.
 ///
 /// For more information: [`D3D12_CPU_PAGE_PROPERTY enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_cpu_page_property)
@@ -65,6 +92,37 @@ pub enum CpuPageProperty {
 
     /// The CPU-page property is write-back.
     WriteBack = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK.0,
+}
+
+/// Specifies the level of sharing across nodes of an adapter, such as Tier 1 Emulated, Tier 1, or Tier 2.
+///
+/// For more information: [`D3D12_CROSS_NODE_SHARING_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_cross_node_sharing_tier)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum CrossNodeSharingTier {
+    /// If an adapter has only 1 node, then cross-node sharing doesn't apply.
+    #[default]
+    NotSupported = D3D12_CROSS_NODE_SHARING_TIER_NOT_SUPPORTED.0,
+
+    /// Tier 1 Emulated. Devices that set the [`CrossNodeSharingTier`] member of the [`Options`] structure to [`CrossNodeSharingTier::Tier1Emulated`] have Tier 1 support.
+    ///
+    /// However, drivers stage these copy operations through a driver-internal system memory allocation. This will cause these copy operations to consume time on the destination GPU as well as the source.
+    Tier1Emulated = D3D12_CROSS_NODE_SHARING_TIER_1_EMULATED.0,
+
+    /// Tier 1. Devices that set the [`CrossNodeSharingTier`] member of the [`Options`] structure to [`CrossNodeSharingTier::Tier1`] only support the following cross-node copy operations:
+    /// * [GraphicsCommandList::copy_buffer_region](crate::command_list::GraphicsCommandList::copy_buffer_region)
+    /// * [GraphicsCommandList::copy_texture_region](crate::command_list::GraphicsCommandList::copy_texture_region)
+    /// * [GraphicsCommandList::copy_resource](crate::command_list::GraphicsCommandList::copy_resource)
+    Tier1 = D3D12_CROSS_NODE_SHARING_TIER_1.0,
+
+    /// Tier 2. Devices that set the [`CrossNodeSharingTier`] member of the [`Options`] structure to D3D12_CROSS_NODE_SHARING_TIER_2 support all operations across nodes, except for the following:
+    /// * Render target views.
+    /// * Depth stencil views.
+    /// * UAV atomic operations. Similar to CPU/GPU interop, shaders may perform UAV atomic operations; however, no atomicity across adapters is guaranteed.
+    Tier2 = D3D12_CROSS_NODE_SHARING_TIER_2.0,
+
+    /// Indicates support for [`HeapFlags`] on heaps that are visible to multiple nodes.
+    Tier3 = D3D12_CROSS_NODE_SHARING_TIER_3.0,
 }
 
 /// Specifies a type of descriptor heap.

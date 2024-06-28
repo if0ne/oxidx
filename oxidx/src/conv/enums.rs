@@ -4,8 +4,10 @@ use crate::conv_enum;
 
 use super::*;
 
-conv_enum!(CpuPageProperty to D3D12_CPU_PAGE_PROPERTY);
 conv_enum!(CommandListType to D3D12_COMMAND_LIST_TYPE);
+conv_enum!(CpuPageProperty to D3D12_CPU_PAGE_PROPERTY);
+conv_enum!(ConservativeRasterizationTier to D3D12_CONSERVATIVE_RASTERIZATION_TIER);
+conv_enum!(CrossNodeSharingTier to D3D12_CROSS_NODE_SHARING_TIER);
 conv_enum!(DescriptorHeapType to D3D12_DESCRIPTOR_HEAP_TYPE);
 conv_enum!(FeatureType to D3D12_FEATURE);
 conv_enum!(HeapType to D3D12_HEAP_TYPE);

@@ -30,12 +30,6 @@ impl CpuDescriptorHandle {
     }
 }
 
-#[derive(Clone, Copy, Debug, Default)]
-pub struct ConservativeRasterizationTier {}
-
-#[derive(Clone, Copy, Debug, Default)]
-pub struct CrossNodeSharingTier {}
-
 /// Describes a GPU descriptor handle.
 ///
 /// For more information: [`D3D12_GPU_DESCRIPTOR_HANDLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_gpu_descriptor_handle)

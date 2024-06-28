@@ -8,36 +8,54 @@ use super::*;
 #[derive(Clone, Debug, Default)]
 pub struct Options {
     /// Specifies whether double types are allowed for shader operations.
-    double_precision_float_shader_ops: bool,
+    pub double_precision_float_shader_ops: bool,
 
     /// Specifies whether logic operations are available in blend state.
-    output_merger_logic_op: bool,
+    pub output_merger_logic_op: bool,
 
     /// A combination of [`MinPrecisionSupport`]-typed values that are combined by using a bitwise OR operation.
     /// The resulting value specifies minimum precision levels that the driver supports for shader stages.
     /// A value of zero indicates that the driver supports only full 32-bit precision for all shader stages.
-    min_precision_support: MinPrecisionSupport,
+    pub min_precision_support: MinPrecisionSupport,
 
     /// Specifies whether the hardware and driver support tiled resources.
     /// The runtime sets this member to a [`TiledResourcesTier`]-typed value that indicates if the hardware and driver support tiled resources and at what tier level.
-    tiled_resources_tier: TiledResourcesTier,
+    pub tiled_resources_tier: TiledResourcesTier,
 
     /// Specifies the level at which the hardware and driver support resource binding.
     /// The runtime sets this member to a [`ResourceBindingTier`]-typed value that indicates the tier level.
-    resource_binding_tier: ResourceBindingTier,
-    ps_specified_stencil_ref_supported: bool,
-    typed_uav_load_additional_formats: bool,
-    rovs_supported: bool,
-    conservative_rasterization_tier: ConservativeRasterizationTier,
-    max_gpu_virtual_address_bits_per_resource: u32,
-    standard_swizzle_64kb_supported: bool,
-    cross_node_sharing_tier: CrossNodeSharingTier,
-    cross_adapter_row_major_texture_supported: bool,
-    vp_and_rt_array_index_from_any_shader_feeding_rasterizer_supported_without_gs_emulation: bool,
+    pub resource_binding_tier: ResourceBindingTier,
+
+    /// Specifies whether pixel shader stencil ref is supported.
+    pub ps_specified_stencil_ref_supported: bool,
+
+    /// Specifies whether the loading of additional formats for typed unordered-access views (UAVs) is supported.
+    pub typed_uav_load_additional_formats: bool,
+
+    /// Specifies whether Rasterizer Order Views (ROVs) are supported.
+    pub rovs_supported: bool,
+
+    /// Specifies the level at which the hardware and driver support conservative rasterization.
+    pub conservative_rasterization_tier: ConservativeRasterizationTier,
+
+    /// TRUE if the hardware supports textures with the 64KB standard swizzle pattern.
+    /// Support for this pattern enables zero-copy texture optimizations while providing near-equilateral locality for each dimension within the texture.
+    pub standard_swizzle_64kb_supported: bool,
+
+    /// A [`CrossNodeSharingTier`] enumeration constant that specifies the level of sharing across nodes of an adapter that has multiple nodes, such as Tier 1 Emulated, Tier 1, or Tier 2.
+    pub cross_node_sharing_tier: CrossNodeSharingTier,
+
+    /// FALSE means the device only supports copy operations to and from cross-adapter row-major textures.
+    /// TRUE means the device supports shader resource views, unordered access views, and render target views of cross-adapter row-major textures.
+    pub cross_adapter_row_major_texture_supported: bool,
+
+    /// Whether the viewport (VP) and Render Target (RT) array index from any shader feeding the rasterizer are supported without geometry shader emulation.
+    pub vp_and_rt_array_index_from_any_shader_feeding_rasterizer_supported_without_gs_emulation:
+        bool,
 
     /// Specifies the level at which the hardware and driver require heap attribution related to resource type.
     /// The runtime sets this member to a [`ResourceHeapTier`] enumeration constant.
-    resource_heap_tier: ResourceHeapTier,
+    pub resource_heap_tier: ResourceHeapTier,
 }
 
 impl __Sealed for Options {}
@@ -59,12 +77,12 @@ impl FeatureObject for Options {
             TypedUAVLoadAdditionalFormats: self.typed_uav_load_additional_formats.into(),
             ROVsSupported: self.rovs_supported.into(),
             ConservativeRasterizationTier: self.conservative_rasterization_tier.as_raw(),
-            MaxGPUVirtualAddressBitsPerResource: self.max_gpu_virtual_address_bits_per_resource,
             StandardSwizzle64KBSupported: self.standard_swizzle_64kb_supported.into(),
             CrossNodeSharingTier: self.cross_node_sharing_tier.as_raw(),
             CrossAdapterRowMajorTextureSupported: self.cross_adapter_row_major_texture_supported.into(),
             VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation: self.vp_and_rt_array_index_from_any_shader_feeding_rasterizer_supported_without_gs_emulation.into(),
             ResourceHeapTier: self.resource_heap_tier.as_raw(),
+            MaxGPUVirtualAddressBitsPerResource: 0,
         }
     }
 
@@ -80,7 +98,6 @@ impl FeatureObject for Options {
             typed_uav_load_additional_formats: raw.TypedUAVLoadAdditionalFormats.into(),
             rovs_supported: raw.ROVsSupported.into(),
             conservative_rasterization_tier: raw.ConservativeRasterizationTier.into(),
-            max_gpu_virtual_address_bits_per_resource: raw.MaxGPUVirtualAddressBitsPerResource,
             standard_swizzle_64kb_supported: raw.StandardSwizzle64KBSupported.into(),
             cross_node_sharing_tier: raw.CrossNodeSharingTier.into(),
             cross_adapter_row_major_texture_supported: raw.CrossAdapterRowMajorTextureSupported.into(),

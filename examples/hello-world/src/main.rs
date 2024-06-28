@@ -374,9 +374,11 @@ fn create_device(command_line: &SampleCommandLine) -> (Factory4, Device) {
         get_hardware_adapter(&dxgi_factory)
     };
 
-    let device = entry
+    let device: Device = entry
         .create_device(&adapter, FeatureLevel::Level11)
         .unwrap();
+
+    dbg!(device.check_feature_support(Options::default()));
 
     (dxgi_factory, device)
 }

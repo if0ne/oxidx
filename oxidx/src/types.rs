@@ -4,6 +4,7 @@ mod flags;
 mod structs;
 
 pub use enums::*;
+pub use features::*;
 pub use flags::*;
 pub use structs::*;
 
