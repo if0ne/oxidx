@@ -79,3 +79,43 @@ macro_rules! impl_trait {
         }
     }
 }
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! conv_enum {
+    ($h:ident to $l:ident) => {
+        impl $h {
+            #[inline]
+            pub(crate) fn as_raw(&self) -> $l {
+                $l(*self as i32)
+            }
+        }
+        
+        impl From<$l> for $h {
+            #[inline]
+            fn from(value: $l) -> Self {
+                $h::from_repr(value.0).unwrap_or_else(|| unreachable!())
+            }
+        }
+    }
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! conv_flags {
+    ($h:ident to $l:ident) => {
+        impl $h {
+            #[inline]
+            pub(crate) fn as_raw(&self) -> $l {
+                $l(self.bits())
+            }
+        }
+        
+        impl From<$l> for $h {
+            #[inline]
+            fn from(value: $l) -> Self {
+                Self::from_bits(value.0).unwrap_or_else(|| unreachable!())
+            }
+        }
+    }
+}

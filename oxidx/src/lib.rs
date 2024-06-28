@@ -34,3 +34,11 @@ pub(crate) trait HasInterface {
     fn as_raw(&self) -> &Self::Raw;
     fn as_raw_ref(&self) -> Self::RawRef<'_>;
 }
+
+pub(crate) trait FeatureObject: Default {
+    const TYPE: types::FeatureType;
+    type Raw: Default;
+
+    fn to_raw(self) -> Self::Raw;
+    fn from_raw(raw: Self::Raw) -> Self;
+}

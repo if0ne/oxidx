@@ -12,24 +12,31 @@ use windows::{
 };
 
 use crate::{
-    command_allocator::CommandAllocatorInterface,
-    command_list::CommandListInterface,
-    command_queue::CommandQueueInterface,
-    create_type,
-    descriptor_heap::DescriptorHeapInterface,
-    error::DxError,
-    impl_trait,
-    pso::{
+    command_allocator::CommandAllocatorInterface, command_list::CommandListInterface, command_queue::CommandQueueInterface, create_type, descriptor_heap::DescriptorHeapInterface, error::DxError, impl_trait, pso::{
         BlobInterface, GraphicsPipelineDesc, PipelineStateInterface, RootSignatureDesc,
         RootSignatureInterface, RootSignatureVersion,
-    },
-    resources::{RenderTargetViewDesc, ResourceDesc, ResourceInterface, ResourceState},
-    sync::FenceInterface,
-    types::*,
-    HasInterface,
+    }, resources::{RenderTargetViewDesc, ResourceDesc, ResourceInterface, ResourceState}, sync::FenceInterface, types::*, FeatureObject, HasInterface
 };
 
+/// Represents a virtual adapter; it is used to create 
+/// * command allocators
+/// * command lists 
+/// * command queues
+/// * fences 
+/// * resources 
+/// * pipeline state objects, 
+/// * heaps
+/// * root signatures 
+/// * samplers
+/// * and many resource views.
+/// 
+/// For more information: [`ID3D12Device interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12device)
 pub trait DeviceInterface: HasInterface<Raw: Interface> {
+    /// Gets information about the features that are supported by the current graphics driver.
+    /// 
+    /// For more information: [`ID3D12Device::CheckFeatureSupport method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-checkfeaturesupport)
+    fn check_feature_support<F: FeatureObject>(&self) -> F;
+
     fn create_command_allocator<CA: CommandAllocatorInterface>(
         &self,
         r#type: CommandListType,
@@ -96,11 +103,30 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     ) -> Result<R, DxError>;
 }
 
-create_type! { Device wrap ID3D12Device }
+create_type! {
+    /// Represents a virtual adapter; it is used to create 
+    /// * command allocators
+    /// * command lists 
+    /// * command queues
+    /// * fences 
+    /// * resources 
+    /// * pipeline state objects, 
+    /// * heaps
+    /// * root signatures 
+    /// * samplers
+    /// * and many resource views.
+    /// 
+    /// For more information: [`ID3D12Device interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12device) 
+    Device wrap ID3D12Device 
+}
 
 impl_trait! {
     impl DeviceInterface =>
     Device;
+
+    fn check_feature_support<F: FeatureObject>(&self) -> F {
+        todo!()
+    }
 
     fn create_command_allocator<CA: CommandAllocatorInterface>(&self, r#type: CommandListType) -> Result<CA, DxError> {
         let res: CA::Raw  = unsafe {
