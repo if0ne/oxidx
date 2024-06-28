@@ -21,7 +21,7 @@ pub enum CommandQueuePriority {
 /// Specifies the type of a command list.
 ///
 /// For more information: [`D3D12_COMMAND_LIST_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_command_list_type)
-#[derive( Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
 #[repr(i32)]
 pub enum CommandListType {
     #[default]
@@ -88,12 +88,12 @@ pub enum DescriptorHeapType {
 }
 
 /// Defines constants that specify a Direct3D 12 feature or feature set to query about.
-/// 
+///
 /// For more information: [`D3D12_FEATURE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_feature)
 #[derive(Clone, Copy, Debug, FromRepr)]
 #[repr(i32)]
 pub enum FeatureType {
-    /// Indicates a query for the level of support for basic Direct3D 12 feature options. 
+    /// Indicates a query for the level of support for basic Direct3D 12 feature options.
     Options = D3D12_FEATURE_D3D12_OPTIONS.0,
 
     /// Indicates a query for the adapter's architectural details, so that your application can better optimize for certain adapter properties.
@@ -120,7 +120,7 @@ pub enum FeatureType {
     /// Indicates a query for the level of support for HLSL 6.0 wave operations.
     Options1 = D3D12_FEATURE_D3D12_OPTIONS1.0,
 
-    /// Indicates a query for the level of support for protected resource sessions. 
+    /// Indicates a query for the level of support for protected resource sessions.
     ProtectedResourceSessionSupport = D3D12_FEATURE_PROTECTED_RESOURCE_SESSION_SUPPORT.0,
 
     /// Indicates a query for root signature version support.
@@ -132,13 +132,13 @@ pub enum FeatureType {
     /// Indicates a query for the level of support for depth-bounds tests and programmable sample positions.
     Options2 = D3D12_FEATURE_D3D12_OPTIONS2.0,
 
-    /// Indicates a query for the level of support for shader caching. 
+    /// Indicates a query for the level of support for shader caching.
     ShaderCache = D3D12_FEATURE_SHADER_CACHE.0,
 
     /// Indicates a query for the adapter's support for prioritization of different command queue types.
     CommandQueuePriority = D3D12_FEATURE_COMMAND_QUEUE_PRIORITY.0,
 
-    /// Indicates a query for the level of support for timestamp queries, format-casting, immediate write, view instancing, and barycentrics. 
+    /// Indicates a query for the level of support for timestamp queries, format-casting, immediate write, view instancing, and barycentrics.
     Options3 = D3D12_FEATURE_D3D12_OPTIONS3.0,
 
     /// Indicates a query for whether or not the adapter supports creating heaps from existing system memory.
@@ -177,15 +177,15 @@ pub enum FeatureType {
     /// Starting with Windows 11 (Build 10.0.22000.194), indicates whether or not unaligned block-compressed textures are supported.
     Options8 = D3D12_FEATURE_D3D12_OPTIONS8.0,
 
-    /// Starting with Windows 11 (Build 10.0.22000.194), indicates whether or not support exists for mesh shaders, values of SV_RenderTargetArrayIndex 
-    /// that are 8 or greater, typed resource 64-bit integer atomics, derivative and derivative-dependent texture sample operations, and the level of 
+    /// Starting with Windows 11 (Build 10.0.22000.194), indicates whether or not support exists for mesh shaders, values of SV_RenderTargetArrayIndex
+    /// that are 8 or greater, typed resource 64-bit integer atomics, derivative and derivative-dependent texture sample operations, and the level of
     /// support for WaveMMA (wave_matrix) operations.
     Options9 = D3D12_FEATURE_D3D12_OPTIONS9.0,
 
     /// Starting with Windows 11 (Build 10.0.22000.194), indicates whether or not the SUM combiner can be used, and whether or not SV_ShadingRate can be set from a mesh shader.
     Options10 = D3D12_FEATURE_D3D12_OPTIONS10.0,
 
-    /// Starting with Windows 11 (Build 10.0.22000.194), indicates whether or not 64-bit integer atomics on resources in descriptor heaps are supported. 
+    /// Starting with Windows 11 (Build 10.0.22000.194), indicates whether or not 64-bit integer atomics on resources in descriptor heaps are supported.
     Options11 = D3D12_FEATURE_D3D12_OPTIONS11.0,
 
     /// TBD

@@ -90,14 +90,14 @@ macro_rules! conv_enum {
                 $l(*self as i32)
             }
         }
-        
+
         impl From<$l> for $h {
             #[inline]
             fn from(value: $l) -> Self {
                 $h::from_repr(value.0).unwrap_or_else(|| unreachable!())
             }
         }
-    }
+    };
 }
 
 #[doc(hidden)]
@@ -110,12 +110,12 @@ macro_rules! conv_flags {
                 $l(self.bits())
             }
         }
-        
+
         impl From<$l> for $h {
             #[inline]
             fn from(value: $l) -> Self {
                 Self::from_bits(value.0).unwrap_or_else(|| unreachable!())
             }
         }
-    }
+    };
 }

@@ -12,30 +12,44 @@ use windows::{
 };
 
 use crate::{
-    command_allocator::CommandAllocatorInterface, command_list::CommandListInterface, command_queue::CommandQueueInterface, create_type, descriptor_heap::DescriptorHeapInterface, error::DxError, impl_trait, pso::{
+    command_allocator::CommandAllocatorInterface,
+    command_list::CommandListInterface,
+    command_queue::CommandQueueInterface,
+    create_type,
+    descriptor_heap::DescriptorHeapInterface,
+    error::DxError,
+    impl_trait,
+    pso::{
         BlobInterface, GraphicsPipelineDesc, PipelineStateInterface, RootSignatureDesc,
         RootSignatureInterface, RootSignatureVersion,
-    }, resources::{RenderTargetViewDesc, ResourceDesc, ResourceInterface, ResourceState}, sync::FenceInterface, types::*, FeatureObject, HasInterface
+    },
+    resources::{RenderTargetViewDesc, ResourceDesc, ResourceInterface, ResourceState},
+    sync::FenceInterface,
+    types::*,
+    FeatureObject, HasInterface,
 };
 
-/// Represents a virtual adapter; it is used to create 
+/// Represents a virtual adapter; it is used to create
 /// * command allocators
-/// * command lists 
+/// * command lists
 /// * command queues
-/// * fences 
-/// * resources 
-/// * pipeline state objects, 
+/// * fences
+/// * resources
+/// * pipeline state objects,
 /// * heaps
-/// * root signatures 
+/// * root signatures
 /// * samplers
 /// * and many resource views.
-/// 
+///
 /// For more information: [`ID3D12Device interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12device)
 pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// Gets information about the features that are supported by the current graphics driver.
-    /// 
+    ///
+    /// # Arguments
+    /// * `feature` - A mut reference to a data structure that implement [`FeatureObject`]`.
+    ///
     /// For more information: [`ID3D12Device::CheckFeatureSupport method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-checkfeaturesupport)
-    fn check_feature_support<F: FeatureObject>(&self) -> F;
+    fn check_feature_support<F: FeatureObject>(&self, feature: &mut F);
 
     fn create_command_allocator<CA: CommandAllocatorInterface>(
         &self,
@@ -104,27 +118,27 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
 }
 
 create_type! {
-    /// Represents a virtual adapter; it is used to create 
+    /// Represents a virtual adapter; it is used to create
     /// * command allocators
-    /// * command lists 
+    /// * command lists
     /// * command queues
-    /// * fences 
-    /// * resources 
-    /// * pipeline state objects, 
+    /// * fences
+    /// * resources
+    /// * pipeline state objects,
     /// * heaps
-    /// * root signatures 
+    /// * root signatures
     /// * samplers
     /// * and many resource views.
-    /// 
-    /// For more information: [`ID3D12Device interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12device) 
-    Device wrap ID3D12Device 
+    ///
+    /// For more information: [`ID3D12Device interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12device)
+    Device wrap ID3D12Device
 }
 
 impl_trait! {
     impl DeviceInterface =>
     Device;
 
-    fn check_feature_support<F: FeatureObject>(&self) -> F {
+    fn check_feature_support<F: FeatureObject>(&self, feature: &mut F) {
         todo!()
     }
 

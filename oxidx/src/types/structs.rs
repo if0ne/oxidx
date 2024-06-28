@@ -30,6 +30,12 @@ impl CpuDescriptorHandle {
     }
 }
 
+#[derive(Clone, Copy, Debug, Default)]
+pub struct ConservativeRasterizationTier {}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct CrossNodeSharingTier {}
+
 /// Describes a GPU descriptor handle.
 ///
 /// For more information: [`D3D12_GPU_DESCRIPTOR_HANDLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_gpu_descriptor_handle)
@@ -110,6 +116,15 @@ pub struct HeapProperties {
     pub visible_node_mask: u32,
 }
 
+#[derive(Clone, Copy, Debug, Default)]
+pub struct MinPrecisionSupport {}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct ResourceBindingTier {}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct ResourceHeapTier {}
+
 /// Describes the size of a tiled region.
 ///
 /// For more information: [`D3D12_TILE_REGION_SIZE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_tile_region_size)
@@ -170,3 +185,6 @@ pub struct TiledResourceCoordinate {
     /// The Y and Z coordinates must be zero.
     pub subresource: u32,
 }
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct TiledResourcesTier {}

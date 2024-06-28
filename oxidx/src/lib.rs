@@ -24,6 +24,14 @@ pub(crate) mod pix;
 mod conv;
 mod utils;
 
+pub trait FeatureObject: Default + __Sealed {
+    const TYPE: types::FeatureType;
+    type Raw: Default;
+
+    fn as_raw(&self) -> Self::Raw;
+    fn clone_from_raw(&mut self, raw: Self::Raw);
+}
+
 pub(crate) trait HasInterface {
     type Raw;
     type RawRef<'a>
@@ -35,10 +43,4 @@ pub(crate) trait HasInterface {
     fn as_raw_ref(&self) -> Self::RawRef<'_>;
 }
 
-pub(crate) trait FeatureObject: Default {
-    const TYPE: types::FeatureType;
-    type Raw: Default;
-
-    fn to_raw(self) -> Self::Raw;
-    fn from_raw(raw: Self::Raw) -> Self;
-}
+pub(crate) trait __Sealed {}
