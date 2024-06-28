@@ -300,3 +300,75 @@ pub enum MemoryPool {
     /// When the adapter is UMA, this pool is not available.
     L1 = D3D12_MEMORY_POOL_L1.0,
 }
+
+/// Describes minimum precision support options for shaders in the current graphics driver.
+///
+/// For more information: [`D3D12_SHADER_MIN_PRECISION_SUPPORT enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_shader_min_precision_support)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum MinPrecisionSupport {
+    /// The driver supports only full 32-bit precision for all shader stages.
+    #[default]
+    None = D3D12_SHADER_MIN_PRECISION_SUPPORT_NONE.0,
+
+    /// The driver supports 10-bit precision.
+    Support10Bit = D3D12_SHADER_MIN_PRECISION_SUPPORT_10_BIT.0,
+
+    /// The driver supports 16-bit precision.
+    Support16Bit = D3D12_SHADER_MIN_PRECISION_SUPPORT_16_BIT.0,
+}
+
+/// Identifies the tier of resource binding being used.
+///
+/// For more information: [`D3D12_RESOURCE_BINDING_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_binding_tier)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum ResourceBindingTier {
+    /// Tier 1
+    #[default]
+    Tier1 = D3D12_RESOURCE_BINDING_TIER_1.0,
+
+    /// Tier 2
+    Tier2 = D3D12_RESOURCE_BINDING_TIER_2.0,
+
+    /// Tier 3
+    Tier3 = D3D12_RESOURCE_BINDING_TIER_3.0,
+}
+
+/// Specifies which resource heap tier the hardware and driver support.
+///
+/// For more information: [`D3D12_RESOURCE_HEAP_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_heap_tier)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum ResourceHeapTier {
+    /// Indicates that heaps can only support resources from a single resource category.
+    #[default]
+    Tier1 = D3D12_RESOURCE_HEAP_TIER_1.0,
+
+    /// Indicates that heaps can support resources from all three categories.
+    Tier2 = D3D12_RESOURCE_HEAP_TIER_2.0,
+}
+
+/// Identifies the tier level at which tiled resources are supported.
+///
+/// For more information: [`D3D12_TILED_RESOURCES_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_tiled_resources_tier)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum TiledResourcesTier {
+    /// Indicates that textures cannot be created with the [`TextureLayout64kbUndefinedSwizzle`] layout.
+    #[default]
+    NotSupported = D3D12_TILED_RESOURCES_TIER_NOT_SUPPORTED.0,
+
+    /// Indicates that 2D textures can be created with the [`TextureLayout64kbUndefinedSwizzle`] layout.
+    /// Limitations exist for certain resource formats and properties.
+    Tier1 = D3D12_TILED_RESOURCES_TIER_1.0,
+
+    /// Indicates that a superset of Tier_1 functionality is supported.
+    Tier2 = D3D12_TILED_RESOURCES_TIER_2.0,
+
+    /// Indicates that a superset of Tier 2 is supported, with the addition that 3D textures (Volume Tiled Resources) are supported.
+    Tier3 = D3D12_TILED_RESOURCES_TIER_3.0,
+
+    /// TBD
+    Tier4 = D3D12_TILED_RESOURCES_TIER_4.0,
+}

@@ -7,8 +7,13 @@ use super::*;
 conv_enum!(CpuPageProperty to D3D12_CPU_PAGE_PROPERTY);
 conv_enum!(CommandListType to D3D12_COMMAND_LIST_TYPE);
 conv_enum!(DescriptorHeapType to D3D12_DESCRIPTOR_HEAP_TYPE);
+conv_enum!(FeatureType to D3D12_FEATURE);
 conv_enum!(HeapType to D3D12_HEAP_TYPE);
 conv_enum!(MemoryPool to D3D12_MEMORY_POOL);
+conv_enum!(MinPrecisionSupport to D3D12_SHADER_MIN_PRECISION_SUPPORT);
+conv_enum!(ResourceBindingTier to D3D12_RESOURCE_BINDING_TIER);
+conv_enum!(ResourceHeapTier to D3D12_RESOURCE_HEAP_TIER);
+conv_enum!(TiledResourcesTier to D3D12_TILED_RESOURCES_TIER);
 
 impl CommandQueuePriority {
     #[inline]

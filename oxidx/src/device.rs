@@ -46,10 +46,10 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// Gets information about the features that are supported by the current graphics driver.
     ///
     /// # Arguments
-    /// * `feature` - A mut reference to a data structure that implement [`FeatureObject`]`.
+    /// * `feature` - A data structure that implement [`FeatureObject`]`.
     ///
     /// For more information: [`ID3D12Device::CheckFeatureSupport method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-checkfeaturesupport)
-    fn check_feature_support<F: FeatureObject>(&self, feature: &mut F);
+    fn check_feature_support<F: FeatureObject>(&self, feature: F) -> Result<F, DxError>;
 
     fn create_command_allocator<CA: CommandAllocatorInterface>(
         &self,
@@ -138,9 +138,22 @@ impl_trait! {
     impl DeviceInterface =>
     Device;
 
-    fn check_feature_support<F: FeatureObject>(&self, feature: &mut F) {
-        todo!()
+    fn check_feature_support<F: FeatureObject>(&self, feature: F) -> Result<F, DxError> {
+        let mut raw = feature.as_raw();
+
+        unsafe {
+            self.0
+                .CheckFeatureSupport(
+                    F::TYPE.as_raw(),
+                    &mut raw as *mut F::Raw as *mut _,
+                    core::mem::size_of::<F::Raw>() as u32,
+                )
+                .map_err(DxError::from)?;
+        }
+
+        Ok(F::from_raw(raw))
     }
+
 
     fn create_command_allocator<CA: CommandAllocatorInterface>(&self, r#type: CommandListType) -> Result<CA, DxError> {
         let res: CA::Raw  = unsafe {

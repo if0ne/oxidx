@@ -29,7 +29,7 @@ pub trait FeatureObject: Default + __Sealed {
     type Raw: Default;
 
     fn as_raw(&self) -> Self::Raw;
-    fn clone_from_raw(&mut self, raw: Self::Raw);
+    fn from_raw(raw: Self::Raw) -> Self;
 }
 
 pub(crate) trait HasInterface {
