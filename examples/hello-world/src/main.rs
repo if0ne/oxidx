@@ -406,6 +406,10 @@ fn create_device(command_line: &SampleCommandLine) -> (Factory4, Device) {
         .check_feature_support::<FeatureLevelsFeature>(&supported)
         .unwrap());
 
+    dbg!(device
+        .check_feature_support::<FormatSupportFeature>(Format::Rgba32Float)
+        .unwrap());
+
     (dxgi_factory, device)
 }
 

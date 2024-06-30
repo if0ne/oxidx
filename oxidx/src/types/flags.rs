@@ -53,6 +53,146 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Specifies resources that are supported for a provided format.
+    ///
+    /// Empty flag - No resources are supported.
+    ///
+    /// For more information: [`D3D12_FORMAT_SUPPORT1 enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_format_support1)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct FormatSupport1: i32 {
+        /// Buffer resources supported.
+        const Buffer = D3D12_FORMAT_SUPPORT1_BUFFER.0;
+
+        /// Vertex buffers supported.
+        const IAVertexBuffer = D3D12_FORMAT_SUPPORT1_IA_VERTEX_BUFFER.0;
+
+        /// Index buffers supported.
+        const IAIndexBuffer = D3D12_FORMAT_SUPPORT1_IA_INDEX_BUFFER.0;
+
+        /// Streaming output buffers supported.
+        const SOBuffer = D3D12_FORMAT_SUPPORT1_SO_BUFFER.0;
+
+        /// 1D texture resources supported.
+        const Texture1D = D3D12_FORMAT_SUPPORT1_TEXTURE1D.0;
+
+        /// 2D texture resources supported.
+        const Texture2D = D3D12_FORMAT_SUPPORT1_TEXTURE2D.0;
+
+        /// 3D texture resources supported.
+        const Texture3D = D3D12_FORMAT_SUPPORT1_TEXTURE3D.0;
+
+        /// Cube texture resources supported.
+        const TextureCube = D3D12_FORMAT_SUPPORT1_TEXTURECUBE.0;
+
+        /// The HLSL Load function for texture objects is supported.
+        const ShaderLoad = D3D12_FORMAT_SUPPORT1_SHADER_LOAD.0;
+
+        /// The HLSL Sample function for texture objects is supported.
+        const ShaderSample = D3D12_FORMAT_SUPPORT1_SHADER_SAMPLE.0;
+
+        /// The HLSL SampleCmp and SampleCmpLevelZero functions for texture objects are supported.
+        const ShaderSampleComparison = D3D12_FORMAT_SUPPORT1_SHADER_SAMPLE_COMPARISON.0;
+
+        /// Mipmaps are supported.
+        const Mip = D3D12_FORMAT_SUPPORT1_MIP.0;
+
+        /// Render targets are supported.
+        const RenderTarget = D3D12_FORMAT_SUPPORT1_RENDER_TARGET.0;
+
+        /// Blend operations supported.
+        const Blendable = D3D12_FORMAT_SUPPORT1_BLENDABLE.0;
+
+        /// Depth stencils supported.
+        const DepthStencil = D3D12_FORMAT_SUPPORT1_DEPTH_STENCIL.0;
+
+        /// Multisample antialiasing (MSAA) resolve operations are supported.
+        const MultiSampleResolve = D3D12_FORMAT_SUPPORT1_MULTISAMPLE_RESOLVE.0;
+
+        ///Format can be displayed on screen.
+        const Display = D3D12_FORMAT_SUPPORT1_DISPLAY.0;
+
+        /// Format can't be cast to another format.
+        const CastWithinBitLayout = D3D12_FORMAT_SUPPORT1_CAST_WITHIN_BIT_LAYOUT.0;
+
+        /// Format can be used as a multi-sampled render target.
+        const MultiSampleRenderTarget = D3D12_FORMAT_SUPPORT1_MULTISAMPLE_RENDERTARGET.0;
+
+        /// Format can be used as a multi-sampled texture and read into a shader with the HLSL Load function.
+        const MultiSampleLoad = D3D12_FORMAT_SUPPORT1_MULTISAMPLE_LOAD.0;
+
+        /// Format can be used with the HLSL gather function. This value is available in DirectX 10.1 or higher.
+        const ShaderGather = D3D12_FORMAT_SUPPORT1_SHADER_GATHER.0;
+
+        /// Format supports casting when the resource is a back buffer.
+        const BackbufferCast = D3D12_FORMAT_SUPPORT1_BACK_BUFFER_CAST.0;
+
+        /// Format can be used for an unordered access view.
+        const TypedUnorderedAccessView = D3D12_FORMAT_SUPPORT1_TYPED_UNORDERED_ACCESS_VIEW.0;
+
+        /// Format can be used with the HLSL gather with comparison function.
+        const ShaderGatherComparison = D3D12_FORMAT_SUPPORT1_SHADER_GATHER_COMPARISON.0;
+
+        /// Format can be used with the decoder output.
+        const DecoderOutput = D3D12_FORMAT_SUPPORT1_DECODER_OUTPUT.0;
+
+        /// Format can be used with the video processor output.
+        const VideoProcessorOutput = D3D12_FORMAT_SUPPORT1_VIDEO_PROCESSOR_OUTPUT.0;
+
+        /// Format can be used with the video processor input.
+        const VideoProcessorInput = D3D12_FORMAT_SUPPORT1_VIDEO_PROCESSOR_INPUT.0;
+
+        /// Format can be used with the video encoder.
+        const VideoEncoder = D3D12_FORMAT_SUPPORT1_VIDEO_ENCODER.0;
+    }
+}
+
+bitflags::bitflags! {
+    /// Specifies which unordered resource options are supported for a provided format.
+    ///
+    /// Empty flag - No unordered resource options are supported.
+    ///
+    /// For more information: [`D3D12_FORMAT_SUPPORT2 enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_format_support2)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct FormatSupport2: i32 {
+        /// Format supports atomic add.
+        const UavAtomicAdd = D3D12_FORMAT_SUPPORT2_UAV_ATOMIC_ADD.0;
+
+        /// Format supports atomic bitwise operations.
+        const UavAtomicBitwiseOps = D3D12_FORMAT_SUPPORT2_UAV_ATOMIC_BITWISE_OPS.0;
+
+        /// Format supports atomic compare with store or exchange.
+        const UavAtomicCompareStoreOrCompareExchange = D3D12_FORMAT_SUPPORT2_UAV_ATOMIC_COMPARE_STORE_OR_COMPARE_EXCHANGE.0;
+
+        /// Format supports atomic exchange.
+        const UavAtomicExchange = D3D12_FORMAT_SUPPORT2_UAV_ATOMIC_EXCHANGE.0;
+
+        /// Format supports atomic min and max.
+        const UavAtomicSignedMinOrMax = D3D12_FORMAT_SUPPORT2_UAV_ATOMIC_SIGNED_MIN_OR_MAX.0;
+
+        /// Format supports atomic unsigned min and max.
+        const UavAtomicUnsignedMinOrMax = D3D12_FORMAT_SUPPORT2_UAV_ATOMIC_UNSIGNED_MIN_OR_MAX.0;
+
+        /// Format supports a typed load.
+        const UavTypedLoad = D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD.0;
+
+        /// Format supports a typed store.
+        const UavTypedStore = D3D12_FORMAT_SUPPORT2_UAV_TYPED_STORE.0;
+
+        /// Format supports logic operations in blend state.
+        const OutputMergerLogicOp = D3D12_FORMAT_SUPPORT2_OUTPUT_MERGER_LOGIC_OP.0;
+
+        /// Format supports tiled resources.
+        const Tiled = D3D12_FORMAT_SUPPORT2_TILED.0;
+
+        /// Format supports multi-plane overlays.
+        const MultiplaneOverlay = D3D12_FORMAT_SUPPORT2_MULTIPLANE_OVERLAY.0;
+
+        /// TBD
+        const SamplerFeedback = D3D12_FORMAT_SUPPORT2_SAMPLER_FEEDBACK.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Describes the level of GPU-based validation to perform at runtime.
     ///
     /// Empty flag - Default behavior; resource states, descriptors, and descriptor tables are all validated.

@@ -183,3 +183,47 @@ impl FeatureObject for FeatureLevelsFeature {
         raw.MaxSupportedFeatureLevel.into()
     }
 }
+
+/// Describes which resources are supported by the current graphics driver for a given format.
+///
+/// For more information: [`D3D12_FEATURE_DATA_FORMAT_SUPPORT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_format_support)
+#[derive(Debug)]
+pub struct FormatSupportFeature;
+
+/// Describes which resources are supported by the current graphics driver for a given format.
+///
+/// For more information: [`D3D12_FEATURE_DATA_FORMAT_SUPPORT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_format_support)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct FormatSupport {
+    /// A combination of [`FormatSupport1`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies which resources are supported.
+    pub support1: FormatSupport1,
+
+    /// A combination of [`FormatSupport2`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies which unordered resource options are supported.
+    pub support2: FormatSupport2,
+}
+
+impl __Sealed for FormatSupportFeature {}
+
+impl FeatureObject for FormatSupportFeature {
+    const TYPE: FeatureType = FeatureType::FormatSupport;
+
+    type Raw = D3D12_FEATURE_DATA_FORMAT_SUPPORT;
+    type Input<'a> = Format;
+    type Output = FormatSupport;
+
+    #[inline(always)]
+    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_FORMAT_SUPPORT {
+            Format: input.as_raw(),
+            ..Default::default()
+        }
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        Self::Output {
+            support1: raw.Support1.into(),
+            support2: raw.Support2.into(),
+        }
+    }
+}
