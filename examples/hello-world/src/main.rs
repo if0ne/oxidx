@@ -389,10 +389,10 @@ fn create_device(command_line: &SampleCommandLine) -> (Factory4, Device) {
         .unwrap();
 
     dbg!(device
-        .check_feature_support::<Options>(Default::default())
+        .check_feature_support::<OptionsFeature>(Default::default())
         .unwrap());
     dbg!(device
-        .check_feature_support::<Architecture>(Default::default())
+        .check_feature_support::<ArchitectureFeature>(Default::default())
         .unwrap());
 
     let supported = [
@@ -403,9 +403,7 @@ fn create_device(command_line: &SampleCommandLine) -> (Factory4, Device) {
         FeatureLevel::Level12,
     ];
     dbg!(device
-        .check_feature_support::<FeatureLevels>(FeatureLevelsInput {
-            feature_levels_requested: &supported,
-        })
+        .check_feature_support::<FeatureLevelsFeature>(&supported)
         .unwrap());
 
     (dxgi_factory, device)

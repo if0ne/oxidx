@@ -8,21 +8,15 @@ use super::*;
 ///
 /// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options)
 #[derive(Debug)]
-pub struct Options;
+pub struct OptionsFeature;
 
-impl __Sealed for Options {}
-
-/// Describes Direct3D 12 feature options in the current graphics driver.
-///
-/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options)
-#[derive(Clone, Copy, Debug, Default)]
-pub struct OptionsInput;
+impl __Sealed for OptionsFeature {}
 
 /// Describes Direct3D 12 feature options in the current graphics driver.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options)
 #[derive(Clone, Debug, Default)]
-pub struct OptionsOutput {
+pub struct Options {
     /// Specifies whether double types are allowed for shader operations.
     pub double_precision_float_shader_ops: bool,
 
@@ -74,12 +68,12 @@ pub struct OptionsOutput {
     pub resource_heap_tier: ResourceHeapTier,
 }
 
-impl FeatureObject for Options {
+impl FeatureObject for OptionsFeature {
     const TYPE: FeatureType = FeatureType::Options;
 
     type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS;
-    type Input<'a> = OptionsInput;
-    type Output = OptionsOutput;
+    type Input<'a> = ();
+    type Output = Options;
 
     #[inline]
     fn into_raw(_: Self::Input<'_>) -> Self::Raw {
@@ -110,21 +104,15 @@ impl FeatureObject for Options {
 /// Provides detail about the adapter architecture, so that your application can better optimize for certain adapter properties.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_ARCHITECTURE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_architecture)
-pub struct Architecture;
+pub struct ArchitectureFeature;
 
-impl __Sealed for Architecture {}
-
-/// Provides detail about the adapter architecture, so that your application can better optimize for certain adapter properties.
-///
-/// For more information: [`D3D12_FEATURE_DATA_ARCHITECTURE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_architecture)
-#[derive(Clone, Copy, Debug, Default)]
-pub struct ArchitectureInput;
+impl __Sealed for ArchitectureFeature {}
 
 /// Provides detail about the adapter architecture, so that your application can better optimize for certain adapter properties.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_ARCHITECTURE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_architecture)
 #[derive(Clone, Copy, Debug, Default)]
-pub struct ArchitectureOutput {
+pub struct Architecture {
     /// In multi-adapter operation, this indicates which physical adapter of the device is relevant.
     pub node_index: u32,
 
@@ -138,12 +126,12 @@ pub struct ArchitectureOutput {
     pub cache_coherent_uma: bool,
 }
 
-impl FeatureObject for Architecture {
+impl FeatureObject for ArchitectureFeature {
     const TYPE: FeatureType = FeatureType::Architecture;
 
     type Raw = D3D12_FEATURE_DATA_ARCHITECTURE;
-    type Input<'a> = ArchitectureInput;
-    type Output = ArchitectureOutput;
+    type Input<'a> = ();
+    type Output = Architecture;
 
     #[inline]
     fn into_raw(_: Self::Input<'_>) -> Self::Raw {
@@ -165,39 +153,20 @@ impl FeatureObject for Architecture {
 ///
 /// For more information: [`D3D12_FEATURE_DATA_FEATURE_LEVELS structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_feature_levels)
 #[derive(Debug)]
-pub struct FeatureLevels;
+pub struct FeatureLevelsFeature;
 
-impl __Sealed for FeatureLevels {}
+impl __Sealed for FeatureLevelsFeature {}
 
-/// Describes info about the [`FeatureLevel`] supported by the current graphics driver.
-///
-/// For more information: [`D3D12_FEATURE_DATA_FEATURE_LEVELS structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_feature_levels)
-#[derive(Debug)]
-pub struct FeatureLevelsInput<'a> {
-    /// A reference to an array of [`FeatureLevel`] that the application is requesting for the driver and hardware to evaluate.
-    pub feature_levels_requested: &'a [FeatureLevel],
-}
-
-/// Describes info about the [`FeatureLevel`] supported by the current graphics driver.
-///
-/// For more information: [`D3D12_FEATURE_DATA_FEATURE_LEVELS structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_feature_levels)
-#[derive(Clone, Debug)]
-pub struct FeatureLevelsOutput {
-    /// The maximum [`FeatureLevel`] that the driver and hardware support.
-    pub max_supported_feature_level: FeatureLevel,
-}
-
-impl FeatureObject for FeatureLevels {
+impl FeatureObject for FeatureLevelsFeature {
     const TYPE: FeatureType = FeatureType::FeatureLevels;
 
     type Raw = D3D12_FEATURE_DATA_FEATURE_LEVELS;
-    type Input<'a> = FeatureLevelsInput<'a>;
-    type Output = FeatureLevelsOutput;
+    type Input<'a> = &'a [FeatureLevel];
+    type Output = FeatureLevel;
 
     #[inline(always)]
     fn into_raw(input: Self::Input<'_>) -> Self::Raw {
         let raw = input
-            .feature_levels_requested
             .iter()
             .map(|feature| feature.as_raw())
             .collect::<SmallVec<[_; 8]>>();
@@ -211,8 +180,6 @@ impl FeatureObject for FeatureLevels {
 
     #[inline]
     fn from_raw(raw: Self::Raw) -> Self::Output {
-        Self::Output {
-            max_supported_feature_level: raw.MaxSupportedFeatureLevel.into(),
-        }
+        raw.MaxSupportedFeatureLevel.into()
     }
 }
