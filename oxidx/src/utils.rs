@@ -13,14 +13,17 @@ macro_rules! create_type {
             type Raw = $raw_type;
             type RawRef<'a> = &'a $raw_type;
 
+            #[inline]
             fn new(raw: Self::Raw) -> Self {
                 Self(raw)
             }
 
+            #[inline]
             fn as_raw(&self) -> &Self::Raw {
                 &self.0
             }
 
+            #[inline]
             fn as_raw_ref(&self) -> Self::RawRef<'_> {
                 &self.0
             }
@@ -31,6 +34,7 @@ macro_rules! create_type {
             impl TryInto<$name> for $base {
                 type Error = $crate::error::DxError;
 
+                #[inline]
                 fn try_into(self) -> Result<$name, Self::Error> {
                     let temp = self.0.cast::<_>()
                         .map_err(|_|
@@ -47,6 +51,7 @@ macro_rules! create_type {
             impl TryInto<$base> for $name {
                 type Error = $crate::error::DxError;
 
+                #[inline]
                 fn try_into(self) -> Result<$base, Self::Error> {
                     let temp = self.0.cast::<_>()
                         .map_err(|_|

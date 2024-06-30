@@ -378,7 +378,8 @@ fn create_device(command_line: &SampleCommandLine) -> (Factory4, Device) {
         .create_device(&adapter, FeatureLevel::Level11)
         .unwrap();
 
-    dbg!(device.check_feature_support(Options::default()));
+    dbg!(device.check_feature_support(Options::default()).unwrap());
+    dbg!(device.check_feature_support(Architecture::default()).unwrap());
 
     (dxgi_factory, device)
 }

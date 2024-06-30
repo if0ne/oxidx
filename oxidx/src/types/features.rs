@@ -1,4 +1,4 @@
-use crate::{FeatureObject};
+use crate::FeatureObject;
 
 use super::*;
 
@@ -101,6 +101,50 @@ impl FeatureObject for Options {
             cross_adapter_row_major_texture_supported: raw.CrossAdapterRowMajorTextureSupported.into(),
             vp_and_rt_array_index_from_any_shader_feeding_rasterizer_supported_without_gs_emulation: raw.VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation.into(),
             resource_heap_tier: raw.ResourceHeapTier.into(),
+        }
+    }
+}
+
+/// Provides detail about the adapter architecture, so that your application can better optimize for certain adapter properties.
+/// 
+/// For more information: [`D3D12_FEATURE_DATA_ARCHITECTURE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_architecture)
+#[derive(Clone, Debug, Default)]
+pub struct Architecture {
+    /// In multi-adapter operation, this indicates which physical adapter of the device is relevant.
+    pub node_index: u32,
+
+    /// Specifies whether the hardware and driver support a tile-based renderer.
+    pub tile_based_renderer: bool,
+
+    /// Specifies whether the hardware and driver support UMA. 
+    pub uma: bool,
+
+    /// Specifies whether the hardware and driver support cache-coherent UMA.
+    pub cache_coherent_uma: bool,
+}
+
+impl FeatureObject for Architecture {
+    const TYPE: FeatureType = FeatureType::Architecture;
+
+    type Raw = D3D12_FEATURE_DATA_ARCHITECTURE;
+
+    #[inline]
+    fn as_raw(&self) -> Self::Raw {
+        D3D12_FEATURE_DATA_ARCHITECTURE {
+            NodeIndex: self.node_index,
+            TileBasedRenderer: self.tile_based_renderer.into(),
+            UMA: self.uma.into(),
+            CacheCoherentUMA: self.cache_coherent_uma.into(),
+        }
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self {
+        Self {
+            node_index: raw.NodeIndex,
+            tile_based_renderer: raw.TileBasedRenderer.into(),
+            uma: raw.UMA.into(),
+            cache_coherent_uma: raw.CacheCoherentUMA.into(),
         }
     }
 }
