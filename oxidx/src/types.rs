@@ -1,10 +1,10 @@
 mod enums;
-mod features;
 mod flags;
 mod structs;
 
+pub mod features;
+
 pub use enums::*;
-pub use features::*;
 pub use flags::*;
 pub use structs::*;
 

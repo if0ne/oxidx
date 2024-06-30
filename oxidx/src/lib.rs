@@ -24,12 +24,15 @@ pub(crate) mod pix;
 mod conv;
 mod utils;
 
-pub(crate) trait FeatureObject {
+pub trait FeatureObject: __Sealed {
     const TYPE: types::FeatureType;
-    type Raw: Default;
 
-    fn as_raw(&self) -> Self::Raw;
-    fn from_raw(raw: Self::Raw) -> Self;
+    type Raw: Default;
+    type Input<'a>;
+    type Output;
+
+    fn into_raw(input: Self::Input<'_>) -> Self::Raw;
+    fn from_raw(raw: Self::Raw) -> Self::Output;
 }
 
 pub(crate) trait HasInterface {
@@ -42,3 +45,5 @@ pub(crate) trait HasInterface {
     fn as_raw(&self) -> &Self::Raw;
     fn as_raw_ref(&self) -> Self::RawRef<'_>;
 }
+
+pub(crate) trait __Sealed {}

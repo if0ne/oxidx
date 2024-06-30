@@ -49,7 +49,10 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// * `feature` - A data structure that implement [`FeatureObject`].
     ///
     /// For more information: [`ID3D12Device::CheckFeatureSupport method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-checkfeaturesupport)
-    fn check_feature_support<F: FeatureObject>(&self, feature: F) -> Result<F, DxError>;
+    fn check_feature_support<F: FeatureObject>(
+        &self,
+        feature: F::Input<'_>,
+    ) -> Result<F::Output, DxError>;
 
     fn create_command_allocator<CA: CommandAllocatorInterface>(
         &self,
@@ -138,8 +141,8 @@ impl_trait! {
     impl DeviceInterface =>
     Device;
 
-    fn check_feature_support<F: FeatureObject>(&self, feature: F) -> Result<F, DxError> {
-        let mut raw = feature.as_raw();
+    fn check_feature_support<F: FeatureObject>(&self, feature: F::Input<'_>) -> Result<F::Output, DxError> {
+        let mut raw = F::into_raw(feature);
 
         unsafe {
             self.0

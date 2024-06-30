@@ -1,9 +1,19 @@
 use std::num::NonZeroIsize;
 
 use oxidx::{
-    adapter::*, command_allocator::*, command_list::*, command_queue::*, debug::*,
-    descriptor_heap::*, device::*, factory::*, pso::*, resources::*, swapchain::*, sync::*,
-    types::*,
+    adapter::*,
+    command_allocator::*,
+    command_list::*,
+    command_queue::*,
+    debug::*,
+    descriptor_heap::*,
+    device::*,
+    factory::*,
+    pso::*,
+    resources::*,
+    swapchain::*,
+    sync::*,
+    types::{features::*, *},
 };
 use smallvec::smallvec;
 use winit::{
@@ -378,16 +388,23 @@ fn create_device(command_line: &SampleCommandLine) -> (Factory4, Device) {
         .create_device(&adapter, FeatureLevel::Level11)
         .unwrap();
 
-    dbg!(device.check_feature_support(Options::default()).unwrap());
     dbg!(device
-        .check_feature_support(Architecture::default())
+        .check_feature_support::<Options>(Default::default())
+        .unwrap());
+    dbg!(device
+        .check_feature_support::<Architecture>(Default::default())
         .unwrap());
 
-    let supported = [FeatureLevel::Level12];
+    let supported = [
+        FeatureLevel::Level12_1,
+        FeatureLevel::Level12_2,
+        FeatureLevel::Level11_1,
+        FeatureLevel::Level11,
+        FeatureLevel::Level12,
+    ];
     dbg!(device
-        .check_feature_support(FeatureLevels {
-            feature_levels_requested: std::borrow::Cow::Borrowed(&supported),
-            max_supported_feature_level: FeatureLevel::Level12_2
+        .check_feature_support::<FeatureLevels>(FeatureLevelsInput {
+            feature_levels_requested: &supported,
         })
         .unwrap());
 
