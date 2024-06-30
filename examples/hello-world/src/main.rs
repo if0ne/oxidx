@@ -379,7 +379,17 @@ fn create_device(command_line: &SampleCommandLine) -> (Factory4, Device) {
         .unwrap();
 
     dbg!(device.check_feature_support(Options::default()).unwrap());
-    dbg!(device.check_feature_support(Architecture::default()).unwrap());
+    dbg!(device
+        .check_feature_support(Architecture::default())
+        .unwrap());
+
+    let supported = [FeatureLevel::Level12];
+    dbg!(device
+        .check_feature_support(FeatureLevels {
+            feature_levels_requested: std::borrow::Cow::Borrowed(&supported),
+            max_supported_feature_level: FeatureLevel::Level12_2
+        })
+        .unwrap());
 
     (dxgi_factory, device)
 }

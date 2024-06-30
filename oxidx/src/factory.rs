@@ -2,10 +2,6 @@ use std::num::NonZeroIsize;
 
 use windows::core::Interface;
 use windows::Win32::Foundation::HWND;
-use windows::Win32::Graphics::Direct3D::{
-    D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_12_0, D3D_FEATURE_LEVEL_12_1,
-    D3D_FEATURE_LEVEL_12_2,
-};
 use windows::Win32::Graphics::Direct3D12::{D3D12CreateDevice, D3D12GetDebugInterface};
 use windows::Win32::Graphics::Dxgi::{
     CreateDXGIFactory2, IDXGIAdapter, IDXGIAdapter3, IDXGIFactory4, IDXGIFactory6, IDXGIFactory7,
@@ -18,6 +14,7 @@ use crate::command_queue::CommandQueueInterface;
 use crate::debug::DebugInterface;
 use crate::device::DeviceInterface;
 use crate::swapchain::{OutputInterface, Swapchain1, SwapchainDesc, SwapchainFullscreenDesc};
+use crate::types::FeatureLevel;
 use crate::{adapter::Adapter3, error::DxError};
 use crate::{create_type, impl_trait, HasInterface};
 
@@ -161,16 +158,6 @@ bitflags::bitflags! {
     pub struct FactoryCreationFlags: u32 {
         const Debug = DXGI_CREATE_FACTORY_DEBUG;
     }
-}
-
-#[repr(i32)]
-#[derive(Debug, Clone, Copy)]
-pub enum FeatureLevel {
-    Level11 = D3D_FEATURE_LEVEL_11_0.0,
-    Level11_1 = D3D_FEATURE_LEVEL_11_1.0,
-    Level12 = D3D_FEATURE_LEVEL_12_0.0,
-    Level12_1 = D3D_FEATURE_LEVEL_12_1.0,
-    Level12_2 = D3D_FEATURE_LEVEL_12_2.0,
 }
 
 pub struct Entry;

@@ -20,7 +20,6 @@ use windows::{
 use crate::{
     adapter::{AdapterDesc, AdapterFlags, Luid},
     error::DxError,
-    factory::FeatureLevel,
     pso::{
         Blend, BlendOp, Blob, BlobInterface, CachedPipeline, CullMode, DeclarationEntry,
         DepthStencilDesc, FillMode, IndexBufferStripCutValue, InputElementDesc, InputSlotClass,
@@ -123,12 +122,6 @@ impl ScanlineOrdering {
 impl ScalingMode {
     pub(crate) fn as_raw(&self) -> DXGI_MODE_SCALING {
         DXGI_MODE_SCALING(*self as i32)
-    }
-}
-
-impl FeatureLevel {
-    pub(crate) fn as_raw(&self) -> D3D_FEATURE_LEVEL {
-        D3D_FEATURE_LEVEL(*self as i32)
     }
 }
 

@@ -1,5 +1,5 @@
 use strum::FromRepr;
-use windows::Win32::Graphics::Direct3D12::*;
+use windows::Win32::Graphics::{Direct3D::*, Direct3D12::*};
 
 #[allow(unused_imports)]
 use super::*;
@@ -61,16 +61,16 @@ pub enum ConservativeRasterizationTier {
     #[default]
     NotSupported = D3D12_CONSERVATIVE_RASTERIZATION_TIER_NOT_SUPPORTED.0,
 
-    /// Tier 1 enforces a maximum 1/2 pixel uncertainty region and does not support post-snap degenerates. 
+    /// Tier 1 enforces a maximum 1/2 pixel uncertainty region and does not support post-snap degenerates.
     /// This is good for tiled rendering, a texture atlas, light map generation and sub-pixel shadow maps.
     Tier1 = D3D12_CONSERVATIVE_RASTERIZATION_TIER_1.0,
 
-    /// Tier 2 reduces the maximum uncertainty region to 1/256 and requires post-snap degenerates not be culled. 
+    /// Tier 2 reduces the maximum uncertainty region to 1/256 and requires post-snap degenerates not be culled.
     /// This tier is helpful for CPU-based algorithm acceleration (such as voxelization).
     Tier2 = D3D12_CONSERVATIVE_RASTERIZATION_TIER_2.0,
 
-    /// Tier 3 maintains a maximum 1/256 uncertainty region and adds support for inner input coverage. Inner input coverage adds the new value `SV_InnerCoverage` to 
-    /// High Level Shading Language (HLSL). This is a 32-bit scalar integer that can be specified on input to a pixel shader, and represents the underestimated conservative 
+    /// Tier 3 maintains a maximum 1/256 uncertainty region and adds support for inner input coverage. Inner input coverage adds the new value `SV_InnerCoverage` to
+    /// High Level Shading Language (HLSL). This is a 32-bit scalar integer that can be specified on input to a pixel shader, and represents the underestimated conservative
     /// rasterization information (that is, whether a pixel is guaranteed-to-be-fully covered). This tier is helpful for occlusion culling.
     Tier3 = D3D12_CONSERVATIVE_RASTERIZATION_TIER_3.0,
 }
@@ -281,6 +281,30 @@ pub enum FeatureType {
 
     /// TBD
     HardwareCopy = D3D12_FEATURE_HARDWARE_COPY.0,
+}
+
+/// Describes the set of features targeted by a Direct3D device.
+///
+/// For more information: [`D3D_FEATURE_LEVEL enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_feature_level)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum FeatureLevel {
+    /// Targets features supported by Direct3D 11.0, including shader model 5.
+    #[default]
+    Level11 = D3D_FEATURE_LEVEL_11_0.0,
+
+    /// Targets features supported by Direct3D 11.1, including shader model 5 and logical blend operations.
+    /// This feature level requires a display driver that is at least implemented to WDDM for Windows 8 (WDDM 1.2).
+    Level11_1 = D3D_FEATURE_LEVEL_11_1.0,
+
+    /// Targets features supported by Direct3D 12.0, including shader model 5.
+    Level12 = D3D_FEATURE_LEVEL_12_0.0,
+
+    /// Targets features supported by Direct3D 12.1, including shader model 5.
+    Level12_1 = D3D_FEATURE_LEVEL_12_1.0,
+
+    /// Targets features supported by Direct3D 12.2, including shader model 6.5.
+    Level12_2 = D3D_FEATURE_LEVEL_12_2.0,
 }
 
 /// Heap alignment variants.

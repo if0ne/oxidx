@@ -24,7 +24,7 @@ pub(crate) mod pix;
 mod conv;
 mod utils;
 
-pub(crate) trait FeatureObject: Default {
+pub(crate) trait FeatureObject {
     const TYPE: types::FeatureType;
     type Raw: Default;
 

@@ -1,3 +1,8 @@
+use std::borrow::Cow;
+
+use smallvec::{smallvec, SmallVec};
+use windows::Win32::Graphics::Direct3D::D3D_FEATURE_LEVEL;
+
 use crate::FeatureObject;
 
 use super::*;
@@ -106,7 +111,7 @@ impl FeatureObject for Options {
 }
 
 /// Provides detail about the adapter architecture, so that your application can better optimize for certain adapter properties.
-/// 
+///
 /// For more information: [`D3D12_FEATURE_DATA_ARCHITECTURE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_architecture)
 #[derive(Clone, Debug, Default)]
 pub struct Architecture {
@@ -116,7 +121,7 @@ pub struct Architecture {
     /// Specifies whether the hardware and driver support a tile-based renderer.
     pub tile_based_renderer: bool,
 
-    /// Specifies whether the hardware and driver support UMA. 
+    /// Specifies whether the hardware and driver support UMA.
     pub uma: bool,
 
     /// Specifies whether the hardware and driver support cache-coherent UMA.
@@ -145,6 +150,46 @@ impl FeatureObject for Architecture {
             tile_based_renderer: raw.TileBasedRenderer.into(),
             uma: raw.UMA.into(),
             cache_coherent_uma: raw.CacheCoherentUMA.into(),
+        }
+    }
+}
+
+/// Describes info about the [`FeatureLevel`] supported by the current graphics driver.
+///
+/// For more information: [`D3D12_FEATURE_DATA_FEATURE_LEVELS structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_feature_levels)
+#[derive(Clone, Debug)]
+pub struct FeatureLevels<'a> {
+    pub feature_levels_requested: Cow<'a, [FeatureLevel]>,
+    pub max_supported_feature_level: FeatureLevel,
+}
+
+impl<'a> FeatureObject for FeatureLevels<'a> {
+    const TYPE: FeatureType = FeatureType::FeatureLevels;
+
+    type Raw = D3D12_FEATURE_DATA_FEATURE_LEVELS;
+
+    fn as_raw(&self) -> Self::Raw {
+        D3D12_FEATURE_DATA_FEATURE_LEVELS {
+            NumFeatureLevels: self.feature_levels_requested.len() as u32,
+            pFeatureLevelsRequested: self.feature_levels_requested.as_ptr() as *const _,
+            MaxSupportedFeatureLevel: self.max_supported_feature_level.as_raw(),
+        }
+    }
+
+    fn from_raw(raw: Self::Raw) -> Self {
+        let feature_levels_requested = unsafe {
+            std::slice::from_raw_parts(
+                raw.pFeatureLevelsRequested as *mut D3D_FEATURE_LEVEL,
+                raw.NumFeatureLevels as usize,
+            )
+        };
+
+        Self {
+            feature_levels_requested: feature_levels_requested
+                .into_iter()
+                .map(|f| (*f).into())
+                .collect(),
+            max_supported_feature_level: raw.MaxSupportedFeatureLevel.into(),
         }
     }
 }
