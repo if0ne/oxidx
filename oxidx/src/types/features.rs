@@ -115,9 +115,6 @@ impl __Sealed for ArchitectureFeature {}
 /// For more information: [`D3D12_FEATURE_DATA_ARCHITECTURE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_architecture)
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Architecture {
-    /// In multi-adapter operation, this indicates which physical adapter of the device is relevant.
-    pub node_index: u32,
-
     /// Specifies whether the hardware and driver support a tile-based renderer.
     pub tile_based_renderer: bool,
 
@@ -132,18 +129,20 @@ impl FeatureObject for ArchitectureFeature {
     const TYPE: FeatureType = FeatureType::Architecture;
 
     type Raw = D3D12_FEATURE_DATA_ARCHITECTURE;
-    type Input<'a> = ();
+    type Input<'a> = u32;
     type Output = Architecture;
 
     #[inline]
-    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
-        D3D12_FEATURE_DATA_ARCHITECTURE::default()
+    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_ARCHITECTURE {
+            NodeIndex: input,
+            ..Default::default()
+        }
     }
 
     #[inline]
     fn from_raw(raw: Self::Raw) -> Self::Output {
         Self::Output {
-            node_index: raw.NodeIndex,
             tile_based_renderer: raw.TileBasedRenderer.into(),
             uma: raw.UMA.into(),
             cache_coherent_uma: raw.CacheCoherentUMA.into(),
@@ -498,5 +497,54 @@ impl FeatureObject for RootSignatureFeature {
     #[inline]
     fn from_raw(raw: Self::Raw) -> Self::Output {
         raw.HighestVersion.into()
+    }
+}
+
+/// Provides detail about each adapter's architectural details, so that your application can better optimize for certain adapter properties.
+///
+/// For more information: [`D3D12_FEATURE_DATA_ARCHITECTURE1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_architecture1)
+#[derive(Debug)]
+pub struct Architecture1Feature;
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Architecture1 {
+    /// Specifies whether the hardware and driver support a tile-based renderer.
+    pub tile_based_renderer: bool,
+
+    /// Specifies whether the hardware and driver support UMA.
+    pub uma: bool,
+
+    /// Specifies whether the hardware and driver support cache-coherent UMA.
+    pub cache_coherent_uma: bool,
+
+    /// Specifies whether the hardware and driver support isolated Memory Management Unit (MMU).
+    pub isolated_mmu: bool,
+}
+
+impl __Sealed for Architecture1Feature {}
+
+impl FeatureObject for Architecture1Feature {
+    const TYPE: FeatureType = FeatureType::Architecture1;
+
+    type Raw = D3D12_FEATURE_DATA_ARCHITECTURE1;
+    type Input<'a> = u32;
+    type Output = Architecture1;
+
+    #[inline]
+    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_ARCHITECTURE1  {
+            NodeIndex: input,
+            ..Default::default()
+        }
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        Self::Output {
+            tile_based_renderer: raw.TileBasedRenderer.into(),
+            uma: raw.UMA.into(),
+            cache_coherent_uma: raw.CacheCoherentUMA.into(),
+            isolated_mmu: raw.IsolatedMMU.into(),
+        }
     }
 }
