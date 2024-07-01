@@ -443,3 +443,32 @@ impl FeatureObject for Options1Feature {
         }
     }
 }
+
+/// Indicates the level of support for protected resource sessions.
+///
+/// For more information: [`D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_SUPPORT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_protected_resource_session_support)
+#[derive(Debug)]
+pub struct ProtectedResourceSessionSupportFeature;
+
+impl __Sealed for ProtectedResourceSessionSupportFeature {}
+
+impl FeatureObject for ProtectedResourceSessionSupportFeature {
+    const TYPE: FeatureType = FeatureType::ProtectedResourceSessionSupport;
+
+    type Raw = D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_SUPPORT;
+    type Input<'a> = u32;
+    type Output = ProtectedResourceSessionSupportFlags;
+
+    #[inline]
+    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_SUPPORT {
+            NodeIndex: input,
+            ..Default::default()
+        }
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        raw.Support.into()
+    }
+}

@@ -280,6 +280,19 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Specifies options for determining quality levels.
+    ///
+    /// Empty flag - Indicates that protected resource sessions are not supported.
+    ///
+    /// For more information: [`D3D12_PROTECTED_RESOURCE_SESSION_SUPPORT_FLAGS enumeration`](https://learn.microsoft.com/ru-ru/windows/win32/api/d3d12/ne-d3d12-d3d12_protected_resource_session_support_flags)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct ProtectedResourceSessionSupportFlags: i32 {
+        /// Indicates that protected resource sessions are supported.
+        const Supported = D3D12_PROTECTED_RESOURCE_SESSION_SUPPORT_FLAG_SUPPORTED.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Specifies a range of tile mappings.
     ///
     /// Empty flag - No tile-mapping flags are specified.
