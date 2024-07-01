@@ -27,7 +27,7 @@ pub enum DxError {
 
     /// Generic error. Enable debug layer to get detailed error information
     #[error("Enable debug layer to get detailed error information.")]
-    Fail,
+    Fail(String),
 
     /// An invalid parameter was passed to the returning function
     #[error("An invalid parameter was passed to the returning function.")]

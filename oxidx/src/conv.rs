@@ -618,7 +618,7 @@ impl From<windows::core::Error> for DxError {
         match value.code() {
             D3D12_ERROR_ADAPTER_NOT_FOUND => DxError::AdapterNotFound,
             D3D12_ERROR_DRIVER_VERSION_MISMATCH => DxError::DriverVersionMismatch,
-            E_FAIL => DxError::Fail,
+            E_FAIL => DxError::Fail(value.message()),
             E_INVALIDARG => DxError::InvalidArgs,
             E_OUTOFMEMORY => DxError::Oom,
             E_NOTIMPL => DxError::NotImpl,

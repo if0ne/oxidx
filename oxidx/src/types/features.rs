@@ -1,3 +1,5 @@
+use std::num::NonZeroU32;
+
 use smallvec::SmallVec;
 
 use crate::{FeatureObject, __Sealed};
@@ -211,7 +213,7 @@ impl FeatureObject for FormatSupportFeature {
     type Input<'a> = Format;
     type Output = FormatSupport;
 
-    #[inline(always)]
+    #[inline]
     fn into_raw(input: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_FORMAT_SUPPORT {
             Format: input.as_raw(),
@@ -224,6 +226,63 @@ impl FeatureObject for FormatSupportFeature {
         Self::Output {
             support1: raw.Support1.into(),
             support2: raw.Support2.into(),
+        }
+    }
+}
+
+/// Describes the multi-sampling image quality levels for a given format and sample count.
+///
+/// For more information: [`D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_multisample_quality_levels)
+#[derive(Debug)]
+pub struct MultisampleQualityLevelsFeature;
+
+/// Describes the multi-sampling image quality levels for a given format and sample count.
+///
+/// For more information: [`D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_multisample_quality_levels)
+pub struct MultisampleQualityLevelsInfo {
+    /// A [`Format`]-typed value for the format to return info about.
+    pub format: Format,
+
+    /// The number of multi-samples per pixel to return info about.
+    pub sample_count: NonZeroU32,
+}
+
+/// Describes the multi-sampling image quality levels for a given format and sample count.
+///
+/// For more information: [`D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_multisample_quality_levels)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct MultisampleQualityLevels {
+    /// Flags to control quality levels, as a bitwise-OR'd combination of [`MultisampleQualityLevelFlags`] enumeration constants.
+    /// The resulting value specifies options for determining quality levels.
+    pub flags: MultisampleQualityLevelFlags,
+
+    /// The number of quality levels.
+    pub num_quality_levels: u32,
+}
+
+impl __Sealed for MultisampleQualityLevelsFeature {}
+
+impl FeatureObject for MultisampleQualityLevelsFeature {
+    const TYPE: FeatureType = FeatureType::MultisampleQualityLevels;
+
+    type Raw = D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS;
+    type Input<'a> = MultisampleQualityLevelsInfo;
+    type Output = MultisampleQualityLevels;
+
+    #[inline]
+    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS {
+            Format: input.format.as_raw(),
+            SampleCount: input.sample_count.get(),
+            ..Default::default()
+        }
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        Self::Output {
+            flags: raw.Flags.into(),
+            num_quality_levels: raw.NumQualityLevels,
         }
     }
 }

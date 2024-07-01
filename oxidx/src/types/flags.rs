@@ -267,6 +267,19 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Specifies options for determining quality levels.
+    ///
+    /// Empty flag - No options are supported.
+    ///
+    /// For more information: [`D3D12_MULTISAMPLE_QUALITY_LEVEL_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_multisample_quality_level_flags)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct MultisampleQualityLevelFlags: i32 {
+        /// The number of quality levels can be determined for tiled resources.
+        const TiledResource = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_TILED_RESOURCE.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Specifies a range of tile mappings.
     ///
     /// Empty flag - No tile-mapping flags are specified.

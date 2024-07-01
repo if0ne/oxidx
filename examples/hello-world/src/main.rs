@@ -1,4 +1,4 @@
-use std::num::NonZeroIsize;
+use std::num::{NonZero, NonZeroIsize};
 
 use oxidx::{
     adapter::*,
@@ -365,10 +365,8 @@ fn transition_barrier(
 fn create_device(command_line: &SampleCommandLine) -> (Factory4, Device) {
     let entry = Entry;
 
-    if cfg!(debug_assertions) {
-        let debug: Debug = entry.create_debug().unwrap();
-        debug.enable_debug_layer();
-    }
+    let debug: Debug = entry.create_debug().unwrap();
+    debug.enable_debug_layer();
 
     let dxgi_factory_flags = if cfg!(debug_assertions) {
         FactoryCreationFlags::Debug
@@ -389,10 +387,10 @@ fn create_device(command_line: &SampleCommandLine) -> (Factory4, Device) {
         .unwrap();
 
     dbg!(device
-        .check_feature_support::<OptionsFeature>(Default::default())
+        .check_feature_support::<OptionsFeature>(())
         .unwrap());
     dbg!(device
-        .check_feature_support::<ArchitectureFeature>(Default::default())
+        .check_feature_support::<ArchitectureFeature>(())
         .unwrap());
 
     let supported = [
@@ -408,6 +406,13 @@ fn create_device(command_line: &SampleCommandLine) -> (Factory4, Device) {
 
     dbg!(device
         .check_feature_support::<FormatSupportFeature>(Format::Rgba32Float)
+        .unwrap());
+
+    dbg!(device
+        .check_feature_support::<MultisampleQualityLevelsFeature>(MultisampleQualityLevelsInfo {
+            format: Format::Rgba32Float,
+            sample_count: NonZero::new(1).unwrap(),
+        })
         .unwrap());
 
     (dxgi_factory, device)
