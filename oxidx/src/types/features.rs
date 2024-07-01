@@ -589,3 +589,29 @@ impl FeatureObject for Options2Feature {
         }
     }
 }
+
+/// Describes the level of shader caching supported in the current graphics driver.
+///
+/// For more information: [`D3D12_FEATURE_DATA_SHADER_CACHE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_shader_cache)
+#[derive(Debug)]
+pub struct ShaderCacheFeature;
+
+impl __Sealed for ShaderCacheFeature {}
+
+impl FeatureObject for ShaderCacheFeature {
+    const TYPE: FeatureType = FeatureType::ShaderCache;
+
+    type Raw = D3D12_FEATURE_DATA_SHADER_CACHE;
+    type Input<'a> = ();
+    type Output = CacheSupportFlags;
+
+    #[inline]
+    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_SHADER_CACHE::default()
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        raw.SupportFlags.into()
+    }
+}

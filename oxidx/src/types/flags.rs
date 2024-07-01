@@ -4,6 +4,38 @@ use windows::Win32::Graphics::Direct3D12::*;
 use super::*;
 
 bitflags::bitflags! {
+    /// Describes the level of support for shader caching in the current graphics driver.
+    ///
+    /// Empty flag - Indicates that the driver does not support shader caching.
+    ///
+    /// For more information: [`D3D12_SHADER_CACHE_SUPPORT_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_shader_cache_support_flags)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct CacheSupportFlags: i32 {
+        /// Indicates that the driver supports the CachedPSO member of the [`GraphicsPipelineStateDesc`] and [`ComputePipelineStateDesc`] structures. This is always supported.
+        const SinglePSO = D3D12_SHADER_CACHE_SUPPORT_SINGLE_PSO.0;
+
+        /// Indicates that the driver supports the ID3D12PipelineLibrary interface, which provides application-controlled PSO grouping and caching. 
+        /// This is supported by drivers targetting the Windows 10 Anniversary Update.
+        const Library = D3D12_SHADER_CACHE_SUPPORT_LIBRARY.0;
+
+        /// Indicates that the driver supports an OS-managed shader cache that stores compiled shaders in memory during the current run of the application.
+        const AutomaticInprocCache = D3D12_SHADER_CACHE_SUPPORT_AUTOMATIC_INPROC_CACHE.0;
+
+        /// Indicates that the driver supports an OS-managed shader cache that stores compiled shaders on disk to accelerate future runs of the application.
+        const AutomaticDiskCache = D3D12_SHADER_CACHE_SUPPORT_AUTOMATIC_DISK_CACHE.0;
+
+        /// TBD
+        const DriverManagedCache = D3D12_SHADER_CACHE_SUPPORT_DRIVER_MANAGED_CACHE.0;
+
+        /// TBD
+        const ShaderControlClear = D3D12_SHADER_CACHE_SUPPORT_SHADER_CONTROL_CLEAR.0;
+
+        /// TBD
+        const ShaderSessionDelete = D3D12_SHADER_CACHE_SUPPORT_SHADER_SESSION_DELETE.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Specifies flags to be used when creating a command queue.
     ///
     /// Empty flag - Indicates a default command queue.
