@@ -356,3 +356,31 @@ impl FeatureObject for GpuVirtualAddressSupportFeature {
         }
     }
 }
+
+/// Contains the supported shader model.
+///
+/// For more information: [`D3D12_FEATURE_DATA_SHADER_MODEL structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_shader_model)
+#[derive(Debug)]
+pub struct ShaderModelFeature;
+
+impl __Sealed for ShaderModelFeature {}
+
+impl FeatureObject for ShaderModelFeature {
+    const TYPE: FeatureType = FeatureType::ShaderModel;
+
+    type Raw = D3D12_FEATURE_DATA_SHADER_MODEL;
+    type Input<'a> = ();
+    type Output = ShaderModel;
+
+    #[inline]
+    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_SHADER_MODEL {
+            HighestShaderModel: D3D_SHADER_MODEL_6_6,
+        }
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        raw.HighestShaderModel.into()
+    }
+}

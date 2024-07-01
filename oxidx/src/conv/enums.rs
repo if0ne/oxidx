@@ -16,6 +16,7 @@ conv_enum!(MemoryPool to D3D12_MEMORY_POOL);
 conv_enum!(MinPrecisionSupport to D3D12_SHADER_MIN_PRECISION_SUPPORT);
 conv_enum!(ResourceBindingTier to D3D12_RESOURCE_BINDING_TIER);
 conv_enum!(ResourceHeapTier to D3D12_RESOURCE_HEAP_TIER);
+conv_enum!(ShaderModel to D3D_SHADER_MODEL);
 conv_enum!(TiledResourcesTier to D3D12_TILED_RESOURCES_TIER);
 
 impl CommandQueuePriority {

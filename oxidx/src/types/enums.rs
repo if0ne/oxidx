@@ -173,7 +173,7 @@ pub enum FeatureType {
     GpuVirtualAddressSupport = D3D12_FEATURE_GPU_VIRTUAL_ADDRESS_SUPPORT.0,
 
     /// Indicates a query for the supported shader model.
-    FeatureShaderModel = D3D12_FEATURE_SHADER_MODEL.0,
+    ShaderModel = D3D12_FEATURE_SHADER_MODEL.0,
 
     /// Indicates a query for the level of support for HLSL 6.0 wave operations.
     Options1 = D3D12_FEATURE_D3D12_OPTIONS1.0,
@@ -429,6 +429,47 @@ pub enum ResourceHeapTier {
 
     /// Indicates that heaps can support resources from all three categories.
     Tier2 = D3D12_RESOURCE_HEAP_TIER_2.0,
+}
+
+/// Specifies a shader model.
+/// 
+/// For more information: [`D3D_SHADER_MODEL enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d_shader_model)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum ShaderModel {
+    /// TBD
+    #[default]
+    None = 0,
+
+    /// Indicates shader model 5.1.
+    Model5_1 = D3D_SHADER_MODEL_5_1.0,
+
+    /// Indicates shader model 6.0. Compiling a shader model 6.0 shader requires using the DXC compiler, and is not supported by legacy FXC.
+    Model6_0 = D3D_SHADER_MODEL_6_0.0,
+
+    /// Indicates shader model 6.1.
+    Model6_1 = D3D_SHADER_MODEL_6_1.0,
+
+    /// Indicates shader model 6.2.
+    Model6_2 = D3D_SHADER_MODEL_6_2.0,
+
+    /// Indicates shader model 6.3.
+    Model6_3 = D3D_SHADER_MODEL_6_3.0,
+
+    /// Shader model 6.4 support was added in Windows 10, Version 1903, and is required for DirectX Raytracing (DXR).
+    Model6_4 = D3D_SHADER_MODEL_6_4.0,
+
+    /// Shader model 6.5 support was added in Windows 10, Version 2004, and is required for Direct Machine Learning.
+    Model6_5 = D3D_SHADER_MODEL_6_5.0,
+
+    /// Shader model 6.6 support was added in Windows 11 and the DirectX 12 Agility SDK.
+    Model6_6 = D3D_SHADER_MODEL_6_6.0,
+
+    /// Shader model 6.7 support was added in the DirectX 12 Agility SDK v1.6
+    Model6_7 = D3D_SHADER_MODEL_6_7.0,
+
+    /// TBD
+    Model6_8 = D3D_SHADER_MODEL_6_8.0,
 }
 
 /// Identifies the tier level at which tiled resources are supported.
