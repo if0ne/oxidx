@@ -286,3 +286,73 @@ impl FeatureObject for MultisampleQualityLevelsFeature {
         }
     }
 }
+
+/// Describes a DXGI data format and plane count.
+///
+/// For more information: [`D3D12_FEATURE_DATA_FORMAT_INFO structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_format_info)
+#[derive(Debug)]
+pub struct FormatInfoFeature;
+
+impl __Sealed for FormatInfoFeature {}
+
+impl FeatureObject for FormatInfoFeature {
+    const TYPE: FeatureType = FeatureType::FormatInfo;
+
+    type Raw = D3D12_FEATURE_DATA_FORMAT_INFO;
+    type Input<'a> = Format;
+    type Output = u8;
+
+    #[inline]
+    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_FORMAT_INFO {
+            Format: input.as_raw(),
+            ..Default::default()
+        }
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        raw.PlaneCount
+    }
+}
+
+/// Details the adapter's GPU virtual address space limitations, including maximum address bits per resource and per process.
+///
+/// For more information: [`D3D12_FEATURE_DATA_GPU_VIRTUAL_ADDRESS_SUPPORT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_gpu_virtual_address_support)
+#[derive(Debug)]
+pub struct GpuVirtualAddressSupportFeature;
+
+/// Details the adapter's GPU virtual address space limitations, including maximum address bits per resource and per process.
+///
+/// For more information: [`D3D12_FEATURE_DATA_GPU_VIRTUAL_ADDRESS_SUPPORT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_gpu_virtual_address_support)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct GpuVirtualAddressSupport {
+    /// The maximum GPU virtual address bits per resource.
+    pub max_gpu_virtual_address_bits_per_resource: u32,
+
+    /// The maximum GPU virtual address bits per process.
+    pub max_gpu_virtual_address_bits_per_process: u32,
+}
+
+impl __Sealed for GpuVirtualAddressSupportFeature {}
+
+impl FeatureObject for GpuVirtualAddressSupportFeature {
+    const TYPE: FeatureType = FeatureType::GpuVirtualAddressSupport;
+
+    type Raw = D3D12_FEATURE_DATA_GPU_VIRTUAL_ADDRESS_SUPPORT;
+    type Input<'a> = ();
+    type Output = GpuVirtualAddressSupport;
+
+    #[inline]
+    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_GPU_VIRTUAL_ADDRESS_SUPPORT::default()
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        Self::Output {
+            max_gpu_virtual_address_bits_per_resource: raw.MaxGPUVirtualAddressBitsPerResource,
+            max_gpu_virtual_address_bits_per_process: raw.MaxGPUVirtualAddressBitsPerProcess,
+        }
+    }
+}

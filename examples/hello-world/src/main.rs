@@ -389,31 +389,6 @@ fn create_device(command_line: &SampleCommandLine) -> (Factory4, Device) {
     dbg!(device
         .check_feature_support::<OptionsFeature>(())
         .unwrap());
-    dbg!(device
-        .check_feature_support::<ArchitectureFeature>(())
-        .unwrap());
-
-    let supported = [
-        FeatureLevel::Level12_1,
-        FeatureLevel::Level12_2,
-        FeatureLevel::Level11_1,
-        FeatureLevel::Level11,
-        FeatureLevel::Level12,
-    ];
-    dbg!(device
-        .check_feature_support::<FeatureLevelsFeature>(&supported)
-        .unwrap());
-
-    dbg!(device
-        .check_feature_support::<FormatSupportFeature>(Format::Rgba32Float)
-        .unwrap());
-
-    dbg!(device
-        .check_feature_support::<MultisampleQualityLevelsFeature>(MultisampleQualityLevelsInfo {
-            format: Format::Rgba32Float,
-            sample_count: NonZero::new(1).unwrap(),
-        })
-        .unwrap());
 
     (dxgi_factory, device)
 }
