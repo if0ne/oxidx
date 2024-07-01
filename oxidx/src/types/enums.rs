@@ -472,6 +472,23 @@ pub enum ShaderModel {
     Model6_8 = D3D_SHADER_MODEL_6_8.0,
 }
 
+/// Specifies the version of root signature layout.
+///
+/// For more information: [`D3D_ROOT_SIGNATURE_VERSION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d_root_signature_version)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum RootSignatureVersion {
+    /// Version one of root signature layout.
+    #[default]
+    V1_0 = D3D_ROOT_SIGNATURE_VERSION_1_0.0,
+
+    /// Version 1.1 of root signature layout.
+    V1_1 = D3D_ROOT_SIGNATURE_VERSION_1_1.0,
+
+    /// TBD
+    V1_2 = D3D_ROOT_SIGNATURE_VERSION_1_2.0,
+}
+
 /// Identifies the tier level at which tiled resources are supported.
 ///
 /// For more information: [`D3D12_TILED_RESOURCES_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_tiled_resources_tier)

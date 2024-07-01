@@ -10,7 +10,7 @@ use windows::{
 };
 
 use crate::{
-    create_type, error::DxError, impl_trait, swapchain::SampleDesc, types::Format, HasInterface,
+    create_type, error::DxError, impl_trait, swapchain::SampleDesc, types::{Format, RootSignatureVersion}, HasInterface,
 };
 
 pub trait PipelineStateInterface:
@@ -286,14 +286,6 @@ pub enum BorderColor {
     OpaqueWhite = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE.0,
     OpaqueBlackUint = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK_UINT.0,
     OpaqueWhiteUint = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE_UINT.0,
-}
-
-#[derive(Clone, Copy, Debug)]
-#[repr(i32)]
-pub enum RootSignatureVersion {
-    V1_0 = D3D_ROOT_SIGNATURE_VERSION_1_0.0,
-    V1_1 = D3D_ROOT_SIGNATURE_VERSION_1_1.0,
-    V1_2 = D3D_ROOT_SIGNATURE_VERSION_1_2.0,
 }
 
 #[derive(Clone, Debug)]

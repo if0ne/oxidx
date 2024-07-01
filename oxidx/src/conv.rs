@@ -24,7 +24,7 @@ use crate::{
         Blend, BlendOp, Blob, BlobInterface, CachedPipeline, CullMode, DeclarationEntry,
         DepthStencilDesc, FillMode, IndexBufferStripCutValue, InputElementDesc, InputSlotClass,
         LogicOp, PrimitiveTopology, RasterizerDesc, RenderTargetBlendDesc, RootParameter,
-        RootParameterType, RootSignatureFlags, RootSignatureVersion, ShaderVisibility,
+        RootParameterType, RootSignatureFlags, ShaderVisibility,
         StaticSamplerDesc,
     },
     resources::{
@@ -268,12 +268,6 @@ impl ViewDimension {
                 },
             },
         }
-    }
-}
-
-impl RootSignatureVersion {
-    pub(crate) fn as_raw(&self) -> D3D_ROOT_SIGNATURE_VERSION {
-        D3D_ROOT_SIGNATURE_VERSION(*self as i32)
     }
 }
 

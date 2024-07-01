@@ -472,3 +472,31 @@ impl FeatureObject for ProtectedResourceSessionSupportFeature {
         raw.Support.into()
     }
 }
+
+/// Indicates root signature version support.
+///
+/// For more information: [`D3D12_FEATURE_DATA_ROOT_SIGNATURE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_root_signature)
+#[derive(Debug)]
+pub struct RootSignatureFeature;
+
+impl __Sealed for RootSignatureFeature {}
+
+impl FeatureObject for RootSignatureFeature {
+    const TYPE: FeatureType = FeatureType::RootSignature;
+
+    type Raw = D3D12_FEATURE_DATA_ROOT_SIGNATURE;
+    type Input<'a> = ();
+    type Output = RootSignatureVersion;
+
+    #[inline]
+    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_ROOT_SIGNATURE  {
+            HighestVersion: D3D_ROOT_SIGNATURE_VERSION_1_1,
+        }
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        raw.HighestVersion.into()
+    }
+}

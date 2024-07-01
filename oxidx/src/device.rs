@@ -21,7 +21,7 @@ use crate::{
     impl_trait,
     pso::{
         BlobInterface, GraphicsPipelineDesc, PipelineStateInterface, RootSignatureDesc,
-        RootSignatureInterface, RootSignatureVersion,
+        RootSignatureInterface,
     },
     resources::{RenderTargetViewDesc, ResourceDesc, ResourceInterface, ResourceState},
     sync::FenceInterface,
