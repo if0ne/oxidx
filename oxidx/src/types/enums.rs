@@ -400,6 +400,26 @@ pub enum MinPrecisionSupport {
     Support16Bit = D3D12_SHADER_MIN_PRECISION_SUPPORT_16_BIT.0,
 }
 
+/// Specifies the level of support for programmable sample positions that's offered by the adapter.
+///
+/// For more information: [`D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_programmable_sample_positions_tier)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum ProgrammableSamplePositionsTier {
+    /// Indicates that there's no support for programmable sample positions.
+    #[default]
+    NotSupported = D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER_NOT_SUPPORTED.0,
+
+    /// Indicates that there's tier 1 support for programmable sample positions. 
+    /// In tier 1, a single sample pattern can be specified to repeat for every pixel (SetSamplePosition parameter NumPixels = 1) and ResolveSubResource is supported.
+    Tier1 = D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER_1.0,
+
+    /// Indicates that there's tier 2 support for programmable sample positions. 
+    /// In tier 2, four separate sample patterns can be specified for each pixel in a 2x2 grid (SetSamplePosition parameter NumPixels = 1) that 
+    /// repeats over the render-target or viewport, aligned on even coordinates.
+    Tier2 = D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER_2.0,
+}
+
 /// Identifies the tier of resource binding being used.
 ///
 /// For more information: [`D3D12_RESOURCE_BINDING_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_binding_tier)
@@ -429,6 +449,23 @@ pub enum ResourceHeapTier {
 
     /// Indicates that heaps can support resources from all three categories.
     Tier2 = D3D12_RESOURCE_HEAP_TIER_2.0,
+}
+
+/// Specifies the version of root signature layout.
+///
+/// For more information: [`D3D_ROOT_SIGNATURE_VERSION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d_root_signature_version)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum RootSignatureVersion {
+    /// Version one of root signature layout.
+    #[default]
+    V1_0 = D3D_ROOT_SIGNATURE_VERSION_1_0.0,
+
+    /// Version 1.1 of root signature layout.
+    V1_1 = D3D_ROOT_SIGNATURE_VERSION_1_1.0,
+
+    /// TBD
+    V1_2 = D3D_ROOT_SIGNATURE_VERSION_1_2.0,
 }
 
 /// Specifies a shader model.
@@ -470,23 +507,6 @@ pub enum ShaderModel {
 
     /// TBD
     Model6_8 = D3D_SHADER_MODEL_6_8.0,
-}
-
-/// Specifies the version of root signature layout.
-///
-/// For more information: [`D3D_ROOT_SIGNATURE_VERSION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d_root_signature_version)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
-#[repr(i32)]
-pub enum RootSignatureVersion {
-    /// Version one of root signature layout.
-    #[default]
-    V1_0 = D3D_ROOT_SIGNATURE_VERSION_1_0.0,
-
-    /// Version 1.1 of root signature layout.
-    V1_1 = D3D_ROOT_SIGNATURE_VERSION_1_1.0,
-
-    /// TBD
-    V1_2 = D3D_ROOT_SIGNATURE_VERSION_1_2.0,
 }
 
 /// Identifies the tier level at which tiled resources are supported.

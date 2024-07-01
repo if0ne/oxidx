@@ -506,6 +506,9 @@ impl FeatureObject for RootSignatureFeature {
 #[derive(Debug)]
 pub struct Architecture1Feature;
 
+/// Provides detail about each adapter's architectural details, so that your application can better optimize for certain adapter properties.
+///
+/// For more information: [`D3D12_FEATURE_DATA_ARCHITECTURE1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_architecture1)
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Architecture1 {
     /// Specifies whether the hardware and driver support a tile-based renderer.
@@ -545,6 +548,44 @@ impl FeatureObject for Architecture1Feature {
             uma: raw.UMA.into(),
             cache_coherent_uma: raw.CacheCoherentUMA.into(),
             isolated_mmu: raw.IsolatedMMU.into(),
+        }
+    }
+}
+
+/// Indicates the level of support that the adapter provides for depth-bounds tests and programmable sample positions.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS2 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options2)
+#[derive(Debug)]
+pub struct Options2Feature;
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Options2 {
+    /// On return, contains true if depth-bounds tests are supported; otherwise, false.
+    pub depth_bounds_test_supported: bool,
+
+    /// On return, contains a value that indicates the level of support offered for programmable sample positions.
+    pub programmable_sample_positions_tier: ProgrammableSamplePositionsTier,
+}
+
+impl __Sealed for Options2Feature {}
+
+impl FeatureObject for Options2Feature {
+    const TYPE: FeatureType = FeatureType::Options2;
+
+    type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS2;
+    type Input<'a> = ();
+    type Output = Options2;
+
+    #[inline]
+    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS2::default()
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        Self::Output {
+            depth_bounds_test_supported: raw.DepthBoundsTestSupported.into(),
+            programmable_sample_positions_tier: raw.ProgrammableSamplePositionsTier.into(),
         }
     }
 }
