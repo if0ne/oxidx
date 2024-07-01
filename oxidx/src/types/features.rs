@@ -384,3 +384,62 @@ impl FeatureObject for ShaderModelFeature {
         raw.HighestShaderModel.into()
     }
 }
+
+/// Describes the level of support for HLSL 6.0 wave operations.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options1)
+#[derive(Debug)]
+pub struct Options1Feature;
+
+/// Describes the level of support for HLSL 6.0 wave operations.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options1)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Options1 {
+    /// True if the driver supports HLSL 6.0 wave operations.
+    pub wave_ops: bool,
+
+    /// Specifies the baseline number of lanes in the SIMD wave that this implementation can support. 
+    /// This term is sometimes known as "wavefront size" or "warp width". Currently apps should rely only on this minimum value for sizing workloads.
+    pub wave_lane_count_min: u32,
+
+    /// Specifies the maximum number of lanes in the SIMD wave that this implementation can support.
+    pub wave_lane_count_max: u32,
+
+    /// Specifies the total number of SIMD lanes on the hardware.
+    pub total_lane_count: u32,
+
+    /// Indicates transitions are possible in and out of the CBV, and indirect argument states, on compute command lists. 
+    /// If [`DeviceInterface::check_feature_support`](crate::device::DeviceInterface::check_feature_support) succeeds this value will always be true.
+    pub expanded_compute_resource_states: bool,
+
+    /// Indicates that 64bit integer operations are supported.
+    pub int64_shader_ops: bool,
+}
+
+impl __Sealed for Options1Feature {}
+
+impl FeatureObject for Options1Feature {
+    const TYPE: FeatureType = FeatureType::Options1;
+
+    type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS1;
+    type Input<'a> = ();
+    type Output = Options1;
+
+    #[inline]
+    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS1::default()
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        Self::Output {
+            wave_ops: raw.WaveOps.into(),
+            wave_lane_count_min: raw.WaveLaneCountMin,
+            wave_lane_count_max: raw.WaveLaneCountMax,
+            total_lane_count: raw.TotalLaneCount,
+            expanded_compute_resource_states: raw.ExpandedComputeResourceStates.into(),
+            int64_shader_ops: raw.Int64ShaderOps.into(),
+        }
+    }
+}
