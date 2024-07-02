@@ -615,3 +615,45 @@ impl FeatureObject for ShaderCacheFeature {
         raw.SupportFlags.into()
     }
 }
+
+/// Details the adapter's support for prioritization of different command queue types.
+///
+/// For more information: [`D3D12_FEATURE_DATA_COMMAND_QUEUE_PRIORITY structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_command_queue_priority)
+#[derive(Debug)]
+pub struct CommandQueuePriorityFeature;
+
+/// Describes the level of shader caching supported in the current graphics driver.
+///
+/// For more information: [`D3D12_FEATURE_DATA_SHADER_CACHE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_shader_cache)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct CommandQueuePriorityInput {
+    /// The type of the command list you're interested in.
+    pub command_list_type: CommandListType,
+
+    /// The priority level you're interested in.
+    pub priority: CommandQueuePriority,
+}
+
+impl __Sealed for CommandQueuePriorityFeature {}
+
+impl FeatureObject for CommandQueuePriorityFeature {
+    const TYPE: FeatureType = FeatureType::CommandQueuePriority;
+
+    type Raw = D3D12_FEATURE_DATA_COMMAND_QUEUE_PRIORITY;
+    type Input<'a> = CommandQueuePriorityInput;
+    type Output = bool;
+
+    #[inline]
+    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_COMMAND_QUEUE_PRIORITY {
+            CommandListType: input.command_list_type.as_raw(),
+            Priority: input.priority.as_raw() as u32,
+            ..Default::default()
+        }
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        raw.PriorityForTypeIsSupported.into()
+    }
+}
