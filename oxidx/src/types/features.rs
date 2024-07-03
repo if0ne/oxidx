@@ -995,3 +995,44 @@ impl FeatureObject for Options6Feature {
         }
     }
 }
+
+/// Indicates the level of support that the adapter provides for mesh and amplification shaders, and for sampler feedback.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS7 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options7)
+#[derive(Debug)]
+pub struct Options7Feature;
+
+/// Indicates the level of support that the adapter provides for mesh and amplification shaders, and for sampler feedback.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS7 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options7)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Options7 {
+    /// Indicates the level of support for mesh and amplification shaders.
+    pub mesh_shader_tier: MeshShaderTier,
+
+    /// Indicates the level of support for sampler feedback.
+    pub sampler_feedback_tier: SamplerFeedbackTier,
+}
+
+impl __Sealed for Options7Feature {}
+
+impl FeatureObject for Options7Feature {
+    const TYPE: FeatureType = FeatureType::Options7;
+
+    type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS7;
+    type Input<'a> = ();
+    type Output = Options7;
+
+    #[inline]
+    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS7::default()
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        Self::Output {
+            mesh_shader_tier: raw.MeshShaderTier.into(),
+            sampler_feedback_tier: raw.SamplerFeedbackTier.into(),
+        }
+    }
+}

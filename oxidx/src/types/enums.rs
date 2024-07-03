@@ -220,9 +220,6 @@ pub enum FeatureType {
     /// Starting with Windows 10, version 1903 (10.0; Build 18362), indicates a query for the level of support for variable-rate shading (VRS), and indicates whether or not background processing is supported.
     Options6 = D3D12_FEATURE_D3D12_OPTIONS6.0,
 
-    /// Indicates a query for the level of support for metacommands.
-    QueryMetaCommand = D3D12_FEATURE_QUERY_META_COMMAND.0,
-
     /// Starting with Windows 10, version 2004 (10.0; Build 19041), indicates a query for the level of support for mesh and amplification shaders, and for sampler feedback.
     Options7 = D3D12_FEATURE_D3D12_OPTIONS7.0,
 
@@ -397,6 +394,19 @@ pub enum MemoryPool {
     /// When the adapter is UMA, this pool is not available.
     L1 = D3D12_MEMORY_POOL_L1.0,
 }
+/// Defines constants that specify mesh and amplification shader support.
+///
+/// For more information: [`D3D12_MESH_SHADER_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_mesh_shader_tier)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum MeshShaderTier {
+    /// Specifies that mesh and amplification shaders are not supported.
+    #[default]
+    NotSupported = D3D12_MESH_SHADER_TIER_NOT_SUPPORTED.0,
+
+    /// Specifies that mesh and amplification shaders are supported.
+    Tier1 = D3D12_MESH_SHADER_TIER_1.0,
+}
 
 /// Describes minimum precision support options for shaders in the current graphics driver.
 ///
@@ -519,6 +529,25 @@ pub enum RootSignatureVersion {
 
     /// TBD
     V1_2 = D3D_ROOT_SIGNATURE_VERSION_1_2.0,
+}
+
+/// Defines constants that specify sampler feedback support.
+///
+/// For more information: [`D3D12_SAMPLER_FEEDBACK_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_sampler_feedback_tier)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum SamplerFeedbackTier {
+    /// Specifies that sampler feedback is not supported. Attempts at calling sampler feedback APIs represent an error.
+    #[default]
+    NoSupported = D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED.0,
+
+    /// Specifies that sampler feedback is supported to tier 0.9.
+    Tier0_9 = D3D12_SAMPLER_FEEDBACK_TIER_0_9.0,
+
+    /// Specifies sample feedback is supported to tier 1.0.
+    /// This indicates that sampler feedback is supported for all texture addressing modes, and feedback-writing methods are supported irrespective of the passed-in
+    /// shader resource view.
+    Tier1_0 = D3D12_SAMPLER_FEEDBACK_TIER_1_0.0,
 }
 
 /// Specifies a shader model.
