@@ -435,6 +435,44 @@ pub enum ProgrammableSamplePositionsTier {
     Tier2 = D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER_2.0,
 }
 
+/// Specifies the level of ray tracing support on the graphics device.
+///
+/// For more information: [`D3D12_RAYTRACING_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_raytracing_tier)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum RaytracingTier {
+    /// No support for ray tracing on the device. Attempts to create any ray tracing-related object will fail, and using ray tracing-related APIs on command lists results in undefined behavior.
+    #[default]
+    NotSupported = D3D12_RAYTRACING_TIER_NOT_SUPPORTED.0,
+
+    /// The device supports tier 1 ray tracing functionality. In the current release, this tier represents all available ray tracing features.
+    Tier1_0 = D3D12_RAYTRACING_TIER_1_0.0,
+
+    /// TBD
+    Tier1_1 = D3D12_RAYTRACING_TIER_1_1.0,
+}
+
+/// Specifies the level of support for render passes on a graphics device.
+///
+/// For more information: [`D3D12_RENDER_PASS_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_render_pass_tier)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum RenderPassTier {
+    /// The user-mode display driver hasn't implemented render passes, and so the feature is provided only via software emulation.
+    /// Render passes might not provide a performance advantage at this level of support.
+    #[default]
+    Tier0 = D3D12_RENDER_PASS_TIER_0.0,
+
+    /// The render passes feature is implemented by the user-mode display driver, and render target/depth buffer writes may be accelerated. 
+    /// Unordered access view (UAV) writes are not efficiently supported within the render pass.
+    Tier1 = D3D12_RENDER_PASS_TIER_1.0,
+
+    /// The render passes feature is implemented by the user-mode display driver, render target/depth buffer writes may be accelerated, 
+    /// and unordered access view (UAV) writes (provided that writes in a render pass are not read until a subsequent render pass) are likely to be more efficient than 
+    /// issuing the same work without using a render pass.
+    Tier2 = D3D12_RENDER_PASS_TIER_2.0,
+}
+
 /// Identifies the tier of resource binding being used.
 ///
 /// For more information: [`D3D12_RESOURCE_BINDING_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_binding_tier)

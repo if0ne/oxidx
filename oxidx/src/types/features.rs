@@ -853,3 +853,48 @@ impl FeatureObject for CrossNodeFeature {
         }
     }
 }
+
+/// Indicates the level of support that the adapter provides for render passes, ray tracing, and shader-resource view tier 3 tiled resources.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS5 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options5)
+#[derive(Debug)]
+pub struct Options5Feature;
+
+/// Indicates the level of support that the adapter provides for render passes, ray tracing, and shader-resource view tier 3 tiled resources.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS5 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options5)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Options5 {
+    /// A boolean value indicating whether the options require shader-resource view tier 3 tiled resource support.
+    pub srv_only_tiled_resource_tier3: bool,
+
+    /// The extent to which a device driver and/or the hardware efficiently supports render passes.
+    pub render_passes_tier: RenderPassTier,
+
+    /// Specifies the level of ray tracing support on the graphics device
+    pub raytracing_tier: RaytracingTier,
+}
+
+impl __Sealed for Options5Feature {}
+
+impl FeatureObject for Options5Feature {
+    const TYPE: FeatureType = FeatureType::Options5;
+
+    type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS5;
+    type Input<'a> = ();
+    type Output = Options5;
+
+    #[inline]
+    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS5::default()
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        Self::Output {
+            srv_only_tiled_resource_tier3: raw.SRVOnlyTiledResourceTier3.into(),
+            render_passes_tier: raw.RenderPassesTier.into(),
+            raytracing_tier: raw.RaytracingTier.into(),
+        }
+    }
+}
