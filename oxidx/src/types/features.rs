@@ -939,3 +939,59 @@ impl FeatureObject for DisplayableFeature {
         }
     }
 }
+
+/// Indicates the level of support that the adapter provides for variable-rate shading (VRS), and indicates whether or not background processing is supported.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS6 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options6)
+#[derive(Debug)]
+pub struct Options6Feature;
+
+/// Indicates the level of support that the adapter provides for variable-rate shading (VRS), and indicates whether or not background processing is supported.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS6 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options6)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Options6 {
+    /// Indicates whether 2x4, 4x2, and 4x4 coarse pixel sizes are supported for single-sampled rendering; and whether coarse pixel size 2x4 is supported for 2x MSAA. true if those sizes are supported, otherwise false.
+    pub additional_shading_rates_supported: bool,
+
+    /// Indicates whether the per-provoking-vertex (also known as per-primitive) rate can be used with more than one viewport.
+    /// If so, then, in that case, that rate can be used when SV_ViewportIndex is written to. true if that rate can be used with more than one viewport, otherwise false.
+    pub per_primitive_shading_rate_supported_with_viewport_indexing: bool,
+
+    /// Indicates the shading rate tier.
+    pub variable_shading_rate_tier: VariableShadingRateTier,
+
+    /// Indicates the tile size of the screen-space image as a `u32`.
+    pub shading_rate_image_tile_size: u32,
+
+    /// Indicates whether or not background processing is supported.
+    pub background_processing_supported: bool,
+}
+
+impl __Sealed for Options6Feature {}
+
+impl FeatureObject for Options6Feature {
+    const TYPE: FeatureType = FeatureType::Options6;
+
+    type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS6;
+    type Input<'a> = ();
+    type Output = Options6;
+
+    #[inline]
+    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS6::default()
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        Self::Output {
+            additional_shading_rates_supported: raw.AdditionalShadingRatesSupported.into(),
+            per_primitive_shading_rate_supported_with_viewport_indexing: raw
+                .PerPrimitiveShadingRateSupportedWithViewportIndexing
+                .into(),
+            variable_shading_rate_tier: raw.VariableShadingRateTier.into(),
+            shading_rate_image_tile_size: raw.ShadingRateImageTileSize,
+            background_processing_supported: raw.BackgroundProcessingSupported.into(),
+        }
+    }
+}

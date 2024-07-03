@@ -332,7 +332,7 @@ pub enum HeapSerializationTier {
     #[default]
     Tier0 = D3D12_HEAP_SERIALIZATION_TIER_0.0,
 
-    /// Indicates that heap serialization is supported. Your application can serialize resource data in heaps through copying APIs such as CopyResource, 
+    /// Indicates that heap serialization is supported. Your application can serialize resource data in heaps through copying APIs such as CopyResource,
     /// without necessarily requiring an explicit state transition of resources on those heaps.
     Tier10 = D3D12_HEAP_SERIALIZATION_TIER_10.0,
 }
@@ -463,12 +463,12 @@ pub enum RenderPassTier {
     #[default]
     Tier0 = D3D12_RENDER_PASS_TIER_0.0,
 
-    /// The render passes feature is implemented by the user-mode display driver, and render target/depth buffer writes may be accelerated. 
+    /// The render passes feature is implemented by the user-mode display driver, and render target/depth buffer writes may be accelerated.
     /// Unordered access view (UAV) writes are not efficiently supported within the render pass.
     Tier1 = D3D12_RENDER_PASS_TIER_1.0,
 
-    /// The render passes feature is implemented by the user-mode display driver, render target/depth buffer writes may be accelerated, 
-    /// and unordered access view (UAV) writes (provided that writes in a render pass are not read until a subsequent render pass) are likely to be more efficient than 
+    /// The render passes feature is implemented by the user-mode display driver, render target/depth buffer writes may be accelerated,
+    /// and unordered access view (UAV) writes (provided that writes in a render pass are not read until a subsequent render pass) are likely to be more efficient than
     /// issuing the same work without using a render pass.
     Tier2 = D3D12_RENDER_PASS_TIER_2.0,
 }
@@ -601,6 +601,23 @@ pub enum TiledResourcesTier {
 
     /// TBD
     Tier4 = D3D12_TILED_RESOURCES_TIER_4.0,
+}
+
+/// Defines constants that specify a shading rate tier (for variable-rate shading, or VRS).
+///
+/// For more information: [`D3D12_VARIABLE_SHADING_RATE_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_variable_shading_rate_tier)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum VariableShadingRateTier {
+    ///Specifies that variable-rate shading is not supported.
+    #[default]
+    NotSupported = D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED.0,
+
+    /// Specifies that variable-rate shading tier 1 is supported.
+    Tier1 = D3D12_VARIABLE_SHADING_RATE_TIER_1.0,
+
+    /// Specifies that variable-rate shading tier 2 is supported.
+    Tier2 = D3D12_VARIABLE_SHADING_RATE_TIER_2.0,
 }
 
 /// Indicates the tier level at which view instancing is supported.

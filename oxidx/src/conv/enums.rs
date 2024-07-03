@@ -24,6 +24,7 @@ conv_enum!(RootSignatureVersion to D3D_ROOT_SIGNATURE_VERSION);
 conv_enum!(ShaderModel to D3D_SHADER_MODEL);
 conv_enum!(SharedResourceCompatibilityTier to D3D12_SHARED_RESOURCE_COMPATIBILITY_TIER);
 conv_enum!(TiledResourcesTier to D3D12_TILED_RESOURCES_TIER);
+conv_enum!(VariableShadingRateTier to D3D12_VARIABLE_SHADING_RATE_TIER);
 conv_enum!(ViewInstancingTier to D3D12_VIEW_INSTANCING_TIER);
 
 impl CommandQueuePriority {
