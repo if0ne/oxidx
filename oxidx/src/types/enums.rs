@@ -670,3 +670,17 @@ pub enum ViewInstancingTier {
     /// Before rasterization, work that doesn't directly depend on SV_ViewID is shared across all views; only work that depends on SV_ViewID is repeated for each view.
     Tier3 = D3D12_VIEW_INSTANCING_TIER_3.0,
 }
+
+/// Defines constants that specify a level of support for WaveMMA (wave_matrix) operations.
+///
+/// For more information: [`D3D12_WAVE_MMA_TIER  enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_wave_mma_tier)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum WaveMmaTier {
+    /// Specifies that WaveMMA (wave_matrix) operations are not supported.
+    #[default]
+    NotSupported = D3D12_WAVE_MMA_TIER_NOT_SUPPORTED.0,
+
+    /// Specifies that WaveMMA (wave_matrix) operations are supported.
+    Tier1_0 = D3D12_WAVE_MMA_TIER_1_0.0,
+}

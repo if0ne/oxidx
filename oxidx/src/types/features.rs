@@ -1136,3 +1136,62 @@ impl FeatureObject for Options8Feature {
         raw.UnalignedBlockTexturesSupported.into()
     }
 }
+
+/// Indicates whether or not support exists for mesh shaders, values of SV_RenderTargetArrayIndex that are 8 or greater, 
+/// typed resource 64-bit integer atomics, derivative and derivative-dependent texture sample operations, and the level of support for WaveMMA (wave_matrix) operations.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS9 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options9)
+#[derive(Debug)]
+pub struct Options9Feature;
+
+/// Indicates whether or not support exists for mesh shaders, values of SV_RenderTargetArrayIndex that are 8 or greater, 
+/// typed resource 64-bit integer atomics, derivative and derivative-dependent texture sample operations, and the level of support for WaveMMA (wave_matrix) operations.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS9 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options9)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Options9 {
+    /// Indicates whether or not mesh shaders are supported.
+    pub mesh_shader_pipeline_stats_supported: bool,
+
+    /// Indicates whether or not values of SV_RenderTargetArrayIndex that are 8 or greater are supported.
+    pub mesh_shader_supports_full_range_render_target_array_index: bool,
+
+    /// Indicates whether or not typed resource 64-bit integer atomics are supported.
+    pub atomic_int64_on_typed_resource_supported: bool,
+
+    /// Indicates whether or not 64-bit integer atomics are supported on groupshared variables.
+    pub atomic_int64_on_group_shared_supported: bool,
+
+    /// Indicates whether or not derivative and derivative-dependent texture sample operations are supported.
+    pub derivatives_in_mesh_and_amplification_shaders_supported: bool,
+
+    /// Indicates the level of support for WaveMMA (wave_matrix) operations.
+    pub wave_mma_tier: WaveMmaTier,
+}
+
+impl __Sealed for Options9Feature {}
+
+impl FeatureObject for Options9Feature {
+    const TYPE: FeatureType = FeatureType::Options9;
+
+    type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS9;
+    type Input<'a> = ();
+    type Output = Options9;
+
+    #[inline]
+    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS9::default()
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        Self::Output {
+            mesh_shader_pipeline_stats_supported: raw.MeshShaderPipelineStatsSupported.into(),
+            mesh_shader_supports_full_range_render_target_array_index: raw.MeshShaderSupportsFullRangeRenderTargetArrayIndex.into(),
+            atomic_int64_on_typed_resource_supported: raw.AtomicInt64OnTypedResourceSupported.into(),
+            atomic_int64_on_group_shared_supported: raw.AtomicInt64OnGroupSharedSupported.into(),
+            derivatives_in_mesh_and_amplification_shaders_supported: raw.DerivativesInMeshAndAmplificationShadersSupported.into(),
+            wave_mma_tier: raw.WaveMMATier.into(),
+        }
+    }
+}

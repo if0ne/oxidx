@@ -28,6 +28,7 @@ conv_enum!(SharedResourceCompatibilityTier to D3D12_SHARED_RESOURCE_COMPATIBILIT
 conv_enum!(TiledResourcesTier to D3D12_TILED_RESOURCES_TIER);
 conv_enum!(VariableShadingRateTier to D3D12_VARIABLE_SHADING_RATE_TIER);
 conv_enum!(ViewInstancingTier to D3D12_VIEW_INSTANCING_TIER);
+conv_enum!(WaveMmaTier to D3D12_WAVE_MMA_TIER);
 
 impl CommandQueuePriority {
     #[inline]
