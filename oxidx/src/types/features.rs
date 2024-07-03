@@ -1110,3 +1110,29 @@ impl FeatureObject for ProtectedResourceSessionTypesFeature {
         ()
     }
 }
+
+/// Indicates whether or not unaligned block-compressed textures are supported.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS8 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options8)
+#[derive(Debug)]
+pub struct Options8Feature;
+
+impl __Sealed for Options8Feature {}
+
+impl FeatureObject for Options8Feature {
+    const TYPE: FeatureType = FeatureType::Options8;
+
+    type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS8;
+    type Input<'a> = ();
+    type Output = bool;
+
+    #[inline]
+    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS8::default()
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        raw.UnalignedBlockTexturesSupported.into()
+    }
+}
