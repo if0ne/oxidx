@@ -898,3 +898,44 @@ impl FeatureObject for Options5Feature {
         }
     }
 }
+
+/// This feature is currently in preview.
+///
+/// For more information: [`D3D12_FEATURE_DATA_DISPLAYABLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_displayable)
+#[derive(Debug)]
+pub struct DisplayableFeature;
+
+/// This feature is currently in preview.
+///
+/// For more information: [`D3D12_FEATURE_DATA_DISPLAYABLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_displayable)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Displayable {
+    /// TBD
+    pub displayable_texture: bool,
+
+    /// TBD
+    pub shared_resource_compatibility_tier: SharedResourceCompatibilityTier,
+}
+
+impl __Sealed for DisplayableFeature {}
+
+impl FeatureObject for DisplayableFeature {
+    const TYPE: FeatureType = FeatureType::Displayable;
+
+    type Raw = D3D12_FEATURE_DATA_DISPLAYABLE;
+    type Input<'a> = ();
+    type Output = Displayable;
+
+    #[inline]
+    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_DISPLAYABLE::default()
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        Self::Output {
+            displayable_texture: raw.DisplayableTexture.into(),
+            shared_resource_compatibility_tier: raw.SharedResourceCompatibilityTier.into(),
+        }
+    }
+}
