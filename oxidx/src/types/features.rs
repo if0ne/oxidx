@@ -710,3 +710,31 @@ impl FeatureObject for Options3Feature {
         }
     }
 }
+
+/// Provides detail about whether the adapter supports creating heaps from existing system memory. 
+/// Such heaps are not intended for general use, but are exceptionally useful for diagnostic purposes, 
+/// because they are guaranteed to persist even after the adapter faults or experiences a device-removal event. 
+///
+/// For more information: [`D3D12_FEATURE_DATA_EXISTING_HEAPS structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_existing_heaps)
+#[derive(Debug)]
+pub struct ExistingHeapsFeature;
+
+impl __Sealed for ExistingHeapsFeature {}
+
+impl FeatureObject for ExistingHeapsFeature {
+    const TYPE: FeatureType = FeatureType::ExistingHeaps;
+
+    type Raw = D3D12_FEATURE_DATA_EXISTING_HEAPS;
+    type Input<'a> = ();
+    type Output = bool;
+
+    #[inline]
+    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_EXISTING_HEAPS::default()
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        raw.Supported.into()
+    }
+}
