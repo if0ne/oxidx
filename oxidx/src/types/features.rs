@@ -1065,3 +1065,48 @@ impl FeatureObject for ProtectedResourceSessionTypeCountFeature {
         raw.Count
     }
 }
+
+/// Indicates a list of protected resource session types.
+///
+/// For more information: [`D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPES structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_protected_resource_session_types)
+#[derive(Debug)]
+pub struct ProtectedResourceSessionTypesFeature;
+
+/// Indicates a list of protected resource session types.
+///
+/// For more information: [`D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPES structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_protected_resource_session_types)
+#[derive(Debug)]
+pub struct ProtectedResourceSessionTypesInput<'a> {
+    /// An input parameter which, in multi-adapter operation, indicates which physical adapter of the device this operation applies to.
+    pub node_index: u32,
+
+    /// An input parameter indicating the size of the array. This must match the count returned through the [`ProtectedResourceSessionTypeCountFeature`] query result.
+    pub count: u32,
+
+    /// An output parameter containing an array populated with the supported protected resource session types.
+    pub types: &'a mut [u128],
+}
+
+impl __Sealed for ProtectedResourceSessionTypesFeature {}
+
+impl FeatureObject for ProtectedResourceSessionTypesFeature {
+    const TYPE: FeatureType = FeatureType::ProtectedResourceSessionTypes;
+
+    type Raw = D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPES;
+    type Input<'a> = ProtectedResourceSessionTypesInput<'a>;
+    type Output = ();
+
+    #[inline]
+    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPES {
+            NodeIndex: input.node_index,
+            Count: input.count,
+            pTypes: input.types.as_mut_ptr() as *mut _,
+        }
+    }
+
+    #[inline]
+    fn from_raw(_: Self::Raw) -> Self::Output {
+        ()
+    }
+}
