@@ -812,3 +812,44 @@ impl FeatureObject for SerializationFeature {
         raw.HeapSerializationTier.into()
     }
 }
+
+/// Indicates the level of support for the sharing of resources between different adapters—for example, multiple GPUs.
+///
+/// For more information: [`D3D12_FEATURE_DATA_CROSS_NODE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_cross_node)
+#[derive(Debug)]
+pub struct CrossNodeFeature;
+
+/// Indicates the level of support for the sharing of resources between different adapters—for example, multiple GPUs.
+///
+/// For more information: [`D3D12_FEATURE_DATA_CROSS_NODE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_cross_node)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct CrossNode {
+    /// Indicates the tier of cross-adapter sharing support.
+    pub sharing_tier: CrossNodeSharingTier,
+
+    /// Indicates there is support for shader instructions which operate across adapters.
+    pub atomic_shader_instructions: bool,
+}
+
+impl __Sealed for CrossNodeFeature {}
+
+impl FeatureObject for CrossNodeFeature {
+    const TYPE: FeatureType = FeatureType::CrossNode;
+
+    type Raw = D3D12_FEATURE_DATA_CROSS_NODE;
+    type Input<'a> = ();
+    type Output = CrossNode;
+
+    #[inline]
+    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_CROSS_NODE::default()
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        Self::Output {
+            sharing_tier: raw.SharingTier.into(),
+            atomic_shader_instructions: raw.AtomicShaderInstructions.into(),
+        }
+    }
+}
