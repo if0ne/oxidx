@@ -783,3 +783,32 @@ impl FeatureObject for Options4Feature {
         }
     }
 }
+
+/// Indicates the level of support for heap serialization.
+///
+/// For more information: [`D3D12_FEATURE_DATA_SERIALIZATION structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_serialization)
+#[derive(Debug)]
+pub struct SerializationFeature;
+
+impl __Sealed for SerializationFeature {}
+
+impl FeatureObject for SerializationFeature {
+    const TYPE: FeatureType = FeatureType::Serialization;
+
+    type Raw = D3D12_FEATURE_DATA_SERIALIZATION;
+    type Input<'a> = u32;
+    type Output = HeapSerializationTier;
+
+    #[inline]
+    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_SERIALIZATION {
+            NodeIndex: input,
+            ..Default::default()
+        }
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        raw.HeapSerializationTier.into()
+    }
+}

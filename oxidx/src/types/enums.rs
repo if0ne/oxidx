@@ -322,6 +322,21 @@ pub enum HeapAlignment {
     MsaaResourcePlacement = D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT as u64,
 }
 
+/// Defines constants that specify heap serialization support.
+///
+/// For more information: [`D3D12_HEAP_SERIALIZATION_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_heap_serialization_tier)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum HeapSerializationTier {
+    /// Indicates that heap serialization is not supported.
+    #[default]
+    Tier0 = D3D12_HEAP_SERIALIZATION_TIER_0.0,
+
+    /// Indicates that heap serialization is supported. Your application can serialize resource data in heaps through copying APIs such as CopyResource, 
+    /// without necessarily requiring an explicit state transition of resources on those heaps.
+    Tier10 = D3D12_HEAP_SERIALIZATION_TIER_10.0,
+}
+
 /// Specifies the type of heap. When resident, heaps reside in a particular physical memory pool with certain CPU cache properties.
 ///
 /// For more information: [`D3D12_HEAP_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_heap_type)

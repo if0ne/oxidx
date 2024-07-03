@@ -11,6 +11,7 @@ conv_enum!(CrossNodeSharingTier to D3D12_CROSS_NODE_SHARING_TIER);
 conv_enum!(DescriptorHeapType to D3D12_DESCRIPTOR_HEAP_TYPE);
 conv_enum!(FeatureType to D3D12_FEATURE);
 conv_enum!(FeatureLevel to D3D_FEATURE_LEVEL);
+conv_enum!(HeapSerializationTier to D3D12_HEAP_SERIALIZATION_TIER);
 conv_enum!(HeapType to D3D12_HEAP_TYPE);
 conv_enum!(MemoryPool to D3D12_MEMORY_POOL);
 conv_enum!(MinPrecisionSupport to D3D12_SHADER_MIN_PRECISION_SUPPORT);
