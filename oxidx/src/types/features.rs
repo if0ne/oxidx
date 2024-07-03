@@ -1036,3 +1036,32 @@ impl FeatureObject for Options7Feature {
         }
     }
 }
+
+/// Indicates the level of support that the adapter provides for mesh and amplification shaders, and for sampler feedback.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS7 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options7)
+#[derive(Debug)]
+pub struct ProtectedResourceSessionTypeCountFeature;
+
+impl __Sealed for ProtectedResourceSessionTypeCountFeature {}
+
+impl FeatureObject for ProtectedResourceSessionTypeCountFeature {
+    const TYPE: FeatureType = FeatureType::ProtectedResourceSessionTypeCount;
+
+    type Raw = D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPE_COUNT;
+    type Input<'a> = u32;
+    type Output = u32;
+
+    #[inline]
+    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPE_COUNT {
+            NodeIndex: input,
+            ..Default::default()
+        }
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        raw.Count
+    }
+}
