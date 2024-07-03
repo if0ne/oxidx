@@ -1246,3 +1246,29 @@ impl FeatureObject for Options10Feature {
         }
     }
 }
+
+/// Indicates whether or not 64-bit integer atomics on resources in descriptor heaps are supported.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS11 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options11)
+#[derive(Debug)]
+pub struct Options11Feature;
+
+impl __Sealed for Options11Feature {}
+
+impl FeatureObject for Options11Feature {
+    const TYPE: FeatureType = FeatureType::Options11;
+
+    type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS11;
+    type Input<'a> = ();
+    type Output = bool;
+
+    #[inline]
+    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS11::default()
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        raw.AtomicInt64OnDescriptorHeapResourceSupported.into()
+    }
+}
