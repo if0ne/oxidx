@@ -6,6 +6,7 @@ use super::*;
 
 conv_flags!(CacheSupportFlags to D3D12_SHADER_CACHE_SUPPORT_FLAGS);
 conv_flags!(CommandQueueFlags to D3D12_COMMAND_QUEUE_FLAGS);
+conv_flags!(CommandListSupportFlags to D3D12_COMMAND_LIST_SUPPORT_FLAGS);
 conv_flags!(DescriptorHeapFlags to D3D12_DESCRIPTOR_HEAP_FLAGS);
 conv_flags!(FenceFlags to D3D12_FENCE_FLAGS);
 conv_flags!(FormatSupport1 to D3D12_FORMAT_SUPPORT1);

@@ -657,3 +657,56 @@ impl FeatureObject for CommandQueuePriorityFeature {
         raw.PriorityForTypeIsSupported.into()
     }
 }
+
+/// Indicates the level of support that the adapter provides for timestamp queries, format-casting, immediate write, view instancing, and barycentrics.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS3 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options3)
+#[derive(Debug)]
+pub struct Options3Feature;
+
+/// Indicates the level of support that the adapter provides for timestamp queries, format-casting, immediate write, view instancing, and barycentrics.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS3 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options3)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Options3 {
+    /// Indicates whether timestamp queries are supported on copy queues.
+    pub copy_queue_timestamp_queries_supported: bool,
+
+    /// Indicates whether casting from one fully typed format to another, compatible, format is supported.
+    pub casting_fully_typed_format_supported: bool,
+
+    /// Indicates the kinds of command lists that support the ability to write an immediate value directly from the command stream into a specified buffer.
+    pub write_buffer_immediate_support_flags: CommandListSupportFlags,
+
+    /// Indicates the level of support the adapter has for view instancing.
+    pub view_instancing_tier: ViewInstancingTier,
+
+    /// Indicates whether barycentrics are supported.
+    pub barycentrics_supported: bool,
+}
+
+impl __Sealed for Options3Feature {}
+
+impl FeatureObject for Options3Feature {
+    const TYPE: FeatureType = FeatureType::Options3;
+
+    type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS3;
+    type Input<'a> = ();
+    type Output = Options3;
+
+    #[inline]
+    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS3::default()
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        Self::Output {
+            copy_queue_timestamp_queries_supported: raw.CopyQueueTimestampQueriesSupported.into(),
+            casting_fully_typed_format_supported: raw.CastingFullyTypedFormatSupported.into(),
+            write_buffer_immediate_support_flags: raw.WriteBufferImmediateSupportFlags.into(),
+            view_instancing_tier: raw.ViewInstancingTier.into(),
+            barycentrics_supported: raw.BarycentricsSupported.into(),
+        }
+    }
+}

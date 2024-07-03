@@ -532,3 +532,25 @@ pub enum TiledResourcesTier {
     /// TBD
     Tier4 = D3D12_TILED_RESOURCES_TIER_4.0,
 }
+
+/// Indicates the tier level at which view instancing is supported.
+///
+/// For more information: [`D3D12_VIEW_INSTANCING_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_view_instancing_tier)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum ViewInstancingTier {
+    /// View instancing is not supported.
+    #[default]
+    NotSupported = D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED.0,
+
+    /// View instancing is supported by draw-call level looping only.
+    Tier1 = D3D12_VIEW_INSTANCING_TIER_1.0,
+
+    /// View instancing is supported by draw-call level looping at worst, but the GPU can perform view instancing more efficiently in certain circumstances which are architecture-dependent.
+    Tier2 = D3D12_VIEW_INSTANCING_TIER_2.0,
+
+    /// View instancing is supported and instancing begins with the first shader stage that references SV_ViewID or with rasterization 
+    /// if no shader stage references SV_ViewID. This means that redundant work is eliminated across view instances when it's not dependent on SV_ViewID. 
+    /// Before rasterization, work that doesn't directly depend on SV_ViewID is shared across all views; only work that depends on SV_ViewID is repeated for each view.
+    Tier3 = D3D12_VIEW_INSTANCING_TIER_3.0,
+}

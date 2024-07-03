@@ -49,6 +49,37 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Used to determine which kinds of command lists are capable of supporting various operations. For example, whether a command list supports immediate writes.
+    ///
+    /// Empty flag - Specifies that no command list supports the operation in question.
+    ///
+    /// For more information: [`D3D12_COMMAND_LIST_SUPPORT_FLAGS enumeration`](https://learn.microsoft.com/ru-ru/windows/win32/api/d3d12/ne-d3d12-d3d12_command_list_support_flags)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct CommandListSupportFlags: i32 {
+        /// Specifies that direct command lists can support the operation in question.
+        const Direct = D3D12_COMMAND_LIST_SUPPORT_FLAG_DIRECT.0;
+
+        /// Specifies that command list bundles can support the operation in question.
+        const Bundle = D3D12_COMMAND_LIST_SUPPORT_FLAG_BUNDLE.0;
+
+        /// Specifies that compute command lists can support the operation in question.
+        const Compute = D3D12_COMMAND_LIST_SUPPORT_FLAG_COMPUTE.0;
+
+        /// Specifies that copy command lists can support the operation in question.
+        const Copy = D3D12_COMMAND_LIST_SUPPORT_FLAG_COPY.0;
+
+        /// Specifies that video-decode command lists can support the operation in question.
+        const VideoDecode = D3D12_COMMAND_LIST_SUPPORT_FLAG_VIDEO_DECODE.0;
+
+        /// Specifies that video-processing command lists can support the operation is question.
+        const VideoProcess = D3D12_COMMAND_LIST_SUPPORT_FLAG_VIDEO_PROCESS.0;
+
+        /// Specifies that video-encode command lists can support the operation in question.
+        const VideoEncode = D3D12_COMMAND_LIST_SUPPORT_FLAG_VIDEO_ENCODE.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Specifies options for a heap.
     ///
     /// Empty flag - Indicates default usage of a heap.
