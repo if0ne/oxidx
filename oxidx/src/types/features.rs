@@ -1137,14 +1137,14 @@ impl FeatureObject for Options8Feature {
     }
 }
 
-/// Indicates whether or not support exists for mesh shaders, values of SV_RenderTargetArrayIndex that are 8 or greater, 
+/// Indicates whether or not support exists for mesh shaders, values of SV_RenderTargetArrayIndex that are 8 or greater,
 /// typed resource 64-bit integer atomics, derivative and derivative-dependent texture sample operations, and the level of support for WaveMMA (wave_matrix) operations.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS9 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options9)
 #[derive(Debug)]
 pub struct Options9Feature;
 
-/// Indicates whether or not support exists for mesh shaders, values of SV_RenderTargetArrayIndex that are 8 or greater, 
+/// Indicates whether or not support exists for mesh shaders, values of SV_RenderTargetArrayIndex that are 8 or greater,
 /// typed resource 64-bit integer atomics, derivative and derivative-dependent texture sample operations, and the level of support for WaveMMA (wave_matrix) operations.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS9 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options9)
@@ -1187,11 +1187,62 @@ impl FeatureObject for Options9Feature {
     fn from_raw(raw: Self::Raw) -> Self::Output {
         Self::Output {
             mesh_shader_pipeline_stats_supported: raw.MeshShaderPipelineStatsSupported.into(),
-            mesh_shader_supports_full_range_render_target_array_index: raw.MeshShaderSupportsFullRangeRenderTargetArrayIndex.into(),
-            atomic_int64_on_typed_resource_supported: raw.AtomicInt64OnTypedResourceSupported.into(),
+            mesh_shader_supports_full_range_render_target_array_index: raw
+                .MeshShaderSupportsFullRangeRenderTargetArrayIndex
+                .into(),
+            atomic_int64_on_typed_resource_supported: raw
+                .AtomicInt64OnTypedResourceSupported
+                .into(),
             atomic_int64_on_group_shared_supported: raw.AtomicInt64OnGroupSharedSupported.into(),
-            derivatives_in_mesh_and_amplification_shaders_supported: raw.DerivativesInMeshAndAmplificationShadersSupported.into(),
+            derivatives_in_mesh_and_amplification_shaders_supported: raw
+                .DerivativesInMeshAndAmplificationShadersSupported
+                .into(),
             wave_mma_tier: raw.WaveMMATier.into(),
+        }
+    }
+}
+
+/// Indicates whether or not the SUM combiner can be used, and whether or not SV_ShadingRate can be set from a mesh shader.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS10 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options10)
+#[derive(Debug)]
+pub struct Options10Feature;
+
+/// Indicates whether or not the SUM combiner can be used, and whether or not SV_ShadingRate can be set from a mesh shader.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS10 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options10)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Options10 {
+    /// Indicates whether or not the SUM combiner can be used (this relates to variable-rate shading Tier 2).
+    pub variable_rate_shading_sum_combiner_supported: bool,
+
+    /// Indicates whether or not SV_ShadingRate can be set from a mesh shader (this relates to variable-rate shading Tier 2).
+    pub mesh_shader_per_primitive_shading_rate_supported: bool,
+}
+
+impl __Sealed for Options10Feature {}
+
+impl FeatureObject for Options10Feature {
+    const TYPE: FeatureType = FeatureType::Options10;
+
+    type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS10;
+    type Input<'a> = ();
+    type Output = Options10;
+
+    #[inline]
+    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS10::default()
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        Self::Output {
+            variable_rate_shading_sum_combiner_supported: raw
+                .VariableRateShadingSumCombinerSupported
+                .into(),
+            mesh_shader_per_primitive_shading_rate_supported: raw
+                .MeshShaderPerPrimitiveShadingRateSupported
+                .into(),
         }
     }
 }
