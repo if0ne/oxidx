@@ -14,7 +14,7 @@ bitflags::bitflags! {
         /// Indicates that the driver supports the CachedPSO member of the [`GraphicsPipelineStateDesc`] and [`ComputePipelineStateDesc`] structures. This is always supported.
         const SinglePSO = D3D12_SHADER_CACHE_SUPPORT_SINGLE_PSO.0;
 
-        /// Indicates that the driver supports the ID3D12PipelineLibrary interface, which provides application-controlled PSO grouping and caching. 
+        /// Indicates that the driver supports the ID3D12PipelineLibrary interface, which provides application-controlled PSO grouping and caching.
         /// This is supported by drivers targetting the Windows 10 Anniversary Update.
         const Library = D3D12_SHADER_CACHE_SUPPORT_LIBRARY.0;
 

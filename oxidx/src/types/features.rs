@@ -398,7 +398,7 @@ pub struct Options1 {
     /// True if the driver supports HLSL 6.0 wave operations.
     pub wave_ops: bool,
 
-    /// Specifies the baseline number of lanes in the SIMD wave that this implementation can support. 
+    /// Specifies the baseline number of lanes in the SIMD wave that this implementation can support.
     /// This term is sometimes known as "wavefront size" or "warp width". Currently apps should rely only on this minimum value for sizing workloads.
     pub wave_lane_count_min: u32,
 
@@ -408,7 +408,7 @@ pub struct Options1 {
     /// Specifies the total number of SIMD lanes on the hardware.
     pub total_lane_count: u32,
 
-    /// Indicates transitions are possible in and out of the CBV, and indirect argument states, on compute command lists. 
+    /// Indicates transitions are possible in and out of the CBV, and indirect argument states, on compute command lists.
     /// If [`DeviceInterface::check_feature_support`](crate::device::DeviceInterface::check_feature_support) succeeds this value will always be true.
     pub expanded_compute_resource_states: bool,
 
@@ -489,7 +489,7 @@ impl FeatureObject for RootSignatureFeature {
 
     #[inline]
     fn into_raw(_: Self::Input<'_>) -> Self::Raw {
-        D3D12_FEATURE_DATA_ROOT_SIGNATURE  {
+        D3D12_FEATURE_DATA_ROOT_SIGNATURE {
             HighestVersion: D3D_ROOT_SIGNATURE_VERSION_1_1,
         }
     }
@@ -535,7 +535,7 @@ impl FeatureObject for Architecture1Feature {
 
     #[inline]
     fn into_raw(input: Self::Input<'_>) -> Self::Raw {
-        D3D12_FEATURE_DATA_ARCHITECTURE1  {
+        D3D12_FEATURE_DATA_ARCHITECTURE1 {
             NodeIndex: input,
             ..Default::default()
         }
@@ -711,9 +711,9 @@ impl FeatureObject for Options3Feature {
     }
 }
 
-/// Provides detail about whether the adapter supports creating heaps from existing system memory. 
-/// Such heaps are not intended for general use, but are exceptionally useful for diagnostic purposes, 
-/// because they are guaranteed to persist even after the adapter faults or experiences a device-removal event. 
+/// Provides detail about whether the adapter supports creating heaps from existing system memory.
+/// Such heaps are not intended for general use, but are exceptionally useful for diagnostic purposes,
+/// because they are guaranteed to persist even after the adapter faults or experiences a device-removal event.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_EXISTING_HEAPS structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_existing_heaps)
 #[derive(Debug)]
@@ -736,5 +736,50 @@ impl FeatureObject for ExistingHeapsFeature {
     #[inline]
     fn from_raw(raw: Self::Raw) -> Self::Output {
         raw.Supported.into()
+    }
+}
+
+/// Indicates the level of support for 64KB-aligned MSAA textures, cross-API sharing, and native 16-bit shader operations.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS4 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options4)
+#[derive(Debug)]
+pub struct Options4Feature;
+
+/// Indicates the level of support for 64KB-aligned MSAA textures, cross-API sharing, and native 16-bit shader operations.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS4 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options4)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Options4 {
+    /// Indicates whether 64KB-aligned MSAA textures are supported.
+    pub msaa_64kb_aligned_texture_supported: bool,
+
+    /// Indicates the tier of cross-API sharing support
+    pub shared_resource_compatibility_tier: SharedResourceCompatibilityTier,
+
+    /// Indicates native 16-bit shader operations are supported. These operations require shader model 6_2.
+    pub native_16bit_shader_ops_supported: bool,
+}
+
+impl __Sealed for Options4Feature {}
+
+impl FeatureObject for Options4Feature {
+    const TYPE: FeatureType = FeatureType::Options4;
+
+    type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS4;
+    type Input<'a> = ();
+    type Output = Options4;
+
+    #[inline]
+    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS4::default()
+    }
+
+    #[inline]
+    fn from_raw(raw: Self::Raw) -> Self::Output {
+        Self::Output {
+            msaa_64kb_aligned_texture_supported: raw.MSAA64KBAlignedTextureSupported.into(),
+            shared_resource_compatibility_tier: raw.SharedResourceCompatibilityTier.into(),
+            native_16bit_shader_ops_supported: raw.Native16BitShaderOpsSupported.into(),
+        }
     }
 }

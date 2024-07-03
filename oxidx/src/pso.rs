@@ -10,7 +10,12 @@ use windows::{
 };
 
 use crate::{
-    create_type, error::DxError, impl_trait, swapchain::SampleDesc, types::{Format, RootSignatureVersion}, HasInterface,
+    create_type,
+    error::DxError,
+    impl_trait,
+    swapchain::SampleDesc,
+    types::{Format, RootSignatureVersion},
+    HasInterface,
 };
 
 pub trait PipelineStateInterface:

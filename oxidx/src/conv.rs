@@ -24,8 +24,7 @@ use crate::{
         Blend, BlendOp, Blob, BlobInterface, CachedPipeline, CullMode, DeclarationEntry,
         DepthStencilDesc, FillMode, IndexBufferStripCutValue, InputElementDesc, InputSlotClass,
         LogicOp, PrimitiveTopology, RasterizerDesc, RenderTargetBlendDesc, RootParameter,
-        RootParameterType, RootSignatureFlags, ShaderVisibility,
-        StaticSamplerDesc,
+        RootParameterType, RootSignatureFlags, ShaderVisibility, StaticSamplerDesc,
     },
     resources::{
         BarrierType, RenderTargetViewDesc, ResourceBarrier, ResourceDesc, ResourceState,

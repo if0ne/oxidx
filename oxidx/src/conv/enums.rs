@@ -19,6 +19,7 @@ conv_enum!(ProgrammableSamplePositionsTier to D3D12_PROGRAMMABLE_SAMPLE_POSITION
 conv_enum!(ResourceHeapTier to D3D12_RESOURCE_HEAP_TIER);
 conv_enum!(RootSignatureVersion to D3D_ROOT_SIGNATURE_VERSION);
 conv_enum!(ShaderModel to D3D_SHADER_MODEL);
+conv_enum!(SharedResourceCompatibilityTier to D3D12_SHARED_RESOURCE_COMPATIBILITY_TIER);
 conv_enum!(TiledResourcesTier to D3D12_TILED_RESOURCES_TIER);
 conv_enum!(ViewInstancingTier to D3D12_VIEW_INSTANCING_TIER);
 

@@ -410,12 +410,12 @@ pub enum ProgrammableSamplePositionsTier {
     #[default]
     NotSupported = D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER_NOT_SUPPORTED.0,
 
-    /// Indicates that there's tier 1 support for programmable sample positions. 
+    /// Indicates that there's tier 1 support for programmable sample positions.
     /// In tier 1, a single sample pattern can be specified to repeat for every pixel (SetSamplePosition parameter NumPixels = 1) and ResolveSubResource is supported.
     Tier1 = D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER_1.0,
 
-    /// Indicates that there's tier 2 support for programmable sample positions. 
-    /// In tier 2, four separate sample patterns can be specified for each pixel in a 2x2 grid (SetSamplePosition parameter NumPixels = 1) that 
+    /// Indicates that there's tier 2 support for programmable sample positions.
+    /// In tier 2, four separate sample patterns can be specified for each pixel in a 2x2 grid (SetSamplePosition parameter NumPixels = 1) that
     /// repeats over the render-target or viewport, aligned on even coordinates.
     Tier2 = D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER_2.0,
 }
@@ -469,7 +469,7 @@ pub enum RootSignatureVersion {
 }
 
 /// Specifies a shader model.
-/// 
+///
 /// For more information: [`D3D_SHADER_MODEL enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d_shader_model)
 #[derive(Clone, Copy, Debug, Default, FromRepr)]
 #[repr(i32)]
@@ -507,6 +507,23 @@ pub enum ShaderModel {
 
     /// TBD
     Model6_8 = D3D_SHADER_MODEL_6_8.0,
+}
+
+/// Defines constants that specify a cross-API sharing support tier.
+///
+/// For more information: [`D3D12_SHARED_RESOURCE_COMPATIBILITY_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_shared_resource_compatibility_tier)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum SharedResourceCompatibilityTier {
+    /// Specifies that the most basic level of cross-API sharing is supported.
+    #[default]
+    Tier0 = D3D12_SHARED_RESOURCE_COMPATIBILITY_TIER_0.0,
+
+    /// Specifies that cross-API sharing functionality of [`SharedResourceCompatibilityTier::Tier0`] is supported, plus the other formats.
+    Tier1 = D3D12_SHARED_RESOURCE_COMPATIBILITY_TIER_1.0,
+
+    /// Specifies that cross-API sharing functionality of [`SharedResourceCompatibilityTier::Tier1`] is supported, plus the other formats.
+    Tier2 = D3D12_SHARED_RESOURCE_COMPATIBILITY_TIER_2.0,
 }
 
 /// Identifies the tier level at which tiled resources are supported.
@@ -549,8 +566,8 @@ pub enum ViewInstancingTier {
     /// View instancing is supported by draw-call level looping at worst, but the GPU can perform view instancing more efficiently in certain circumstances which are architecture-dependent.
     Tier2 = D3D12_VIEW_INSTANCING_TIER_2.0,
 
-    /// View instancing is supported and instancing begins with the first shader stage that references SV_ViewID or with rasterization 
-    /// if no shader stage references SV_ViewID. This means that redundant work is eliminated across view instances when it's not dependent on SV_ViewID. 
+    /// View instancing is supported and instancing begins with the first shader stage that references SV_ViewID or with rasterization
+    /// if no shader stage references SV_ViewID. This means that redundant work is eliminated across view instances when it's not dependent on SV_ViewID.
     /// Before rasterization, work that doesn't directly depend on SV_ViewID is shared across all views; only work that depends on SV_ViewID is repeated for each view.
     Tier3 = D3D12_VIEW_INSTANCING_TIER_3.0,
 }
