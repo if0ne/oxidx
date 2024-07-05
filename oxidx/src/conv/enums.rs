@@ -50,6 +50,79 @@ impl From<i32> for CommandQueuePriority {
     }
 }
 
+impl IndirectArgumentDesc {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_INDIRECT_ARGUMENT_DESC {
+        D3D12_INDIRECT_ARGUMENT_DESC {
+            Type: self.as_raw_type(),
+            Anonymous: match *self {
+                IndirectArgumentDesc::Draw => Default::default(),
+                IndirectArgumentDesc::DrawIndexed => Default::default(),
+                IndirectArgumentDesc::Dispatch => Default::default(),
+                IndirectArgumentDesc::VertexBufferView { slot } => D3D12_INDIRECT_ARGUMENT_DESC_0 {
+                    VertexBuffer: D3D12_INDIRECT_ARGUMENT_DESC_0_4 { Slot: slot },
+                },
+                IndirectArgumentDesc::IndexBufferView => Default::default(),
+                IndirectArgumentDesc::Constant {
+                    root_parameter_index,
+                    dest_offset_in32_bit_values,
+                    num32_bit_values_to_set,
+                } => D3D12_INDIRECT_ARGUMENT_DESC_0 {
+                    Constant: D3D12_INDIRECT_ARGUMENT_DESC_0_1 {
+                        RootParameterIndex: root_parameter_index,
+                        DestOffsetIn32BitValues: dest_offset_in32_bit_values,
+                        Num32BitValuesToSet: num32_bit_values_to_set,
+                    },
+                },
+                IndirectArgumentDesc::ConstantBufferView {
+                    root_parameter_index,
+                } => D3D12_INDIRECT_ARGUMENT_DESC_0 {
+                    ConstantBufferView: D3D12_INDIRECT_ARGUMENT_DESC_0_0 {
+                        RootParameterIndex: root_parameter_index,
+                    },
+                },
+                IndirectArgumentDesc::ShaderResourceView {
+                    root_parameter_index,
+                } => D3D12_INDIRECT_ARGUMENT_DESC_0 {
+                    ShaderResourceView: D3D12_INDIRECT_ARGUMENT_DESC_0_2 {
+                        RootParameterIndex: root_parameter_index,
+                    },
+                },
+                IndirectArgumentDesc::UnorderedAccessView {
+                    root_parameter_index,
+                } => D3D12_INDIRECT_ARGUMENT_DESC_0 {
+                    UnorderedAccessView: D3D12_INDIRECT_ARGUMENT_DESC_0_3 {
+                        RootParameterIndex: root_parameter_index,
+                    },
+                },
+            },
+        }
+    }
+
+    #[inline]
+    fn as_raw_type(&self) -> D3D12_INDIRECT_ARGUMENT_TYPE {
+        match self {
+            IndirectArgumentDesc::Draw => D3D12_INDIRECT_ARGUMENT_TYPE_DRAW,
+            IndirectArgumentDesc::DrawIndexed => D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED,
+            IndirectArgumentDesc::Dispatch => D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH,
+            IndirectArgumentDesc::VertexBufferView { .. } => {
+                D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW
+            }
+            IndirectArgumentDesc::IndexBufferView => D3D12_INDIRECT_ARGUMENT_TYPE_INDEX_BUFFER_VIEW,
+            IndirectArgumentDesc::Constant { .. } => D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT,
+            IndirectArgumentDesc::ConstantBufferView { .. } => {
+                D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW
+            }
+            IndirectArgumentDesc::ShaderResourceView { .. } => {
+                D3D12_INDIRECT_ARGUMENT_TYPE_SHADER_RESOURCE_VIEW
+            }
+            IndirectArgumentDesc::UnorderedAccessView { .. } => {
+                D3D12_INDIRECT_ARGUMENT_TYPE_UNORDERED_ACCESS_VIEW
+            }
+        }
+    }
+}
+
 impl HeapAlignment {
     #[inline]
     pub(crate) fn as_raw(&self) -> u64 {

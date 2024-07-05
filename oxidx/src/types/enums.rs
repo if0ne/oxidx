@@ -367,6 +367,61 @@ pub enum HeapType {
     GpuUpload = D3D12_HEAP_TYPE_GPU_UPLOAD.0,
 }
 
+/// Specifies the type of the indirect parameter.
+///
+/// For more information: [`D3D12_INDIRECT_ARGUMENT_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_indirect_argument_desc)
+#[derive(Clone, Copy, Debug)]
+pub enum IndirectArgumentDesc {
+    /// Indicates the type is a Draw call.
+    Draw,
+
+    /// Indicates the type is a DrawIndexed call.
+    DrawIndexed,
+
+    /// Indicates the type is a Dispatch call.
+    Dispatch,
+
+    /// Indicates the type is a vertex buffer view.
+    VertexBufferView {
+        /// Specifies the slot containing the vertex buffer address.
+        slot: u32,
+    },
+
+    /// Indicates the type is an index buffer view.
+    IndexBufferView,
+
+    /// Indicates the type is a constant.
+    Constant {
+        /// Specifies the root index of the constant.
+        root_parameter_index: u32,
+
+        /// The offset, in 32-bit values, to set the first constant of the group.
+        /// Supports multi-value constants at a given root index. Root constant entries must be sorted from smallest to largest DestOffsetIn32BitValues.
+        dest_offset_in32_bit_values: u32,
+
+        /// The number of 32-bit constants that are set at the given root index. Supports multi-value constants at a given root index.
+        num32_bit_values_to_set: u32,
+    },
+
+    /// Indicates the type is a constant buffer view (CBV).
+    ConstantBufferView {
+        /// Specifies the root index of the CBV.
+        root_parameter_index: u32,
+    },
+
+    /// Indicates the type is a shader resource view (SRV).
+    ShaderResourceView {
+        /// Specifies the root index of the SRV.
+        root_parameter_index: u32,
+    },
+
+    /// Indicates the type is an unordered access view (UAV).
+    UnorderedAccessView {
+        /// Specifies the root index of the UAV.
+        root_parameter_index: u32,
+    },
+}
+
 /// Specifies the memory pool for the heap.
 ///
 /// For more information: [`D3D12_MEMORY_POOL enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_memory_pool)

@@ -1,3 +1,4 @@
+use smallvec::SmallVec;
 use windows::Win32::Graphics::Direct3D12::*;
 
 use super::*;
@@ -9,6 +10,25 @@ impl CommandQueueDesc {
             Type: self.r#type.as_raw(),
             Priority: self.priority.as_raw(),
             Flags: self.flags.as_raw(),
+            NodeMask: self.node_mask,
+        }
+    }
+}
+
+impl<'a> CommandSignatureDesc<'a> {
+    #[inline(always)]
+    pub(crate) fn as_raw(&self) -> D3D12_COMMAND_SIGNATURE_DESC {
+        let num_argument_descs = self.argument_descs.len() as u32;
+        let argument_descs = self
+            .argument_descs
+            .iter()
+            .map(|a| a.as_raw())
+            .collect::<SmallVec<[_; 16]>>();
+
+        D3D12_COMMAND_SIGNATURE_DESC {
+            ByteStride: self.byte_stride,
+            NumArgumentDescs: num_argument_descs,
+            pArgumentDescs: argument_descs.as_ptr(),
             NodeMask: self.node_mask,
         }
     }

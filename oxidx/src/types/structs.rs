@@ -18,6 +18,23 @@ pub struct CommandQueueDesc {
     pub node_mask: u32,
 }
 
+/// Describes the arguments (parameters) of a command signature.
+///
+/// For more information: [`D3D12_COMMAND_SIGNATURE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_command_signature_desc)
+#[derive(Debug)]
+pub struct CommandSignatureDesc<'a> {
+    /// Specifies the size of each command in the drawing buffer, in bytes.
+    pub byte_stride: u32,
+
+    /// An array of [`IndirectArgumentDesc`] enumeration, containing details of the arguments, including whether the argument is a vertex buffer, constant, constant buffer view, shader resource view, or unordered access view.
+    pub argument_descs: &'a [IndirectArgumentDesc],
+
+    /// For single GPU operation, set this to zero.
+    /// If there are multiple GPU nodes, set bits to identify the nodes (the device's physical adapters) for which the command signature is to apply.
+    /// Each bit in the mask corresponds to a single node.
+    pub node_mask: u32,
+}
+
 /// Describes a CPU descriptor handle.
 ///
 /// For more information: [`D3D12_CPU_DESCRIPTOR_HANDLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_cpu_descriptor_handle)

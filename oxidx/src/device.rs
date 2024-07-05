@@ -15,6 +15,7 @@ use crate::{
     command_allocator::CommandAllocatorInterface,
     command_list::CommandListInterface,
     command_queue::CommandQueueInterface,
+    command_signature::CommandSignatureInterface,
     create_type,
     descriptor_heap::DescriptorHeapInterface,
     error::DxError,
@@ -107,7 +108,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// Creates a command list.
     ///
     /// # Arguments
-    /// * `nodemask` - For single-GPU operation, set this to zero. If there are multiple GPU nodes, then set a bit to identify the node (the device's physical adapter) for which to create the command list. Each bit in the mask corresponds to a single node. Only one bit must be set.
+    /// * `node_mask` - For single-GPU operation, set this to zero. If there are multiple GPU nodes, then set a bit to identify the node (the device's physical adapter) for which to create the command list. Each bit in the mask corresponds to a single node. Only one bit must be set.
     /// * `type` - Specifies the type of command list to create.
     /// * `command_allocator` - A reference to the command allocator object from which the device creates command lists.
     /// * `initial_state` - An optional pointer to the pipeline state object that contains the initial pipeline state for the command list.
@@ -118,22 +119,37 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// For more information: [`ID3D12Device::CreateCommandList method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommandlist)
     fn create_command_list<CL: CommandListInterface>(
         &self,
-        nodemask: u32,
+        node_mask: u32,
         r#type: CommandListType,
         command_allocator: &impl CommandAllocatorInterface,
         pso: Option<&impl PipelineStateInterface>,
     ) -> Result<CL, DxError>;
 
     /// Creates a command queue.
-    /// 
+    ///
     /// # Arguments
     /// * `desc` - Specifies a [`CommandQueueDesc`] that describes the command queue.
-    /// 
+    ///
     /// For more information: [`ID3D12Device::CreateCommandQueue method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommandqueue)
     fn create_command_queue<CQ: CommandQueueInterface>(
         &self,
         desc: CommandQueueDesc,
     ) -> Result<CQ, DxError>;
+
+    /// Creates a command queue.
+    ///
+    /// # Arguments
+    /// * `desc` - Describes the command signature to be created with the [`CommandSignatureDesc`] structure.
+    /// * `root_signature` - Specifies the [`RootSignatureInterface`] that the command signature applies to.
+    ///   The root signature is required if any of the commands in the signature will update bindings on the pipeline.
+    ///   If the only command present is a draw or dispatch, the root signature parameter can be set to None.
+    ///
+    /// For more information: [`ID3D12Device::CreateCommandSignature method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommandsignature)
+    fn create_command_signature<CS: CommandSignatureInterface>(
+        &self,
+        desc: &CommandSignatureDesc<'_>,
+        root_signature: Option<&impl RootSignatureInterface>,
+    ) -> Result<CS, DxError>;
 
     fn create_fence<F: FenceInterface>(&self, initial_value: u64) -> Result<F, DxError>;
 
@@ -153,7 +169,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
 
     fn create_root_signature<RS: RootSignatureInterface>(
         &self,
-        nodemask: u32,
+        node_mask: u32,
         blob: &[u8],
     ) -> Result<RS, DxError>;
 
@@ -161,7 +177,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         &self,
         desc: &RootSignatureDesc<'_>,
         version: RootSignatureVersion,
-        nodemask: u32,
+        node_mask: u32,
     ) -> Result<RS, DxError>;
 
     fn create_graphics_pipeline<G: PipelineStateInterface>(
@@ -201,9 +217,9 @@ impl_trait! {
     Device;
 
     fn check_feature_support<F: FeatureObject>(&self, feature_input: F::Input<'_>) -> Result<F::Output, DxError> {
-        let mut raw = F::into_raw(feature_input);
-
         unsafe {
+            let mut raw = F::into_raw(feature_input);
+
             self.0
                 .CheckFeatureSupport(
                     F::TYPE.as_raw(),
@@ -211,9 +227,9 @@ impl_trait! {
                     core::mem::size_of::<F::Raw>() as u32,
                 )
                 .map_err(DxError::from)?;
-        }
 
-        Ok(F::from_raw(raw))
+            Ok(F::from_raw(raw))
+        }
     }
 
     fn copy_descriptors<'a>(
@@ -266,22 +282,43 @@ impl_trait! {
         &self,
         r#type: CommandListType
     ) -> Result<CA, DxError> {
-        let res: CA::Raw  = unsafe {
-            self.0.CreateCommandAllocator(r#type.as_raw()).map_err(DxError::from)?
-        };
+        unsafe {
+            let res: CA::Raw = self.0.CreateCommandAllocator(r#type.as_raw()).map_err(DxError::from)?;
 
-        Ok(CA::new(res))
+            Ok(CA::new(res))
+        }
     }
 
     fn create_command_queue<CQ: CommandQueueInterface>(
         &self,
         desc: CommandQueueDesc,
     ) -> Result<CQ, DxError> {
-        let res: CQ::Raw  = unsafe {
-            self.0.CreateCommandQueue(&desc.as_raw()).map_err(DxError::from)?
-        };
+        unsafe {
+            let res: CQ::Raw = self.0.CreateCommandQueue(&desc.as_raw()).map_err(DxError::from)?;
 
-        Ok(CQ::new(res))
+            Ok(CQ::new(res))
+        }
+    }
+
+    fn create_command_signature<CS: CommandSignatureInterface>(
+        &self,
+        desc: &CommandSignatureDesc<'_>,
+        root_signature: Option<&impl RootSignatureInterface>,
+    ) -> Result<CS, DxError> {
+        unsafe {
+            let desc = desc.as_raw();
+            let mut res: Option<CS::Raw> = None;
+
+            if let Some(root) = root_signature {
+                self.0.CreateCommandSignature(&desc, root.as_raw_ref(), &mut res).map_err(DxError::from)?;
+            } else {
+                self.0.CreateCommandSignature(&desc, None, &mut res).map_err(DxError::from)?;
+            };
+
+            let res = res.unwrap();
+
+            Ok(CS::new(res))
+        }
     }
 
     fn create_fence<F: FenceInterface>(
@@ -323,7 +360,7 @@ impl_trait! {
 
     fn create_command_list<CL: CommandListInterface>(
         &self,
-        nodemask: u32,
+        node_mask: u32,
         r#type: CommandListType,
         command_allocator: &impl CommandAllocatorInterface,
         pso: Option<&impl PipelineStateInterface>,
@@ -331,14 +368,14 @@ impl_trait! {
         let res: CL::Raw = unsafe {
             if let Some(pso) = pso {
                 self.0.CreateCommandList(
-                    nodemask,
+                    node_mask,
                     r#type.as_raw(),
                     command_allocator.as_raw_ref(),
                     pso.as_raw_ref()
                 ).map_err(|_| DxError::Dummy)?
             } else {
                 self.0.CreateCommandList(
-                    nodemask,
+                    node_mask,
                     r#type.as_raw(),
                     command_allocator.as_raw_ref(),
                     None
@@ -350,11 +387,11 @@ impl_trait! {
         Ok(CL::new(res))
     }
 
-    fn create_root_signature<RS: RootSignatureInterface>(&self, nodemask: u32, blob: &[u8]) -> Result<RS, DxError> {
+    fn create_root_signature<RS: RootSignatureInterface>(&self, node_mask: u32, blob: &[u8]) -> Result<RS, DxError> {
         let res: RS::Raw = unsafe {
             self.0
                 .CreateRootSignature(
-                    nodemask,
+                    node_mask,
                     blob,
                 )
                 .map_err(|_| DxError::Dummy)?
@@ -367,11 +404,11 @@ impl_trait! {
         &self,
         desc: &RootSignatureDesc<'_>,
         version: RootSignatureVersion,
-        nodemask: u32,
+        node_mask: u32,
     ) -> Result<RS, DxError> {
         let blob = RS::serialize(desc, version)?;
         unsafe {
-        self.create_root_signature(nodemask, std::slice::from_raw_parts(
+        self.create_root_signature(node_mask, std::slice::from_raw_parts(
                 blob.get_buffer_ptr() as _,
                 blob.get_buffer_size(),
             ))
