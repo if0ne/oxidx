@@ -50,7 +50,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     ///
     /// # Returns
     /// A output data structure for type that implement [`FeatureObject`].
-    ///
+    /// 
     /// For more information: [`ID3D12Device::CheckFeatureSupport method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-checkfeaturesupport)
     fn check_feature_support<F: FeatureObject>(
         &self,
@@ -58,14 +58,14 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     ) -> Result<F::Output, DxError>;
 
     /// Copies descriptors from a source to a destination.
-    ///
+    /// 
     /// # Arguments
-    /// * `dest_descriptor_range_starts` - An array of [`CpuDescriptorHandle`] objects to copy to.
+    /// * `dest_descriptor_range_starts` - An array of [`CpuDescriptorHandle`] objects to copy to. 
     /// * `dest_descriptor_range_sizes` - An array of destination descriptor range sizes to copy to.
-    /// * `src_descriptor_range_starts` - An array of [`CpuDescriptorHandle`] objects to copy from.
+    /// * `src_descriptor_range_starts` - An array of [`CpuDescriptorHandle`] objects to copy from. 
     /// * `src_descriptor_range_sizes` - An array of source  descriptor range sizes to copy from.
     /// * `descriptor_heaps_type` - The [`DescriptorHeapType`]-typed value that specifies the type of descriptor heap to copy with. This is required as different descriptor types may have different sizes.
-    ///
+    /// 
     /// For more information: [`ID3D12Device::CopyDescriptors method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-copydescriptors)
     fn copy_descriptors<'a>(
         &self,
@@ -73,6 +73,23 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         dest_descriptor_range_sizes: Option<&'a [u32]>,
         src_descriptor_range_starts: &'a [CpuDescriptorHandle],
         src_descriptor_range_sizes: Option<&'a [u32]>,
+        descriptor_heaps_type: DescriptorHeapType,
+    );
+
+    /// Copies descriptors from a source to a destination.
+    /// 
+    /// # Arguments
+    /// * `num_descriptors` - The number of descriptors to copy.
+    /// * `dest_descriptor_range_start` - A [`CpuDescriptorHandle`] that describes the destination descriptors to start to copy to.
+    /// * `src_descriptor_range_start` - A [`CpuDescriptorHandle`] that describes the source descriptors to start to copy from. 
+    /// * `descriptor_heaps_type` - The [`DescriptorHeapType`]-typed value that specifies the type of descriptor heap to copy with. This is required as different descriptor types may have different sizes.
+    /// 
+    /// For more information: [`ID3D12Device::CopyDescriptorsSimple method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-copydescriptorssimple)
+    fn copy_descriptors_simple(
+        &self,
+        num_descriptors: u32,
+        dest_descriptor_range_start: CpuDescriptorHandle,
+        src_descriptor_range_start: CpuDescriptorHandle,
         descriptor_heaps_type: DescriptorHeapType,
     );
 
@@ -195,15 +212,32 @@ impl_trait! {
             let src_descriptor_range_starts = src_descriptor_range_starts.as_ptr() as *const _;
             let src_descriptor_range_sizes = src_descriptor_range_sizes.map(|r| r.as_ptr());
             let descriptor_heaps_type = descriptor_heaps_type.as_raw();
-
+    
             self.0.CopyDescriptors(
-                dest_num,
-                dest_descriptor_range_starts,
-                dest_descriptor_range_sizes,
-                src_num,
-                src_descriptor_range_starts,
-                src_descriptor_range_sizes,
+                dest_num, 
+                dest_descriptor_range_starts, 
+                dest_descriptor_range_sizes, 
+                src_num, 
+                src_descriptor_range_starts, 
+                src_descriptor_range_sizes, 
                 descriptor_heaps_type
+            );
+        }
+    }
+
+    fn copy_descriptors_simple(
+        &self,
+        num_descriptors: u32,
+        dest_descriptor_range_start: CpuDescriptorHandle,
+        src_descriptor_range_start: CpuDescriptorHandle,
+        descriptor_heaps_type: DescriptorHeapType,
+    ) {
+        unsafe {
+            self.0.CopyDescriptorsSimple(
+                num_descriptors, 
+                dest_descriptor_range_start.as_raw(), 
+                src_descriptor_range_start.as_raw(), 
+                descriptor_heaps_type.as_raw()
             );
         }
     }

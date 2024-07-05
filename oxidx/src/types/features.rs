@@ -1107,7 +1107,6 @@ impl FeatureObject for ProtectedResourceSessionTypesFeature {
 
     #[inline]
     fn from_raw(_: Self::Raw) -> Self::Output {
-        ()
     }
 }
 

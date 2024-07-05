@@ -13,7 +13,7 @@ use oxidx::{
     resources::*,
     swapchain::*,
     sync::*,
-    types::{features::*, *},
+    types::*,
 };
 use smallvec::smallvec;
 use winit::{
