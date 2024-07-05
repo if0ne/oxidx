@@ -50,7 +50,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     ///
     /// # Returns
     /// A output data structure for type that implement [`FeatureObject`].
-    /// 
+    ///
     /// For more information: [`ID3D12Device::CheckFeatureSupport method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-checkfeaturesupport)
     fn check_feature_support<F: FeatureObject>(
         &self,
@@ -58,14 +58,14 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     ) -> Result<F::Output, DxError>;
 
     /// Copies descriptors from a source to a destination.
-    /// 
+    ///
     /// # Arguments
-    /// * `dest_descriptor_range_starts` - An array of [`CpuDescriptorHandle`] objects to copy to. 
+    /// * `dest_descriptor_range_starts` - An array of [`CpuDescriptorHandle`] objects to copy to.
     /// * `dest_descriptor_range_sizes` - An array of destination descriptor range sizes to copy to.
-    /// * `src_descriptor_range_starts` - An array of [`CpuDescriptorHandle`] objects to copy from. 
+    /// * `src_descriptor_range_starts` - An array of [`CpuDescriptorHandle`] objects to copy from.
     /// * `src_descriptor_range_sizes` - An array of source  descriptor range sizes to copy from.
     /// * `descriptor_heaps_type` - The [`DescriptorHeapType`]-typed value that specifies the type of descriptor heap to copy with. This is required as different descriptor types may have different sizes.
-    /// 
+    ///
     /// For more information: [`ID3D12Device::CopyDescriptors method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-copydescriptors)
     fn copy_descriptors<'a>(
         &self,
@@ -77,13 +77,13 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     );
 
     /// Copies descriptors from a source to a destination.
-    /// 
+    ///
     /// # Arguments
     /// * `num_descriptors` - The number of descriptors to copy.
     /// * `dest_descriptor_range_start` - A [`CpuDescriptorHandle`] that describes the destination descriptors to start to copy to.
-    /// * `src_descriptor_range_start` - A [`CpuDescriptorHandle`] that describes the source descriptors to start to copy from. 
+    /// * `src_descriptor_range_start` - A [`CpuDescriptorHandle`] that describes the source descriptors to start to copy from.
     /// * `descriptor_heaps_type` - The [`DescriptorHeapType`]-typed value that specifies the type of descriptor heap to copy with. This is required as different descriptor types may have different sizes.
-    /// 
+    ///
     /// For more information: [`ID3D12Device::CopyDescriptorsSimple method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-copydescriptorssimple)
     fn copy_descriptors_simple(
         &self,
@@ -93,21 +93,35 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         descriptor_heaps_type: DescriptorHeapType,
     );
 
+    /// Creates a command allocator object.
+    ///
+    /// # Arguments
+    /// * `type` - A [`CommandListType`]-typed value that specifies the type of command allocator to create. The type of command allocator can be the type that records either direct command lists or bundles.
+    ///
+    /// For more information: [`ID3D12Device::CreateCommandAllocator method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommandallocator)
     fn create_command_allocator<CA: CommandAllocatorInterface>(
         &self,
         r#type: CommandListType,
     ) -> Result<CA, DxError>;
 
-    fn create_command_list<
-        CL: CommandListInterface,
-        CA: CommandAllocatorInterface,
-        PSO: PipelineStateInterface,
-    >(
+    /// Creates a command list.
+    ///
+    /// # Arguments
+    /// * `nodemask` - For single-GPU operation, set this to zero. If there are multiple GPU nodes, then set a bit to identify the node (the device's physical adapter) for which to create the command list. Each bit in the mask corresponds to a single node. Only one bit must be set.
+    /// * `type` - Specifies the type of command list to create.
+    /// * `command_allocator` - A reference to the command allocator object from which the device creates command lists.
+    /// * `initial_state` - An optional pointer to the pipeline state object that contains the initial pipeline state for the command list.
+    ///   If it is nullptr, then the runtime sets a dummy initial pipeline state, so that drivers don't have to deal with undefined state.
+    ///   The overhead for this is low, particularly for a command list, for which the overall cost of recording the command list likely dwarfs the cost of a single initial state
+    ///   setting. So there's little cost in not setting the initial pipeline state parameter, if doing so is inconvenient.
+    ///
+    /// For more information: [`ID3D12Device::CreateCommandList method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommandlist)
+    fn create_command_list<CL: CommandListInterface>(
         &self,
         nodemask: u32,
         r#type: CommandListType,
-        command_allocator: &CA,
-        pso: &PSO,
+        command_allocator: &impl CommandAllocatorInterface,
+        pso: Option<&impl PipelineStateInterface>,
     ) -> Result<CL, DxError>;
 
     fn create_command_queue<CQ: CommandQueueInterface>(
@@ -212,14 +226,14 @@ impl_trait! {
             let src_descriptor_range_starts = src_descriptor_range_starts.as_ptr() as *const _;
             let src_descriptor_range_sizes = src_descriptor_range_sizes.map(|r| r.as_ptr());
             let descriptor_heaps_type = descriptor_heaps_type.as_raw();
-    
+
             self.0.CopyDescriptors(
-                dest_num, 
-                dest_descriptor_range_starts, 
-                dest_descriptor_range_sizes, 
-                src_num, 
-                src_descriptor_range_starts, 
-                src_descriptor_range_sizes, 
+                dest_num,
+                dest_descriptor_range_starts,
+                dest_descriptor_range_sizes,
+                src_num,
+                src_descriptor_range_starts,
+                src_descriptor_range_sizes,
                 descriptor_heaps_type
             );
         }
@@ -234,17 +248,20 @@ impl_trait! {
     ) {
         unsafe {
             self.0.CopyDescriptorsSimple(
-                num_descriptors, 
-                dest_descriptor_range_start.as_raw(), 
-                src_descriptor_range_start.as_raw(), 
+                num_descriptors,
+                dest_descriptor_range_start.as_raw(),
+                src_descriptor_range_start.as_raw(),
                 descriptor_heaps_type.as_raw()
             );
         }
     }
 
-    fn create_command_allocator<CA: CommandAllocatorInterface>(&self, r#type: CommandListType) -> Result<CA, DxError> {
+    fn create_command_allocator<CA: CommandAllocatorInterface>(
+        &self,
+        r#type: CommandListType
+    ) -> Result<CA, DxError> {
         let res: CA::Raw  = unsafe {
-            self.0.CreateCommandAllocator(r#type.as_raw()).map_err(|_| DxError::Dummy)?
+            self.0.CreateCommandAllocator(r#type.as_raw()).map_err(DxError::from)?
         };
 
         Ok(CA::new(res))
@@ -298,19 +315,30 @@ impl_trait! {
         }
     }
 
-    fn create_command_list<
-        CL: CommandListInterface,
-        CA: CommandAllocatorInterface,
-        PSO: PipelineStateInterface,
-    >(
+    fn create_command_list<CL: CommandListInterface>(
         &self,
         nodemask: u32,
         r#type: CommandListType,
-        command_allocator: &CA,
-        pso: &PSO,
+        command_allocator: &impl CommandAllocatorInterface,
+        pso: Option<&impl PipelineStateInterface>,
     ) -> Result<CL, DxError> {
         let res: CL::Raw = unsafe {
-            self.0.CreateCommandList(nodemask, r#type.as_raw(), command_allocator.as_raw_ref(), pso.as_raw_ref()).map_err(|_| DxError::Dummy)?
+            if let Some(pso) = pso {
+                self.0.CreateCommandList(
+                    nodemask,
+                    r#type.as_raw(),
+                    command_allocator.as_raw_ref(),
+                    pso.as_raw_ref()
+                ).map_err(|_| DxError::Dummy)?
+            } else {
+                self.0.CreateCommandList(
+                    nodemask,
+                    r#type.as_raw(),
+                    command_allocator.as_raw_ref(),
+                    None
+                ).map_err(|_| DxError::Dummy)?
+            }
+
         };
 
         Ok(CL::new(res))

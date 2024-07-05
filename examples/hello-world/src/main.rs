@@ -1,18 +1,8 @@
 use std::num::NonZeroIsize;
 
 use oxidx::{
-    adapter::*,
-    command_allocator::*,
-    command_list::*,
-    command_queue::*,
-    debug::*,
-    descriptor_heap::*,
-    device::*,
-    factory::*,
-    pso::*,
-    resources::*,
-    swapchain::*,
-    sync::*,
+    adapter::*, command_allocator::*, command_list::*, command_queue::*, debug::*,
+    descriptor_heap::*, device::*, factory::*, pso::*, resources::*, swapchain::*, sync::*,
     types::*,
 };
 use smallvec::smallvec;
@@ -236,7 +226,7 @@ impl DXSample for Sample {
 
         let command_list: GraphicsCommandList = self
             .device
-            .create_command_list(0, CommandListType::Direct, &command_allocator, &pso)
+            .create_command_list(0, CommandListType::Direct, &command_allocator, Some(&pso))
             .unwrap();
 
         command_list.close();

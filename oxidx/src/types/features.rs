@@ -1106,8 +1106,7 @@ impl FeatureObject for ProtectedResourceSessionTypesFeature {
     }
 
     #[inline]
-    fn from_raw(_: Self::Raw) -> Self::Output {
-    }
+    fn from_raw(_: Self::Raw) -> Self::Output {}
 }
 
 /// Indicates whether or not unaligned block-compressed textures are supported.
