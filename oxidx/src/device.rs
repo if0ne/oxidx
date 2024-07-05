@@ -124,6 +124,12 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         pso: Option<&impl PipelineStateInterface>,
     ) -> Result<CL, DxError>;
 
+    /// Creates a command queue.
+    /// 
+    /// # Arguments
+    /// * `desc` - Specifies a [`CommandQueueDesc`] that describes the command queue.
+    /// 
+    /// For more information: [`ID3D12Device::CreateCommandQueue method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommandqueue)
     fn create_command_queue<CQ: CommandQueueInterface>(
         &self,
         desc: CommandQueueDesc,
@@ -272,7 +278,7 @@ impl_trait! {
         desc: CommandQueueDesc,
     ) -> Result<CQ, DxError> {
         let res: CQ::Raw  = unsafe {
-            self.0.CreateCommandQueue(&desc.as_raw()).map_err(|_| DxError::Dummy)?
+            self.0.CreateCommandQueue(&desc.as_raw()).map_err(DxError::from)?
         };
 
         Ok(CQ::new(res))
