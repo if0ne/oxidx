@@ -60,6 +60,16 @@ impl<'a, RS: RootSignatureInterface, B: BlobInterface> ComputePipelineStateDesc<
     }
 }
 
+impl ConstantBufferViewDesc {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_CONSTANT_BUFFER_VIEW_DESC  {
+        D3D12_CONSTANT_BUFFER_VIEW_DESC {
+            BufferLocation: self.buffer_location,
+            SizeInBytes: self.size_in_bytes,
+        }
+    }
+}
+
 impl CpuDescriptorHandle {
     #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_CPU_DESCRIPTOR_HANDLE {

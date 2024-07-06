@@ -185,12 +185,25 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         desc: &ComputePipelineStateDesc<'_, RS, B>,
     ) -> Result<CPS, DxError>;
 
-    fn create_fence<F: FenceInterface>(&self, initial_value: u64) -> Result<F, DxError>;
+    /// Creates a constant-buffer view for accessing resource data.
+    /// 
+    /// # Arguments
+    /// * `desc` - A reference to a [`ConstantBufferViewDesc`] structure that describes the constant-buffer view.
+    /// * `dest_descriptor` - Describes the CPU descriptor handle that represents the start of the heap that holds the constant-buffer view.
+    /// 
+    /// For more information: [`ID3D12Device::CreateConstantBufferView method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createconstantbufferview)
+    fn create_constant_buffer_view(
+        &self,
+        desc: Option<&ConstantBufferViewDesc>,
+        dest_descriptor: CpuDescriptorHandle,
+    );
 
     fn create_descriptor_heap<H: DescriptorHeapInterface>(
         &self,
         desc: DescriptorHeapDesc,
     ) -> Result<H, DxError>;
+
+    fn create_fence<F: FenceInterface>(&self, initial_value: u64) -> Result<F, DxError>;
 
     fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32;
 
@@ -389,6 +402,21 @@ impl_trait! {
             let res: CPS::Raw = self.0.CreateComputePipelineState(&desc).map_err(DxError::from)?;
 
             Ok(CPS::new(res))
+        }
+    }
+
+    fn create_constant_buffer_view(
+        &self,
+        desc: Option<&ConstantBufferViewDesc>,
+        dest_descriptor: CpuDescriptorHandle,
+    ) {
+        unsafe {
+            let desc = desc.map(|desc| desc.as_raw());
+            let desc = desc.as_ref().map(|c| c as *const _);
+            
+            let dest_descriptor = dest_descriptor.as_raw();
+
+            self.0.CreateConstantBufferView(desc, dest_descriptor);
         }
     }
 

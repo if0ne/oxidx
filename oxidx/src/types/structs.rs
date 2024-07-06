@@ -60,6 +60,18 @@ pub struct ComputePipelineStateDesc<'a, RS: RootSignatureInterface, B: BlobInter
     pub flags: PipelineStateFlags,
 }
 
+/// Describes a constant buffer to view.
+///
+/// For more information: [`D3D12_CONSTANT_BUFFER_VIEW_DESC structure `](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_constant_buffer_view_desc)
+#[derive(Clone, Copy, Debug)]
+pub struct ConstantBufferViewDesc {
+    // GPU virtual address
+    pub buffer_location: u64,
+
+    /// The size in bytes of the constant buffer.
+    pub size_in_bytes: u32,
+}
+
 /// Describes a CPU descriptor handle.
 ///
 /// For more information: [`D3D12_CPU_DESCRIPTOR_HANDLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_cpu_descriptor_handle)
