@@ -3,7 +3,7 @@ use windows::{
     core::Interface,
     Win32::Graphics::{
         Direct3D12::{
-            ID3D12Device, D3D12_BLEND_DESC, D3D12_FENCE_FLAG_NONE,
+            ID3D12Device, D3D12_BLEND_DESC, D3D12_CACHED_PIPELINE_STATE, D3D12_FENCE_FLAG_NONE,
             D3D12_GRAPHICS_PIPELINE_STATE_DESC, D3D12_INPUT_LAYOUT_DESC,
             D3D12_PIPELINE_STATE_FLAGS, D3D12_RENDER_TARGET_BLEND_DESC, D3D12_STREAM_OUTPUT_DESC,
         },
@@ -169,6 +169,21 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         init_state: ResourceStates,
         optimized_clear_value: Option<&ClearValue>,
     ) -> Result<R, DxError>;
+
+    /// Creates a compute pipeline state object.
+    ///
+    /// # Arguments
+    /// * `desc` - A reference to a [`ComputePipelineStateDesc`] structure that describes compute pipeline state.
+    ///
+    /// For more information: [`ID3D12Device::CreateComputePipelineState method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcomputepipelinestate)
+    fn create_compute_pipeline_state<
+        CPS: PipelineStateInterface,
+        RS: RootSignatureInterface,
+        B: BlobInterface,
+    >(
+        &self,
+        desc: &ComputePipelineStateDesc<'_, RS, B>,
+    ) -> Result<CPS, DxError>;
 
     fn create_fence<F: FenceInterface>(&self, initial_value: u64) -> Result<F, DxError>;
 
@@ -360,6 +375,23 @@ impl_trait! {
         }
     }
 
+    fn create_compute_pipeline_state<
+        CPS: PipelineStateInterface,
+        RS: RootSignatureInterface,
+        B: BlobInterface,
+    >(
+        &self,
+        desc: &ComputePipelineStateDesc<'_, RS, B>,
+    ) -> Result<CPS, DxError> {
+        unsafe {
+            let desc = desc.as_raw();
+
+            let res: CPS::Raw = self.0.CreateComputePipelineState(&desc).map_err(DxError::from)?;
+
+            Ok(CPS::new(res))
+        }
+    }
+
     fn create_fence<F: FenceInterface>(
         &self,
         initial_value: u64,
@@ -526,11 +558,7 @@ impl_trait! {
             DSVFormat: desc.dsv_format.map(|f| f.as_raw()).unwrap_or_default(),
             SampleDesc: desc.sampler_desc.as_raw(),
             NodeMask: desc.node_mask,
-            CachedPSO: desc
-                .cached_pso
-                .as_ref()
-                .map(|pso| pso.as_raw())
-                .unwrap_or_default(),
+            CachedPSO: D3D12_CACHED_PIPELINE_STATE::default(),
             Flags: D3D12_PIPELINE_STATE_FLAGS(desc.flags.bits()),
         };
 

@@ -5,7 +5,7 @@ use windows::Win32::Graphics::{Direct3D::*, Direct3D12::*};
 use super::*;
 
 /// Describes a value used to optimize clear operations for a particular resource.
-/// 
+///
 /// For more information: [`D3D12_CLEAR_VALUE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_clear_value)
 #[derive(Clone, Copy, Debug)]
 pub enum ClearValue {
@@ -349,7 +349,7 @@ pub enum Format {
 
     /// A four-component, 128-bit signed-integer format that supports 32 bits per channel including alpha.
     Rgba32Sint = DXGI_FORMAT_R32G32B32A32_SINT.0,
-    
+
     /// A three-component, 96-bit typeless format that supports 32 bits per color channel.
     Rgb32Typeless = DXGI_FORMAT_R32G32B32_TYPELESS.0,
 
@@ -533,15 +533,15 @@ pub enum Format {
     /// A single-component, 1-bit unsigned-normalized integer format that supports 1 bit for the red channel.
     R1Unorm = DXGI_FORMAT_R1_UNORM.0,
 
-    /// Three partial-precision floating-point numbers encoded into a single 32-bit value all sharing the same 5-bit exponent (variant of s10e5, which is sign bit, 10-bit mantissa, and 5-bit biased (15) exponent). 
+    /// Three partial-precision floating-point numbers encoded into a single 32-bit value all sharing the same 5-bit exponent (variant of s10e5, which is sign bit, 10-bit mantissa, and 5-bit biased (15) exponent).
     Rgb9E5 = DXGI_FORMAT_R9G9B9E5_SHAREDEXP.0,
 
-    /// A four-component, 32-bit unsigned-normalized-integer format. 
-    /// This packed RGB format is analogous to the UYVY format. Each 32-bit block describes a pair of pixels: (R8, G8, B8) and (R8, G8, B8) where the R8/B8 values are repeated, and the G8 values are unique to each pixel. 
+    /// A four-component, 32-bit unsigned-normalized-integer format.
+    /// This packed RGB format is analogous to the UYVY format. Each 32-bit block describes a pair of pixels: (R8, G8, B8) and (R8, G8, B8) where the R8/B8 values are repeated, and the G8 values are unique to each pixel.
     Rg8Bg8Unorm = DXGI_FORMAT_R8G8_B8G8_UNORM.0,
 
-    /// A four-component, 32-bit unsigned-normalized-integer format. This packed RGB format is analogous to the YUY2 format. 
-    /// Each 32-bit block describes a pair of pixels: (R8, G8, B8) and (R8, G8, B8) where the R8/B8 values are repeated, and the G8 values are unique to each pixel. 
+    /// A four-component, 32-bit unsigned-normalized-integer format. This packed RGB format is analogous to the YUY2 format.
+    /// Each 32-bit block describes a pair of pixels: (R8, G8, B8) and (R8, G8, B8) where the R8/B8 values are repeated, and the G8 values are unique to each pixel.
     Gr8Gb8Unorm = DXGI_FORMAT_G8R8_G8B8_UNORM.0,
 
     /// Four-component typeless block-compression format.
@@ -604,7 +604,7 @@ pub enum Format {
     /// A four-component, 32-bit 2.8-biased fixed-point format that supports 10 bits for each color channel and 2-bit alpha.
     Rgb10XRBiasA2Unorm = DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM.0,
 
-    /// A four-component, 32-bit typeless format that supports 8 bits for each channel including alpha. 
+    /// A four-component, 32-bit typeless format that supports 8 bits for each channel including alpha.
     Bgra8Typeless = DXGI_FORMAT_B8G8R8A8_TYPELESS.0,
 
     /// A four-component, 32-bit unsigned-normalized standard RGB format that supports 8 bits for each channel including alpha.
@@ -619,22 +619,22 @@ pub enum Format {
     /// A typeless block-compression format.
     Bc6hTypeless = DXGI_FORMAT_BC6H_TYPELESS.0,
 
-    /// A block-compression format. 
+    /// A block-compression format.
     Bc6hUf16 = DXGI_FORMAT_BC6H_UF16.0,
 
-    /// A block-compression format. 
+    /// A block-compression format.
     Bc6hSf16 = DXGI_FORMAT_BC6H_SF16.0,
 
     /// A typeless block-compression format.
     Bc7Typeless = DXGI_FORMAT_BC7_TYPELESS.0,
 
-    /// A block-compression format. 
+    /// A block-compression format.
     Bc7Unorm = DXGI_FORMAT_BC7_UNORM.0,
 
-    /// A block-compression format. 
+    /// A block-compression format.
     Bc7UnormSrgb = DXGI_FORMAT_BC7_UNORM_SRGB.0,
 
-    /// Most common YUV 4:4:4 video resource format. 
+    /// Most common YUV 4:4:4 video resource format.
     Ayuv = DXGI_FORMAT_AYUV.0,
 
     /// 10-bit per channel packed YUV 4:4:4 video resource format.
@@ -643,7 +643,7 @@ pub enum Format {
     /// 16-bit per channel packed YUV 4:4:4 video resource format.
     Y416 = DXGI_FORMAT_Y416.0,
 
-    /// Most common YUV 4:2:0 video resource format. 
+    /// Most common YUV 4:2:0 video resource format.
     Nv12 = DXGI_FORMAT_NV12.0,
 
     /// 10-bit per channel planar YUV 4:2:0 video resource format.
@@ -664,7 +664,7 @@ pub enum Format {
     /// 16-bit per channel packed YUV 4:2:2 video resource format.
     Y216 = DXGI_FORMAT_Y216.0,
 
-    /// Most common planar YUV 4:1:1 video resource format. 
+    /// Most common planar YUV 4:1:1 video resource format.
     Nv11 = DXGI_FORMAT_NV11.0,
 
     /// 4-bit palletized YUV format that is commonly used for DVD subpicture.

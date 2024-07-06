@@ -343,6 +343,27 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Flags to control pipeline state.
+    ///
+    /// Empty flag - Indicates no flags.
+    ///
+    /// For more information: [`D3D12_PIPELINE_STATE_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_pipeline_state_flags)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct PipelineStateFlags: i32 {
+        /// Indicates that the pipeline state should be compiled with additional information to assist debugging.
+        ///
+        /// This can only be set on WARP devices.
+        const ToolDebug = D3D12_PIPELINE_STATE_FLAG_TOOL_DEBUG.0;
+
+        /// Indicates that the pipeline state can be dynamically changed after the pipeline is set by using RSSetDepthBias.
+        const DynamicDepthBias = D3D12_PIPELINE_STATE_FLAG_DYNAMIC_DEPTH_BIAS.0;
+
+        /// Indicates that the pipeline state can be dynamically changed after the pipeline is set by using IASetIndexBufferStripCutValue.
+        const DynamicIndexBufferStripCut = D3D12_PIPELINE_STATE_FLAG_DYNAMIC_INDEX_BUFFER_STRIP_CUT.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Specifies options for determining quality levels.
     ///
     /// Empty flag - Indicates that protected resource sessions are not supported.

@@ -21,10 +21,10 @@ use crate::{
     adapter::{AdapterDesc, AdapterFlags, Luid},
     error::DxError,
     pso::{
-        Blend, BlendOp, Blob, BlobInterface, CachedPipeline, CullMode, DeclarationEntry,
-        DepthStencilDesc, FillMode, IndexBufferStripCutValue, InputElementDesc, InputSlotClass,
-        LogicOp, PrimitiveTopology, RasterizerDesc, RenderTargetBlendDesc, RootParameter,
-        RootParameterType, RootSignatureFlags, ShaderVisibility, StaticSamplerDesc,
+        Blend, BlendOp, Blob, BlobInterface, CullMode, DeclarationEntry, DepthStencilDesc,
+        FillMode, IndexBufferStripCutValue, InputElementDesc, InputSlotClass, LogicOp,
+        PrimitiveTopology, RasterizerDesc, RenderTargetBlendDesc, RootParameter, RootParameterType,
+        RootSignatureFlags, ShaderVisibility, StaticSamplerDesc,
     },
     resources::{
         BarrierType, RenderTargetViewDesc, ResourceBarrier, VertexBufferView, ViewDimension,
@@ -440,12 +440,6 @@ impl PrimitiveTopology {
 impl IndexBufferStripCutValue {
     pub(crate) fn as_raw(&self) -> D3D12_INDEX_BUFFER_STRIP_CUT_VALUE {
         D3D12_INDEX_BUFFER_STRIP_CUT_VALUE(*self as i32)
-    }
-}
-
-impl CachedPipeline {
-    pub(crate) fn as_raw(&self) -> D3D12_CACHED_PIPELINE_STATE {
-        D3D12_CACHED_PIPELINE_STATE::default()
     }
 }
 

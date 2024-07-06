@@ -9,13 +9,7 @@ use windows::{
     },
 };
 
-use crate::{
-    create_type,
-    error::DxError,
-    impl_trait,
-    types::{Format, RootSignatureVersion, SampleDesc},
-    HasInterface,
-};
+use crate::{create_type, error::DxError, impl_trait, types::*, HasInterface};
 
 pub trait PipelineStateInterface:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12PipelineState>>
@@ -329,8 +323,7 @@ pub struct GraphicsPipelineDesc<'a> {
     pub dsv_format: Option<Format>,
     pub sampler_desc: SampleDesc,
     pub node_mask: u32,
-    pub cached_pso: Option<CachedPipeline>,
-    pub flags: PipelineFlags,
+    pub flags: PipelineStateFlags,
 }
 
 #[derive(Clone, Debug)]
@@ -430,14 +423,4 @@ pub enum IndexBufferStripCutValue {
 pub enum PrimitiveTopology {
     Triangle,
     Point,
-}
-
-#[derive(Clone, Debug)]
-pub struct CachedPipeline {}
-
-bitflags::bitflags! {
-    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct PipelineFlags: i32 {
-
-    }
 }

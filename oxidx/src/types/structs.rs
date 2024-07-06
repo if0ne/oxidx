@@ -1,3 +1,5 @@
+use crate::pso::{BlobInterface, RootSignatureInterface};
+
 use super::*;
 
 /// Describes a command queue.
@@ -33,6 +35,29 @@ pub struct CommandSignatureDesc<'a> {
     /// If there are multiple GPU nodes, set bits to identify the nodes (the device's physical adapters) for which the command signature is to apply.
     /// Each bit in the mask corresponds to a single node.
     pub node_mask: u32,
+}
+
+/// Describes a compute pipeline state object.
+///
+/// For more information: [`D3D12_COMPUTE_PIPELINE_STATE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_compute_pipeline_state_desc)
+#[derive(Debug)]
+pub struct ComputePipelineStateDesc<'a, RS: RootSignatureInterface, B: BlobInterface> {
+    /// A reference to the [`RootSignatureInterface`] object.
+    pub root_signature: &'a RS,
+
+    /// /// A reference to the [`BlobInterface`] object that contains compute shader.
+    pub cs: &'a B,
+
+    /// For single GPU operation, set this to zero.
+    /// If there are multiple GPU nodes, set bits to identify the nodes (the device's physical adapters) for which the compute pipeline state is to apply.
+    /// Each bit in the mask corresponds to a single node.
+    pub node_mask: u32,
+
+    /// A cached pipeline state object, as a [`CachedPipelineState`] structure. `cached_blob` and `cached_blob_size_in_bytes` may be set to None and 0 respectively.
+    pub cached_pso: Option<&'a B>,
+
+    /// A [`PipelineStateFlags`] enumeration constant such as for "tool debug".
+    pub flags: PipelineStateFlags,
 }
 
 /// Describes a CPU descriptor handle.

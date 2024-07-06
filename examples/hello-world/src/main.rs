@@ -491,8 +491,7 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
         rtv_formats: smallvec![Format::Bgra8Unorm],
         dsv_format: None,
         node_mask: 0,
-        cached_pso: None,
-        flags: PipelineFlags::empty(),
+        flags: PipelineStateFlags::empty(),
     };
 
     device.create_graphics_pipeline(&desc).unwrap()
