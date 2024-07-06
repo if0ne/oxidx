@@ -213,9 +213,15 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         dest_descriptor: CpuDescriptorHandle,
     );
 
+    /// Creates a descriptor heap object.
+    ///
+    /// # Arguments
+    /// * `desc` - A reference to a [`DescriptorHeapDesc`] structure that describes the heap.
+    ///
+    /// For more information: [`ID3D12Device::CreateDescriptorHeap method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createdescriptorheap)
     fn create_descriptor_heap<H: DescriptorHeapInterface>(
         &self,
-        desc: DescriptorHeapDesc,
+        desc: &DescriptorHeapDesc,
     ) -> Result<H, DxError>;
 
     fn create_fence<F: FenceInterface>(&self, initial_value: u64) -> Result<F, DxError>;
@@ -455,6 +461,19 @@ impl_trait! {
         }
     }
 
+    fn create_descriptor_heap<H: DescriptorHeapInterface>(
+        &self,
+        desc: &DescriptorHeapDesc,
+    ) -> Result<H, DxError> {
+        unsafe {
+            let desc = desc.as_raw();
+
+            let res: H::Raw  = self.0.CreateDescriptorHeap(&desc).map_err(DxError::from)?;
+
+            Ok(H::new(res))
+        }
+    }
+
     fn create_fence<F: FenceInterface>(
         &self,
         initial_value: u64,
@@ -464,17 +483,6 @@ impl_trait! {
         };
 
         Ok(F::new(res))
-    }
-
-    fn create_descriptor_heap<H: DescriptorHeapInterface>(
-        &self,
-        desc: DescriptorHeapDesc,
-    ) -> Result<H, DxError> {
-        let res: H::Raw  = unsafe {
-            self.0.CreateDescriptorHeap(&desc.as_raw()).map_err(|_| DxError::Dummy)?
-        };
-
-        Ok(H::new(res))
     }
 
     fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32 {
