@@ -6,7 +6,11 @@ use windows::{
 };
 
 use crate::{
-    create_type, error::DxError, impl_trait, swapchain::SampleDesc, types::Format, HasInterface,
+    create_type,
+    error::DxError,
+    impl_trait,
+    types::{Format, ResourceStates},
+    HasInterface,
 };
 
 pub trait ResourceInterface:
@@ -74,8 +78,8 @@ pub enum BarrierType<'a> {
     Transition {
         resource: &'a Resource,
         subresource: u32,
-        before: ResourceState,
-        after: ResourceState,
+        before: ResourceStates,
+        after: ResourceStates,
     },
     Aliasing {
         before: &'a Resource,
@@ -98,15 +102,6 @@ bitflags::bitflags! {
 pub struct RenderTargetViewDesc {
     pub format: Format,
     pub dimension: ViewDimension,
-}
-
-bitflags::bitflags! {
-    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct ResourceState: i32 {
-        const Present = D3D12_RESOURCE_STATE_PRESENT.0;
-        const RenderTarget = D3D12_RESOURCE_STATE_RENDER_TARGET.0;
-        const GenericRead = D3D12_RESOURCE_STATE_GENERIC_READ.0;
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -143,54 +138,6 @@ pub enum ViewDimension {
         first_array_slice: u32,
         array_size: u32,
     },
-}
-
-#[derive(Clone, Copy, Debug)]
-#[repr(i32)]
-pub enum ResourceDimension {
-    Unknown = D3D12_RESOURCE_DIMENSION_UNKNOWN.0,
-    Buffer = D3D12_RESOURCE_DIMENSION_BUFFER.0,
-    Texture1D = D3D12_RESOURCE_DIMENSION_TEXTURE1D.0,
-    Texture2D = D3D12_RESOURCE_DIMENSION_TEXTURE2D.0,
-    Texture3d = D3D12_RESOURCE_DIMENSION_TEXTURE3D.0,
-}
-
-#[derive(Clone, Debug)]
-pub struct ResourceDesc {
-    pub dimension: ResourceDimension,
-    pub alignment: u64,
-    pub width: u64,
-    pub height: u32,
-    pub depth_or_array_size: u16,
-    pub mip_levels: u16,
-    pub sample_desc: SampleDesc,
-    pub format: Format,
-    pub layout: TextureLayout,
-    pub flags: ResourceFlags,
-}
-
-bitflags::bitflags! {
-    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct ResourceFlags: i32 {
-        const AllowRenderTarget = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET.0;
-        const AllowDepthStencil = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL.0;
-        const AllowUnorderedAccess = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS.0;
-        const DenyShaderResource = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE.0;
-        const AllowCrossAdapter = D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER.0;
-        const AllowSimultaneousAccess = D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS.0;
-        const VideoDecodeReferenceOnly = D3D12_RESOURCE_FLAG_VIDEO_DECODE_REFERENCE_ONLY.0;
-        const VideoEncodeReferenceOnly = D3D12_RESOURCE_FLAG_VIDEO_ENCODE_REFERENCE_ONLY.0;
-        const RaytracingAccelerationStructure = D3D12_RESOURCE_FLAG_RAYTRACING_ACCELERATION_STRUCTURE.0;
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-#[repr(i32)]
-pub enum TextureLayout {
-    Unknown = D3D12_TEXTURE_LAYOUT_UNKNOWN.0,
-    RowMajor = D3D12_TEXTURE_LAYOUT_ROW_MAJOR.0,
-    UndefinedSwizzle64Kb = D3D12_TEXTURE_LAYOUT_64KB_UNDEFINED_SWIZZLE.0,
-    StandardSwizzle64Kb = D3D12_TEXTURE_LAYOUT_64KB_STANDARD_SWIZZLE.0,
 }
 
 #[derive(Clone, Debug)]

@@ -21,16 +21,6 @@ pub const BARRIER_ALL_SUBRESOURCES: u32 = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCE
 pub const COMPILE_DEBUG: u32 = D3DCOMPILE_DEBUG;
 pub const COMPILE_SKIP_OPT: u32 = D3DCOMPILE_SKIP_OPTIMIZATION;
 
-#[derive(Debug, Default, Clone, Copy)]
-#[repr(i32)]
-pub enum Format {
-    #[default]
-    Less = 0,
-    Bgra8Unorm = DXGI_FORMAT_B8G8R8A8_UNORM.0,
-    Rgb32Float = DXGI_FORMAT_R32G32B32_FLOAT.0,
-    Rgba32Float = DXGI_FORMAT_R32G32B32A32_FLOAT.0,
-}
-
 bitflags::bitflags! {
     #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct FrameBufferUsage: u32 {

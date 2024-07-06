@@ -24,7 +24,7 @@ use crate::{
         BlobInterface, GraphicsPipelineDesc, PipelineStateInterface, RootSignatureDesc,
         RootSignatureInterface,
     },
-    resources::{RenderTargetViewDesc, ResourceDesc, ResourceInterface, ResourceState},
+    resources::{RenderTargetViewDesc, ResourceInterface},
     sync::FenceInterface,
     types::*,
     FeatureObject, HasInterface,
@@ -151,6 +151,25 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         root_signature: Option<&impl RootSignatureInterface>,
     ) -> Result<CS, DxError>;
 
+    /// Creates both a resource and an implicit heap, such that the heap is big enough to contain the entire resource, and the resource is mapped to the heap.
+    ///
+    /// # Arguments
+    /// * `heap_properties` - A reference to a [`HeapProperties`] structure that provides properties for the resource's heap.
+    /// * `heap_flags` - Heap options, as a bitwise-OR'd combination of [`HeapFlags`] enumeration constants.
+    /// * `desc` - A reference to a [`ResourceDesc`] structure that describes the resource.
+    /// * `init_state` - The initial state of the resource, as a bitwise-OR'd combination of [`ResourceState`] enumeration constants.
+    /// * `optimized_clear_value` - Specifies a [`ClearValue`] structure that describes the default value for a clear color.
+    ///
+    /// For more information: [`ID3D12Device::CreateCommittedResource method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommittedresource)
+    fn create_committed_resource<R: ResourceInterface>(
+        &self,
+        heap_properties: &HeapProperties,
+        heap_flags: HeapFlags,
+        desc: &ResourceDesc,
+        init_state: ResourceStates,
+        optimized_clear_value: Option<&ClearValue>,
+    ) -> Result<R, DxError>;
+
     fn create_fence<F: FenceInterface>(&self, initial_value: u64) -> Result<F, DxError>;
 
     fn create_descriptor_heap<H: DescriptorHeapInterface>(
@@ -184,15 +203,6 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         &self,
         desc: &GraphicsPipelineDesc<'_>,
     ) -> Result<G, DxError>;
-
-    fn create_committed_resource<R: ResourceInterface>(
-        &self,
-        heap_properties: HeapProperties,
-        heap_flags: HeapFlags,
-        desc: ResourceDesc,
-        init_state: ResourceState,
-        optimized_clear_value: Option<ClearValue>,
-    ) -> Result<R, DxError>;
 }
 
 create_type! {
@@ -318,6 +328,35 @@ impl_trait! {
             let res = res.unwrap();
 
             Ok(CS::new(res))
+        }
+    }
+
+    fn create_committed_resource<R: ResourceInterface>(
+        &self,
+        heap_properties: &HeapProperties,
+        heap_flags: HeapFlags,
+        desc: &ResourceDesc,
+        init_state: ResourceStates,
+        optimized_clear_value: Option<&ClearValue>,
+    ) -> Result<R, DxError> {
+        unsafe {
+            let clear_value = optimized_clear_value.as_ref().map(|c| c.as_raw());
+            let clear_value = clear_value.as_ref().map(|c| c as *const _);
+
+            let mut resource = None;
+
+            self.0.CreateCommittedResource(
+                &heap_properties.as_raw(),
+                heap_flags.as_raw(),
+                &desc.as_raw(),
+                init_state.as_raw(),
+                clear_value,
+                &mut resource,
+            ).map_err(DxError::from)?;
+
+            let resource = resource.unwrap();
+
+            Ok(R::new(resource))
         }
     }
 
@@ -502,32 +541,5 @@ impl_trait! {
         };
 
         Ok(G::new(res))
-    }
-
-    fn create_committed_resource<R: ResourceInterface>(
-        &self,
-        heap_properties: HeapProperties,
-        heap_flags: HeapFlags,
-        desc: ResourceDesc,
-        init_state: ResourceState,
-        optimized_clear_value: Option<ClearValue>,
-    ) -> Result<R, DxError> {
-        let clear_value = optimized_clear_value.as_ref().map(|c| c.as_raw());
-        let clear_value = clear_value.as_ref().map(|c| c as *const _);
-
-        let mut resource = None;
-        unsafe {
-            self.0.CreateCommittedResource(
-                &heap_properties.as_raw(),
-                heap_flags.as_raw(),
-                &desc.as_raw(),
-                init_state.as_raw(),
-                clear_value,
-                &mut resource,
-            ).map_err(|_| DxError::Dummy)?;
-        }
-        let resource = resource.unwrap();
-
-        Ok(R::new(resource))
     }
 }

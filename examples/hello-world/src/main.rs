@@ -309,8 +309,8 @@ fn populate_command_list(resources: &Resources) {
 
     let barrier = transition_barrier(
         &resources.render_targets[resources.frame_index as usize],
-        ResourceState::Present,
-        ResourceState::RenderTarget,
+        ResourceStates::Present,
+        ResourceStates::RenderTarget,
     );
     command_list.resource_barrier(&[barrier]);
 
@@ -328,8 +328,8 @@ fn populate_command_list(resources: &Resources) {
 
     let barrier = transition_barrier(
         &resources.render_targets[resources.frame_index as usize],
-        ResourceState::RenderTarget,
-        ResourceState::Present,
+        ResourceStates::RenderTarget,
+        ResourceStates::Present,
     );
     command_list.resource_barrier(&[barrier]);
 
@@ -338,8 +338,8 @@ fn populate_command_list(resources: &Resources) {
 
 fn transition_barrier(
     resource: &Resource,
-    state_before: ResourceState,
-    state_after: ResourceState,
+    state_before: ResourceStates,
+    state_after: ResourceStates,
 ) -> ResourceBarrier {
     ResourceBarrier {
         r#type: BarrierType::Transition {
@@ -516,7 +516,7 @@ fn create_vertex_buffer(device: &Device, aspect_ratio: f32) -> (Resource, Vertex
 
     let vertex_buffer: Resource = device
         .create_committed_resource(
-            HeapProperties {
+            &HeapProperties {
                 r#type: HeapType::Upload,
                 cpu_page_propery: CpuPageProperty::Unknown,
                 memory_pool_preference: MemoryPool::Unknown,
@@ -524,7 +524,7 @@ fn create_vertex_buffer(device: &Device, aspect_ratio: f32) -> (Resource, Vertex
                 visible_node_mask: 0,
             },
             HeapFlags::empty(),
-            ResourceDesc {
+            &ResourceDesc {
                 dimension: ResourceDimension::Buffer,
                 alignment: 0,
                 width: std::mem::size_of_val(&vertices) as u64,
@@ -535,11 +535,11 @@ fn create_vertex_buffer(device: &Device, aspect_ratio: f32) -> (Resource, Vertex
                     count: 1,
                     quality: 0,
                 },
-                format: Format::Less,
+                format: Format::Unknown,
                 layout: TextureLayout::RowMajor,
                 flags: ResourceFlags::empty(),
             },
-            ResourceState::GenericRead,
+            ResourceStates::GenericRead,
             None,
         )
         .unwrap();

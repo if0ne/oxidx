@@ -127,6 +127,54 @@ pub struct HeapProperties {
     pub visible_node_mask: u32,
 }
 
+/// Describes a resource, such as a texture. This structure is used extensively.
+///
+/// For more information: [`D3D12_RESOURCE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_desc)
+#[derive(Clone, Debug)]
+pub struct ResourceDesc {
+    /// One member of [`ResourceDimension`], specifying the dimensions of the resource.
+    pub dimension: ResourceDimension,
+
+    /// Specifies the alignment.
+    pub alignment: u64,
+
+    /// Specifies the width of the resource.
+    pub width: u64,
+
+    /// Specifies the height of the resource.
+    pub height: u32,
+
+    /// Specifies the depth of the resource, if it is 3D, or the array size if it is an array of 1D or 2D resources.
+    pub depth_or_array_size: u16,
+
+    /// Specifies the number of MIP levels.
+    pub mip_levels: u16,
+
+    /// Specifies a [`SampleDesc`] structure.
+    pub sample_desc: SampleDesc,
+
+    /// Specifies one member of [`Format`].
+    pub format: Format,
+
+    /// Specifies one member of [`TextureLayout`].
+    pub layout: TextureLayout,
+
+    /// Bitwise-OR'd flags, as [`ResourceFlags`] enumeration constants.
+    pub flags: ResourceFlags,
+}
+
+/// Describes multi-sampling parameters for a resource.
+///
+/// For more information: [`DXGI_SAMPLE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgicommon/ns-dxgicommon-dxgi_sample_desc)
+#[derive(Debug, Default, Clone, Copy)]
+pub struct SampleDesc {
+    /// The number of multisamples per pixel.
+    pub count: u32,
+
+    /// The image quality level. The higher the quality, the lower the performance.
+    pub quality: u32,
+}
+
 /// Describes the size of a tiled region.
 ///
 /// For more information: [`D3D12_TILE_REGION_SIZE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_tile_region_size)
@@ -136,21 +184,6 @@ pub struct TileRegionSize {
     pub num_tiles: u32,
 
     /// Specifies whether the runtime uses the **width**, **height**, and **depth** members to define the region.
-    ///
-    /// If **true**, the runtime uses the **width**, **height**, and **depth** members to define the region.
-    /// In this case, **num_tiles** should be equal to **width * height * depth**.
-    ///
-    /// If **false**, the runtime ignores the **width**, **height**, and **depth** members and uses the **num_tiles** member to
-    /// traverse tiles in the resource linearly across x, then y, then z (as applicable) and then spills over mipmaps/arrays in subresource order.
-    /// For example, use this technique to map an entire resource at once.
-    ///
-    /// Regardless of whether you specify **true** or **false** for **use_box**, you use a [`TiledResourceCoordinate`] structure to specify
-    /// the starting location for the region within the resource as a separate parameter outside of this structure by using x, y, and z coordinates.
-    ///
-    /// When the region includes mipmaps that are packed with nonstandard tiling, **use_box** must be **false** because
-    /// tile dimensions are not standard and the app only knows a count of how many tiles are consumed by the packed area,
-    /// which is per array slice. The corresponding (separate) starting location parameter uses x to offset into the flat range of tiles in this case,
-    /// and y and z coordinates must each be 0.
     pub use_box: bool,
 
     /// The width of the tiled region, in tiles. Used for buffer and 1D, 2D, and 3D textures.
@@ -180,10 +213,5 @@ pub struct TiledResourceCoordinate {
     pub z: u32,
 
     /// The index of the subresource for the tiled resource.
-    ///
-    /// For mipmaps that use nonstandard tiling, or are packed, or both use nonstandard tiling and are packed,
-    /// any subresource value that indicates any of the packed mipmaps all refer to the same tile.
-    /// Additionally, the X coordinate is used to indicate a tile within the packed mip region, rather than a logical region of a single subresource.
-    /// The Y and Z coordinates must be zero.
     pub subresource: u32,
 }

@@ -15,4 +15,6 @@ conv_flags!(GpuBasedValidationFlags to D3D12_GPU_BASED_VALIDATION_FLAGS);
 conv_flags!(HeapFlags to D3D12_HEAP_FLAGS);
 conv_flags!(MultisampleQualityLevelFlags to D3D12_MULTISAMPLE_QUALITY_LEVEL_FLAGS);
 conv_flags!(ProtectedResourceSessionSupportFlags to D3D12_PROTECTED_RESOURCE_SESSION_SUPPORT_FLAGS);
+conv_flags!(ResourceFlags to D3D12_RESOURCE_FLAGS);
+conv_flags!(ResourceStates to D3D12_RESOURCE_STATES);
 conv_flags!(TileRangeFlags to D3D12_TILE_RANGE_FLAGS);

@@ -356,6 +356,132 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Defines constants that specify options for working with resources.
+    ///
+    /// Empty flag - No options are specified.
+    ///
+    /// For more information: [`D3D12_RESOURCE_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_flags)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct ResourceFlags: i32 {
+        /// Allows a render target view to be created for the resource; and also enables the resource to transition into the state of [`ResourceStates::RenderTarget`].
+        const AllowRenderTarget = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET.0;
+
+        /// Allows a depth stencil view to be created for the resource, as well as enables the resource to transition into the state of [`ResourceStates::DepthWrite`] and/or [`ResourceStates::DepthRead`].
+        const AllowDepthStencil = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL.0;
+
+        /// Allows an unordered access view to be created for the resource, as well as enables the resource to transition into the state of [`ResourceStates::UnorderedAccess`].
+        const AllowUnorderedAccess = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS.0;
+
+        /// Disallows a shader resource view from being created for the resource, as well as disables the resource from transitioning into the state of [`ResourceStates::NonPixelShaderResource`] or [`ResourceStates::PixelShaderResource`].
+        const DenyShaderResource = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE.0;
+
+        /// Allows the resource to be used for cross-adapter data, as well as those features enabled by [`ResourceFlags::AllowSimultaneousAccess`].
+        const AllowCrossAdapter = D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER.0;
+
+        /// Allows a resource to be simultaneously accessed by multiple different queues, devices, or processes.
+        const AllowSimultaneousAccess = D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS.0;
+
+        /// Specfies that this resource may be used only as a decode reference frame. It may be written to or read only by the video decode operation.
+        const VideoDecodeReferenceOnly = D3D12_RESOURCE_FLAG_VIDEO_DECODE_REFERENCE_ONLY.0;
+
+        /// Specfies that this resource may be used only as an encode reference frame. It may be written to or read only by the video encode operation.
+        const VideoEncodeReferenceOnly = D3D12_RESOURCE_FLAG_VIDEO_ENCODE_REFERENCE_ONLY.0;
+
+        /// Requires the DirectX 12 Agility SDK 1.7 or later. Indicates that a buffer is to be used as a raytracing acceleration structure.
+        const RaytracingAccelerationStructure = D3D12_RESOURCE_FLAG_RAYTRACING_ACCELERATION_STRUCTURE.0;
+    }
+}
+
+bitflags::bitflags! {
+    /// Defines constants that specify the state of a resource regarding how the resource is being used.
+    ///
+    /// For more information: [`D3D12_RESOURCE_STATES enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_states)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct ResourceStates: i32 {
+        /// Your application should transition to this state only for accessing a resource across different graphics engine types.
+        const Common = D3D12_RESOURCE_STATE_COMMON.0;
+
+        /// A subresource must be in this state when it is accessed by the GPU as a vertex buffer or constant buffer. This is a read-only state.
+        const VertexAndConstantBuffer = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER.0;
+
+        /// A subresource must be in this state when it is accessed by the 3D pipeline as an index buffer. This is a read-only state.
+        const IndexBuffer = D3D12_RESOURCE_STATE_INDEX_BUFFER.0;
+
+        /// The resource is used as a render target.
+        const RenderTarget = D3D12_RESOURCE_STATE_RENDER_TARGET.0;
+
+        /// The resource is used for unordered access
+        const UnorderedAccess = D3D12_RESOURCE_STATE_UNORDERED_ACCESS.0;
+
+        /// This is a state that is mutually exclusive with other states.
+        const DepthWrite = D3D12_RESOURCE_STATE_DEPTH_WRITE.0;
+
+        /// This is a state that can be combined with other states.
+        const DepthRead = D3D12_RESOURCE_STATE_DEPTH_READ.0;
+
+        /// The resource is used with a shader other than the pixel shader.
+        const NonPixelShaderResource = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE.0;
+
+        /// The resource is used with a pixel shader.
+        const PixelShaderResource = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE.0;
+
+        /// The resource is used with stream output.
+        const StreamOut = D3D12_RESOURCE_STATE_STREAM_OUT.0;
+
+        /// The resource is used as an indirect argument.
+        const IndirectArgument = D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT.0;
+
+        /// The resource is used as the destination in a copy operation.
+        const CopyDest = D3D12_RESOURCE_STATE_COPY_DEST.0;
+
+        /// The resource is used as the source in a copy operation.
+        const CopySource = D3D12_RESOURCE_STATE_COPY_SOURCE.0;
+
+        /// The resource is used as the destination in a resolve operation.
+        const ResolveDest = D3D12_RESOURCE_STATE_RESOLVE_DEST.0;
+
+        /// The resource is used as the source in a resolve operation.
+        const ResolveSource = D3D12_RESOURCE_STATE_RESOLVE_SOURCE.0;
+
+        /// When a buffer is created with this as its initial state, it indicates that the resource is a raytracing acceleration structure.
+        const RaytracingAccelerationStructure = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE.0;
+
+        /// Starting with Windows 10, version 1903 (10.0; Build 18362), indicates that the resource is a screen-space shading-rate image for variable-rate shading (VRS).
+        const ShadingRateSource = D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE.0;
+
+        /// This is a logically OR'd combination of other read-state bits. This is the required starting state for an upload heap.
+        const GenericRead = D3D12_RESOURCE_STATE_GENERIC_READ.0;
+
+        /// Equivalent to [`ResourceStates::NonPixelShaderResource`] | [`ResourceStates::PixelShaderResource`]
+        const AllShaderResource = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE.0;
+
+        /// Synonymous with [`ResourceStates::Common`].
+        const Present = D3D12_RESOURCE_STATE_PRESENT.0;
+
+        /// The resource is used for Predication.
+        const Predication = D3D12_RESOURCE_STATE_PREDICATION.0;
+
+        /// The resource is used as a source in a decode operation.
+        const VideoDecodeRead = D3D12_RESOURCE_STATE_VIDEO_DECODE_READ.0;
+
+        /// The resource is used as a destination in the decode operation.
+        const VideoDecodeWrite = D3D12_RESOURCE_STATE_VIDEO_DECODE_WRITE.0;
+
+        /// The resource is used to read video data during video processing.
+        const VideoProcessRead = D3D12_RESOURCE_STATE_VIDEO_PROCESS_READ.0;
+
+        /// The resource is used to write video data during video processing.
+        const VideoProcessWrite = D3D12_RESOURCE_STATE_VIDEO_PROCESS_WRITE.0;
+
+        /// The resource is used as the source in an encode operation.
+        const VideoEncodeRead = D3D12_RESOURCE_STATE_VIDEO_ENCODE_READ.0;
+
+        /// This resource is used as the destination in an encode operation.
+        const VideoEncodeWrite = D3D12_RESOURCE_STATE_VIDEO_ENCODE_WRITE.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Specifies a range of tile mappings.
     ///
     /// Empty flag - No tile-mapping flags are specified.

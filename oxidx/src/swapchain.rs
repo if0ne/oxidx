@@ -12,7 +12,9 @@ use windows::Win32::Graphics::Dxgi::{
 
 use crate::error::DxError;
 use crate::resources::ResourceInterface;
-use crate::types::{AlphaMode, PresentFlags, Scaling, ScalingMode, ScanlineOrdering, SwapEffect};
+use crate::types::{
+    AlphaMode, PresentFlags, SampleDesc, Scaling, ScalingMode, ScanlineOrdering, SwapEffect,
+};
 use crate::{
     create_type,
     types::{Format, FrameBufferUsage},
@@ -91,12 +93,6 @@ bitflags::bitflags! {
         const AllowTearing = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING.0;
         const RestrictedToAllHolographicDisplays = DXGI_SWAP_CHAIN_FLAG_RESTRICTED_TO_ALL_HOLOGRAPHIC_DISPLAYS.0;
     }
-}
-
-#[derive(Debug, Default, Clone, Copy)]
-pub struct SampleDesc {
-    pub count: u32,
-    pub quality: u32,
 }
 
 #[derive(Debug, Clone, Copy)]

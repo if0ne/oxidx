@@ -27,10 +27,9 @@ use crate::{
         RootParameterType, RootSignatureFlags, ShaderVisibility, StaticSamplerDesc,
     },
     resources::{
-        BarrierType, RenderTargetViewDesc, ResourceBarrier, ResourceDesc, ResourceState,
-        VertexBufferView, ViewDimension,
+        BarrierType, RenderTargetViewDesc, ResourceBarrier, VertexBufferView, ViewDimension,
     },
-    swapchain::{Rational, SampleDesc, SwapchainDesc, SwapchainFullscreenDesc},
+    swapchain::{Rational, SwapchainDesc, SwapchainFullscreenDesc},
     types::*,
     HasInterface,
 };
@@ -49,21 +48,6 @@ impl SwapchainDesc {
             SwapEffect: self.swap_effect.as_raw(),
             AlphaMode: self.alpha_mode.as_raw(),
             Flags: self.flags.bits() as u32,
-        }
-    }
-}
-
-impl Format {
-    pub(crate) fn as_raw(&self) -> DXGI_FORMAT {
-        DXGI_FORMAT(*self as i32)
-    }
-}
-
-impl SampleDesc {
-    pub(crate) fn as_raw(&self) -> DXGI_SAMPLE_DESC {
-        DXGI_SAMPLE_DESC {
-            Count: self.count,
-            Quality: self.quality,
         }
     }
 }
@@ -521,29 +505,6 @@ impl ClearValue {
                 },
             },
         }
-    }
-}
-
-impl ResourceDesc {
-    pub(crate) fn as_raw(&self) -> D3D12_RESOURCE_DESC {
-        D3D12_RESOURCE_DESC {
-            Dimension: D3D12_RESOURCE_DIMENSION(self.dimension as i32),
-            Alignment: self.alignment,
-            Width: self.width,
-            Height: self.height,
-            DepthOrArraySize: self.depth_or_array_size,
-            MipLevels: self.mip_levels,
-            Format: self.format.as_raw(),
-            SampleDesc: self.sample_desc.as_raw(),
-            Layout: D3D12_TEXTURE_LAYOUT(self.layout as i32),
-            Flags: D3D12_RESOURCE_FLAGS(self.flags.bits()),
-        }
-    }
-}
-
-impl ResourceState {
-    pub(crate) fn as_raw(&self) -> D3D12_RESOURCE_STATES {
-        D3D12_RESOURCE_STATES(self.bits())
     }
 }
 

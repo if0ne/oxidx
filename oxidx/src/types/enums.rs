@@ -304,6 +304,25 @@ pub enum FeatureLevel {
     Level12_2 = D3D_FEATURE_LEVEL_12_2.0,
 }
 
+/// Resource data formats, including fully-typed and typeless formats. A list of modifiers at the bottom of the page more fully describes each format type.
+///
+/// For more information: [`DXGI_FORMAT enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum Format {
+    /// The format is not known.
+    #[default]
+    Unknown = DXGI_FORMAT_UNKNOWN.0,
+    /// A four-component, 32-bit unsigned-normalized-integer format that supports 8 bits for each color channel and 8-bit alpha.
+    Bgra8Unorm = DXGI_FORMAT_B8G8R8A8_UNORM.0,
+
+    /// A three-component, 96-bit floating-point format that supports 32 bits per color channel.
+    Rgb32Float = DXGI_FORMAT_R32G32B32_FLOAT.0,
+
+    /// A four-component, 128-bit floating-point format that supports 32 bits per channel including alpha.
+    Rgba32Float = DXGI_FORMAT_R32G32B32A32_FLOAT.0,
+}
+
 /// Heap alignment variants.
 #[derive(Clone, Copy, Debug, Default, FromRepr)]
 #[repr(u64)]
@@ -555,6 +574,28 @@ pub enum ResourceBindingTier {
     Tier3 = D3D12_RESOURCE_BINDING_TIER_3.0,
 }
 
+/// Identifies the type of resource being used.
+///
+/// For more information: [`D3D12_RESOURCE_DIMENSION enumeration `](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_dimension)
+#[derive(Clone, Copy, Debug, FromRepr)]
+#[repr(i32)]
+pub enum ResourceDimension {
+    /// Resource is of unknown type.
+    Unknown = D3D12_RESOURCE_DIMENSION_UNKNOWN.0,
+
+    /// Resource is a buffer.
+    Buffer = D3D12_RESOURCE_DIMENSION_BUFFER.0,
+
+    /// Resource is a 1D texture.
+    Texture1D = D3D12_RESOURCE_DIMENSION_TEXTURE1D.0,
+
+    /// Resource is a 2D texture.
+    Texture2D = D3D12_RESOURCE_DIMENSION_TEXTURE2D.0,
+
+    /// Resource is a 3D texture.
+    Texture3d = D3D12_RESOURCE_DIMENSION_TEXTURE3D.0,
+}
+
 /// Specifies which resource heap tier the hardware and driver support.
 ///
 /// For more information: [`D3D12_RESOURCE_HEAP_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_heap_tier)
@@ -661,6 +702,30 @@ pub enum SharedResourceCompatibilityTier {
 
     /// Specifies that cross-API sharing functionality of [`SharedResourceCompatibilityTier::Tier1`] is supported, plus the other formats.
     Tier2 = D3D12_SHARED_RESOURCE_COMPATIBILITY_TIER_2.0,
+}
+
+/// Specifies texture layout options.
+///
+/// For more information: [`D3D12_TEXTURE_LAYOUT enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_texture_layout)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum TextureLayout {
+    /// Indicates that the layout is unknown, and is likely adapter-dependent.
+    ///
+    /// During creation, the driver chooses the most efficient layout based on other resource properties, especially resource size and flags.
+    ///
+    /// Prefer this choice unless certain functionality is required from another texture layout.
+    #[default]
+    Unknown = D3D12_TEXTURE_LAYOUT_UNKNOWN.0,
+
+    /// Indicates that data for the texture is stored in row-major order (sometimes called "pitch-linear order").
+    RowMajor = D3D12_TEXTURE_LAYOUT_ROW_MAJOR.0,
+
+    /// Indicates that the layout within 64KB tiles and tail mip packing is up to the driver.
+    UndefinedSwizzle64Kb = D3D12_TEXTURE_LAYOUT_64KB_UNDEFINED_SWIZZLE.0,
+
+    /// Indicates that a default texture uses the standardized swizzle pattern.
+    StandardSwizzle64Kb = D3D12_TEXTURE_LAYOUT_64KB_STANDARD_SWIZZLE.0,
 }
 
 /// Identifies the tier level at which tiled resources are supported.

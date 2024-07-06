@@ -13,8 +13,7 @@ use crate::{
     create_type,
     error::DxError,
     impl_trait,
-    swapchain::SampleDesc,
-    types::{Format, RootSignatureVersion},
+    types::{Format, RootSignatureVersion, SampleDesc},
     HasInterface,
 };
 

@@ -148,6 +148,34 @@ impl From<D3D12_HEAP_PROPERTIES> for HeapProperties {
     }
 }
 
+impl ResourceDesc {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_RESOURCE_DESC {
+        D3D12_RESOURCE_DESC {
+            Dimension: self.dimension.as_raw(),
+            Alignment: self.alignment,
+            Width: self.width,
+            Height: self.height,
+            DepthOrArraySize: self.depth_or_array_size,
+            MipLevels: self.mip_levels,
+            Format: self.format.as_raw(),
+            SampleDesc: self.sample_desc.as_raw(),
+            Layout: self.layout.as_raw(),
+            Flags: self.flags.as_raw(),
+        }
+    }
+}
+
+impl SampleDesc {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> DXGI_SAMPLE_DESC {
+        DXGI_SAMPLE_DESC {
+            Count: self.count,
+            Quality: self.quality,
+        }
+    }
+}
+
 impl TileRegionSize {
     #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_TILE_REGION_SIZE {
