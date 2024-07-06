@@ -224,7 +224,18 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         desc: &DescriptorHeapDesc,
     ) -> Result<H, DxError>;
 
-    fn create_fence<F: FenceInterface>(&self, initial_value: u64) -> Result<F, DxError>;
+    /// Creates a fence object.
+    ///
+    /// # Arguments
+    /// * `initial_value` - The initial value for the fence.
+    /// * `flags` - A combination of [`FenceFlags`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies options for the fence.
+    ///
+    /// For more information: [`ID3D12Device::CreateFence method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createfence)
+    fn create_fence<F: FenceInterface>(
+        &self,
+        initial_value: u64,
+        flags: FenceFlags,
+    ) -> Result<F, DxError>;
 
     fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32;
 
@@ -477,12 +488,13 @@ impl_trait! {
     fn create_fence<F: FenceInterface>(
         &self,
         initial_value: u64,
+        flags: FenceFlags,
     ) -> Result<F, DxError> {
-        let res: F::Raw  = unsafe {
-            self.0.CreateFence(initial_value, D3D12_FENCE_FLAG_NONE).map_err(|_| DxError::Dummy)?
-        };
+        unsafe {
+            let res: F::Raw = self.0.CreateFence(initial_value, flags.as_raw()).map_err(DxError::from)?;
 
-        Ok(F::new(res))
+            Ok(F::new(res))
+        }
     }
 
     fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32 {
