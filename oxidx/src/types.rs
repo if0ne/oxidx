@@ -152,16 +152,3 @@ impl Rect {
         }
     }
 }
-
-#[derive(Clone, Debug)]
-pub enum ClearValue {
-    Color {
-        format: Format,
-        value: [f32; 4],
-    },
-    Depth {
-        format: Format,
-        depth: f32,
-        stencil: u8,
-    },
-}

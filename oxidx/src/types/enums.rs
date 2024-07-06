@@ -4,6 +4,30 @@ use windows::Win32::Graphics::{Direct3D::*, Direct3D12::*};
 #[allow(unused_imports)]
 use super::*;
 
+/// Describes a value used to optimize clear operations for a particular resource.
+///
+/// For more information: [`D3D12_CLEAR_VALUE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_clear_value)
+#[derive(Clone, Copy, Debug)]
+pub enum ClearValue {
+    Color {
+        /// Specifies one member of the [`Format`] enum.
+        format: Format,
+
+        /// Specifies a 4-entry array of float values, determining the RGBA value.
+        value: [f32; 4],
+    },
+    Depth {
+        /// Specifies one member of the [`Format`] enum.
+        format: Format,
+
+        /// Specifies the depth value.
+        depth: f32,
+
+        /// Specifies the stencil value.
+        stencil: u8,
+    },
+}
+
 /// Defines priority levels for a command queue.
 ///
 /// For more information: [`D3D12_COMMAND_QUEUE_PRIORITY enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_command_queue_priority)
@@ -313,14 +337,326 @@ pub enum Format {
     /// The format is not known.
     #[default]
     Unknown = DXGI_FORMAT_UNKNOWN.0,
-    /// A four-component, 32-bit unsigned-normalized-integer format that supports 8 bits for each color channel and 8-bit alpha.
-    Bgra8Unorm = DXGI_FORMAT_B8G8R8A8_UNORM.0,
+
+    /// A four-component, 128-bit typeless format that supports 32 bits per channel including alpha.
+    Rgba32Typeless = DXGI_FORMAT_R32G32B32A32_TYPELESS.0,
+
+    /// A four-component, 128-bit floating-point format that supports 32 bits per channel including alpha.
+    Rgba32Float = DXGI_FORMAT_R32G32B32A32_FLOAT.0,
+
+    /// A four-component, 128-bit unsigned-integer format that supports 32 bits per channel including alpha.
+    Rgba32Uint = DXGI_FORMAT_R32G32B32A32_UINT.0,
+
+    /// A four-component, 128-bit signed-integer format that supports 32 bits per channel including alpha.
+    Rgba32Sint = DXGI_FORMAT_R32G32B32A32_SINT.0,
+
+    /// A three-component, 96-bit typeless format that supports 32 bits per color channel.
+    Rgb32Typeless = DXGI_FORMAT_R32G32B32_TYPELESS.0,
 
     /// A three-component, 96-bit floating-point format that supports 32 bits per color channel.
     Rgb32Float = DXGI_FORMAT_R32G32B32_FLOAT.0,
 
-    /// A four-component, 128-bit floating-point format that supports 32 bits per channel including alpha.
-    Rgba32Float = DXGI_FORMAT_R32G32B32A32_FLOAT.0,
+    /// A three-component, 96-bit unsigned-integer format that supports 32 bits per color channel.
+    Rgb32Uint = DXGI_FORMAT_R32G32B32_UINT.0,
+
+    /// A three-component, 96-bit signed-integer format that supports 32 bits per color channel.
+    Rgb32Sint = DXGI_FORMAT_R32G32B32_SINT.0,
+
+    /// A four-component, 64-bit typeless format that supports 16 bits per channel including alpha.
+    Rgba16Typeless = DXGI_FORMAT_R16G16B16A16_TYPELESS.0,
+
+    /// A four-component, 64-bit floating-point format that supports 16 bits per channel including alpha.
+    Rgba16Float = DXGI_FORMAT_R16G16B16A16_FLOAT.0,
+
+    /// A four-component, 64-bit unsigned-normalized-integer format that supports 16 bits per channel including alpha.
+    Rgba16Unorm = DXGI_FORMAT_R16G16B16A16_UNORM.0,
+
+    /// A four-component, 64-bit unsigned-integer format that supports 16 bits per channel including alpha.
+    Rgba16Uint = DXGI_FORMAT_R16G16B16A16_UINT.0,
+
+    /// A four-component, 64-bit signed-normalized-integer format that supports 16 bits per channel including alpha.
+    Rgba16Snorm = DXGI_FORMAT_R16G16B16A16_SNORM.0,
+
+    /// A four-component, 64-bit signed-integer format that supports 16 bits per channel including alpha.
+    Rgba16Sint = DXGI_FORMAT_R16G16B16A16_SINT.0,
+
+    /// A two-component, 64-bit typeless format that supports 32 bits for the red channel and 32 bits for the green channel.
+    Rg32Typeless = DXGI_FORMAT_R32G32_TYPELESS.0,
+
+    /// A two-component, 64-bit floating-point format that supports 32 bits for the red channel and 32 bits for the green channel.
+    Rg32Float = DXGI_FORMAT_R32G32_FLOAT.0,
+
+    /// A two-component, 64-bit unsigned-integer format that supports 32 bits for the red channel and 32 bits for the green channel.
+    Rg32Uint = DXGI_FORMAT_R32G32_UINT.0,
+
+    /// A two-component, 64-bit signed-integer format that supports 32 bits for the red channel and 32 bits for the green channel.
+    Rg32Sint = DXGI_FORMAT_R32G32_SINT.0,
+
+    /// A two-component, 64-bit typeless format that supports 32 bits for the red channel, 8 bits for the green channel, and 24 bits are unused.
+    R32G8X24Typeless = DXGI_FORMAT_R32G8X24_TYPELESS.0,
+
+    /// A 32-bit floating-point component, and two unsigned-integer components (with an additional 32 bits). This format supports 32-bit depth, 8-bit stencil, and 24 bits are unused.
+    D32FloatS8X24Uint = DXGI_FORMAT_D32_FLOAT_S8X24_UINT.0,
+
+    /// A 32-bit typeless component, and two unsigned-integer components (with an additional 32 bits). This format has 32 bits unused, 8 bits for green channel, and 24 bits are unused.
+    R32FloatX8X24Typeless = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS.0,
+
+    /// A four-component, 32-bit typeless format that supports 10 bits for each color and 2 bits for alpha.
+    Rgb10A2Typeless = DXGI_FORMAT_R10G10B10A2_TYPELESS.0,
+
+    /// A four-component, 32-bit unsigned-normalized-integer format that supports 10 bits for each color and 2 bits for alpha.
+    Rgb10A2Unorm = DXGI_FORMAT_R10G10B10A2_UNORM.0,
+
+    /// A four-component, 32-bit unsigned-integer format that supports 10 bits for each color and 2 bits for alpha.
+    Rgb10A2Uint = DXGI_FORMAT_R10G10B10A2_UINT.0,
+
+    /// Three partial-precision floating-point numbers encoded into a single 32-bit value (a variant of s10e5, which is sign bit, 10-bit mantissa, and 5-bit biased (15) exponent).
+    Rg11B10Float = DXGI_FORMAT_R11G11B10_FLOAT.0,
+
+    /// A four-component, 32-bit typeless format that supports 8 bits per channel including alpha.
+    Rgba8Typeless = DXGI_FORMAT_R8G8B8A8_TYPELESS.0,
+
+    /// A four-component, 32-bit unsigned-normalized-integer format that supports 8 bits per channel including alpha.
+    Rgba8Unorm = DXGI_FORMAT_R8G8B8A8_UNORM.0,
+
+    /// A four-component, 32-bit unsigned-normalized integer sRGB format that supports 8 bits per channel including alpha.
+    Rgba8UnormSrgb = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB.0,
+
+    /// A four-component, 32-bit unsigned-integer format that supports 8 bits per channel including alpha.
+    Rgba8Uint = DXGI_FORMAT_R8G8B8A8_UINT.0,
+
+    /// A four-component, 32-bit signed-normalized-integer format that supports 8 bits per channel including alpha.
+    Rgba8Snorm = DXGI_FORMAT_R8G8B8A8_SNORM.0,
+
+    /// A four-component, 32-bit signed-integer format that supports 8 bits per channel including alpha.
+    Rgba8Sint = DXGI_FORMAT_R8G8B8A8_SINT.0,
+
+    /// A two-component, 32-bit typeless format that supports 16 bits for the red channel and 16 bits for the green channel.
+    Rg16Typeless = DXGI_FORMAT_R16G16_TYPELESS.0,
+
+    /// A two-component, 32-bit floating-point format that supports 16 bits for the red channel and 16 bits for the green channel.
+    Rg16Float = DXGI_FORMAT_R16G16_FLOAT.0,
+
+    /// A two-component, 32-bit unsigned-normalized-integer format that supports 16 bits each for the green and red channels.
+    Rg16Unorm = DXGI_FORMAT_R16G16_UNORM.0,
+
+    /// A two-component, 32-bit unsigned-integer format that supports 16 bits for the red channel and 16 bits for the green channel.
+    Rg16Uint = DXGI_FORMAT_R16G16_UINT.0,
+
+    /// A two-component, 32-bit signed-normalized-integer format that supports 16 bits each for the green and red channels.
+    Rg16Snorm = DXGI_FORMAT_R16G16_SNORM.0,
+
+    /// A two-component, 32-bit signed-integer format that supports 16 bits for the red channel and 16 bits for the green channel.
+    Rg16Sint = DXGI_FORMAT_R16G16_SINT.0,
+
+    /// A single-component, 32-bit typeless format that supports 32 bits for the red channel.
+    R32Typeless = DXGI_FORMAT_R32_TYPELESS.0,
+
+    /// A single-component, 32-bit floating-point format that supports 32 bits for the red channel.
+    D32Float = DXGI_FORMAT_D32_FLOAT.0,
+
+    /// A single-component, 32-bit floating-point format that supports 32 bits for the red channel.
+    R32Float = DXGI_FORMAT_R32_FLOAT.0,
+
+    /// A single-component, 32-bit unsigned-integer format that supports 32 bits for the red channel.
+    R32Uint = DXGI_FORMAT_R32_UINT.0,
+
+    /// A single-component, 32-bit signed-integer format that supports 32 bits for the red channel.
+    R32Sint = DXGI_FORMAT_R32_SINT.0,
+
+    /// A two-component, 32-bit typeless format that supports 24 bits for the red channel and 8 bits for the green channel.
+    R24G8Typeless = DXGI_FORMAT_R24G8_TYPELESS.0,
+
+    /// A 32-bit z-buffer format that supports 24 bits for depth and 8 bits for stencil.
+    D24UnormS8Uint = DXGI_FORMAT_D24_UNORM_S8_UINT.0,
+
+    /// A 32-bit format, that contains a 24 bit, single-component, unsigned-normalized integer, with an additional typeless 8 bits. This format has 24 bits red channel and 8 bits unused.
+    R24UnormX8Typeless = DXGI_FORMAT_R24_UNORM_X8_TYPELESS.0,
+
+    /// A 32-bit format, that contains a 24 bit, single-component, typeless format, with an additional 8 bit unsigned integer component. This format has 24 bits unused and 8 bits green channel.
+    X24TypelessG8Uint = DXGI_FORMAT_X24_TYPELESS_G8_UINT.0,
+
+    /// A two-component, 16-bit typeless format that supports 8 bits for the red channel and 8 bits for the green channel.
+    Rg8Typeless = DXGI_FORMAT_R8G8_TYPELESS.0,
+
+    /// A two-component, 16-bit unsigned-normalized-integer format that supports 8 bits for the red channel and 8 bits for the green channel.
+    Rg8Unorm = DXGI_FORMAT_R8G8_UNORM.0,
+
+    /// A two-component, 16-bit unsigned-integer format that supports 8 bits for the red channel and 8 bits for the green channel.
+    Rg8Uint = DXGI_FORMAT_R8G8_UINT.0,
+
+    /// A two-component, 16-bit signed-normalized-integer format that supports 8 bits for the red channel and 8 bits for the green channel.
+    Rg8Snorm = DXGI_FORMAT_R8G8_SNORM.0,
+
+    /// A two-component, 16-bit signed-integer format that supports 8 bits for the red channel and 8 bits for the green channel.
+    Rg8Sint = DXGI_FORMAT_R8G8_SINT.0,
+
+    /// A single-component, 16-bit typeless format that supports 16 bits for the red channel.
+    R16Typeless = DXGI_FORMAT_R16_TYPELESS.0,
+
+    /// A single-component, 16-bit floating-point format that supports 16 bits for the red channel.
+    R16Float = DXGI_FORMAT_R16_FLOAT.0,
+
+    /// A single-component, 16-bit unsigned-normalized-integer format that supports 16 bits for depth.
+    D16Unorm = DXGI_FORMAT_D16_UNORM.0,
+
+    /// A single-component, 16-bit unsigned-normalized-integer format that supports 16 bits for the red channel.
+    R16Unorm = DXGI_FORMAT_R16_UNORM.0,
+
+    /// A single-component, 16-bit unsigned-integer format that supports 16 bits for the red channel.
+    R16Uint = DXGI_FORMAT_R16_UINT.0,
+
+    /// A single-component, 16-bit signed-normalized-integer format that supports 16 bits for the red channel.
+    R16Snorm = DXGI_FORMAT_R16_SNORM.0,
+
+    /// A single-component, 16-bit signed-integer format that supports 16 bits for the red channel.
+    R16Sint = DXGI_FORMAT_R16_SINT.0,
+
+    /// A single-component, 8-bit typeless format that supports 8 bits for the red channel.
+    R8Typeless = DXGI_FORMAT_R8_TYPELESS.0,
+
+    /// A single-component, 8-bit unsigned-normalized-integer format that supports 8 bits for the red channel.
+    R8Unorm = DXGI_FORMAT_R8_UNORM.0,
+
+    /// A single-component, 8-bit unsigned-integer format that supports 8 bits for the red channel.
+    R8Uint = DXGI_FORMAT_R8_UINT.0,
+
+    /// A single-component, 8-bit signed-normalized-integer format that supports 8 bits for the red channel.
+    R8Snorm = DXGI_FORMAT_R8_SNORM.0,
+
+    /// A single-component, 8-bit signed-integer format that supports 8 bits for the red channel.
+    R8Sint = DXGI_FORMAT_R8_SINT.0,
+
+    /// A single-component, 8-bit unsigned-normalized-integer format for alpha only.
+    A8Unorm = DXGI_FORMAT_A8_UNORM.0,
+
+    /// A single-component, 1-bit unsigned-normalized integer format that supports 1 bit for the red channel.
+    R1Unorm = DXGI_FORMAT_R1_UNORM.0,
+
+    /// Three partial-precision floating-point numbers encoded into a single 32-bit value all sharing the same 5-bit exponent (variant of s10e5, which is sign bit, 10-bit mantissa, and 5-bit biased (15) exponent).
+    Rgb9E5 = DXGI_FORMAT_R9G9B9E5_SHAREDEXP.0,
+
+    /// A four-component, 32-bit unsigned-normalized-integer format.
+    /// This packed RGB format is analogous to the UYVY format. Each 32-bit block describes a pair of pixels: (R8, G8, B8) and (R8, G8, B8) where the R8/B8 values are repeated, and the G8 values are unique to each pixel.
+    Rg8Bg8Unorm = DXGI_FORMAT_R8G8_B8G8_UNORM.0,
+
+    /// A four-component, 32-bit unsigned-normalized-integer format. This packed RGB format is analogous to the YUY2 format.
+    /// Each 32-bit block describes a pair of pixels: (R8, G8, B8) and (R8, G8, B8) where the R8/B8 values are repeated, and the G8 values are unique to each pixel.
+    Gr8Gb8Unorm = DXGI_FORMAT_G8R8_G8B8_UNORM.0,
+
+    /// Four-component typeless block-compression format.
+    Bc1Typeless = DXGI_FORMAT_BC1_TYPELESS.0,
+
+    /// Four-component block-compression format.
+    Bc1Unorm = DXGI_FORMAT_BC1_UNORM.0,
+
+    /// Four-component block-compression format for sRGB data.
+    Bc1UnormSrgb = DXGI_FORMAT_BC1_UNORM_SRGB.0,
+
+    /// Four-component typeless block-compression format.
+    Bc2Typeless = DXGI_FORMAT_BC2_TYPELESS.0,
+
+    /// Four-component block-compression format.
+    Bc2Unorm = DXGI_FORMAT_BC2_UNORM.0,
+
+    /// Four-component block-compression format for sRGB data.
+    Bc2UnormSrgb = DXGI_FORMAT_BC2_UNORM_SRGB.0,
+
+    /// Four-component typeless block-compression format.
+    Bc3Typeless = DXGI_FORMAT_BC3_TYPELESS.0,
+
+    /// Four-component block-compression format.
+    Bc3Unorm = DXGI_FORMAT_BC3_UNORM.0,
+
+    /// Four-component block-compression format for sRGB data.
+    Bc3UnormSrgb = DXGI_FORMAT_BC3_UNORM_SRGB.0,
+
+    /// Four-component typeless block-compression format.
+    Bc4Typeless = DXGI_FORMAT_BC4_TYPELESS.0,
+
+    /// Four-component block-compression format.
+    Bc4Unorm = DXGI_FORMAT_BC4_UNORM.0,
+
+    /// Four-component block-compression format for sRGB data.
+    Bc4Snorm = DXGI_FORMAT_BC4_SNORM.0,
+
+    /// Four-component typeless block-compression format.
+    Bc5Typeless = DXGI_FORMAT_BC5_TYPELESS.0,
+
+    /// Four-component block-compression format.
+    Bc5Unorm = DXGI_FORMAT_BC5_UNORM.0,
+
+    /// Four-component block-compression format for sRGB data.
+    Bc5Snorm = DXGI_FORMAT_BC5_SNORM.0,
+
+    /// A three-component, 16-bit unsigned-normalized-integer format that supports 5 bits for blue, 6 bits for green, and 5 bits for red.
+    B5G6R5Unorm = DXGI_FORMAT_B5G6R5_UNORM.0,
+
+    /// A four-component, 16-bit unsigned-normalized-integer format that supports 5 bits for each color channel and 1-bit alpha.
+    B5G6R5A1Unorm = DXGI_FORMAT_B5G5R5A1_UNORM.0,
+
+    /// A four-component, 32-bit unsigned-normalized-integer format that supports 8 bits for each color channel and 8-bit alpha.
+    Bgra8Unorm = DXGI_FORMAT_B8G8R8A8_UNORM.0,
+
+    ///A four-component, 32-bit unsigned-normalized-integer format that supports 8 bits for each color channel and 8 bits unused.
+    Bgrx8Unorm = DXGI_FORMAT_B8G8R8X8_UNORM.0,
+
+    /// A four-component, 32-bit 2.8-biased fixed-point format that supports 10 bits for each color channel and 2-bit alpha.
+    Rgb10XRBiasA2Unorm = DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM.0,
+
+    /// A four-component, 32-bit typeless format that supports 8 bits for each channel including alpha.
+    Bgra8Typeless = DXGI_FORMAT_B8G8R8A8_TYPELESS.0,
+
+    /// A four-component, 32-bit unsigned-normalized standard RGB format that supports 8 bits for each channel including alpha.
+    Bgra8UnormSrgb = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB.0,
+
+    /// A four-component, 32-bit typeless format that supports 8 bits for each color channel, and 8 bits are unused.
+    Bgrx8Typeless = DXGI_FORMAT_B8G8R8X8_TYPELESS.0,
+
+    /// A four-component, 32-bit unsigned-normalized standard RGB format that supports 8 bits for each color channel, and 8 bits are unused.
+    Bgrx8UnormSrgb = DXGI_FORMAT_B8G8R8X8_UNORM_SRGB.0,
+
+    /// A typeless block-compression format.
+    Bc6hTypeless = DXGI_FORMAT_BC6H_TYPELESS.0,
+
+    /// A block-compression format.
+    Bc6hUf16 = DXGI_FORMAT_BC6H_UF16.0,
+
+    /// A block-compression format.
+    Bc6hSf16 = DXGI_FORMAT_BC6H_SF16.0,
+
+    /// A typeless block-compression format.
+    Bc7Typeless = DXGI_FORMAT_BC7_TYPELESS.0,
+
+    /// A block-compression format.
+    Bc7Unorm = DXGI_FORMAT_BC7_UNORM.0,
+
+    /// A block-compression format.
+    Bc7UnormSrgb = DXGI_FORMAT_BC7_UNORM_SRGB.0,
+
+    /// Most common YUV 4:4:4 video resource format.
+    Ayuv = DXGI_FORMAT_AYUV.0,
+
+    /// 10-bit per channel packed YUV 4:4:4 video resource format.
+    Y410 = DXGI_FORMAT_Y410.0,
+
+    /// 16-bit per channel packed YUV 4:4:4 video resource format.
+    Y416 = DXGI_FORMAT_Y416.0,
+
+    /// Most common YUV 4:2:0 video resource format.
+    NV12 = DXGI_FORMAT_NV12.0,
+
+    /// 10-bit per channel planar YUV 4:2:0 video resource format.
+    P010 = DXGI_FORMAT_P010.0,
+
+    /// 16-bit per channel planar YUV 4:2:0 video resource format.
+    P016 = DXGI_FORMAT_P016.0,
+
+    /// 8-bit per channel planar YUV 4:2:0 video resource format.
+    Opaque420 = DXGI_FORMAT_420_OPAQUE.0,
+
+    /// Most common YUV 4:2:2 video resource format.
+    Yuy2 = DXGI_FORMAT_YUY2.0,
 }
 
 /// Heap alignment variants.

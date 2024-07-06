@@ -33,6 +33,31 @@ conv_enum!(VariableShadingRateTier to D3D12_VARIABLE_SHADING_RATE_TIER);
 conv_enum!(ViewInstancingTier to D3D12_VIEW_INSTANCING_TIER);
 conv_enum!(WaveMmaTier to D3D12_WAVE_MMA_TIER);
 
+impl ClearValue {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_CLEAR_VALUE {
+        match *self {
+            ClearValue::Color { format, value } => D3D12_CLEAR_VALUE {
+                Format: format.as_raw(),
+                Anonymous: D3D12_CLEAR_VALUE_0 { Color: value },
+            },
+            ClearValue::Depth {
+                format,
+                depth,
+                stencil,
+            } => D3D12_CLEAR_VALUE {
+                Format: format.as_raw(),
+                Anonymous: D3D12_CLEAR_VALUE_0 {
+                    DepthStencil: D3D12_DEPTH_STENCIL_VALUE {
+                        Depth: depth,
+                        Stencil: stencil,
+                    },
+                },
+            },
+        }
+    }
+}
+
 impl CommandQueuePriority {
     #[inline]
     pub(crate) fn as_raw(&self) -> i32 {
