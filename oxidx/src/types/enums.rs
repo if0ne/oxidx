@@ -169,6 +169,60 @@ pub enum DescriptorHeapType {
     Sampler = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER.0,
 }
 
+/// Specifies how to access a resource used in a depth-stencil view.
+///
+/// For more information: [`D3D12_DSV_DIMENSION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_dsv_dimension)
+#[derive(Clone, Copy, Debug)]
+pub enum DsvDimension {
+    /// The resource will be accessed as a 1D texture.
+    Tex1D {
+        /// The index of the first mipmap level to use.
+        mip_slice: u32,
+    },
+
+    /// The resource will be accessed as an array of 1D textures.
+    ArrayTex1D {
+        /// The index of the first mipmap level to use.
+        mip_slice: u32,
+
+        /// The index of the first texture to use in an array of textures.
+        first_array_slice: u32,
+
+        /// Number of textures to use.
+        array_size: u32,
+    },
+
+    /// The resource will be accessed as a 2D texture.
+    Tex2D {
+        /// The index of the first mipmap level to use.
+        mip_slice: u32,
+    },
+
+    /// The resource will be accessed as an array of 2D textures.
+    ArrayTex2D {
+        /// The index of the first mipmap level to use.
+        mip_slice: u32,
+
+        /// The index of the first texture to use in an array of textures.
+        first_array_slice: u32,
+
+        /// Number of textures to use.
+        array_size: u32,
+    },
+
+    /// The resource will be accessed as a 2D texture with multi sampling.
+    Tex2DMs,
+
+    /// The resource will be accessed as an array of 2D textures with multi sampling.
+    ArrayTex2DMs {
+        /// The index of the first texture to use in an array of textures.
+        first_array_slice: u32,
+
+        /// Number of textures to use.
+        array_size: u32,
+    },
+}
+
 /// Defines constants that specify a Direct3D 12 feature or feature set to query about.
 ///
 /// For more information: [`D3D12_FEATURE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_feature)
@@ -962,7 +1016,7 @@ pub enum ResourceDimension {
     Texture2D = D3D12_RESOURCE_DIMENSION_TEXTURE2D.0,
 
     /// Resource is a 3D texture.
-    Texture3d = D3D12_RESOURCE_DIMENSION_TEXTURE3D.0,
+    Texture3D = D3D12_RESOURCE_DIMENSION_TEXTURE3D.0,
 }
 
 /// Specifies which resource heap tier the hardware and driver support.

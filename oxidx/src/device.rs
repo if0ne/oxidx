@@ -186,15 +186,30 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     ) -> Result<CPS, DxError>;
 
     /// Creates a constant-buffer view for accessing resource data.
-    /// 
+    ///
     /// # Arguments
     /// * `desc` - A reference to a [`ConstantBufferViewDesc`] structure that describes the constant-buffer view.
     /// * `dest_descriptor` - Describes the CPU descriptor handle that represents the start of the heap that holds the constant-buffer view.
-    /// 
+    ///
     /// For more information: [`ID3D12Device::CreateConstantBufferView method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createconstantbufferview)
     fn create_constant_buffer_view(
         &self,
         desc: Option<&ConstantBufferViewDesc>,
+        dest_descriptor: CpuDescriptorHandle,
+    );
+
+    /// Creates a depth-stencil view for accessing resource data.
+    ///
+    /// # Arguments
+    /// * `resource` - A reference to the [`ResourceInterface`] object that represents the depth stencil.
+    /// * `desc` - A reference to a [`ConstantBufferViewDesc`] structure that describes the constant-buffer view.
+    /// * `dest_descriptor` - Describes the CPU descriptor handle that represents the start of the heap that holds the constant-buffer view.
+    ///
+    /// For more information: [`ID3D12Device::CreateDepthStencilView method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createdepthstencilview)
+    fn create_depth_stencil_view(
+        &self,
+        resource: Option<&impl ResourceInterface>,
+        desc: Option<&DepthStencilViewDesc>,
         dest_descriptor: CpuDescriptorHandle,
     );
 
@@ -413,10 +428,30 @@ impl_trait! {
         unsafe {
             let desc = desc.map(|desc| desc.as_raw());
             let desc = desc.as_ref().map(|c| c as *const _);
-            
+
             let dest_descriptor = dest_descriptor.as_raw();
 
             self.0.CreateConstantBufferView(desc, dest_descriptor);
+        }
+    }
+
+    fn create_depth_stencil_view(
+        &self,
+        resource: Option<&impl ResourceInterface>,
+        desc: Option<&DepthStencilViewDesc>,
+        dest_descriptor: CpuDescriptorHandle,
+    ) {
+        unsafe {
+            let desc = desc.map(|desc| desc.as_raw());
+            let desc = desc.as_ref().map(|c| c as *const _);
+
+            let dest_descriptor = dest_descriptor.as_raw();
+
+            if let Some(resource) = resource {
+                self.0.CreateDepthStencilView(resource.as_raw_ref(), desc, dest_descriptor);
+            } else {
+                self.0.CreateDepthStencilView(None, desc, dest_descriptor);
+            }
         }
     }
 

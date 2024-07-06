@@ -96,6 +96,22 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Specifies depth-stencil view options.
+    ///
+    /// Empty flag - Indicates a default view.
+    ///
+    /// For more information: [`D3D12_DSV_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_dsv_flags)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct DsvFlags: i32 {
+        /// Indicates that depth values are read only.
+        const ReadOnlyDepth = D3D12_DSV_FLAG_READ_ONLY_DEPTH.0;
+
+        /// Indicates that stencil values are read only.
+        const ReadOnlyStencil = D3D12_DSV_FLAG_READ_ONLY_STENCIL.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Specifies fence options.
     ///
     /// Empty flag - No options are specified.

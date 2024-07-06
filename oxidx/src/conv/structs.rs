@@ -62,7 +62,7 @@ impl<'a, RS: RootSignatureInterface, B: BlobInterface> ComputePipelineStateDesc<
 
 impl ConstantBufferViewDesc {
     #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_CONSTANT_BUFFER_VIEW_DESC  {
+    pub(crate) fn as_raw(&self) -> D3D12_CONSTANT_BUFFER_VIEW_DESC {
         D3D12_CONSTANT_BUFFER_VIEW_DESC {
             BufferLocation: self.buffer_location,
             SizeInBytes: self.size_in_bytes,
@@ -130,6 +130,63 @@ impl From<D3D12_DESCRIPTOR_HEAP_DESC> for DescriptorHeapDesc {
             num: value.NumDescriptors,
             flags: value.Flags.into(),
             node_mask: value.NodeMask,
+        }
+    }
+}
+
+impl DepthStencilViewDesc {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_DEPTH_STENCIL_VIEW_DESC {
+        D3D12_DEPTH_STENCIL_VIEW_DESC {
+            Format: self.format.as_raw(),
+            ViewDimension: self.view_dimension.as_raw(),
+            Flags: self.flags.as_raw(),
+            Anonymous: match self.view_dimension {
+                DsvDimension::Tex1D { mip_slice } => D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
+                    Texture1D: D3D12_TEX1D_DSV {
+                        MipSlice: mip_slice,
+                    },
+                },
+                DsvDimension::ArrayTex1D {
+                    mip_slice,
+                    first_array_slice,
+                    array_size,
+                } => D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
+                    Texture1DArray: D3D12_TEX1D_ARRAY_DSV {
+                        MipSlice: mip_slice,
+                        FirstArraySlice: first_array_slice,
+                        ArraySize: array_size,
+                    },
+                },
+                DsvDimension::Tex2D { mip_slice } => D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
+                    Texture2D: D3D12_TEX2D_DSV {
+                        MipSlice: mip_slice,
+                    },
+                },
+                DsvDimension::ArrayTex2D {
+                    mip_slice,
+                    first_array_slice,
+                    array_size,
+                } => D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
+                    Texture2DArray: D3D12_TEX2D_ARRAY_DSV {
+                        MipSlice: mip_slice,
+                        FirstArraySlice: first_array_slice,
+                        ArraySize: array_size,
+                    },
+                },
+                DsvDimension::Tex2DMs => D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
+                    Texture2DMS: D3D12_TEX2DMS_DSV::default(),
+                },
+                DsvDimension::ArrayTex2DMs {
+                    first_array_slice,
+                    array_size,
+                } => D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
+                    Texture2DMSArray: D3D12_TEX2DMS_ARRAY_DSV {
+                        FirstArraySlice: first_array_slice,
+                        ArraySize: array_size,
+                    },
+                },
+            },
         }
     }
 }

@@ -84,6 +84,16 @@ impl CpuDescriptorHandle {
     }
 }
 
+/// Describes the subresources of a texture that are accessible from a depth-stencil view.
+///
+/// For more information: [`D3D12_DEPTH_STENCIL_VIEW_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_depth_stencil_view_desc)
+#[derive(Clone, Copy, Debug)]
+pub struct DepthStencilViewDesc {
+    pub format: Format,
+    pub view_dimension: DsvDimension,
+    pub flags: DsvFlags,
+}
+
 /// Describes a GPU descriptor handle.
 ///
 /// For more information: [`D3D12_GPU_DESCRIPTOR_HANDLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_gpu_descriptor_handle)

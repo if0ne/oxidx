@@ -78,6 +78,20 @@ impl From<i32> for CommandQueuePriority {
     }
 }
 
+impl DsvDimension {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_DSV_DIMENSION {
+        match self {
+            DsvDimension::Tex1D { .. } => D3D12_DSV_DIMENSION_TEXTURE1D,
+            DsvDimension::ArrayTex1D { .. } => D3D12_DSV_DIMENSION_TEXTURE1DARRAY,
+            DsvDimension::Tex2D { .. } => D3D12_DSV_DIMENSION_TEXTURE2D,
+            DsvDimension::ArrayTex2D { .. } => D3D12_DSV_DIMENSION_TEXTURE2DARRAY,
+            DsvDimension::Tex2DMs => D3D12_DSV_DIMENSION_TEXTURE2DMS,
+            DsvDimension::ArrayTex2DMs { .. } => D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY,
+        }
+    }
+}
+
 impl IndirectArgumentDesc {
     #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_INDIRECT_ARGUMENT_DESC {
