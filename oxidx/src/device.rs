@@ -3,7 +3,7 @@ use windows::{
     core::Interface,
     Win32::Graphics::{
         Direct3D12::{
-            ID3D12Device, D3D12_BLEND_DESC, D3D12_CACHED_PIPELINE_STATE, D3D12_FENCE_FLAG_NONE,
+            ID3D12Device, D3D12_BLEND_DESC, D3D12_CACHED_PIPELINE_STATE,
             D3D12_GRAPHICS_PIPELINE_STATE_DESC, D3D12_INPUT_LAYOUT_DESC,
             D3D12_PIPELINE_STATE_FLAGS, D3D12_RENDER_TARGET_BLEND_DESC, D3D12_STREAM_OUTPUT_DESC,
         },
@@ -12,6 +12,7 @@ use windows::{
 };
 
 use crate::{
+    blob::BlobInterface,
     command_allocator::CommandAllocatorInterface,
     command_list::CommandListInterface,
     command_queue::CommandQueueInterface,
@@ -20,11 +21,9 @@ use crate::{
     descriptor_heap::DescriptorHeapInterface,
     error::DxError,
     impl_trait,
-    pso::{
-        BlobInterface, GraphicsPipelineDesc, PipelineStateInterface, RootSignatureDesc,
-        RootSignatureInterface,
-    },
+    pso::PipelineStateInterface,
     resources::{RenderTargetViewDesc, ResourceInterface},
+    root_signature::RootSignatureInterface,
     sync::FenceInterface,
     types::*,
     FeatureObject, HasInterface,
@@ -176,13 +175,9 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// * `desc` - A reference to a [`ComputePipelineStateDesc`] structure that describes compute pipeline state.
     ///
     /// For more information: [`ID3D12Device::CreateComputePipelineState method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcomputepipelinestate)
-    fn create_compute_pipeline_state<
-        CPS: PipelineStateInterface,
-        RS: RootSignatureInterface,
-        B: BlobInterface,
-    >(
+    fn create_compute_pipeline_state<CPS: PipelineStateInterface>(
         &self,
-        desc: &ComputePipelineStateDesc<'_, RS, B>,
+        desc: &ComputePipelineStateDesc<'_>,
     ) -> Result<CPS, DxError>;
 
     /// Creates a constant-buffer view for accessing resource data.
@@ -237,6 +232,17 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         flags: FenceFlags,
     ) -> Result<F, DxError>;
 
+    /// Creates a graphics pipeline state object.
+    ///
+    /// # Arguments
+    /// * `desc` - A pointer to a [`GraphicsPipelineDesc`] structure that describes graphics pipeline state.
+    ///
+    /// For more information: [`ID3D12Device::CreateGraphicsPipelineState method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-creategraphicspipelinestate)
+    fn create_graphics_pipeline<G: PipelineStateInterface>(
+        &self,
+        desc: &GraphicsPipelineDesc<'_>,
+    ) -> Result<G, DxError>;
+
     fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32;
 
     fn create_render_target_view(
@@ -258,11 +264,6 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         version: RootSignatureVersion,
         node_mask: u32,
     ) -> Result<RS, DxError>;
-
-    fn create_graphics_pipeline<G: PipelineStateInterface>(
-        &self,
-        desc: &GraphicsPipelineDesc<'_>,
-    ) -> Result<G, DxError>;
 }
 
 create_type! {
@@ -420,13 +421,9 @@ impl_trait! {
         }
     }
 
-    fn create_compute_pipeline_state<
-        CPS: PipelineStateInterface,
-        RS: RootSignatureInterface,
-        B: BlobInterface,
-    >(
+    fn create_compute_pipeline_state<CPS: PipelineStateInterface>(
         &self,
-        desc: &ComputePipelineStateDesc<'_, RS, B>,
+        desc: &ComputePipelineStateDesc<'_>,
     ) -> Result<CPS, DxError> {
         unsafe {
             let desc = desc.as_raw();
@@ -599,11 +596,11 @@ impl_trait! {
 
         let desc = D3D12_GRAPHICS_PIPELINE_STATE_DESC {
             pRootSignature: unsafe { std::mem::transmute_copy(desc.root_signature.as_raw_ref()) },
-            VS: desc.vs.as_raw(),
-            PS: desc.ps.map(|ps| ps.as_raw()).unwrap_or_default(),
-            DS: desc.ds.map(|ds| ds.as_raw()).unwrap_or_default(),
-            HS: desc.hs.map(|hs| hs.as_raw()).unwrap_or_default(),
-            GS: desc.gs.map(|gs| gs.as_raw()).unwrap_or_default(),
+            VS: desc.vs.as_shader_bytecode(),
+            PS: desc.ps.map(|ps| ps.as_shader_bytecode()).unwrap_or_default(),
+            DS: desc.ds.map(|ds| ds.as_shader_bytecode()).unwrap_or_default(),
+            HS: desc.hs.map(|hs| hs.as_shader_bytecode()).unwrap_or_default(),
+            GS: desc.gs.map(|gs| gs.as_shader_bytecode()).unwrap_or_default(),
             StreamOutput: desc
                 .stream_output
                 .as_ref()

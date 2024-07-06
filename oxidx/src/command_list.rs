@@ -9,9 +9,10 @@ use crate::{
     create_type,
     error::DxError,
     impl_trait,
-    pso::{PipelineStateInterface, PrimitiveTopology, RootSignatureInterface},
+    pso::PipelineStateInterface,
     resources::{ResourceBarrier, VertexBufferView},
-    types::{CommandListType, CpuDescriptorHandle, Rect, Viewport},
+    root_signature::RootSignatureInterface,
+    types::*,
     HasInterface,
 };
 

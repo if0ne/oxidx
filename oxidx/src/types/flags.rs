@@ -4,6 +4,16 @@ use windows::Win32::Graphics::Direct3D12::*;
 use super::*;
 
 bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct BlendMask: u8 {
+        const R = 1;
+        const G = 2;
+        const B = 4;
+        const A = 8;
+    }
+}
+
+bitflags::bitflags! {
     /// Describes the level of support for shader caching in the current graphics driver.
     ///
     /// Empty flag - Indicates that the driver does not support shader caching.
@@ -515,6 +525,24 @@ bitflags::bitflags! {
 
         /// This resource is used as the destination in an encode operation.
         const VideoEncodeWrite = D3D12_RESOURCE_STATE_VIDEO_ENCODE_WRITE.0;
+    }
+}
+
+bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct RootSignatureFlags: i32 {
+        const AllowInputAssemblerInputLayout = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT.0;
+        const DenyVertexShaderAccess = D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS.0;
+        const DenyHullShaderAccess = D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS.0;
+        const DenyDomainShaderAccess = D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS.0;
+        const DenyGeometryShaderAccess = D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS.0;
+        const DenyPixelShaderAccess = D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS.0;
+        const AllowStreamOutput = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT.0;
+        const Local = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE.0;
+        const DenyAmplificationShaderAccess = D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS.0;
+        const DenyMeshShaderAccess = D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS.0;
+        const CbvSrvUavHeapDirectlyIndexed = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED.0;
+        const SamplerHeapDirectlyIndexed = D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED.0;
     }
 }
 

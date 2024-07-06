@@ -1,8 +1,6 @@
 use smallvec::SmallVec;
 use windows::Win32::Graphics::Direct3D12::*;
 
-use crate::pso::RootSignatureInterface;
-
 use super::*;
 
 impl CommandQueueDesc {
@@ -36,23 +34,17 @@ impl<'a> CommandSignatureDesc<'a> {
     }
 }
 
-impl<'a, RS: RootSignatureInterface, B: BlobInterface> ComputePipelineStateDesc<'a, RS, B> {
+impl<'a> ComputePipelineStateDesc<'a> {
     #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_COMPUTE_PIPELINE_STATE_DESC {
         unsafe {
             D3D12_COMPUTE_PIPELINE_STATE_DESC {
                 pRootSignature: std::mem::transmute_copy(self.root_signature.as_raw()),
-                CS: D3D12_SHADER_BYTECODE {
-                    pShaderBytecode: self.cs.get_buffer_ptr() as *const _,
-                    BytecodeLength: self.cs.get_buffer_size(),
-                },
+                CS: self.cs.as_shader_bytecode(),
                 NodeMask: self.node_mask,
                 CachedPSO: self
                     .cached_pso
-                    .map(|pso| D3D12_CACHED_PIPELINE_STATE {
-                        pCachedBlob: pso.get_buffer_ptr() as *const _,
-                        CachedBlobSizeInBytes: pso.get_buffer_size(),
-                    })
+                    .map(|pso| pso.as_cached_pipeline_state())
                     .unwrap_or_default(),
                 Flags: self.flags.as_raw(),
             }

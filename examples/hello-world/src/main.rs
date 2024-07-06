@@ -1,8 +1,20 @@
 use std::num::NonZeroIsize;
 
 use oxidx::{
-    adapter::*, command_allocator::*, command_list::*, command_queue::*, debug::*,
-    descriptor_heap::*, device::*, factory::*, pso::*, resources::*, swapchain::*, sync::*,
+    adapter::*,
+    blob::{Blob, BlobInterface},
+    command_allocator::*,
+    command_list::*,
+    command_queue::*,
+    debug::*,
+    descriptor_heap::*,
+    device::*,
+    factory::*,
+    pso::*,
+    resources::*,
+    root_signature::RootSignature,
+    swapchain::*,
+    sync::*,
     types::*,
 };
 use smallvec::smallvec;
@@ -189,7 +201,7 @@ impl DXSample for Sample {
 
         let rtv_heap: DescriptorHeap = self
             .device
-            .create_descriptor_heap(DescriptorHeapDesc {
+            .create_descriptor_heap(&DescriptorHeapDesc {
                 num: FRAME_COUNT,
                 r#type: DescriptorHeapType::Rtv,
                 ..Default::default()
@@ -235,7 +247,7 @@ impl DXSample for Sample {
 
         let (vertex_buffer, vbv) = create_vertex_buffer(&self.device, aspect_ratio);
 
-        let fence = self.device.create_fence(0).unwrap();
+        let fence = self.device.create_fence(0, FenceFlags::empty()).unwrap();
 
         let fence_value = 1;
 

@@ -20,12 +20,6 @@ use windows::{
 use crate::{
     adapter::{AdapterDesc, AdapterFlags, Luid},
     error::DxError,
-    pso::{
-        Blend, BlendOp, Blob, BlobInterface, CullMode, DeclarationEntry, DepthStencilDesc,
-        FillMode, IndexBufferStripCutValue, InputElementDesc, InputSlotClass, LogicOp,
-        PrimitiveTopology, RasterizerDesc, RenderTargetBlendDesc, RootParameter, RootParameterType,
-        RootSignatureFlags, ShaderVisibility, StaticSamplerDesc,
-    },
     resources::{
         BarrierType, RenderTargetViewDesc, ResourceBarrier, VertexBufferView, ViewDimension,
     },
@@ -339,15 +333,6 @@ impl<'a> RootParameterType<'a> {
                     Num32BitValues: *num_32bit_values,
                 },
             },
-        }
-    }
-}
-
-impl Blob {
-    pub(crate) fn as_raw(&self) -> D3D12_SHADER_BYTECODE {
-        D3D12_SHADER_BYTECODE {
-            pShaderBytecode: self.get_buffer_ptr() as *const _,
-            BytecodeLength: self.get_buffer_size(),
         }
     }
 }

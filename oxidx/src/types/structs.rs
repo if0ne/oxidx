@@ -1,6 +1,17 @@
-use crate::pso::{BlobInterface, RootSignatureInterface};
+use std::ffi::CStr;
+
+use smallvec::SmallVec;
+
+use crate::{blob::Blob, root_signature::RootSignature};
 
 use super::*;
+
+#[derive(Clone, Debug)]
+pub struct BlendDesc {
+    pub render_targets: SmallVec<[RenderTargetBlendDesc; 8]>,
+    pub alpha_to_coverage_enable: bool,
+    pub independent_blend_enable: bool,
+}
 
 /// Describes a command queue.
 ///
@@ -41,12 +52,12 @@ pub struct CommandSignatureDesc<'a> {
 ///
 /// For more information: [`D3D12_COMPUTE_PIPELINE_STATE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_compute_pipeline_state_desc)
 #[derive(Debug)]
-pub struct ComputePipelineStateDesc<'a, RS: RootSignatureInterface, B: BlobInterface> {
+pub struct ComputePipelineStateDesc<'a> {
     /// A reference to the [`RootSignatureInterface`] object.
-    pub root_signature: &'a RS,
+    pub root_signature: &'a RootSignature,
 
     /// /// A reference to the [`BlobInterface`] object that contains compute shader.
-    pub cs: &'a B,
+    pub cs: &'a Blob,
 
     /// For single GPU operation, set this to zero.
     /// If there are multiple GPU nodes, set bits to identify the nodes (the device's physical adapters) for which the compute pipeline state is to apply.
@@ -54,7 +65,7 @@ pub struct ComputePipelineStateDesc<'a, RS: RootSignatureInterface, B: BlobInter
     pub node_mask: u32,
 
     /// A cached pipeline state object, as a [`CachedPipelineState`] structure. `cached_blob` and `cached_blob_size_in_bytes` may be set to None and 0 respectively.
-    pub cached_pso: Option<&'a B>,
+    pub cached_pso: Option<&'a Blob>,
 
     /// A [`PipelineStateFlags`] enumeration constant such as for "tool debug".
     pub flags: PipelineStateFlags,
@@ -84,6 +95,19 @@ impl CpuDescriptorHandle {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct DeclarationEntry {
+    pub stream: u32,
+    pub semantic_name: &'static CStr,
+    pub semantic_index: u32,
+    pub start_component: u8,
+    pub component_count: u8,
+    pub output_slot: u8,
+}
+
+#[derive(Clone, Debug)]
+pub struct DepthStencilDesc {}
+
 /// Describes the subresources of a texture that are accessible from a depth-stencil view.
 ///
 /// For more information: [`D3D12_DEPTH_STENCIL_VIEW_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_depth_stencil_view_desc)
@@ -92,18 +116,6 @@ pub struct DepthStencilViewDesc {
     pub format: Format,
     pub view_dimension: DsvDimension,
     pub flags: DsvFlags,
-}
-
-/// Describes a GPU descriptor handle.
-///
-/// For more information: [`D3D12_GPU_DESCRIPTOR_HANDLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_gpu_descriptor_handle)
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct GpuDescriptorHandle(pub(crate) usize);
-
-impl GpuDescriptorHandle {
-    pub fn offset(&self, offset: usize) -> Self {
-        Self(self.0 + offset)
-    }
 }
 
 /// Describes the descriptor heap.
@@ -122,6 +134,52 @@ pub struct DescriptorHeapDesc {
 
     /// For single-adapter operation, set this to zero. If there are multiple adapter nodes, set a bit to identify the node (one of the device's physical adapters) to which the descriptor heap applies. Each bit in the mask corresponds to a single node. Only one bit must be set.
     pub node_mask: u32,
+}
+
+/// Describes a GPU descriptor handle.
+///
+/// For more information: [`D3D12_GPU_DESCRIPTOR_HANDLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_gpu_descriptor_handle)
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct GpuDescriptorHandle(pub(crate) usize);
+
+impl GpuDescriptorHandle {
+    pub fn offset(&self, offset: usize) -> Self {
+        Self(self.0 + offset)
+    }
+}
+
+#[derive(Debug)]
+pub struct GraphicsPipelineDesc<'a> {
+    pub root_signature: &'a RootSignature,
+    pub input_layout: &'a [InputElementDesc],
+    pub vs: &'a Blob,
+    pub ps: Option<&'a Blob>,
+    pub ds: Option<&'a Blob>,
+    pub hs: Option<&'a Blob>,
+    pub gs: Option<&'a Blob>,
+    pub stream_output: Option<StreamOutputDesc<'a>>,
+    pub blend_state: BlendDesc,
+    pub sample_mask: u32,
+    pub rasterizer_state: RasterizerDesc,
+    pub depth_stencil: Option<DepthStencilDesc>,
+    pub ib_strip_cut_value: Option<IndexBufferStripCutValue>,
+    pub primitive_topology: PrimitiveTopology,
+    pub rtv_formats: SmallVec<[Format; 8]>, // TODO: Custom Type
+    pub dsv_format: Option<Format>,
+    pub sampler_desc: SampleDesc,
+    pub node_mask: u32,
+    pub flags: PipelineStateFlags,
+}
+
+#[derive(Clone, Debug)]
+pub struct InputElementDesc {
+    pub semantic_name: &'static CStr,
+    pub semantic_index: u32,
+    pub format: Format,
+    pub input_slot: u32,
+    pub offset: u32,
+    pub slot_class: InputSlotClass,
+    pub instance_data_step_rate: u32,
 }
 
 /// Describes a heap.
@@ -174,6 +232,26 @@ pub struct HeapProperties {
     pub visible_node_mask: u32,
 }
 
+#[derive(Clone, Debug)]
+pub struct RasterizerDesc {
+    pub fill_mode: FillMode,
+    pub cull_mode: CullMode,
+}
+
+#[derive(Clone, Debug)]
+pub struct RenderTargetBlendDesc {
+    pub blend_enable: bool,
+    pub logic_op_enable: bool,
+    pub src_blend: Blend,
+    pub dst_blend: Blend,
+    pub blend_op: BlendOp,
+    pub src_blend_alpha: Blend,
+    pub dst_blend_alpha: Blend,
+    pub blend_op_alpha: BlendOp,
+    pub logic_op: LogicOp,
+    pub mask: BlendMask,
+}
+
 /// Describes a resource, such as a texture. This structure is used extensively.
 ///
 /// For more information: [`D3D12_RESOURCE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_desc)
@@ -210,6 +288,19 @@ pub struct ResourceDesc {
     pub flags: ResourceFlags,
 }
 
+#[derive(Debug, Default)]
+pub struct RootSignatureDesc<'a> {
+    pub parameters: &'a [RootParameter<'a>],
+    pub samplers: &'a [StaticSamplerDesc],
+    pub flags: RootSignatureFlags,
+}
+
+#[derive(Clone, Debug)]
+pub struct RootParameter<'a> {
+    pub r#type: RootParameterType<'a>,
+    pub visibility: ShaderVisibility,
+}
+
 /// Describes multi-sampling parameters for a resource.
 ///
 /// For more information: [`DXGI_SAMPLE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgicommon/ns-dxgicommon-dxgi_sample_desc)
@@ -220,6 +311,30 @@ pub struct SampleDesc {
 
     /// The image quality level. The higher the quality, the lower the performance.
     pub quality: u32,
+}
+
+#[derive(Clone, Debug)]
+pub struct StaticSamplerDesc {
+    pub filter: Filter,
+    pub address_u: AddressMode,
+    pub address_v: AddressMode,
+    pub address_w: AddressMode,
+    pub mip_lod_bias: f32,
+    pub max_anisotropy: f32,
+    pub comparison_func: ComparisonFunc,
+    pub border_color: BorderColor,
+    pub min_lod: f32,
+    pub max_lod: f32,
+    pub shader_register: u32,
+    pub register_space: u32,
+    pub visibility: ShaderVisibility,
+}
+
+#[derive(Clone, Debug)]
+pub struct StreamOutputDesc<'a> {
+    pub entries: &'a [DeclarationEntry],
+    pub buffer_strides: &'a [u32],
+    pub rasterized_stream: u32,
 }
 
 /// Describes the size of a tiled region.

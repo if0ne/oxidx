@@ -4,6 +4,39 @@ use windows::Win32::Graphics::{Direct3D::*, Direct3D12::*};
 #[allow(unused_imports)]
 use super::*;
 
+#[derive(Clone, Copy, Debug)]
+#[repr(i32)]
+pub enum AddressMode {
+    Wrap = D3D12_TEXTURE_ADDRESS_MODE_WRAP.0,
+    Mirror = D3D12_TEXTURE_ADDRESS_MODE_MIRROR.0,
+    Clamp = D3D12_TEXTURE_ADDRESS_MODE_CLAMP.0,
+    Border = D3D12_TEXTURE_ADDRESS_MODE_BORDER.0,
+    MirrorOnce = D3D12_TEXTURE_ADDRESS_MODE_MIRROR_ONCE.0,
+}
+
+#[derive(Clone, Copy, Debug)]
+#[repr(i32)]
+pub enum Blend {
+    One = D3D12_BLEND_ONE.0,
+    Zero = D3D12_BLEND_ZERO.0,
+}
+
+#[derive(Clone, Copy, Debug)]
+#[repr(i32)]
+pub enum BlendOp {
+    Add = D3D12_BLEND_OP_ADD.0,
+}
+
+#[derive(Clone, Copy, Debug)]
+#[repr(i32)]
+pub enum BorderColor {
+    TransparentBlack = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK.0,
+    OpaqueBlack = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK.0,
+    OpaqueWhite = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE.0,
+    OpaqueBlackUint = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK_UINT.0,
+    OpaqueWhiteUint = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE_UINT.0,
+}
+
 /// Describes a value used to optimize clear operations for a particular resource.
 ///
 /// For more information: [`D3D12_CLEAR_VALUE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_clear_value)
@@ -73,6 +106,20 @@ pub enum CommandListType {
 
     /// Specifies a command buffer for video encoding.
     VideoEncode = D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE.0,
+}
+
+#[derive(Clone, Copy, Debug)]
+#[repr(i32)]
+pub enum ComparisonFunc {
+    None = D3D12_COMPARISON_FUNC_NONE.0,
+    Never = D3D12_COMPARISON_FUNC_NEVER.0,
+    Less = D3D12_COMPARISON_FUNC_LESS.0,
+    Equal = D3D12_COMPARISON_FUNC_EQUAL.0,
+    LessEqual = D3D12_COMPARISON_FUNC_LESS_EQUAL.0,
+    FuncGreater = D3D12_COMPARISON_FUNC_GREATER.0,
+    NotEqual = D3D12_COMPARISON_FUNC_NOT_EQUAL.0,
+    GreaterEqual = D3D12_COMPARISON_FUNC_GREATER_EQUAL.0,
+    Always = D3D12_COMPARISON_FUNC_ALWAYS.0,
 }
 
 /// Identifies the tier level of conservative rasterization.
@@ -149,6 +196,11 @@ pub enum CrossNodeSharingTier {
     Tier3 = D3D12_CROSS_NODE_SHARING_TIER_3.0,
 }
 
+#[derive(Clone, Debug)]
+pub enum CullMode {
+    None,
+}
+
 /// Specifies a type of descriptor heap.
 ///
 /// For more information: [`D3D12_DESCRIPTOR_HEAP_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_descriptor_heap_type)
@@ -167,6 +219,26 @@ pub enum DescriptorHeapType {
 
     /// The descriptor heap for the sampler.
     Sampler = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER.0,
+}
+
+// MUST BE repr(C) for casting in raw format
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct DescriptorRange {
+    r#type: DescriptorRangeType,
+    num: u32,
+    base_shader_register: u32,
+    register_space: u32,
+    offset_in_descriptors_from_table_start: u32,
+}
+
+#[derive(Clone, Copy, Debug)]
+#[repr(i32)]
+pub enum DescriptorRangeType {
+    Srv = D3D12_DESCRIPTOR_RANGE_TYPE_SRV.0,
+    Uav = D3D12_DESCRIPTOR_RANGE_TYPE_UAV.0,
+    Cbv = D3D12_DESCRIPTOR_RANGE_TYPE_CBV.0,
+    Sampler = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER.0,
 }
 
 /// Specifies how to access a resource used in a depth-stencil view.
@@ -746,6 +818,30 @@ pub enum Format {
     V408 = DXGI_FORMAT_V408.0,
 }
 
+#[derive(Clone, Copy, Debug)]
+#[repr(i32)]
+pub enum Filter {
+    MinMagPointMipLinear = D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR.0,
+}
+
+#[derive(Clone, Debug)]
+pub enum FillMode {
+    Solid,
+    Wireframe,
+}
+
+#[derive(Clone, Copy, Debug)]
+#[repr(i32)]
+pub enum IndexBufferStripCutValue {
+    Disabled = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED.0,
+}
+
+#[derive(Clone, Copy, Debug)]
+#[repr(i32)]
+pub enum InputSlotClass {
+    PerVertex = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA.0,
+}
+
 /// Heap alignment variants.
 #[derive(Clone, Copy, Debug, Default, FromRepr)]
 #[repr(u64)]
@@ -864,6 +960,12 @@ pub enum IndirectArgumentDesc {
     },
 }
 
+#[derive(Clone, Copy, Debug)]
+#[repr(i32)]
+pub enum LogicOp {
+    Noop = D3D12_LOGIC_OP_NOOP.0,
+}
+
 /// Specifies the memory pool for the heap.
 ///
 /// For more information: [`D3D12_MEMORY_POOL enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_memory_pool)
@@ -920,6 +1022,12 @@ pub enum MinPrecisionSupport {
 
     /// The driver supports 16-bit precision.
     Support16Bit = D3D12_SHADER_MIN_PRECISION_SUPPORT_16_BIT.0,
+}
+
+#[derive(Clone, Debug)]
+pub enum PrimitiveTopology {
+    Triangle,
+    Point,
 }
 
 /// Specifies the level of support for programmable sample positions that's offered by the adapter.
@@ -1050,6 +1158,30 @@ pub enum RootSignatureVersion {
     V1_2 = D3D_ROOT_SIGNATURE_VERSION_1_2.0,
 }
 
+#[derive(Clone, Debug)]
+pub enum RootParameterType<'a> {
+    Cbv {
+        shader_register: u32,
+        register_space: u32,
+    },
+    Srv {
+        shader_register: u32,
+        register_space: u32,
+    },
+    Uav {
+        shader_register: u32,
+        register_space: u32,
+    },
+    DescriptorTable {
+        ranges: &'a [DescriptorRange],
+    },
+    Constants {
+        shader_register: u32,
+        register_space: u32,
+        num_32bit_values: u32,
+    },
+}
+
 /// Defines constants that specify sampler feedback support.
 ///
 /// For more information: [`D3D12_SAMPLER_FEEDBACK_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_sampler_feedback_tier)
@@ -1108,6 +1240,19 @@ pub enum ShaderModel {
 
     /// TBD
     Model6_8 = D3D_SHADER_MODEL_6_8.0,
+}
+
+#[derive(Clone, Copy, Debug)]
+#[repr(i32)]
+pub enum ShaderVisibility {
+    All = D3D12_SHADER_VISIBILITY_ALL.0,
+    Vertex = D3D12_SHADER_VISIBILITY_VERTEX.0,
+    Hull = D3D12_SHADER_VISIBILITY_HULL.0,
+    Domain = D3D12_SHADER_VISIBILITY_DOMAIN.0,
+    Geometry = D3D12_SHADER_VISIBILITY_GEOMETRY.0,
+    Pixel = D3D12_SHADER_VISIBILITY_PIXEL.0,
+    Amplification = D3D12_SHADER_VISIBILITY_AMPLIFICATION.0,
+    Mesh = D3D12_SHADER_VISIBILITY_MESH.0,
 }
 
 /// Defines constants that specify a cross-API sharing support tier.

@@ -3,6 +3,7 @@
 #![allow(clippy::too_many_arguments)]
 
 pub mod adapter;
+pub mod blob;
 pub mod command_allocator;
 pub mod command_list;
 pub mod command_queue;
@@ -15,6 +16,7 @@ pub mod factory;
 pub mod heap;
 pub mod pso;
 pub mod resources;
+pub mod root_signature;
 pub mod swapchain;
 pub mod sync;
 pub mod types;
