@@ -14,17 +14,92 @@ pub enum AddressMode {
     MirrorOnce = D3D12_TEXTURE_ADDRESS_MODE_MIRROR_ONCE.0,
 }
 
-#[derive(Clone, Copy, Debug)]
+/// Specifies blend factors, which modulate values for the pixel shader and render target.
+///
+/// For more information: [`D3D12_BLEND enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_blend)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
 #[repr(i32)]
 pub enum Blend {
-    One = D3D12_BLEND_ONE.0,
+    /// The blend factor is (0, 0, 0, 0). No pre-blend operation.
+    #[default]
     Zero = D3D12_BLEND_ZERO.0,
+
+    /// The blend factor is (1, 1, 1, 1). No pre-blend operation.
+    One = D3D12_BLEND_ONE.0,
+
+    /// The blend factor is (Rₛ, Gₛ, Bₛ, Aₛ), that is color data (RGB) from a pixel shader. No pre-blend operation.
+    SrcColor = D3D12_BLEND_SRC_COLOR.0,
+
+    /// The blend factor is (1 - Rₛ, 1 - Gₛ, 1 - Bₛ, 1 - Aₛ), that is color data (RGB) from a pixel shader. The pre-blend operation inverts the data, generating 1 - RGB.
+    InvSrcColor = D3D12_BLEND_INV_SRC_COLOR.0,
+
+    /// The blend factor is (Aₛ, Aₛ, Aₛ, Aₛ), that is alpha data (A) from a pixel shader. No pre-blend operation.
+    SrcAlpha = D3D12_BLEND_SRC_ALPHA.0,
+
+    /// The blend factor is ( 1 - Aₛ, 1 - Aₛ, 1 - Aₛ, 1 - Aₛ), that is alpha data (A) from a pixel shader. The pre-blend operation inverts the data, generating 1 - A.
+    InvSrcAlpha = D3D12_BLEND_INV_SRC_ALPHA.0,
+
+    /// The blend factor is (Ad Ad Ad Ad), that is alpha data from a render target. No pre-blend operation.
+    DestAlpha = D3D12_BLEND_DEST_ALPHA.0,
+
+    /// The blend factor is (1 - Ad 1 - Ad 1 - Ad 1 - Ad), that is alpha data from a render target. The pre-blend operation inverts the data, generating 1 - A.
+    InvDestAlpha = D3D12_BLEND_INV_DEST_ALPHA.0,
+
+    /// The blend factor is (Rd, Gd, Bd, Ad), that is color data from a render target. No pre-blend operation.
+    DestColor = D3D12_BLEND_DEST_COLOR.0,
+
+    /// The blend factor is (1 - Rd, 1 - Gd, 1 - Bd, 1 - Ad), that is color data from a render target. The pre-blend operation inverts the data, generating 1 - RGB.
+    InvDestColor = D3D12_BLEND_INV_DEST_COLOR.0,
+
+    /// The blend factor is (f, f, f, 1); where f = min(Aₛ, 1 - Ad). The pre-blend operation clamps the data to 1 or less.
+    SrcAlphaSat = D3D12_BLEND_SRC_ALPHA_SAT.0,
+
+    /// The blend factor is the blend factor set with [`GraphicsCommandListInterface::om_set_blend_factor`]. No pre-blend operation.
+    BlendFactor = D3D12_BLEND_BLEND_FACTOR.0,
+
+    /// The blend factor is the blend factor set with [`GraphicsCommandListInterface::om_set_blend_factor`]. The pre-blend operation inverts the blend factor, generating 1 - blend_factor.
+    InvBlendFactor = D3D12_BLEND_INV_BLEND_FACTOR.0,
+
+    /// The blend factor is data sources both as color data output by a pixel shader. There is no pre-blend operation. This blend factor supports dual-source color blending.
+    Src1Color = D3D12_BLEND_SRC1_COLOR.0,
+
+    /// The blend factor is data sources both as color data output by a pixel shader. The pre-blend operation inverts the data, generating 1 - RGB. This blend factor supports dual-source color blending.
+    InvSrc1Color = D3D12_BLEND_INV_SRC1_COLOR.0,
+
+    /// The blend factor is data sources as alpha data output by a pixel shader. There is no pre-blend operation. This blend factor supports dual-source color blending.
+    Src1Alpha = D3D12_BLEND_SRC1_ALPHA.0,
+
+    /// The blend factor is data sources as alpha data output by a pixel shader. The pre-blend operation inverts the data, generating 1 - A. This blend factor supports dual-source color blending.
+    InvSrc1Alpha = D3D12_BLEND_INV_SRC1_ALPHA.0,
+
+    /// The blend factor is (A, A, A, A), where the constant, A, is taken from the blend factor set with [`GraphicsCommandListInterface::om_set_blend_factor`].
+    AlphaFactor = D3D12_BLEND_ALPHA_FACTOR.0,
+
+    /// The blend factor is (1 – A, 1 – A, 1 – A, 1 – A), where the constant, A, is taken from the blend factor set with [`GraphicsCommandListInterface::om_set_blend_factor`].
+    InvAlphaFactor = D3D12_BLEND_INV_ALPHA_FACTOR.0,
 }
 
-#[derive(Clone, Copy, Debug)]
+/// Specifies RGB or alpha blending operations.
+///
+/// For more information: [`D3D12_BLEND_OP enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_blend_op)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
 #[repr(i32)]
 pub enum BlendOp {
+    /// Add source 1 and source 2.
+    #[default]
     Add = D3D12_BLEND_OP_ADD.0,
+
+    /// Subtract source 1 from source 2.
+    Subtract = D3D12_BLEND_OP_SUBTRACT.0,
+
+    /// Subtract source 2 from source 1.
+    RevSubtract = D3D12_BLEND_OP_REV_SUBTRACT.0,
+
+    /// Find the minimum of source 1 and source 2.
+    Min = D3D12_BLEND_OP_MIN.0,
+
+    /// Find the maximum of source 1 and source 2.
+    Max = D3D12_BLEND_OP_MAX.0,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -960,10 +1035,29 @@ pub enum IndirectArgumentDesc {
     },
 }
 
-#[derive(Clone, Copy, Debug)]
+/// Defines constants that specify logical operations to configure for a render target.
+///
+/// For more information: [`D3D12_LOGIC_OP enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_logic_op)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
 #[repr(i32)]
 pub enum LogicOp {
+    #[default]
+    Clear = D3D12_LOGIC_OP_CLEAR.0,
+    Set = D3D12_LOGIC_OP_SET.0,
+    Copy = D3D12_LOGIC_OP_COPY.0,
+    CopyInverted = D3D12_LOGIC_OP_COPY_INVERTED.0,
     Noop = D3D12_LOGIC_OP_NOOP.0,
+    Invert = D3D12_LOGIC_OP_INVERT.0,
+    And = D3D12_LOGIC_OP_AND.0,
+    Nand = D3D12_LOGIC_OP_NAND.0,
+    Or = D3D12_LOGIC_OP_OR.0,
+    Nor = D3D12_LOGIC_OP_NOR.0,
+    Xor = D3D12_LOGIC_OP_XOR.0,
+    Equiv = D3D12_LOGIC_OP_EQUIV.0,
+    Reverse = D3D12_LOGIC_OP_AND_REVERSE.0,
+    AndInverted = D3D12_LOGIC_OP_AND_INVERTED.0,
+    OrReverse = D3D12_LOGIC_OP_OR_REVERSE.0,
+    OrInverted = D3D12_LOGIC_OP_OR_INVERTED.0,
 }
 
 /// Specifies the memory pool for the heap.

@@ -4,12 +4,22 @@ use windows::Win32::Graphics::Direct3D12::*;
 use super::*;
 
 bitflags::bitflags! {
+    /// Identifies which components of each pixel of a render target are writable during blending.
+    ///
+    /// For more information: [`D3D12_COLOR_WRITE_ENABLE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_color_write_enable)
     #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct BlendMask: u8 {
-        const R = 1;
-        const G = 2;
-        const B = 4;
-        const A = 8;
+    pub struct ColorWriteEnable: i32 {
+        /// Allow data to be stored in the red component.
+        const R = D3D12_COLOR_WRITE_ENABLE_RED.0;
+
+        /// Allow data to be stored in the green component.
+        const G = D3D12_COLOR_WRITE_ENABLE_GREEN.0;
+
+        /// Allow data to be stored in the blue component.
+        const B = D3D12_COLOR_WRITE_ENABLE_BLUE.0;
+
+        /// Allow data to be stored in the alpha component.
+        const A = D3D12_COLOR_WRITE_ENABLE_ALPHA.0;
     }
 }
 

@@ -4,6 +4,8 @@ use crate::conv_enum;
 
 use super::*;
 
+conv_enum!(Blend to D3D12_BLEND);
+conv_enum!(BlendOp to D3D12_BLEND_OP);
 conv_enum!(CommandListType to D3D12_COMMAND_LIST_TYPE);
 conv_enum!(CpuPageProperty to D3D12_CPU_PAGE_PROPERTY);
 conv_enum!(ConservativeRasterizationTier to D3D12_CONSERVATIVE_RASTERIZATION_TIER);
@@ -180,6 +182,40 @@ impl From<u64> for HeapAlignment {
             D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT => HeapAlignment::ResourcePlacement,
             D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT => HeapAlignment::MsaaResourcePlacement,
             _ => unreachable!(),
+        }
+    }
+}
+
+impl RenderTargetBlendDesc {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_RENDER_TARGET_BLEND_DESC {
+        match self {
+            RenderTargetBlendDesc::None => D3D12_RENDER_TARGET_BLEND_DESC::default(),
+            RenderTargetBlendDesc::Blend {
+                src_blend,
+                dst_blend,
+                blend_op,
+                src_blend_alpha,
+                dst_blend_alpha,
+                blend_op_alpha,
+                mask,
+            } => D3D12_RENDER_TARGET_BLEND_DESC {
+                BlendEnable: true.into(),
+                SrcBlend: src_blend.as_raw(),
+                DestBlend: dst_blend.as_raw(),
+                BlendOp: blend_op.as_raw(),
+                SrcBlendAlpha: src_blend_alpha.as_raw(),
+                DestBlendAlpha: dst_blend_alpha.as_raw(),
+                BlendOpAlpha: blend_op_alpha.as_raw(),
+                RenderTargetWriteMask: mask.as_raw().0 as u8,
+                ..Default::default()
+            },
+            RenderTargetBlendDesc::Logic { logic_op, mask } => D3D12_RENDER_TARGET_BLEND_DESC {
+                LogicOpEnable: true.into(),
+                LogicOp: logic_op.as_raw(),
+                RenderTargetWriteMask: mask.as_raw().0 as u8,
+                ..Default::default()
+            },
         }
     }
 }

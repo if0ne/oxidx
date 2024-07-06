@@ -3,6 +3,23 @@ use windows::Win32::Graphics::Direct3D12::*;
 
 use super::*;
 
+impl BlendDesc {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_BLEND_DESC {
+        let mut render_target = [D3D12_RENDER_TARGET_BLEND_DESC::default(); 8];
+
+        for (i, desc) in self.render_targets.iter().enumerate() {
+            render_target[i] = desc.as_raw();
+        }
+
+        D3D12_BLEND_DESC {
+            AlphaToCoverageEnable: self.alpha_to_coverage_enable.into(),
+            IndependentBlendEnable: self.independent_blend_enable.into(),
+            RenderTarget: render_target,
+        }
+    }
+}
+
 impl CommandQueueDesc {
     #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_COMMAND_QUEUE_DESC {
@@ -11,6 +28,18 @@ impl CommandQueueDesc {
             Priority: self.priority.as_raw(),
             Flags: self.flags.as_raw(),
             NodeMask: self.node_mask,
+        }
+    }
+}
+
+impl From<D3D12_COMMAND_QUEUE_DESC> for CommandQueueDesc {
+    #[inline]
+    fn from(value: D3D12_COMMAND_QUEUE_DESC) -> Self {
+        Self {
+            r#type: value.Type.into(),
+            priority: value.Priority.into(),
+            flags: value.Flags.into(),
+            node_mask: value.NodeMask,
         }
     }
 }
@@ -76,6 +105,89 @@ impl From<D3D12_CPU_DESCRIPTOR_HANDLE> for CpuDescriptorHandle {
     }
 }
 
+impl DeclarationEntry {
+    #[inline(always)]
+    pub(crate) fn as_raw(&self) -> D3D12_SO_DECLARATION_ENTRY {
+        let semantic_name = PCSTR::from_raw(self.semantic_name.as_ref().as_ptr() as *const _);
+
+        D3D12_SO_DECLARATION_ENTRY {
+            Stream: self.stream,
+            SemanticName: semantic_name,
+            SemanticIndex: self.semantic_index,
+            StartComponent: self.start_component,
+            ComponentCount: self.component_count,
+            OutputSlot: self.output_slot,
+        }
+    }
+}
+
+impl<'a> GraphicsPipelineDesc<'a> {
+    #[inline(always)]
+    pub(crate) fn as_raw(&self) -> D3D12_GRAPHICS_PIPELINE_STATE_DESC {
+        let mut rtv_formats = [DXGI_FORMAT::default(); 8];
+
+        for (i, format) in self.rtv_formats.iter().enumerate() {
+            rtv_formats[i] = format.as_raw();
+        }
+
+        let input_layouts = self
+            .input_layout
+            .iter()
+            .map(|il| il.as_raw())
+            .collect::<SmallVec<[_; 8]>>();
+
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC {
+            pRootSignature: unsafe { std::mem::transmute_copy(self.root_signature.as_raw()) },
+            VS: self.vs.as_shader_bytecode(),
+            PS: self
+                .ps
+                .map(|ps| ps.as_shader_bytecode())
+                .unwrap_or_default(),
+            DS: self
+                .ds
+                .map(|ds| ds.as_shader_bytecode())
+                .unwrap_or_default(),
+            HS: self
+                .hs
+                .map(|hs| hs.as_shader_bytecode())
+                .unwrap_or_default(),
+            GS: self
+                .gs
+                .map(|gs| gs.as_shader_bytecode())
+                .unwrap_or_default(),
+            StreamOutput: self
+                .stream_output
+                .as_ref()
+                .map(|so| so.as_raw())
+                .unwrap_or_default(),
+            BlendState: self.blend_state.as_raw(),
+            SampleMask: self.sample_mask,
+            RasterizerState: self.rasterizer_state.as_raw(),
+            DepthStencilState: self
+                .depth_stencil
+                .as_ref()
+                .map(|ds| ds.as_raw())
+                .unwrap_or_default(),
+            InputLayout: D3D12_INPUT_LAYOUT_DESC {
+                pInputElementDescs: input_layouts.as_ptr() as *const _,
+                NumElements: input_layouts.len() as u32,
+            },
+            IBStripCutValue: self
+                .ib_strip_cut_value
+                .map(|ib| ib.as_raw())
+                .unwrap_or_default(),
+            PrimitiveTopologyType: self.primitive_topology.as_raw(),
+            NumRenderTargets: self.num_render_targets,
+            RTVFormats: rtv_formats,
+            DSVFormat: self.dsv_format.map(|f| f.as_raw()).unwrap_or_default(),
+            SampleDesc: self.sampler_desc.as_raw(),
+            NodeMask: self.node_mask,
+            CachedPSO: D3D12_CACHED_PIPELINE_STATE::default(),
+            Flags: D3D12_PIPELINE_STATE_FLAGS(self.flags.bits()),
+        }
+    }
+}
+
 impl GpuDescriptorHandle {
     #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_GPU_DESCRIPTOR_HANDLE {
@@ -87,18 +199,6 @@ impl From<D3D12_GPU_DESCRIPTOR_HANDLE> for GpuDescriptorHandle {
     #[inline]
     fn from(value: D3D12_GPU_DESCRIPTOR_HANDLE) -> Self {
         Self(value.ptr as usize)
-    }
-}
-
-impl From<D3D12_COMMAND_QUEUE_DESC> for CommandQueueDesc {
-    #[inline]
-    fn from(value: D3D12_COMMAND_QUEUE_DESC) -> Self {
-        Self {
-            r#type: value.Type.into(),
-            priority: value.Priority.into(),
-            flags: value.Flags.into(),
-            node_mask: value.NodeMask,
-        }
     }
 }
 
@@ -257,6 +357,25 @@ impl SampleDesc {
         DXGI_SAMPLE_DESC {
             Count: self.count,
             Quality: self.quality,
+        }
+    }
+}
+
+impl<'a> StreamOutputDesc<'a> {
+    #[inline(always)]
+    pub(crate) fn as_raw(&self) -> D3D12_STREAM_OUTPUT_DESC {
+        let entries = self
+            .entries
+            .iter()
+            .map(|e| e.as_raw())
+            .collect::<SmallVec<[_; 16]>>();
+
+        D3D12_STREAM_OUTPUT_DESC {
+            pSODeclaration: entries.as_ptr(),
+            NumEntries: entries.len() as u32,
+            pBufferStrides: self.buffer_strides.as_ptr(),
+            NumStrides: self.buffer_strides.len() as u32,
+            RasterizedStream: self.rasterized_stream,
         }
     }
 }

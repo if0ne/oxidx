@@ -10,6 +10,9 @@ use windows::{
 
 use crate::{create_type, error::DxError, impl_trait, HasInterface};
 
+/// This interface is used to return data of arbitrary length.
+///
+/// For more information: [`ID3DBlob interface`](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/ff728743(v=vs.85))
 pub trait BlobInterface: HasInterface<Raw: Interface> {
     // TODO: type for target
     fn compile_from_file(
@@ -27,7 +30,12 @@ pub trait BlobInterface: HasInterface<Raw: Interface> {
     fn get_buffer_size(&self) -> usize;
 }
 
-create_type! { Blob wrap ID3DBlob }
+create_type! {
+    /// This interface is used to return data of arbitrary length.
+    ///
+    /// For more information: [`ID3DBlob interface`](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/ff728743(v=vs.85))
+    Blob wrap ID3DBlob
+}
 
 impl Blob {
     pub(crate) fn as_shader_bytecode(&self) -> D3D12_SHADER_BYTECODE {

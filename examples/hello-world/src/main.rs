@@ -17,7 +17,7 @@ use oxidx::{
     sync::*,
     types::*,
 };
-use smallvec::smallvec;
+
 use winit::{
     dpi::PhysicalSize,
     event::{Event as EventWin, WindowEvent},
@@ -480,18 +480,16 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
         blend_state: BlendDesc {
             alpha_to_coverage_enable: false,
             independent_blend_enable: false,
-            render_targets: smallvec![RenderTargetBlendDesc {
-                blend_enable: false,
-                logic_op_enable: false,
-                src_blend: Blend::One,
-                dst_blend: Blend::Zero,
-                blend_op: BlendOp::Add,
-                src_blend_alpha: Blend::One,
-                dst_blend_alpha: Blend::Zero,
-                blend_op_alpha: BlendOp::Add,
-                logic_op: LogicOp::Noop,
-                mask: BlendMask::all(),
-            }],
+            render_targets: [
+                RenderTargetBlendDesc::default(),
+                RenderTargetBlendDesc::default(),
+                RenderTargetBlendDesc::default(),
+                RenderTargetBlendDesc::default(),
+                RenderTargetBlendDesc::default(),
+                RenderTargetBlendDesc::default(),
+                RenderTargetBlendDesc::default(),
+                RenderTargetBlendDesc::default(),
+            ],
         },
         depth_stencil: None,
         primitive_topology: PrimitiveTopology::Triangle,
@@ -500,10 +498,21 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
             ..Default::default()
         },
         ib_strip_cut_value: None,
-        rtv_formats: smallvec![Format::Bgra8Unorm],
+        rtv_formats: [
+            Format::Bgra8Unorm,
+            Default::default(),
+            Default::default(),
+            Default::default(),
+            Default::default(),
+            Default::default(),
+            Default::default(),
+            Default::default(),
+        ],
         dsv_format: None,
         node_mask: 0,
         flags: PipelineStateFlags::empty(),
+        num_render_targets: 1,
+        cached_pso: None,
     };
 
     device.create_graphics_pipeline(&desc).unwrap()

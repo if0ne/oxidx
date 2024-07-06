@@ -6,6 +6,11 @@ use windows::{
 
 use crate::{blob::Blob, create_type, error::DxError, impl_trait, types::*, HasInterface};
 
+/// The root signature defines what resources are bound to the graphics pipeline.
+/// A root signature is configured by the app and links command lists to the resources the shaders require.
+/// Currently, there is one graphics and one compute root signature per app.
+///
+/// For more information: [`ID3D12RootSignature interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12rootsignature)
 pub trait RootSignatureInterface:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12RootSignature>>
 {
@@ -15,7 +20,14 @@ pub trait RootSignatureInterface:
     ) -> Result<Blob, DxError>;
 }
 
-create_type! { RootSignature wrap ID3D12RootSignature }
+create_type! {
+    /// The root signature defines what resources are bound to the graphics pipeline.
+    /// A root signature is configured by the app and links command lists to the resources the shaders require.
+    /// Currently, there is one graphics and one compute root signature per app.
+    ///
+    /// For more information: [`ID3D12RootSignature interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12rootsignature)
+    RootSignature wrap ID3D12RootSignature
+}
 
 impl_trait! {
     impl RootSignatureInterface =>

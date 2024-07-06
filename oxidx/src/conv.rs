@@ -358,21 +358,6 @@ impl InputSlotClass {
     }
 }
 
-impl DeclarationEntry {
-    pub(crate) fn as_raw(&self) -> D3D12_SO_DECLARATION_ENTRY {
-        let semantic_name = PCSTR::from_raw(self.semantic_name.as_ref().as_ptr() as *const _);
-
-        D3D12_SO_DECLARATION_ENTRY {
-            Stream: self.stream,
-            SemanticName: semantic_name,
-            SemanticIndex: self.semantic_index,
-            StartComponent: self.start_component,
-            ComponentCount: self.component_count,
-            OutputSlot: self.output_slot,
-        }
-    }
-}
-
 impl RasterizerDesc {
     pub(crate) fn as_raw(&self) -> D3D12_RASTERIZER_DESC {
         D3D12_RASTERIZER_DESC {
@@ -425,35 +410,6 @@ impl PrimitiveTopology {
 impl IndexBufferStripCutValue {
     pub(crate) fn as_raw(&self) -> D3D12_INDEX_BUFFER_STRIP_CUT_VALUE {
         D3D12_INDEX_BUFFER_STRIP_CUT_VALUE(*self as i32)
-    }
-}
-
-impl RenderTargetBlendDesc {
-    pub(crate) fn as_raw(&self) -> D3D12_RENDER_TARGET_BLEND_DESC {
-        D3D12_RENDER_TARGET_BLEND_DESC {
-            BlendEnable: self.blend_enable.into(),
-            LogicOpEnable: self.logic_op_enable.into(),
-            SrcBlend: self.src_blend.as_raw(),
-            DestBlend: self.dst_blend.as_raw(),
-            BlendOp: self.blend_op.as_raw(),
-            SrcBlendAlpha: self.src_blend_alpha.as_raw(),
-            DestBlendAlpha: self.dst_blend_alpha.as_raw(),
-            BlendOpAlpha: self.blend_op_alpha.as_raw(),
-            LogicOp: self.logic_op.as_raw(),
-            RenderTargetWriteMask: self.mask.bits(),
-        }
-    }
-}
-
-impl Blend {
-    pub(crate) fn as_raw(&self) -> D3D12_BLEND {
-        D3D12_BLEND(*self as i32)
-    }
-}
-
-impl BlendOp {
-    pub(crate) fn as_raw(&self) -> D3D12_BLEND_OP {
-        D3D12_BLEND_OP(*self as i32)
     }
 }
 

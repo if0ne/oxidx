@@ -5,5 +5,4 @@ edition = "2021"
 
 [dependencies]
 oxidx = { path = "../../oxidx" }
-smallvec = "1.13.2"
 winit = "0.29.15"

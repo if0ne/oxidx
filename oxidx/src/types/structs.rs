@@ -1,16 +1,24 @@
 use std::ffi::CStr;
 
-use smallvec::SmallVec;
-
 use crate::{blob::Blob, root_signature::RootSignature};
 
 use super::*;
 
-#[derive(Clone, Debug)]
+/// Describes the blend state.
+///
+/// For more information: [`D3D12_BLEND_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_blend_desc)
+#[derive(Clone, Debug, Default)]
 pub struct BlendDesc {
-    pub render_targets: SmallVec<[RenderTargetBlendDesc; 8]>,
+    /// Specifies whether to use alpha-to-coverage as a multisampling technique when setting a pixel to a render target.
     pub alpha_to_coverage_enable: bool,
+
+    /// Specifies whether to enable independent blending in simultaneous render targets.
+    /// Set to TRUE to enable independent blending. If set to FALSE, only the RenderTarget[0] members are used; RenderTarget[1..7] are ignored.
     pub independent_blend_enable: bool,
+
+    /// An array of [`RenderTargetBlendDesc`] structures that describe the blend states for render targets;
+    /// these correspond to the eight render targets that can be bound to the output-merger stage at one time.
+    pub render_targets: [RenderTargetBlendDesc; 8],
 }
 
 /// Describes a command queue.
@@ -95,13 +103,30 @@ impl CpuDescriptorHandle {
     }
 }
 
+/// Describes a vertex element in a vertex buffer in an output slot.
+///
+/// For more information: [`D3D12_SO_DECLARATION_ENTRY structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_so_declaration_entry)
 #[derive(Clone, Debug)]
 pub struct DeclarationEntry {
+    /// Zero-based, stream number.
     pub stream: u32,
+
+    /// Type of output element; possible values include: "POSITION", "NORMAL", or "TEXCOORD0".
+    /// Note that if SemanticName is NULL then ComponentCount can be greater than 4 and the described entry will be a gap in the stream out where no data will be written.
     pub semantic_name: &'static CStr,
+
+    /// Output element's zero-based index. Use, for example, if you have more than one texture coordinate stored in each vertex.
     pub semantic_index: u32,
+
+    /// The component of the entry to begin writing out to. Valid values are 0 to 3. For example, if you only wish to output to the y and z components of a position, StartComponent is 1 and ComponentCount is 2.
     pub start_component: u8,
+
+    /// The number of components of the entry to write out to. Valid values are 1 to 4.
+    /// For example, if you only wish to output to the y and z components of a position, StartComponent is 1 and ComponentCount is 2.
+    /// Note that if SemanticName is NULL then ComponentCount can be greater than 4 and the described entry will be a gap in the stream out where no data will be written.
     pub component_count: u8,
+
+    /// The associated stream output buffer that is bound to the pipeline. The valid range for OutputSlot is 0 to 3.
     pub output_slot: u8,
 }
 
@@ -148,26 +173,74 @@ impl GpuDescriptorHandle {
     }
 }
 
+/// Describes a graphics pipeline state object.
+///
+/// For more information: [`D3D12_GRAPHICS_PIPELINE_STATE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_graphics_pipeline_state_desc)
 #[derive(Debug)]
 pub struct GraphicsPipelineDesc<'a> {
+    /// A reference to the [`RootSignature`] object.
     pub root_signature: &'a RootSignature,
-    pub input_layout: &'a [InputElementDesc],
+
+    /// A [`Blob`] that contains the vertex shader.
     pub vs: &'a Blob,
+
+    /// A [`Blob`] that contains the pixel shader.
     pub ps: Option<&'a Blob>,
+
+    /// A [`Blob`] that contains the domain shader.
     pub ds: Option<&'a Blob>,
+
+    /// A [`Blob`] that contains the hull shader.
     pub hs: Option<&'a Blob>,
+
+    /// A [`Blob`] that contains the geometry shader.
     pub gs: Option<&'a Blob>,
+
+    /// A [`StreamOutputDesc`] structure that describes a streaming output buffer.
     pub stream_output: Option<StreamOutputDesc<'a>>,
+
+    /// A [`BlendDesc`] structure that describes the blend state.
     pub blend_state: BlendDesc,
+
+    /// The sample mask for the blend state.
     pub sample_mask: u32,
+
+    /// A [`RasterizerDesc`] structure that describes the rasterizer state.
     pub rasterizer_state: RasterizerDesc,
+
+    /// A [`DepthStencilDesc`] structure that describes the depth-stencil state.
     pub depth_stencil: Option<DepthStencilDesc>,
+
+    /// An array of [`InputElementDesc`] that describes the input-buffer data for the input-assembler stage.
+    pub input_layout: &'a [InputElementDesc],
+
+    /// Specifies the properties of the index buffer in a [`IndexBufferStripCutValue`] structure.
     pub ib_strip_cut_value: Option<IndexBufferStripCutValue>,
+
+    /// A [`PrimitiveTopology`]-typed value for the type of primitive, and ordering of the primitive data.
     pub primitive_topology: PrimitiveTopology,
-    pub rtv_formats: SmallVec<[Format; 8]>, // TODO: Custom Type
+
+    /// The number of render target formats in the rtv_formats member.
+    pub num_render_targets: u32,
+
+    /// An array of [`Format`]-typed values for the render target formats.
+    pub rtv_formats: [Format; 8],
+
+    /// A [`Format`]-typed value for the depth-stencil format.
     pub dsv_format: Option<Format>,
+
+    /// A [`SampleDesc`] structure that specifies multisampling parameters.
     pub sampler_desc: SampleDesc,
+
+    /// For single GPU operation, set this to zero.
+    /// If there are multiple GPU nodes, set bits to identify the nodes (the device's physical adapters) for which the graphics pipeline state is to apply.
+    /// Each bit in the mask corresponds to a single node.
     pub node_mask: u32,
+
+    /// A cached pipeline state object, as a [`Blob`].
+    pub cached_pso: Option<&'a Blob>,
+
+    /// A [`PipelineStateFlags`] enumeration constant such as for "tool debug".
     pub flags: PipelineStateFlags,
 }
 
@@ -238,18 +311,47 @@ pub struct RasterizerDesc {
     pub cull_mode: CullMode,
 }
 
-#[derive(Clone, Debug)]
-pub struct RenderTargetBlendDesc {
-    pub blend_enable: bool,
-    pub logic_op_enable: bool,
-    pub src_blend: Blend,
-    pub dst_blend: Blend,
-    pub blend_op: BlendOp,
-    pub src_blend_alpha: Blend,
-    pub dst_blend_alpha: Blend,
-    pub blend_op_alpha: BlendOp,
-    pub logic_op: LogicOp,
-    pub mask: BlendMask,
+/// Describes the blend state for a render target.
+///
+/// For more information: [`D3D12_RENDER_TARGET_BLEND_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_render_target_blend_desc)
+#[derive(Clone, Debug, Default)]
+pub enum RenderTargetBlendDesc {
+    /// No blend or logic op.
+    #[default]
+    None,
+    /// Specifies whether to enable blending.
+    Blend {
+        /// A [`Blend`]-typed value that specifies the operation to perform on the RGB value that the pixel shader outputs. The BlendOp member defines how to combine the src_blend and dest_blend operations.
+        src_blend: Blend,
+
+        /// A [`Blend`]-typed value that specifies the operation to perform on the current RGB value in the render target. The BlendOp member defines how to combine the src_blend and dest_blend operations.
+        dst_blend: Blend,
+
+        /// A [`BlendOp]-typed value that defines how to combine the SrcBlend and DestBlend operations.
+        blend_op: BlendOp,
+
+        /// A [`Blend`]-typed value that specifies the operation to perform on the alpha value that the pixel shader outputs.
+        /// Blend options that end in _COLOR are not allowed. The BlendOpAlpha member defines how to combine the src_blend_alpha and dst_blend_alpha operations.
+        src_blend_alpha: Blend,
+
+        /// A [`Blend`]-typed value that specifies the operation to perform on the current alpha value in the render target.
+        /// Blend options that end in _COLOR are not allowed. The BlendOpAlpha member defines how to combine the src_blend_alpha and dst_blend_alpha operations.
+        dst_blend_alpha: Blend,
+
+        /// A [`BlendOp`]-typed value that defines how to combine the SrcBlendAlpha and DestBlendAlpha operations.
+        blend_op_alpha: BlendOp,
+
+        /// A combination of [`ColorWriteEnable`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies a write mask.
+        mask: ColorWriteEnable,
+    },
+    /// Specifies whether to enable a logical operation.
+    Logic {
+        /// A [`LogicOp`]-typed value that specifies the logical operation to configure for the render target.
+        logic_op: LogicOp,
+
+        /// A combination of [`ColorWriteEnable`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies a write mask.
+        mask: ColorWriteEnable,
+    },
 }
 
 /// Describes a resource, such as a texture. This structure is used extensively.
@@ -330,10 +432,18 @@ pub struct StaticSamplerDesc {
     pub visibility: ShaderVisibility,
 }
 
+/// Describes a streaming output buffer.
+///
+/// For more information: [`D3D12_STREAM_OUTPUT_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_stream_output_desc)
 #[derive(Clone, Debug)]
 pub struct StreamOutputDesc<'a> {
+    /// An array of [`DeclarationEntry`] structures
     pub entries: &'a [DeclarationEntry],
+
+    /// An array of buffer strides; each stride is the size of an element for that buffer.
     pub buffer_strides: &'a [u32],
+
+    /// The index number of the stream to be sent to the rasterizer stage.
     pub rasterized_stream: u32,
 }
 
