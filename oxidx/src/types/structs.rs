@@ -130,16 +130,68 @@ pub struct DeclarationEntry {
     pub output_slot: u8,
 }
 
-#[derive(Clone, Debug)]
-pub struct DepthStencilDesc {}
+/// Describes depth-stencil state.
+///
+/// For more information: [`D3D12_DEPTH_STENCIL_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_depth_stencil_desc)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct DepthStencilDesc {
+    /// Specifies whether to enable depth testing. Set this member to TRUE to enable depth testing.
+    pub depth_enable: bool,
+
+    /// A [`DepthWriteMask`]-typed value that identifies a portion of the depth-stencil buffer that can be modified by depth data.
+    pub depth_write_mask: DepthWriteMask,
+
+    /// A [`ComparisonFunc`]-typed value that identifies a function that compares depth data against existing depth data.
+    pub depth_func: ComparisonFunc,
+
+    /// Specifies whether to enable stencil testing. Set this member to TRUE to enable stencil testing.
+    pub stencil_enable: bool,
+
+    /// Identify a portion of the depth-stencil buffer for reading stencil data.
+    pub stencil_read_mask: u8,
+
+    /// Identify a portion of the depth-stencil buffer for writing stencil data.
+    pub stencil_write_mask: u8,
+
+    /// A [`DepthStencilOpDesc`] structure that describes how to use the results of the depth test and the stencil test for pixels whose surface normal is facing towards the camera.
+    pub front_face: DepthStencilOpDesc,
+
+    /// A [`DepthStencilOpDesc`] structure that describes how to use the results of the depth test and the stencil test for pixels whose surface normal is facing away from the camera.
+    pub back_face: DepthStencilOpDesc,
+}
+
+/// Describes stencil operations that can be performed based on the results of stencil test.
+///
+/// For more information: [`D3D12_DEPTH_STENCILOP_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_depth_stencilop_desc)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct DepthStencilOpDesc {
+    /// A [`StencilOp`]-typed value that identifies the stencil operation to perform when stencil testing fails.
+    pub stencil_fail_op: StencilOp,
+
+    /// A [`StencilOp`]-typed value that identifies the stencil operation to perform when stencil testing passes and depth testing fails.
+    pub stencil_depth_fail_op: StencilOp,
+
+    /// A [`StencilOp`]-typed value that identifies the stencil operation to perform when stencil testing and depth testing both pass.
+    pub stencil_pass_op: StencilOp,
+
+    /// A [`ComparisonFunc`]-typed value that identifies the function that compares stencil data against existing stencil data.
+    pub stencil_func: ComparisonFunc,
+}
 
 /// Describes the subresources of a texture that are accessible from a depth-stencil view.
 ///
 /// For more information: [`D3D12_DEPTH_STENCIL_VIEW_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_depth_stencil_view_desc)
 #[derive(Clone, Copy, Debug)]
 pub struct DepthStencilViewDesc {
+    /// A [`Format`]-typed value that specifies the viewing format.
     pub format: Format,
+
+    /// A [`DsvDimension`]-typed value that specifies how the depth-stencil resource will be accessed. This member also determines which _DSV to use in the following union.
     pub view_dimension: DsvDimension,
+
+    /// A combination of [`DsvFlags`] enumeration constants that are combined by using a bitwise OR operation. The resulting value specifies whether the texture is read only.
+    ///
+    /// Pass `empty` to specify that it isn't read only; otherwise, pass one or more of the members of the [`DsvFlags`] enumerated type.
     pub flags: DsvFlags,
 }
 
@@ -218,7 +270,7 @@ pub struct GraphicsPipelineDesc<'a> {
     pub ib_strip_cut_value: Option<IndexBufferStripCutValue>,
 
     /// A [`PrimitiveTopology`]-typed value for the type of primitive, and ordering of the primitive data.
-    pub primitive_topology: PrimitiveTopology,
+    pub primitive_topology: PipelinePrimitiveTopology,
 
     /// The number of render target formats in the rtv_formats member.
     pub num_render_targets: u32,
@@ -244,14 +296,34 @@ pub struct GraphicsPipelineDesc<'a> {
     pub flags: PipelineStateFlags,
 }
 
+/// Describes a single element for the input-assembler stage of the graphics pipeline.
+///
+/// For more information: [`D3D12_INPUT_ELEMENT_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_input_element_desc)
 #[derive(Clone, Debug)]
 pub struct InputElementDesc {
+    /// The HLSL semantic associated with this element in a shader input-signature.
     pub semantic_name: &'static CStr,
+
+    /// The semantic index for the element.
+    /// A semantic index modifies a semantic, with an integer index number.
+    ///  A semantic index is only needed in a case where there is more than one element with the same semantic.
+    /// For example, a 4x4 matrix would have four components each with the semantic name matrix, however each of the four component would have different semantic indices (0, 1, 2, and 3).
     pub semantic_index: u32,
+
+    /// A [`Format`]-typed value that specifies the format of the element data.
     pub format: Format,
+
+    /// An integer value that identifies the input-assembler. Valid values are between 0 and 15.
     pub input_slot: u32,
+
+    /// Optional. Offset, in bytes, to this element from the start of the vertex.
+    /// Use `0xffffffff` for convenience to define the current element directly after the previous one, including any packing if necessary.
     pub offset: u32,
+
+    /// A value that identifies the input data class for a single input slot.
     pub slot_class: InputSlotClass,
+
+    /// The number of instances to draw using the same per-instance data before advancing in the buffer by one element.
     pub instance_data_step_rate: u32,
 }
 
@@ -305,10 +377,46 @@ pub struct HeapProperties {
     pub visible_node_mask: u32,
 }
 
-#[derive(Clone, Debug)]
+/// Describes rasterizer state.
+///
+/// For more information: [`D3D12_RASTERIZER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_rasterizer_desc)
+#[derive(Clone, Copy, Debug, Default)]
 pub struct RasterizerDesc {
+    /// A [`FillMode`]-typed value that specifies the fill mode to use when rendering.
     pub fill_mode: FillMode,
+
+    /// A [`CullMode`]-typed value that specifies that triangles facing the specified direction are not drawn.
     pub cull_mode: CullMode,
+
+    /// Determines if a triangle is front- or back-facing.
+    /// If this member is TRUE, a triangle will be considered front-facing if its vertices are counter-clockwise on the render target and considered back-facing
+    /// if they are clockwise. If this parameter is FALSE, the opposite is true.
+    pub front_counter_clockwise: bool,
+
+    /// Depth value added to a given pixel. For info about depth bias.
+    pub depth_bias: i32,
+
+    /// Maximum depth bias of a pixel. For info about depth bias.
+    pub depth_bias_clamp: f32,
+
+    /// Scalar on a given pixel's slope.
+    pub slope_scaled_depth_bias: f32,
+
+    /// Specifies whether to enable clipping based on distance.
+    pub depth_clip_enable: bool,
+
+    /// Specifies whether to use the quadrilateral or alpha line anti-aliasing algorithm on multisample antialiasing (MSAA) render targets.
+    /// Set to TRUE to use the quadrilateral line anti-aliasing algorithm and to FALSE to use the alpha line anti-aliasing algorithm.
+    pub multisample_enable: bool,
+
+    /// Specifies whether to enable line antialiasing; only applies if doing line drawing and MultisampleEnable is FALSE.
+    pub antialiased_line_enable: bool,
+
+    /// The sample count that is forced while UAV rendering or rasterizing. Valid values are 0, 1, 4, 8, and optionally 16. 0 indicates that the sample count is not forced.
+    pub forced_sample_count: u32,
+
+    /// A [`ConservativeRaster``]-typed value that identifies whether conservative rasterization is on or off.
+    pub conservative_raster: ConservativeRaster,
 }
 
 /// Describes the blend state for a render target.

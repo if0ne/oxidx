@@ -476,6 +476,7 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
         rasterizer_state: RasterizerDesc {
             fill_mode: FillMode::Solid,
             cull_mode: CullMode::None,
+            ..Default::default()
         },
         blend_state: BlendDesc {
             alpha_to_coverage_enable: false,
@@ -492,7 +493,7 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
             ],
         },
         depth_stencil: None,
-        primitive_topology: PrimitiveTopology::Triangle,
+        primitive_topology: PipelinePrimitiveTopology::Triangle,
         sampler_desc: SampleDesc {
             count: 1,
             ..Default::default()

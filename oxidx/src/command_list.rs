@@ -194,7 +194,7 @@ impl_trait! {
 
     fn ia_set_primitive_topology(&self, topology: PrimitiveTopology) {
         unsafe {
-            self.0.IASetPrimitiveTopology(topology.as_raw_d3d());
+            self.0.IASetPrimitiveTopology(topology.as_raw());
         }
     }
 

@@ -136,6 +136,20 @@ pub enum ClearValue {
     },
 }
 
+/// Identifies whether conservative rasterization is on or off.
+///
+/// For more information: [`D3D12_CONSERVATIVE_RASTERIZATION_MODE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_conservative_rasterization_mode)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum ConservativeRaster {
+    /// Conservative rasterization is off.
+    #[default]
+    Off = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF.0,
+
+    /// Conservative rasterization is on.
+    On = D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON.0,
+}
+
 /// Defines priority levels for a command queue.
 ///
 /// For more information: [`D3D12_COMMAND_QUEUE_PRIORITY enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_command_queue_priority)
@@ -183,17 +197,38 @@ pub enum CommandListType {
     VideoEncode = D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE.0,
 }
 
-#[derive(Clone, Copy, Debug)]
+/// Specifies comparison options.
+///
+/// For more information: [`D3D12_COMPARISON_FUNC enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_comparison_func)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
 #[repr(i32)]
 pub enum ComparisonFunc {
+    /// None
+    #[default]
     None = D3D12_COMPARISON_FUNC_NONE.0,
+
+    /// Never pass the comparison.
     Never = D3D12_COMPARISON_FUNC_NEVER.0,
+
+    /// If the source data is less than the destination data, the comparison passes.
     Less = D3D12_COMPARISON_FUNC_LESS.0,
+
+    /// If the source data is equal to the destination data, the comparison passes.
     Equal = D3D12_COMPARISON_FUNC_EQUAL.0,
+
+    /// If the source data is less than or equal to the destination data, the comparison passes.
     LessEqual = D3D12_COMPARISON_FUNC_LESS_EQUAL.0,
-    FuncGreater = D3D12_COMPARISON_FUNC_GREATER.0,
+
+    /// If the source data is greater than the destination data, the comparison passes.
+    Greater = D3D12_COMPARISON_FUNC_GREATER.0,
+
+    /// If the source data is not equal to the destination data, the comparison passes.
     NotEqual = D3D12_COMPARISON_FUNC_NOT_EQUAL.0,
+
+    /// If the source data is greater than or equal to the destination data, the comparison passes.
     GreaterEqual = D3D12_COMPARISON_FUNC_GREATER_EQUAL.0,
+
+    /// Always pass the comparison.
     Always = D3D12_COMPARISON_FUNC_ALWAYS.0,
 }
 
@@ -271,9 +306,21 @@ pub enum CrossNodeSharingTier {
     Tier3 = D3D12_CROSS_NODE_SHARING_TIER_3.0,
 }
 
-#[derive(Clone, Debug)]
+/// Specifies triangles facing a particular direction are not drawn.
+///
+/// For more information: [`D3D12_CULL_MODE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_cull_mode)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
 pub enum CullMode {
-    None,
+    /// Always draw all triangles.
+    #[default]
+    None = D3D12_CULL_MODE_NONE.0,
+
+    /// Do not draw triangles that are front-facing.
+    Front = D3D12_CULL_MODE_FRONT.0,
+
+    /// Do not draw triangles that are back-facing.
+    Back = D3D12_CULL_MODE_BACK.0,
 }
 
 /// Specifies a type of descriptor heap.
@@ -527,6 +574,26 @@ pub enum FeatureLevel {
 
     /// Targets features supported by Direct3D 12.2, including shader model 6.5.
     Level12_2 = D3D_FEATURE_LEVEL_12_2.0,
+}
+
+#[derive(Clone, Copy, Debug)]
+#[repr(i32)]
+pub enum Filter {
+    MinMagPointMipLinear = D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR.0,
+}
+
+/// Specifies the fill mode to use when rendering triangles.
+///
+/// For more information: [`D3D12_FILL_MODE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_fill_mode)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum FillMode {
+    /// Draw lines connecting the vertices. Adjacent vertices are not drawn.
+    Wireframe = D3D12_FILL_MODE_WIREFRAME.0,
+
+    /// Fill the triangles formed by the vertices. Adjacent vertices are not drawn.
+    #[default]
+    Solid = D3D12_FILL_MODE_SOLID.0,
 }
 
 /// Resource data formats, including fully-typed and typeless formats. A list of modifiers at the bottom of the page more fully describes each format type.
@@ -893,28 +960,34 @@ pub enum Format {
     V408 = DXGI_FORMAT_V408.0,
 }
 
-#[derive(Clone, Copy, Debug)]
-#[repr(i32)]
-pub enum Filter {
-    MinMagPointMipLinear = D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR.0,
-}
-
-#[derive(Clone, Debug)]
-pub enum FillMode {
-    Solid,
-    Wireframe,
-}
-
-#[derive(Clone, Copy, Debug)]
+/// When using triangle strip primitive topology, vertex positions are interpreted as vertices of a continuous triangle “strip”.
+/// There is a special index value that represents the desire to have a discontinuity in the strip, the cut index value. This enum lists the supported cut values.
+///
+/// For more information: [`D3D12_INDEX_BUFFER_STRIP_CUT_VALUE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_index_buffer_strip_cut_value)
+#[derive(Clone, Copy, Debug, FromRepr)]
 #[repr(i32)]
 pub enum IndexBufferStripCutValue {
+    /// Indicates that there is no cut value.
     Disabled = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED.0,
+
+    /// Indicates that 0xFFFF should be used as the cut value.
+    _0xFFFF = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFF.0,
+
+    /// Indicates that 0xFFFFFFFF should be used as the cut value.
+    _0xFFFFFFFF = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFFFFFF.0,
 }
 
-#[derive(Clone, Copy, Debug)]
+/// Identifies the type of data contained in an input slot.
+///
+/// For more information: [`D3D12_INPUT_CLASSIFICATION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_input_classification)
+#[derive(Clone, Copy, Debug, FromRepr)]
 #[repr(i32)]
 pub enum InputSlotClass {
+    /// Input data is per-vertex data.
     PerVertex = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA.0,
+
+    /// Input data is per-instance data.
+    InstanceData = D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA.0,
 }
 
 /// Heap alignment variants.
@@ -1041,22 +1114,53 @@ pub enum IndirectArgumentDesc {
 #[derive(Clone, Copy, Debug, Default, FromRepr)]
 #[repr(i32)]
 pub enum LogicOp {
+    /// Clears the render target (0).
     #[default]
     Clear = D3D12_LOGIC_OP_CLEAR.0,
+
+    /// Sets the render target (1).
     Set = D3D12_LOGIC_OP_SET.0,
+
+    /// Copys the render target (s source from Pixel Shader output).
     Copy = D3D12_LOGIC_OP_COPY.0,
+
+    /// Performs an inverted-copy of the render target (~s).
     CopyInverted = D3D12_LOGIC_OP_COPY_INVERTED.0,
+
+    /// No operation is performed on the render target (d destination in the Render Target View).
     Noop = D3D12_LOGIC_OP_NOOP.0,
+
+    /// Inverts the render target (~d).
     Invert = D3D12_LOGIC_OP_INVERT.0,
+
+    /// Performs a logical AND operation on the render target (s & d).
     And = D3D12_LOGIC_OP_AND.0,
+
+    /// Performs a logical NAND operation on the render target (~(s & d)).
     Nand = D3D12_LOGIC_OP_NAND.0,
+
+    /// Performs a logical OR operation on the render target (s | d).
     Or = D3D12_LOGIC_OP_OR.0,
+
+    /// Performs a logical NOR operation on the render target (~(s | d)).
     Nor = D3D12_LOGIC_OP_NOR.0,
+
+    /// Performs a logical XOR operation on the render target (s ^ d).
     Xor = D3D12_LOGIC_OP_XOR.0,
+
+    /// Performs a logical equal operation on the render target (~(s ^ d)).
     Equiv = D3D12_LOGIC_OP_EQUIV.0,
+
+    /// Performs a logical AND and reverse operation on the render target (s & ~d).
     Reverse = D3D12_LOGIC_OP_AND_REVERSE.0,
+
+    /// Performs a logical AND and invert operation on the render target (~s & d).
     AndInverted = D3D12_LOGIC_OP_AND_INVERTED.0,
+
+    /// Performs a logical OR and reverse operation on the render target (s | ~d).
     OrReverse = D3D12_LOGIC_OP_OR_REVERSE.0,
+
+    /// Performs a logical OR and invert operation on the render target (~s | d).
     OrInverted = D3D12_LOGIC_OP_OR_INVERTED.0,
 }
 
@@ -1118,10 +1222,47 @@ pub enum MinPrecisionSupport {
     Support16Bit = D3D12_SHADER_MIN_PRECISION_SUPPORT_16_BIT.0,
 }
 
-#[derive(Clone, Debug)]
+/// Values that indicate how the pipeline interprets vertex data that is bound to the input-assembler stage. These primitive topology values determine how the vertex data is rendered on screen.
+///
+/// For more information: [`D3D_PRIMITIVE_TOPOLOGY enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_primitive_topology)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
 pub enum PrimitiveTopology {
-    Triangle,
-    Point,
+    /// The IA stage has not been initialized with a primitive topology. The IA stage will not function properly unless a primitive topology is defined.
+    #[default]
+    Undefined = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED.0,
+
+    /// Interpret the vertex data as a list of points.
+    Point = D3D_PRIMITIVE_TOPOLOGY_POINTLIST.0,
+
+    /// Interpret the vertex data as a list of lines.
+    Line = D3D_PRIMITIVE_TOPOLOGY_LINELIST.0,
+
+    /// Interpret the vertex data as a list of triangles.
+    Triangle = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST.0,
+}
+
+/// Specifies the level of support for programmable sample positions that's offered by the adapter.
+///
+/// For more information: [`D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_programmable_sample_positions_tier)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum PipelinePrimitiveTopology {
+    /// The shader has not been initialized with an input primitive type.
+    #[default]
+    Undefined = D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED.0,
+
+    /// Interpret the input primitive as a point.
+    Point = D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT.0,
+
+    /// Interpret the input primitive as a line.
+    Line = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE.0,
+
+    /// Interpret the input primitive as a triangle.
+    Triangle = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE.0,
+
+    /// Interpret the input primitive as a control point patch.
+    Patch = D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH.0,
 }
 
 /// Specifies the level of support for programmable sample positions that's offered by the adapter.
@@ -1364,6 +1505,38 @@ pub enum SharedResourceCompatibilityTier {
 
     /// Specifies that cross-API sharing functionality of [`SharedResourceCompatibilityTier::Tier1`] is supported, plus the other formats.
     Tier2 = D3D12_SHARED_RESOURCE_COMPATIBILITY_TIER_2.0,
+}
+
+/// Identifies the stencil operations that can be performed during depth-stencil testing.
+///
+/// For more information: [`D3D12_STENCIL_OP enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_stencil_op)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum StencilOp {
+    /// Keep the existing stencil data.
+    #[default]
+    Keep = D3D12_STENCIL_OP_KEEP.0,
+
+    /// Set the stencil data to 0.
+    Zero = D3D12_STENCIL_OP_ZERO.0,
+
+    /// Set the stencil data to the reference value set by calling [`GraphicsCommandListInterface::om_set_stencil_ref`](crate::command_list::GraphicsCommandListInterface).
+    Replace = D3D12_STENCIL_OP_REPLACE.0,
+
+    /// Increment the stencil value by 1, and clamp the result.
+    IncrSat = D3D12_STENCIL_OP_INCR_SAT.0,
+
+    /// Decrement the stencil value by 1, and clamp the result.
+    DecrSat = D3D12_STENCIL_OP_DECR_SAT.0,
+
+    /// Invert the stencil data.
+    Invert = D3D12_STENCIL_OP_INVERT.0,
+
+    /// Increment the stencil value by 1, and wrap the result if necessary.
+    Incr = D3D12_STENCIL_OP_INCR.0,
+
+    /// Decrement the stencil value by 1, and wrap the result if necessary.
+    Decr = D3D12_STENCIL_OP_DECR.0,
 }
 
 /// Specifies texture layout options.

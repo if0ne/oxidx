@@ -121,6 +121,34 @@ impl DeclarationEntry {
     }
 }
 
+impl DepthStencilDesc {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_DEPTH_STENCIL_DESC {
+        D3D12_DEPTH_STENCIL_DESC {
+            DepthEnable: self.depth_enable.into(),
+            DepthWriteMask: self.depth_write_mask.as_raw(),
+            DepthFunc: self.depth_func.as_raw(),
+            StencilEnable: self.stencil_enable.into(),
+            StencilReadMask: self.stencil_read_mask,
+            StencilWriteMask: self.stencil_write_mask,
+            FrontFace: self.front_face.as_raw(),
+            BackFace: self.back_face.as_raw(),
+        }
+    }
+}
+
+impl DepthStencilOpDesc {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_DEPTH_STENCILOP_DESC {
+        D3D12_DEPTH_STENCILOP_DESC {
+            StencilFailOp: self.stencil_fail_op.as_raw(),
+            StencilDepthFailOp: self.stencil_depth_fail_op.as_raw(),
+            StencilPassOp: self.stencil_pass_op.as_raw(),
+            StencilFunc: self.stencil_func.as_raw(),
+        }
+    }
+}
+
 impl<'a> GraphicsPipelineDesc<'a> {
     #[inline(always)]
     pub(crate) fn as_raw(&self) -> D3D12_GRAPHICS_PIPELINE_STATE_DESC {
@@ -134,7 +162,7 @@ impl<'a> GraphicsPipelineDesc<'a> {
             .input_layout
             .iter()
             .map(|il| il.as_raw())
-            .collect::<SmallVec<[_; 8]>>();
+            .collect::<SmallVec<[_; 16]>>();
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC {
             pRootSignature: unsafe { std::mem::transmute_copy(self.root_signature.as_raw()) },
@@ -182,8 +210,11 @@ impl<'a> GraphicsPipelineDesc<'a> {
             DSVFormat: self.dsv_format.map(|f| f.as_raw()).unwrap_or_default(),
             SampleDesc: self.sampler_desc.as_raw(),
             NodeMask: self.node_mask,
-            CachedPSO: D3D12_CACHED_PIPELINE_STATE::default(),
-            Flags: D3D12_PIPELINE_STATE_FLAGS(self.flags.bits()),
+            CachedPSO: self
+                .cached_pso
+                .map(|pso| pso.as_cached_pipeline_state())
+                .unwrap_or_default(),
+            Flags: self.flags.as_raw(),
         }
     }
 }
@@ -329,6 +360,42 @@ impl From<D3D12_HEAP_PROPERTIES> for HeapProperties {
             memory_pool_preference: value.MemoryPoolPreference.into(),
             creation_node_mask: value.CreationNodeMask,
             visible_node_mask: value.VisibleNodeMask,
+        }
+    }
+}
+
+impl InputElementDesc {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_INPUT_ELEMENT_DESC {
+        let semantic_name = PCSTR::from_raw(self.semantic_name.as_ref().as_ptr() as *const _);
+
+        D3D12_INPUT_ELEMENT_DESC {
+            SemanticName: semantic_name,
+            SemanticIndex: self.semantic_index,
+            Format: self.format.as_raw(),
+            InputSlot: self.input_slot,
+            AlignedByteOffset: self.offset,
+            InputSlotClass: self.slot_class.as_raw(),
+            InstanceDataStepRate: self.instance_data_step_rate,
+        }
+    }
+}
+
+impl RasterizerDesc {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_RASTERIZER_DESC {
+        D3D12_RASTERIZER_DESC {
+            FillMode: self.fill_mode.as_raw(),
+            CullMode: self.cull_mode.as_raw(),
+            FrontCounterClockwise: self.front_counter_clockwise.into(),
+            DepthBias: self.depth_bias,
+            DepthBiasClamp: self.depth_bias_clamp,
+            SlopeScaledDepthBias: self.slope_scaled_depth_bias,
+            DepthClipEnable: self.depth_clip_enable.into(),
+            MultisampleEnable: self.multisample_enable.into(),
+            AntialiasedLineEnable: self.antialiased_line_enable.into(),
+            ForcedSampleCount: self.forced_sample_count,
+            ConservativeRaster: self.conservative_raster.as_raw(),
         }
     }
 }

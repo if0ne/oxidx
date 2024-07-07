@@ -100,6 +100,19 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Identifies the portion of a depth-stencil buffer for writing depth data.
+    ///
+    /// Empty flag - Turn off writes to the depth-stencil buffer.
+    ///
+    /// For more information: [`D3D12_DEPTH_WRITE_MASK enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_depth_write_mask)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct DepthWriteMask: i32 {
+        /// Turn on writes to the depth-stencil buffer.
+        const All = D3D12_DEPTH_WRITE_MASK_ALL.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Specifies options for a heap.
     ///
     /// Empty flag - Indicates default usage of a heap.
