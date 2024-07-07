@@ -419,49 +419,6 @@ pub struct RasterizerDesc {
     pub conservative_raster: ConservativeRaster,
 }
 
-/// Describes the blend state for a render target.
-///
-/// For more information: [`D3D12_RENDER_TARGET_BLEND_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_render_target_blend_desc)
-#[derive(Clone, Debug, Default)]
-pub enum RenderTargetBlendDesc {
-    /// No blend or logic op.
-    #[default]
-    None,
-    /// Specifies whether to enable blending.
-    Blend {
-        /// A [`Blend`]-typed value that specifies the operation to perform on the RGB value that the pixel shader outputs. The BlendOp member defines how to combine the src_blend and dest_blend operations.
-        src_blend: Blend,
-
-        /// A [`Blend`]-typed value that specifies the operation to perform on the current RGB value in the render target. The BlendOp member defines how to combine the src_blend and dest_blend operations.
-        dst_blend: Blend,
-
-        /// A [`BlendOp]-typed value that defines how to combine the SrcBlend and DestBlend operations.
-        blend_op: BlendOp,
-
-        /// A [`Blend`]-typed value that specifies the operation to perform on the alpha value that the pixel shader outputs.
-        /// Blend options that end in _COLOR are not allowed. The BlendOpAlpha member defines how to combine the src_blend_alpha and dst_blend_alpha operations.
-        src_blend_alpha: Blend,
-
-        /// A [`Blend`]-typed value that specifies the operation to perform on the current alpha value in the render target.
-        /// Blend options that end in _COLOR are not allowed. The BlendOpAlpha member defines how to combine the src_blend_alpha and dst_blend_alpha operations.
-        dst_blend_alpha: Blend,
-
-        /// A [`BlendOp`]-typed value that defines how to combine the SrcBlendAlpha and DestBlendAlpha operations.
-        blend_op_alpha: BlendOp,
-
-        /// A combination of [`ColorWriteEnable`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies a write mask.
-        mask: ColorWriteEnable,
-    },
-    /// Specifies whether to enable a logical operation.
-    Logic {
-        /// A [`LogicOp`]-typed value that specifies the logical operation to configure for the render target.
-        logic_op: LogicOp,
-
-        /// A combination of [`ColorWriteEnable`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies a write mask.
-        mask: ColorWriteEnable,
-    },
-}
-
 /// Describes a resource, such as a texture. This structure is used extensively.
 ///
 /// For more information: [`D3D12_RESOURCE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_desc)

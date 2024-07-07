@@ -200,7 +200,10 @@ impl RenderTargetBlendDesc {
     #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_RENDER_TARGET_BLEND_DESC {
         match self {
-            RenderTargetBlendDesc::None => D3D12_RENDER_TARGET_BLEND_DESC::default(),
+            RenderTargetBlendDesc::None => D3D12_RENDER_TARGET_BLEND_DESC {
+                RenderTargetWriteMask: ColorWriteEnable::all().as_raw().0 as u8,
+                ..Default::default()
+            },
             RenderTargetBlendDesc::Blend {
                 src_blend,
                 dst_blend,
