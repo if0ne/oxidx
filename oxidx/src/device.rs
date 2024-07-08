@@ -9,6 +9,7 @@ use crate::{
     create_type,
     descriptor_heap::DescriptorHeapInterface,
     error::DxError,
+    heap::HeapInterface,
     impl_trait,
     pso::PipelineStateInterface,
     resources::{RenderTargetViewDesc, ResourceInterface},
@@ -224,13 +225,21 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// Creates a graphics pipeline state object.
     ///
     /// # Arguments
-    /// * `desc` - A pointer to a [`GraphicsPipelineDesc`] structure that describes graphics pipeline state.
+    /// * `desc` - A reference to a [`GraphicsPipelineDesc`] structure that describes graphics pipeline state.
     ///
     /// For more information: [`ID3D12Device::CreateGraphicsPipelineState method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-creategraphicspipelinestate)
     fn create_graphics_pipeline<G: PipelineStateInterface>(
         &self,
         desc: &GraphicsPipelineDesc<'_>,
     ) -> Result<G, DxError>;
+
+    /// Creates a heap that can be used with placed resources and reserved resources.
+    ///
+    /// # Arguments
+    /// * `desc` - A reference to a constant [`HeapDesc`] structure that describes the heap.
+    ///
+    /// For more information: [`ID3D12Device::CreateHeap method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createheap)
+    fn create_heap<H: HeapInterface>(&self, desc: &HeapDesc) -> Result<H, DxError>;
 
     fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32;
 
@@ -483,6 +492,31 @@ impl_trait! {
         }
     }
 
+    fn create_graphics_pipeline<G: PipelineStateInterface>(
+        &self,
+        desc: &GraphicsPipelineDesc<'_>,
+    ) -> Result<G, DxError> {
+        unsafe {
+            let desc = desc.as_raw();
+
+            let res: G::Raw = self.0.CreateGraphicsPipelineState(&desc).map_err(DxError::from)?;
+
+            Ok(G::new(res))
+        }
+    }
+
+    fn create_heap<H: HeapInterface>(&self, desc: &HeapDesc) -> Result<H, DxError> {
+        unsafe {
+            let desc = desc.as_raw();
+
+            let mut res: Option<H::Raw> = None;
+            self.0.CreateHeap(&desc, &mut res).map_err(DxError::from)?;
+            let res = res.unwrap();
+
+            Ok(H::new(res))
+        }
+    }
+
     fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32 {
         unsafe {
             self.0.GetDescriptorHandleIncrementSize(r#type.as_raw())
@@ -553,20 +587,5 @@ impl_trait! {
                 blob.get_buffer_size(),
             ))
         }
-    }
-
-    fn create_graphics_pipeline<G: PipelineStateInterface>(
-        &self,
-        desc: &GraphicsPipelineDesc<'_>,
-    ) -> Result<G, DxError> {
-        let desc = desc.as_raw();
-
-        let res: G::Raw = unsafe {
-            self.0
-                .CreateGraphicsPipelineState(&desc)
-                .map_err(|_| DxError::Dummy)?
-        };
-
-        Ok(G::new(res))
     }
 }
