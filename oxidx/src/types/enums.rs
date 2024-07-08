@@ -4,13 +4,25 @@ use windows::Win32::Graphics::{Direct3D::*, Direct3D12::*};
 #[allow(unused_imports)]
 use super::*;
 
-#[derive(Clone, Copy, Debug)]
+/// Identifies a technique for resolving texture coordinates that are outside of the boundaries of a texture.
+///
+/// For more information: [`D3D12_TEXTURE_ADDRESS_MODE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_texture_address_mode)
+#[derive(Clone, Copy, Debug, FromRepr)]
 #[repr(i32)]
 pub enum AddressMode {
+    /// Tile the texture at every (u,v) integer junction.
     Wrap = D3D12_TEXTURE_ADDRESS_MODE_WRAP.0,
+
+    /// Flip the texture at every (u,v) integer junction.
     Mirror = D3D12_TEXTURE_ADDRESS_MODE_MIRROR.0,
+
+    /// Texture coordinates outside the range [0.0, 1.0] are set to the texture color at 0.0 or 1.0, respectively.
     Clamp = D3D12_TEXTURE_ADDRESS_MODE_CLAMP.0,
+
+    /// Texture coordinates outside the range [0.0, 1.0] are set to the border color specified in [`SamplerDesc`] or HLSL code.
     Border = D3D12_TEXTURE_ADDRESS_MODE_BORDER.0,
+
+    /// Similar to [`AddressMode::Mirror`] and [`AddressMode::Clamp`]. Takes the absolute value of the texture coordinate (thus, mirroring around 0), and then clamps to the maximum value.
     MirrorOnce = D3D12_TEXTURE_ADDRESS_MODE_MIRROR_ONCE.0,
 }
 
@@ -102,13 +114,25 @@ pub enum BlendOp {
     Max = D3D12_BLEND_OP_MAX.0,
 }
 
-#[derive(Clone, Copy, Debug)]
+/// Specifies the border color for a static sampler.
+///
+/// For more information: [`D3D12_STATIC_BORDER_COLOR structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_static_border_color)
+#[derive(Clone, Copy, Debug, FromRepr)]
 #[repr(i32)]
 pub enum BorderColor {
+    /// Indicates black, with the alpha component as fully transparent.
     TransparentBlack = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK.0,
+
+    /// Indicates black, with the alpha component as fully opaque.
     OpaqueBlack = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK.0,
+
+    /// Indicates white, with the alpha component as fully opaque.
     OpaqueWhite = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE.0,
+
+    /// TBD
     OpaqueBlackUint = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK_UINT.0,
+
+    /// TBD
     OpaqueWhiteUint = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE_UINT.0,
 }
 
@@ -343,23 +367,22 @@ pub enum DescriptorHeapType {
     Sampler = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER.0,
 }
 
-// MUST BE repr(C) for casting in raw format
-#[derive(Clone, Debug)]
-#[repr(C)]
-pub struct DescriptorRange {
-    r#type: DescriptorRangeType,
-    num: u32,
-    base_shader_register: u32,
-    register_space: u32,
-    offset_in_descriptors_from_table_start: u32,
-}
-
-#[derive(Clone, Copy, Debug)]
+/// Specifies a range so that, for example, if part of a descriptor table has 100 shader-resource views (SRVs) that range can be declared in one entry rather than 100.
+///
+/// For more information: [`D3D12_DESCRIPTOR_RANGE_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_descriptor_range_type)
+#[derive(Clone, Copy, Debug, FromRepr)]
 #[repr(i32)]
 pub enum DescriptorRangeType {
+    /// Specifies a range of SRVs.
     Srv = D3D12_DESCRIPTOR_RANGE_TYPE_SRV.0,
+
+    /// Specifies a range of unordered-access views (UAVs).
     Uav = D3D12_DESCRIPTOR_RANGE_TYPE_UAV.0,
+
+    /// Specifies a range of constant-buffer views (CBVs).
     Cbv = D3D12_DESCRIPTOR_RANGE_TYPE_CBV.0,
+
+    /// Specifies a range of samplers.
     Sampler = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER.0,
 }
 
@@ -576,10 +599,131 @@ pub enum FeatureLevel {
     Level12_2 = D3D_FEATURE_LEVEL_12_2.0,
 }
 
-#[derive(Clone, Copy, Debug)]
+/// Specifies filtering options during texture sampling.
+///
+/// For more information: [`D3D12_FILTER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_filter)
+#[derive(Clone, Copy, Debug, FromRepr)]
 #[repr(i32)]
 pub enum Filter {
+    /// Use point sampling for minification, magnification, and mip-level sampling.
+    Point = D3D12_FILTER_MIN_MAG_MIP_POINT.0,
+
+    /// Use point sampling for minification and magnification; use linear interpolation for mip-level sampling.
     MinMagPointMipLinear = D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR.0,
+
+    /// Use point sampling for minification; use linear interpolation for magnification; use point sampling for mip-level sampling.
+    MinMipPointMagLinear = D3D12_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT.0,
+
+    /// Use point sampling for minification; use linear interpolation for magnification and mip-level sampling.
+    MinPointMagMipLinear = D3D12_FILTER_MIN_POINT_MAG_MIP_LINEAR.0,
+
+    /// Use linear interpolation for minification; use point sampling for magnification and mip-level sampling.
+    MinLinearMagMipPoint = D3D12_FILTER_MIN_LINEAR_MAG_MIP_POINT.0,
+
+    /// Use linear interpolation for minification; use point sampling for magnification; use linear interpolation for mip-level sampling.
+    MinMipLinearMagPoint = D3D12_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR.0,
+
+    /// Use linear interpolation for minification and magnification; use point sampling for mip-level sampling.
+    MinMagLinearMipPoint = D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT.0,
+
+    /// Use linear interpolation for minification, magnification, and mip-level sampling.
+    Linear = D3D12_FILTER_MIN_MAG_MIP_LINEAR.0,
+
+    /// TBD
+    MinMagAnisotropicMipPoint = D3D12_FILTER_MIN_MAG_ANISOTROPIC_MIP_POINT.0,
+
+    /// Use anisotropic interpolation for minification, magnification, and mip-level sampling.
+    Anisotropic = D3D12_FILTER_ANISOTROPIC.0,
+
+    /// Use point sampling for minification, magnification, and mip-level sampling. Compare the result to the comparison value.
+    ComparisonPoint = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_POINT.0,
+
+    /// Use point sampling for minification and magnification; use linear interpolation for mip-level sampling. Compare the result to the comparison value.
+    ComparisonMinMagPointMipLinear = D3D12_FILTER_COMPARISON_MIN_MAG_POINT_MIP_LINEAR.0,
+
+    /// Use point sampling for minification; use linear interpolation for magnification; use point sampling for mip-level sampling. Compare the result to the comparison value.
+    ComparisonMinMipPointMagLinear = D3D12_FILTER_COMPARISON_MIN_POINT_MAG_LINEAR_MIP_POINT.0,
+
+    /// Use point sampling for minification; use linear interpolation for magnification and mip-level sampling. Compare the result to the comparison value.
+    ComparisonMinPointMagMipLinear = D3D12_FILTER_COMPARISON_MIN_POINT_MAG_MIP_LINEAR.0,
+
+    /// Use linear interpolation for minification; use point sampling for magnification and mip-level sampling. Compare the result to the comparison value.
+    ComparisonMinLinearMagMipPoint = D3D12_FILTER_COMPARISON_MIN_LINEAR_MAG_MIP_POINT.0,
+
+    /// Use linear interpolation for minification; use point sampling for magnification; use linear interpolation for mip-level sampling. Compare the result to the comparison value.
+    ComparisonMinMipLinearMagPoint = D3D12_FILTER_COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR.0,
+
+    /// Use linear interpolation for minification and magnification; use point sampling for mip-level sampling. Compare the result to the comparison value.
+    ComparisonMinMagLinearMipPoint = D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT.0,
+
+    /// Use linear interpolation for minification, magnification, and mip-level sampling. Compare the result to the comparison value.
+    ComparisonLinear = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR.0,
+
+    /// TBD
+    ComparisonMinMagAnisotropicMipPoint = D3D12_FILTER_COMPARISON_MIN_MAG_ANISOTROPIC_MIP_POINT.0,
+
+    /// Use anisotropic interpolation for minification, magnification, and mip-level sampling. Compare the result to the comparison value.
+    ComparisonAnisotropic = D3D12_FILTER_COMPARISON_ANISOTROPIC.0,
+
+    /// Fetch the same set of texels as [`Filter::Point`] and instead of filtering them return the minimum of the texels.
+    MinimumPoint = D3D12_FILTER_MINIMUM_MIN_MAG_MIP_POINT.0,
+
+    /// Fetch the same set of texels as [`Filter::MinMagPointMipLinear`] and instead of filtering them return the minimum of the texels.
+    MinimumMinMagPointMipLinear = D3D12_FILTER_MINIMUM_MIN_MAG_POINT_MIP_LINEAR.0,
+
+    /// Fetch the same set of texels as [`Filter::MinMipPointMagLinear`] and instead of filtering them return the minimum of the texels.
+    MinimumMinMipPointMagLinear = D3D12_FILTER_MINIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT.0,
+
+    /// Fetch the same set of texels as [`Filter::MinPointMagMipLinear`] and instead of filtering them return the minimum of the texels.
+    MinimumMinPointMagMipLinear = D3D12_FILTER_MINIMUM_MIN_POINT_MAG_MIP_LINEAR.0,
+
+    /// Fetch the same set of texels as [`Filter::MinLinearMagMipPoint`] and instead of filtering them return the minimum of the texels.
+    MinimumMinLinearMagMipPoint = D3D12_FILTER_MINIMUM_MIN_LINEAR_MAG_MIP_POINT.0,
+
+    /// Fetch the same set of texels as [`Filter::MinMipLinearMagPoint`] and instead of filtering them return the minimum of the texels.
+    MinimumMinMipLinearMagPoint = D3D12_FILTER_MINIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR.0,
+
+    /// Fetch the same set of texels as [`Filter::MinMagLinearMipPoint`] and instead of filtering them return the minimum of the texels.
+    MinimumMinMagLinearMipPoint = D3D12_FILTER_MINIMUM_MIN_MAG_LINEAR_MIP_POINT.0,
+
+    /// Fetch the same set of texels as [`Filter::Linear`] and instead of filtering them return the minimum of the texels.
+    MinimumLinear = D3D12_FILTER_MINIMUM_MIN_MAG_MIP_LINEAR.0,
+
+    /// Fetch the same set of texels as [`Filter::MinMagAnisotropicMipPoint`] and instead of filtering them return the minimum of the texels.
+    MinimumMinMagAnisotropicMipPoint = D3D12_FILTER_MINIMUM_MIN_MAG_ANISOTROPIC_MIP_POINT.0,
+
+    /// Fetch the same set of texels as [`Filter::Anisotropic`] and instead of filtering them return the minimum of the texels.
+    MinimumAnisotropic = D3D12_FILTER_MINIMUM_ANISOTROPIC.0,
+
+    /// Fetch the same set of texels as [`Filter::Point`] and instead of filtering them return the maximum of the texels.
+    MaximumPoint = D3D12_FILTER_MAXIMUM_MIN_MAG_MIP_POINT.0,
+
+    /// Fetch the same set of texels as [`Filter::MinMagPointMipLinear`] and instead of filtering them return the maximum of the texels.
+    MaximumMinMagPointMipLinear = D3D12_FILTER_MAXIMUM_MIN_MAG_POINT_MIP_LINEAR.0,
+
+    /// Fetch the same set of texels as [`Filter::MinMipPointMagLinear`] and instead of filtering them return the maximum of the texels.
+    MaximumMinMipPointMagLinear = D3D12_FILTER_MAXIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT.0,
+
+    /// Fetch the same set of texels as [`Filter::MinPointMagMipLinear`] and instead of filtering them return the maximum of the texels.
+    MaximumMinPointMagMipLinear = D3D12_FILTER_MAXIMUM_MIN_POINT_MAG_MIP_LINEAR.0,
+
+    /// Fetch the same set of texels as [`Filter::MinLinearMagMipPoint`] and instead of filtering them return the maximum of the texels.
+    MaximumMinLinearMagMipPoint = D3D12_FILTER_MAXIMUM_MIN_LINEAR_MAG_MIP_POINT.0,
+
+    /// Fetch the same set of texels as [`Filter::MinMipLinearMagPoint`] and instead of filtering them return the maximum of the texels.
+    MaximumMinMipLinearMagPoint = D3D12_FILTER_MAXIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR.0,
+
+    /// Fetch the same set of texels as [`Filter::MinMagLinearMipPoint`] and instead of filtering them return the maximum of the texels.
+    MaximumMinMagLinearMipPoint = D3D12_FILTER_MAXIMUM_MIN_MAG_LINEAR_MIP_POINT.0,
+
+    /// Fetch the same set of texels as [`Filter::Linear`] and instead of filtering them return the maximum of the texels.
+    MaximumLinear = D3D12_FILTER_MAXIMUM_MIN_MAG_MIP_LINEAR.0,
+
+    /// Fetch the same set of texels as [`Filter::MinMagAnisotropicMipPoint`] and instead of filtering them return the maximum of the texels.
+    MaximumMinMagAnisotropicMipPoint = D3D12_FILTER_MAXIMUM_MIN_MAG_ANISOTROPIC_MIP_POINT.0,
+
+    /// Fetch the same set of texels as [`Filter::Anisotropic`] and instead of filtering them return the maximum of the texels.
+    MaximumAnisotropic = D3D12_FILTER_MAXIMUM_ANISOTROPIC.0,
 }
 
 /// Specifies the fill mode to use when rendering triangles.
@@ -1436,27 +1580,135 @@ pub enum RootSignatureVersion {
     V1_2 = D3D_ROOT_SIGNATURE_VERSION_1_2.0,
 }
 
+/// Specifies the type of root signature slot.
+///
+/// For more information: [`D3D12_ROOT_PARAMETER_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_root_parameter_type)
 #[derive(Clone, Debug)]
 pub enum RootParameterType<'a> {
-    Cbv {
-        shader_register: u32,
-        register_space: u32,
-    },
-    Srv {
-        shader_register: u32,
-        register_space: u32,
-    },
-    Uav {
-        shader_register: u32,
-        register_space: u32,
-    },
+    /// The slot is for a descriptor table.
     DescriptorTable {
+        /// An array of [`DescriptorRange`] structures that describe the descriptor ranges.
         ranges: &'a [DescriptorRange],
     },
-    Constants {
+
+    /// The slot is for root constants.
+    Constants32Bit {
+        /// The shader register.
         shader_register: u32,
+
+        /// The register space.
         register_space: u32,
+
+        /// The number of constants that occupy a single shader slot (these constants appear like a single constant buffer). All constants occupy a single root signature bind slot.
         num_32bit_values: u32,
+    },
+
+    /// The slot is for a constant-buffer view (CBV).
+    Cbv {
+        /// The shader register.
+        shader_register: u32,
+
+        /// The register space.
+        register_space: u32,
+    },
+
+    /// The slot is for a shader-resource view (SRV).
+    Srv {
+        /// The shader register.
+        shader_register: u32,
+
+        /// The register space.
+        register_space: u32,
+    },
+
+    /// The slot is for a unordered-access view (UAV).
+    Uav {
+        /// The shader register.
+        shader_register: u32,
+
+        /// The register space.
+        register_space: u32,
+    },
+}
+
+/// Identifies the type of resource to view as a render target.
+///
+/// For more information: [`D3D12_RTV_DIMENSION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_rtv_dimension)
+#[derive(Clone, Copy, Debug)]
+pub enum RtvDimension {
+    /// The resource will be accessed as a buffer.
+    Buffer {
+        /// Number of elements between the beginning of the buffer and the first element to access.
+        first_element: u64,
+
+        /// The total number of elements in the view.
+        num_elements: u32,
+    },
+
+    /// The resource will be accessed as a 1D texture.
+    Tex1D {
+        /// The index of the mipmap level to use mip slice.
+        mip_slice: u32,
+    },
+
+    // The resource will be accessed as an array of 1D textures.
+    ArrayTex1D {
+        /// The index of the mipmap level to use mip slice.
+        mip_slice: u32,
+
+        /// The index of the first texture to use in an array of textures.
+        first_array_slice: u32,
+
+        /// Number of textures to use.
+        array_size: u32,
+    },
+
+    /// The resource will be accessed as a 2D texture.
+    Tex2D {
+        /// The index of the mipmap level to use.
+        mip_slice: u32,
+
+        /// The index (plane slice number) of the plane to use in the texture.
+        plane_slice: u32,
+    },
+
+    /// The resource will be accessed as an array of 2D textures.
+    ArrayTex2D {
+        /// The index of the mipmap level to use mip slice.
+        mip_slice: u32,
+
+        /// The index of the first texture to use in an array of textures.
+        plane_slice: u32,
+
+        /// Number of textures in the array to use in the render target view, starting from FirstArraySlice.
+        first_array_slice: u32,
+
+        /// The index (plane slice number) of the plane to use in an array of textures.
+        array_size: u32,
+    },
+
+    /// The resource will be accessed as a 2D texture with multisampling.
+    Tex2DMs,
+
+    /// The resource will be accessed as an array of 2D textures with multisampling.
+    Array2DMs {
+        /// The index of the first texture to use in an array of textures.
+        first_array_slice: u32,
+
+        /// The number of textures to use.
+        array_size: u32,
+    },
+
+    /// The resource will be accessed as a 3D texture.
+    Tex3D {
+        /// The index of the mipmap level to use mip slice.
+        mip_slice: u32,
+
+        /// First depth level to use.
+        first_w_slice: u32,
+        
+        /// Number of depth levels to use in the render-target view, starting from FirstWSlice. A value of -1 indicates all of the slices along the w axis, starting from FirstWSlice.
+        w_size: u32,
     },
 }
 
@@ -1520,16 +1772,34 @@ pub enum ShaderModel {
     Model6_8 = D3D_SHADER_MODEL_6_8.0,
 }
 
-#[derive(Clone, Copy, Debug)]
+/// Specifies the shaders that can access the contents of a given root signature slot.
+///
+/// For more information: [`D3D12_SHADER_VISIBILITY enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_shader_visibility)
+#[derive(Clone, Copy, Debug, FromRepr)]
 #[repr(i32)]
 pub enum ShaderVisibility {
+    /// Specifies that all shader stages can access whatever is bound at the root signature slot.
     All = D3D12_SHADER_VISIBILITY_ALL.0,
+
+    /// Specifies that the vertex shader stage can access whatever is bound at the root signature slot.
     Vertex = D3D12_SHADER_VISIBILITY_VERTEX.0,
+
+    /// Specifies that the hull shader stage can access whatever is bound at the root signature slot.
     Hull = D3D12_SHADER_VISIBILITY_HULL.0,
+
+    /// Specifies that the domain shader stage can access whatever is bound at the root signature slot.
     Domain = D3D12_SHADER_VISIBILITY_DOMAIN.0,
+
+    /// Specifies that the geometry shader stage can access whatever is bound at the root signature slot.
     Geometry = D3D12_SHADER_VISIBILITY_GEOMETRY.0,
+
+    /// Specifies that the pixel shader stage can access whatever is bound at the root signature slot.
     Pixel = D3D12_SHADER_VISIBILITY_PIXEL.0,
+
+    /// Specifies that the amplification shader stage can access whatever is bound at the root signature slot.
     Amplification = D3D12_SHADER_VISIBILITY_AMPLIFICATION.0,
+
+    /// Specifies that the mesh shader stage can access whatever is bound at the root signature slot.
     Mesh = D3D12_SHADER_VISIBILITY_MESH.0,
 }
 

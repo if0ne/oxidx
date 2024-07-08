@@ -1,11 +1,14 @@
+use smallvec::SmallVec;
 use windows::Win32::Graphics::Direct3D12::*;
 
 use crate::conv_enum;
 
 use super::*;
 
+conv_enum!(AddressMode to D3D12_TEXTURE_ADDRESS_MODE);
 conv_enum!(Blend to D3D12_BLEND);
 conv_enum!(BlendOp to D3D12_BLEND_OP);
+conv_enum!(BorderColor to D3D12_STATIC_BORDER_COLOR);
 conv_enum!(CommandListType to D3D12_COMMAND_LIST_TYPE);
 conv_enum!(CpuPageProperty to D3D12_CPU_PAGE_PROPERTY);
 conv_enum!(ComparisonFunc to D3D12_COMPARISON_FUNC);
@@ -14,9 +17,11 @@ conv_enum!(ConservativeRasterizationTier to D3D12_CONSERVATIVE_RASTERIZATION_TIE
 conv_enum!(CrossNodeSharingTier to D3D12_CROSS_NODE_SHARING_TIER);
 conv_enum!(CullMode to D3D12_CULL_MODE);
 conv_enum!(DescriptorHeapType to D3D12_DESCRIPTOR_HEAP_TYPE);
+conv_enum!(DescriptorRangeType to D3D12_DESCRIPTOR_RANGE_TYPE);
 conv_enum!(FeatureType to D3D12_FEATURE);
 conv_enum!(FeatureLevel to D3D_FEATURE_LEVEL);
 conv_enum!(FillMode to D3D12_FILL_MODE);
+conv_enum!(Filter to D3D12_FILTER);
 conv_enum!(Format to DXGI_FORMAT);
 conv_enum!(HeapSerializationTier to D3D12_HEAP_SERIALIZATION_TIER);
 conv_enum!(HeapType to D3D12_HEAP_TYPE);
@@ -37,6 +42,7 @@ conv_enum!(RenderPassTier to D3D12_RENDER_PASS_TIER);
 conv_enum!(RootSignatureVersion to D3D_ROOT_SIGNATURE_VERSION);
 conv_enum!(SamplerFeedbackTier to D3D12_SAMPLER_FEEDBACK_TIER);
 conv_enum!(ShaderModel to D3D_SHADER_MODEL);
+conv_enum!(ShaderVisibility to D3D12_SHADER_VISIBILITY);
 conv_enum!(SharedResourceCompatibilityTier to D3D12_SHARED_RESOURCE_COMPATIBILITY_TIER);
 conv_enum!(StencilOp to D3D12_STENCIL_OP);
 conv_enum!(TextureLayout to D3D12_TEXTURE_LAYOUT);
@@ -228,6 +234,171 @@ impl RenderTargetBlendDesc {
                 LogicOp: logic_op.as_raw(),
                 RenderTargetWriteMask: mask.as_raw().0 as u8,
                 ..Default::default()
+            },
+        }
+    }
+}
+
+
+impl<'a> RootParameterType<'a> {
+    #[inline]
+    pub(crate) fn as_type_raw(&self) -> D3D12_ROOT_PARAMETER_TYPE {
+        match self {
+            RootParameterType::DescriptorTable { .. } => D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+            RootParameterType::Constants32Bit { .. } => D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
+            RootParameterType::Cbv { .. } => D3D12_ROOT_PARAMETER_TYPE_CBV,
+            RootParameterType::Srv { .. } => D3D12_ROOT_PARAMETER_TYPE_SRV,
+            RootParameterType::Uav { .. } => D3D12_ROOT_PARAMETER_TYPE_UAV,
+        }
+    }
+
+    #[inline(always)]
+    pub(crate) fn as_raw(&self) -> D3D12_ROOT_PARAMETER_0 {
+        let ranges = if let RootParameterType::DescriptorTable { ranges } = self {
+            ranges
+                .iter()
+                .map(|r| r.as_raw())
+                .collect::<SmallVec<[_; 16]>>()
+        } else {
+            SmallVec::new()
+        };
+
+        match self {
+            RootParameterType::Cbv {
+                shader_register,
+                register_space,
+            } => D3D12_ROOT_PARAMETER_0 {
+                Descriptor: D3D12_ROOT_DESCRIPTOR {
+                    ShaderRegister: *shader_register,
+                    RegisterSpace: *register_space,
+                },
+            },
+            RootParameterType::Srv {
+                shader_register,
+                register_space,
+            } => D3D12_ROOT_PARAMETER_0 {
+                Descriptor: D3D12_ROOT_DESCRIPTOR {
+                    ShaderRegister: *shader_register,
+                    RegisterSpace: *register_space,
+                },
+            },
+            RootParameterType::Uav {
+                shader_register,
+                register_space,
+            } => D3D12_ROOT_PARAMETER_0 {
+                Descriptor: D3D12_ROOT_DESCRIPTOR {
+                    ShaderRegister: *shader_register,
+                    RegisterSpace: *register_space,
+                },
+            },
+            RootParameterType::DescriptorTable { .. } => D3D12_ROOT_PARAMETER_0 {
+                DescriptorTable: D3D12_ROOT_DESCRIPTOR_TABLE {
+                    NumDescriptorRanges: ranges.len() as u32,
+                    pDescriptorRanges: ranges.as_ptr() as *const _,
+                },
+            },
+            RootParameterType::Constants32Bit {
+                shader_register,
+                register_space,
+                num_32bit_values,
+            } => D3D12_ROOT_PARAMETER_0 {
+                Constants: D3D12_ROOT_CONSTANTS {
+                    ShaderRegister: *shader_register,
+                    RegisterSpace: *register_space,
+                    Num32BitValues: *num_32bit_values,
+                },
+            },
+        }
+    }
+}
+
+impl RtvDimension {
+    pub(crate) fn as_type_raw(&self) -> D3D12_RTV_DIMENSION {
+        match self {
+            RtvDimension::Buffer { .. } => D3D12_RTV_DIMENSION_BUFFER,
+            RtvDimension::Tex1D { .. } => D3D12_RTV_DIMENSION_TEXTURE1D,
+            RtvDimension::Tex2D { .. } => D3D12_RTV_DIMENSION_TEXTURE2D,
+            RtvDimension::Tex3D { .. } => D3D12_RTV_DIMENSION_TEXTURE3D,
+            RtvDimension::ArrayTex1D { .. } => D3D12_RTV_DIMENSION_TEXTURE1DARRAY,
+            RtvDimension::ArrayTex2D { .. } => D3D12_RTV_DIMENSION_TEXTURE2DARRAY,
+            RtvDimension::Tex2DMs => D3D12_RTV_DIMENSION_TEXTURE2DMS,
+            RtvDimension::Array2DMs { .. } => D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY,
+        }
+    }
+
+    pub(crate) fn as_raw(&self) -> D3D12_RENDER_TARGET_VIEW_DESC_0 {
+        match self {
+            RtvDimension::Buffer {
+                first_element,
+                num_elements,
+            } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Buffer: D3D12_BUFFER_RTV {
+                    FirstElement: *first_element,
+                    NumElements: *num_elements,
+                },
+            },
+            RtvDimension::Tex1D { mip_slice } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture1D: D3D12_TEX1D_RTV {
+                    MipSlice: *mip_slice,
+                },
+            },
+            RtvDimension::Tex2D {
+                mip_slice,
+                plane_slice,
+            } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture2D: D3D12_TEX2D_RTV {
+                    MipSlice: *mip_slice,
+                    PlaneSlice: *plane_slice,
+                },
+            },
+            RtvDimension::Tex3D {
+                mip_slice,
+                first_w_slice,
+                w_size,
+            } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture3D: D3D12_TEX3D_RTV {
+                    MipSlice: *mip_slice,
+                    FirstWSlice: *first_w_slice,
+                    WSize: *w_size,
+                },
+            },
+            RtvDimension::ArrayTex1D {
+                mip_slice,
+                first_array_slice,
+                array_size,
+            } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture1DArray: D3D12_TEX1D_ARRAY_RTV {
+                    MipSlice: *mip_slice,
+                    FirstArraySlice: *first_array_slice,
+                    ArraySize: *array_size,
+                },
+            },
+            RtvDimension::ArrayTex2D {
+                mip_slice,
+                plane_slice,
+                first_array_slice,
+                array_size,
+            } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture2DArray: D3D12_TEX2D_ARRAY_RTV {
+                    MipSlice: *mip_slice,
+                    PlaneSlice: *plane_slice,
+                    FirstArraySlice: *first_array_slice,
+                    ArraySize: *array_size,
+                },
+            },
+            RtvDimension::Tex2DMs => D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture2DMS: D3D12_TEX2DMS_RTV {
+                    UnusedField_NothingToDefine: 0,
+                },
+            },
+            RtvDimension::Array2DMs {
+                first_array_slice,
+                array_size,
+            } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture2DMSArray: D3D12_TEX2DMS_ARRAY_RTV {
+                    FirstArraySlice: *first_array_slice,
+                    ArraySize: *array_size,
+                },
             },
         }
     }

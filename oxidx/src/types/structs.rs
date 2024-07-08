@@ -213,6 +213,27 @@ pub struct DescriptorHeapDesc {
     pub node_mask: u32,
 }
 
+/// Describes a descriptor range.
+///
+/// For more information: [`D3D12_DESCRIPTOR_RANGE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_descriptor_range)
+#[derive(Clone, Debug)]
+pub struct DescriptorRange {
+    /// A [`DescriptorRangeType`]-typed value that specifies the type of descriptor range.
+    pub r#type: DescriptorRangeType,
+
+    /// The number of descriptors in the range.
+    pub num: u32,
+
+    /// The base shader register in the range.
+    pub base_shader_register: u32,
+
+    /// The register space. Can typically be 0, but allows multiple descriptor arrays of unknown size to not appear to overlap.
+    pub register_space: u32,
+
+    /// The offset in descriptors, from the start of the descriptor table which was set as the root argument value for this parameter slot.
+    pub offset_in_descriptors_from_table_start: u32,
+}
+
 /// Describes a GPU descriptor handle.
 ///
 /// For more information: [`D3D12_GPU_DESCRIPTOR_HANDLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_gpu_descriptor_handle)
@@ -419,10 +440,22 @@ pub struct RasterizerDesc {
     pub conservative_raster: ConservativeRaster,
 }
 
+/// Describes the subresources from a resource that are accessible by using a render-target view.
+///
+/// For more information: [`D3D12_RENDER_TARGET_VIEW_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_render_target_view_desc)
+#[derive(Clone, Copy, Debug)]
+pub struct RenderTargetViewDesc {
+    /// A [`Format`]-typed value that specifies the viewing format.
+    pub format: Format,
+
+    /// A [`RtvDimension`]-typed value that specifies how the render-target resource will be accessed. This type specifies how the resource will be accessed. This member also determines which _RTV to use in the following union.
+    pub dimension: RtvDimension,
+}
+
 /// Describes a resource, such as a texture. This structure is used extensively.
 ///
 /// For more information: [`D3D12_RESOURCE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_desc)
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct ResourceDesc {
     /// One member of [`ResourceDimension`], specifying the dimensions of the resource.
     pub dimension: ResourceDimension,
@@ -455,16 +488,30 @@ pub struct ResourceDesc {
     pub flags: ResourceFlags,
 }
 
+/// Describes the layout of a root signature version 1.0.
+///
+/// For more information: [`D3D12_ROOT_SIGNATURE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_root_signature_desc)
 #[derive(Debug, Default)]
 pub struct RootSignatureDesc<'a> {
+    /// An array of [`RootParameter`] structures for the slots in the root signature.
     pub parameters: &'a [RootParameter<'a>],
+
+    /// Pointer to one or more [`StaticSamplerDesc`] structures.
     pub samplers: &'a [StaticSamplerDesc],
+
+    /// A combination of [`RootSignatureFlags`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies options for the root signature layout.
     pub flags: RootSignatureFlags,
 }
 
+/// Describes the slot of a root signature version 1.0.
+///
+/// For more information: [`D3D12_ROOT_PARAMETER structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_root_parameter)
 #[derive(Clone, Debug)]
 pub struct RootParameter<'a> {
+    /// A [`RootParameterType`]-typed value that specifies the type of root signature slot. This member determines which type to use in the union below.
     pub r#type: RootParameterType<'a>,
+
+    /// A [`ShaderVisibility`]-typed value that specifies the shaders that can access the contents of the root signature slot.
     pub visibility: ShaderVisibility,
 }
 
@@ -480,20 +527,84 @@ pub struct SampleDesc {
     pub quality: u32,
 }
 
+/// Describes a sampler state.
+///
+/// For more information: [`D3D12_SAMPLER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_sampler_desc)
+#[derive(Clone, Debug)]
+pub struct SamplerDesc {
+    /// A [`Filter`]-typed value that specifies the filtering method to use when sampling a texture.
+    pub filter: Filter,
+
+    /// Specifies the [`AddressMode`] mode to use for resolving a `u` texture coordinate that is outside the 0 to 1 range.
+    pub address_u: AddressMode,
+
+    /// Specifies the [`AddressMode`] mode to use for resolving a `v` texture coordinate that is outside the 0 to 1 range.
+    pub address_v: AddressMode,
+
+    /// Specifies the [`AddressMode`] mode to use for resolving a `w` texture coordinate that is outside the 0 to 1 range.
+    pub address_w: AddressMode,
+
+    /// Offset from the calculated mipmap level. For example, if Direct3D calculates that a texture should be sampled at mipmap level 3 and MipLODBias is 2, then the texture will be sampled at mipmap level 5.
+    pub mip_lod_bias: f32,
+
+    /// Clamping value used if [`Filter::Anisotropic`] or [`Filter::ComparisonAnisotropic`] is specified as the filter. Valid values are between 1 and 16.
+    pub max_anisotropy: u32,
+
+    /// A function that compares sampled data against existing sampled data. The function options are listed in [`ComparisonFunc`].
+    pub comparison_func: ComparisonFunc,
+
+    /// RGBA border color to use if [`AddressMode::Border`] is specified for AddressU, AddressV, or AddressW. Range must be between 0.0 and 1.0 inclusive.
+    pub border_color: [f32; 4],
+
+    /// Lower end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level and any level higher than that is less detailed.
+    pub min_lod: f32,
+
+    /// Upper end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level and any level higher than that is less detailed. This value must be greater than or equal to MinLOD. To have no upper limit on LOD set this to a large value such as D3D12_FLOAT32_MAX.
+    pub max_lod: f32,
+}
+
+/// Describes a static sampler.
+///
+/// For more information: [`D3D12_STATIC_SAMPLER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_static_sampler_desc)
 #[derive(Clone, Debug)]
 pub struct StaticSamplerDesc {
+    /// The filtering method to use when sampling a texture, as a [`Filter`] enumeration constant.
     pub filter: Filter,
+
+    /// Specifies the [`AddressMode`] mode to use for resolving a `u` texture coordinate that is outside the 0 to 1 range.
     pub address_u: AddressMode,
+
+    /// Specifies the [`AddressMode`] mode to use for resolving a `v` texture coordinate that is outside the 0 to 1 range.
     pub address_v: AddressMode,
+
+    /// Specifies the [`AddressMode`] mode to use for resolving a `w` texture coordinate that is outside the 0 to 1 range.
     pub address_w: AddressMode,
+
+    /// Offset from the calculated mipmap level. For example, if Direct3D calculates that a texture should be sampled at mipmap level 3 and MipLODBias is 2, then the texture will be sampled at mipmap level 5.
     pub mip_lod_bias: f32,
-    pub max_anisotropy: f32,
+
+    /// Clamping value used if [`Filter::Anisotropic`] or [`Filter::ComparisonAnisotropic`] is specified as the filter. Valid values are between 1 and 16.
+    pub max_anisotropy: u32,
+
+    /// A function that compares sampled data against existing sampled data. The function options are listed in [`ComparisonFunc`].
     pub comparison_func: ComparisonFunc,
+
+    /// One member of [`BorderColor`], the border color to use if [`AddressMode::Border`] is specified for AddressU, AddressV, or AddressW. Range must be between 0.0 and 1.0 inclusive.
     pub border_color: BorderColor,
+
+    /// Lower end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level and any level higher than that is less detailed.
     pub min_lod: f32,
+
+    /// Upper end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level and any level higher than that is less detailed. This value must be greater than or equal to MinLOD. To have no upper limit on LOD set this to a large value such as D3D12_FLOAT32_MAX.
     pub max_lod: f32,
+
+    /// The ShaderRegister and RegisterSpace parameters correspond to the binding syntax of HLSL.
     pub shader_register: u32,
+
+    /// See the description for ShaderRegister. Register space is optional; the default register space is 0.
     pub register_space: u32,
+
+    /// Specifies the visibility of the sampler to the pipeline shaders, one member of [`ShaderVisibility`].
     pub visibility: ShaderVisibility,
 }
 

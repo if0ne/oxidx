@@ -21,4 +21,5 @@ conv_flags!(PipelineStateFlags to D3D12_PIPELINE_STATE_FLAGS);
 conv_flags!(ProtectedResourceSessionSupportFlags to D3D12_PROTECTED_RESOURCE_SESSION_SUPPORT_FLAGS);
 conv_flags!(ResourceFlags to D3D12_RESOURCE_FLAGS);
 conv_flags!(ResourceStates to D3D12_RESOURCE_STATES);
+conv_flags!(RootSignatureFlags to D3D12_ROOT_SIGNATURE_FLAGS);
 conv_flags!(TileRangeFlags to D3D12_TILE_RANGE_FLAGS);

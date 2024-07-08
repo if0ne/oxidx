@@ -216,7 +216,7 @@ impl DXSample for Sample {
         let render_targets: [Resource; FRAME_COUNT as usize] = std::array::from_fn(|i| {
             let render_target: Resource = swap_chain.get_buffer(i as u32).unwrap();
             self.device.create_render_target_view(
-                &render_target,
+                Some(&render_target),
                 None,
                 rtv_handle.offset(i * rtv_descriptor_size),
             );
@@ -420,7 +420,7 @@ fn create_root_signature(device: &Device) -> RootSignature {
     };
 
     device
-        .serialize_create_root_signature(&desc, RootSignatureVersion::V1_0, 0)
+        .serialize_and_create_root_signature(&desc, RootSignatureVersion::V1_0, 0)
         .unwrap()
 }
 

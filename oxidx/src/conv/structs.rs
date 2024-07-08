@@ -149,6 +149,19 @@ impl DepthStencilOpDesc {
     }
 }
 
+impl DescriptorRange {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_DESCRIPTOR_RANGE {
+        D3D12_DESCRIPTOR_RANGE {
+            RangeType: self.r#type.as_raw(),
+            NumDescriptors: self.num,
+            BaseShaderRegister: self.base_shader_register,
+            RegisterSpace: self.register_space,
+            OffsetInDescriptorsFromTableStart: self.offset_in_descriptors_from_table_start,
+        }
+    }
+}
+
 impl<'a> GraphicsPipelineDesc<'a> {
     #[inline(always)]
     pub(crate) fn as_raw(&self) -> D3D12_GRAPHICS_PIPELINE_STATE_DESC {
@@ -418,6 +431,51 @@ impl ResourceDesc {
     }
 }
 
+impl<'a> RootSignatureDesc<'a> {
+    #[inline(always)]
+    pub(crate) fn as_raw(&self) -> D3D12_ROOT_SIGNATURE_DESC {
+        let parameters = self
+            .parameters
+            .iter()
+            .map(|param| param.as_raw())
+            .collect::<SmallVec<[_; 16]>>();
+        let sampler = self
+            .samplers
+            .iter()
+            .map(|sampler| sampler.as_raw())
+            .collect::<SmallVec<[_; 16]>>();
+
+        D3D12_ROOT_SIGNATURE_DESC {
+            NumParameters: self.parameters.len() as u32,
+            pParameters: parameters.as_ptr(),
+            NumStaticSamplers: self.samplers.len() as u32,
+            pStaticSamplers: sampler.as_ptr(),
+            Flags: self.flags.as_raw(),
+        }
+    }
+}
+
+impl RenderTargetViewDesc {
+    pub(crate) fn as_raw(&self) -> D3D12_RENDER_TARGET_VIEW_DESC {
+        D3D12_RENDER_TARGET_VIEW_DESC {
+            Format: self.format.as_raw(),
+            ViewDimension: self.dimension.as_type_raw(),
+            Anonymous: self.dimension.as_raw(),
+        }
+    }
+}
+
+impl<'a> RootParameter<'a> {
+    #[inline(always)]
+    pub(crate) fn as_raw(&self) -> D3D12_ROOT_PARAMETER {
+        D3D12_ROOT_PARAMETER {
+            ParameterType: self.r#type.as_type_raw(),
+            Anonymous: self.r#type.as_raw(),
+            ShaderVisibility: self.visibility.as_raw(),
+        }
+    }
+}
+
 impl SampleDesc {
     #[inline]
     pub(crate) fn as_raw(&self) -> DXGI_SAMPLE_DESC {
@@ -443,6 +501,45 @@ impl<'a> StreamOutputDesc<'a> {
             pBufferStrides: self.buffer_strides.as_ptr(),
             NumStrides: self.buffer_strides.len() as u32,
             RasterizedStream: self.rasterized_stream,
+        }
+    }
+}
+
+impl SamplerDesc {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_SAMPLER_DESC {
+        D3D12_SAMPLER_DESC {
+            Filter: self.filter.as_raw(),
+            AddressU: self.address_u.as_raw(),
+            AddressV: self.address_v.as_raw(),
+            AddressW: self.address_w.as_raw(),
+            MipLODBias: self.mip_lod_bias,
+            MaxAnisotropy: self.max_anisotropy,
+            ComparisonFunc: self.comparison_func.as_raw(),
+            BorderColor: self.border_color,
+            MinLOD: self.min_lod,
+            MaxLOD: self.max_lod,
+        }
+    }
+}
+
+impl StaticSamplerDesc {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_STATIC_SAMPLER_DESC {
+        D3D12_STATIC_SAMPLER_DESC {
+            Filter: self.filter.as_raw(),
+            AddressU: self.address_u.as_raw(),
+            AddressV: self.address_v.as_raw(),
+            AddressW: self.address_w.as_raw(),
+            MipLODBias: self.mip_lod_bias,
+            MaxAnisotropy: self.max_anisotropy,
+            ComparisonFunc: self.comparison_func.as_raw(),
+            BorderColor: self.border_color.as_raw(),
+            MinLOD: self.min_lod,
+            MaxLOD: self.max_lod,
+            ShaderRegister: self.shader_register,
+            RegisterSpace: self.register_space,
+            ShaderVisibility: self.visibility.as_raw(),
         }
     }
 }

@@ -12,7 +12,7 @@ use crate::{
     heap::HeapInterface,
     impl_trait,
     pso::PipelineStateInterface,
-    resources::{RenderTargetViewDesc, ResourceInterface},
+    resources::ResourceInterface,
     root_signature::RootSignatureInterface,
     sync::FenceInterface,
     types::*,
@@ -146,7 +146,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// * `heap_properties` - A reference to a [`HeapProperties`] structure that provides properties for the resource's heap.
     /// * `heap_flags` - Heap options, as a bitwise-OR'd combination of [`HeapFlags`] enumeration constants.
     /// * `desc` - A reference to a [`ResourceDesc`] structure that describes the resource.
-    /// * `init_state` - The initial state of the resource, as a bitwise-OR'd combination of [`ResourceState`] enumeration constants.
+    /// * `initial_state` - The initial state of the resource, as a bitwise-OR'd combination of [`ResourceState`] enumeration constants.
     /// * `optimized_clear_value` - Specifies a [`ClearValue`] structure that describes the default value for a clear color.
     ///
     /// For more information: [`ID3D12Device::CreateCommittedResource method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommittedresource)
@@ -155,7 +155,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         heap_properties: &HeapProperties,
         heap_flags: HeapFlags,
         desc: &ResourceDesc,
-        init_state: ResourceStates,
+        initial_state: ResourceStates,
         optimized_clear_value: Option<&ClearValue>,
     ) -> Result<R, DxError>;
 
@@ -241,27 +241,80 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// For more information: [`ID3D12Device::CreateHeap method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createheap)
     fn create_heap<H: HeapInterface>(&self, desc: &HeapDesc) -> Result<H, DxError>;
 
-    fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32;
+    /// Creates a resource that is placed in a specific heap. Placed resources are the lightest weight resource objects available, and are the fastest to create and destroy.
+    ///
+    /// # Arguments
+    /// * `heap` - A reference to the [`HeapInterface`] interface that represents the heap in which the resource is placed.
+    /// * `heap_offset` - The offset, in bytes, to the resource.
+    /// * `desc` - A reference to a [`ResourceDesc`] structure that describes the resource.
+    /// * `initial_state` - The initial state of the resource, as a bitwise-OR'd combination of [`ResourceStates`] enumeration constants.
+    /// * `optimized_clear_value` - Specifies a [`ClearValue`] that describes the default value for a clear color.
+    ///
+    /// For more information: [`ID3D12Device::CreatePlacedResource method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createplacedresource)
+    fn create_placed_resource<R: ResourceInterface>(
+        &self,
+        heap: &impl HeapInterface,
+        heap_offset: u64,
+        desc: &ResourceDesc,
+        initial_state: ResourceStates,
+        optimized_clear_value: Option<&ClearValue>,
+    ) -> Result<R, DxError>;
 
+    /// Creates a render-target view for accessing resource data.
+    ///
+    /// # Arguments
+    /// * `resource` - A reference to the [`ResourceInterface`] object that represents the render target.
+    /// * `desc` - A reference to a [`RenderTargetViewDesc`] structure that describes the render-target view.
+    /// * `dest_descriptor` - Describes the CPU descriptor handle that represents the destination where the newly-created render target view will reside.
+    ///
+    /// For more information: [`ID3D12Device::CreateRenderTargetView method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createrendertargetview)
     fn create_render_target_view(
         &self,
-        resource: &impl ResourceInterface,
-        view_desc: Option<&RenderTargetViewDesc>,
+        resource: Option<&impl ResourceInterface>,
+        desc: Option<&RenderTargetViewDesc>,
         handle: CpuDescriptorHandle,
     );
 
+    /// Creates a root signature layout.
+    ///
+    /// # Arguments
+    /// * `node_mask` - For single GPU operation, set this to zero.
+    ///   If there are multiple GPU nodes, set bits to identify the nodes (the device's physical adapters) to which the root signature is to apply.
+    ///   Each bit in the mask corresponds to a single node.
+    /// * `blob` - A reference to the source data for the serialized signature.
+    ///
+    /// For more information: [`ID3D12Device::CreateRootSignature method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createrootsignature)
     fn create_root_signature<RS: RootSignatureInterface>(
         &self,
         node_mask: u32,
         blob: &[u8],
     ) -> Result<RS, DxError>;
 
-    fn serialize_create_root_signature<RS: RootSignatureInterface>(
+    /// Serializes and creates a root signature layout.
+    ///
+    /// # Arguments
+    /// * `desc` - The description of the root signature, as a reference to a [`RootSignatureDesc`] structure.
+    /// * `version` - A [`RootSignatureVersion`]-typed value that specifies the version of root signature.
+    /// * `node_mask` - For single GPU operation, set this to zero.
+    ///   If there are multiple GPU nodes, set bits to identify the nodes (the device's physical adapters) to which the root signature is to apply.
+    ///   Each bit in the mask corresponds to a single node.
+    fn serialize_and_create_root_signature<RS: RootSignatureInterface>(
         &self,
         desc: &RootSignatureDesc<'_>,
         version: RootSignatureVersion,
         node_mask: u32,
     ) -> Result<RS, DxError>;
+
+    /// Create a sampler object that encapsulates sampling information for a texture.
+    ///
+    /// # Arguments
+    /// * `desc` - A reference to a [`SamplerDesc`] structure that describes the sampler.
+    /// * `dest_descriptor` - Describes the CPU descriptor handle that represents the start of the heap that holds the sampler.
+    ///
+    /// For more information: [`ID3D12Device::CreateRootSignature method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createrootsignature)
+    fn create_sampler(&self, desc: &SamplerDesc, dest_descriptor: CpuDescriptorHandle);
+
+    fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32;
 }
 
 create_type! {
@@ -395,7 +448,7 @@ impl_trait! {
         heap_properties: &HeapProperties,
         heap_flags: HeapFlags,
         desc: &ResourceDesc,
-        init_state: ResourceStates,
+        initial_state: ResourceStates,
         optimized_clear_value: Option<&ClearValue>,
     ) -> Result<R, DxError> {
         unsafe {
@@ -408,7 +461,7 @@ impl_trait! {
                 &heap_properties.as_raw(),
                 heap_flags.as_raw(),
                 &desc.as_raw(),
-                init_state.as_raw(),
+                initial_state.as_raw(),
                 clear_value,
                 &mut resource,
             ).map_err(DxError::from)?;
@@ -509,7 +562,7 @@ impl_trait! {
         unsafe {
             let desc = desc.as_raw();
 
-            let mut res: Option<H::Raw> = None;
+            let mut res = None;
             self.0.CreateHeap(&desc, &mut res).map_err(DxError::from)?;
             let res = res.unwrap();
 
@@ -517,18 +570,95 @@ impl_trait! {
         }
     }
 
-    fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32 {
+    fn create_placed_resource<R: ResourceInterface>(
+        &self,
+        heap: &impl HeapInterface,
+        heap_offset: u64,
+        desc: &ResourceDesc,
+        initial_state: ResourceStates,
+        optimized_clear_value: Option<&ClearValue>,
+    ) -> Result<R, DxError> {
         unsafe {
-            self.0.GetDescriptorHandleIncrementSize(r#type.as_raw())
+            let clear_value = optimized_clear_value.as_ref().map(|c| c.as_raw());
+            let clear_value = clear_value.as_ref().map(|c| c as *const _);
+
+            let mut resource = None;
+
+            self.0.CreatePlacedResource(
+                heap.as_raw_ref(),
+                heap_offset,
+                &desc.as_raw(),
+                initial_state.as_raw(),
+                clear_value,
+                &mut resource,
+            ).map_err(DxError::from)?;
+
+            let resource = resource.unwrap();
+
+            Ok(R::new(resource))
         }
     }
 
-    fn create_render_target_view(&self, resource: &impl ResourceInterface, view_desc: Option<&RenderTargetViewDesc>, handle: CpuDescriptorHandle) {
-        let desc = view_desc.map(|v| v.as_raw());
-        let desc = desc.as_ref().map(|f| f as *const _);
-
+    fn create_render_target_view(
+        &self,
+        resource: Option<&impl ResourceInterface>,
+        desc: Option<&RenderTargetViewDesc>,
+        handle: CpuDescriptorHandle,
+    ) {
         unsafe {
-            self.0.CreateRenderTargetView(resource.as_raw_ref(), desc, handle.as_raw());
+            let desc = desc.map(|v| v.as_raw());
+            let desc = desc.as_ref().map(|f| f as *const _);
+
+            if let Some(resource) = resource {
+                self.0.CreateRenderTargetView(resource.as_raw_ref(), desc, handle.as_raw());
+            } else {
+                self.0.CreateRenderTargetView(None, desc, handle.as_raw());
+            }
+        }
+    }
+
+    fn create_root_signature<RS: RootSignatureInterface>(
+        &self,
+        node_mask: u32,
+        blob: &[u8],
+    ) -> Result<RS, DxError> {
+        unsafe {
+            let res: RS::Raw = self.0.CreateRootSignature(node_mask, blob).map_err(DxError::from)?;
+
+            Ok(RS::new(res))
+        }
+    }
+
+    fn serialize_and_create_root_signature<RS: RootSignatureInterface>(
+        &self,
+        desc: &RootSignatureDesc<'_>,
+        version: RootSignatureVersion,
+        node_mask: u32,
+    ) -> Result<RS, DxError> {
+        unsafe {
+            let blob = RS::serialize(desc, version)?;
+
+            self.create_root_signature(
+                node_mask,
+                std::slice::from_raw_parts(
+                    blob.get_buffer_ptr() as _,
+                    blob.get_buffer_size(),
+                )
+            )
+        }
+    }
+
+    fn create_sampler(&self, desc: &SamplerDesc, dest_descriptor: CpuDescriptorHandle) {
+        unsafe {
+            let desc = desc.as_raw();
+
+            self.0.CreateSampler(&desc, dest_descriptor.as_raw());
+        }
+    }
+
+    fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32 {
+        unsafe {
+            self.0.GetDescriptorHandleIncrementSize(r#type.as_raw())
         }
     }
 
@@ -559,33 +689,5 @@ impl_trait! {
         };
 
         Ok(CL::new(res))
-    }
-
-    fn create_root_signature<RS: RootSignatureInterface>(&self, node_mask: u32, blob: &[u8]) -> Result<RS, DxError> {
-        let res: RS::Raw = unsafe {
-            self.0
-                .CreateRootSignature(
-                    node_mask,
-                    blob,
-                )
-                .map_err(|_| DxError::Dummy)?
-        };
-
-        Ok(RS::new(res))
-    }
-
-    fn serialize_create_root_signature<RS: RootSignatureInterface>(
-        &self,
-        desc: &RootSignatureDesc<'_>,
-        version: RootSignatureVersion,
-        node_mask: u32,
-    ) -> Result<RS, DxError> {
-        let blob = RS::serialize(desc, version)?;
-        unsafe {
-        self.create_root_signature(node_mask, std::slice::from_raw_parts(
-                blob.get_buffer_ptr() as _,
-                blob.get_buffer_size(),
-            ))
-        }
     }
 }

@@ -9,7 +9,7 @@ use crate::{
     create_type,
     error::DxError,
     impl_trait,
-    types::{Format, ResourceStates},
+    types::ResourceStates,
     HasInterface,
 };
 
@@ -96,48 +96,6 @@ bitflags::bitflags! {
         const BeginOnly = D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY.0;
         const EndOnly = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY.0;
     }
-}
-
-#[derive(Debug, Clone)]
-pub struct RenderTargetViewDesc {
-    pub format: Format,
-    pub dimension: ViewDimension,
-}
-
-#[derive(Debug, Clone)]
-pub enum ViewDimension {
-    Buffer {
-        first_element: u64,
-        num_elements: u32,
-    },
-    Tex1D {
-        mip_slice: u32,
-    },
-    Tex2D {
-        mip_slice: u32,
-        plane_slice: u32,
-    },
-    Tex3D {
-        mip_slice: u32,
-        first_w_slice: u32,
-        w_size: u32,
-    },
-    ArrayTex1D {
-        mip_slice: u32,
-        first_array_slice: u32,
-        array_size: u32,
-    },
-    ArrayTex2D {
-        mip_slice: u32,
-        plane_slice: u32,
-        first_array_slice: u32,
-        array_size: u32,
-    },
-    Tex2DMs,
-    Array2DMs {
-        first_array_slice: u32,
-        array_size: u32,
-    },
 }
 
 #[derive(Clone, Debug)]
