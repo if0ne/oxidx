@@ -1429,6 +1429,39 @@ pub enum ProgrammableSamplePositionsTier {
     Tier2 = D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER_2.0,
 }
 
+/// Specifies the type of query heap to create.
+///
+/// For more information: [`D3D12_QUERY_HEAP_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_query_heap_type)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum QueryHeapType {
+    /// This returns a binary 0/1 result:
+    /// 0 indicates that no samples passed depth and stencil testing,
+    /// 1 indicates that at least one sample passed depth and stencil testing.
+    /// This enables occlusion queries to not interfere with any GPU performance optimization associated with depth/stencil testing.
+    #[default]
+    Occlusion = D3D12_QUERY_HEAP_TYPE_OCCLUSION.0,
+
+    /// Indicates that the heap is for high-performance timing data.
+    Timestamp = D3D12_QUERY_HEAP_TYPE_TIMESTAMP.0,
+
+    /// Indicates the heap is to contain pipeline data.
+    PipelineStatistics = D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS.0,
+
+    /// Indicates the heap is to contain stream output data.
+    SoStatistics = D3D12_QUERY_HEAP_TYPE_SO_STATISTICS.0,
+
+    /// Indicates the heap is to contain video decode statistics data.
+    VideoDecodeStatistics = D3D12_QUERY_HEAP_TYPE_VIDEO_DECODE_STATISTICS.0,
+
+    /// Indicates the heap is to contain timestamp queries emitted exclusively by copy command lists.
+    /// Copy queue timestamps can only be queried from a copy command list, and a copy command list can not emit to a regular timestamp query Heap.
+    CopyQueueTimestamp = D3D12_QUERY_HEAP_TYPE_COPY_QUEUE_TIMESTAMP.0,
+
+    /// TBD
+    PipelineStatistics1 = D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1.0,
+}
+
 /// Specifies the level of ray tracing support on the graphics device.
 ///
 /// For more information: [`D3D12_RAYTRACING_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_raytracing_tier)
@@ -1706,7 +1739,7 @@ pub enum RtvDimension {
 
         /// First depth level to use.
         first_w_slice: u32,
-        
+
         /// Number of depth levels to use in the render-target view, starting from FirstWSlice. A value of -1 indicates all of the slices along the w axis, starting from FirstWSlice.
         w_size: u32,
     },

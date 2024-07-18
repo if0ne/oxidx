@@ -5,13 +5,7 @@ use windows::{
     Win32::Graphics::Direct3D12::*,
 };
 
-use crate::{
-    create_type,
-    error::DxError,
-    impl_trait,
-    types::ResourceStates,
-    HasInterface,
-};
+use crate::{create_type, error::DxError, impl_trait, types::ResourceStates, HasInterface};
 
 pub trait ResourceInterface:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12Resource>>

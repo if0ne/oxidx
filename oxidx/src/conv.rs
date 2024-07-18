@@ -20,9 +20,7 @@ use windows::{
 use crate::{
     adapter::{AdapterDesc, AdapterFlags, Luid},
     error::DxError,
-    resources::{
-        BarrierType, ResourceBarrier, VertexBufferView,
-    },
+    resources::{BarrierType, ResourceBarrier, VertexBufferView},
     swapchain::{Rational, SwapchainDesc, SwapchainFullscreenDesc},
     types::*,
     HasInterface,

@@ -1,22 +1,13 @@
 use windows::{core::Interface, Win32::Graphics::Direct3D12::ID3D12Device};
 
 use crate::{
-    blob::BlobInterface,
-    command_allocator::CommandAllocatorInterface,
-    command_list::CommandListInterface,
-    command_queue::CommandQueueInterface,
-    command_signature::CommandSignatureInterface,
-    create_type,
-    descriptor_heap::DescriptorHeapInterface,
-    error::DxError,
-    heap::HeapInterface,
-    impl_trait,
-    pso::PipelineStateInterface,
-    resources::ResourceInterface,
-    root_signature::RootSignatureInterface,
-    sync::FenceInterface,
-    types::*,
-    FeatureObject, HasInterface,
+    blob::BlobInterface, command_allocator::CommandAllocatorInterface,
+    command_list::CommandListInterface, command_queue::CommandQueueInterface,
+    command_signature::CommandSignatureInterface, create_type,
+    descriptor_heap::DescriptorHeapInterface, error::DxError, heap::HeapInterface, impl_trait,
+    pso::PipelineStateInterface, query_heap::QueryHeapInterface, resources::ResourceInterface,
+    root_signature::RootSignatureInterface, sync::FenceInterface, types::*, FeatureObject,
+    HasInterface,
 };
 
 /// Represents a virtual adapter; it is used to create
@@ -260,6 +251,14 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         optimized_clear_value: Option<&ClearValue>,
     ) -> Result<R, DxError>;
 
+    /// Describes the purpose of a query heap. A query heap contains an array of individual queries.
+    ///
+    /// # Arguments
+    /// * `desc` - Specifies the query heap in a [`QueryHeapDesc`] structure.
+    ///
+    /// For more information: [`ID3D12Device::CreateQueryHeap method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createqueryheap)
+    fn create_query_heap<Q: QueryHeapInterface>(&self, desc: &QueryHeapDesc) -> Result<Q, DxError>;
+
     /// Creates a render-target view for accessing resource data.
     ///
     /// # Arguments
@@ -437,7 +436,7 @@ impl_trait! {
                 self.0.CreateCommandSignature(&desc, None, &mut res).map_err(DxError::from)?;
             };
 
-            let res = res.unwrap();
+            let res = res.unwrap_unchecked();
 
             Ok(CS::new(res))
         }
@@ -466,7 +465,7 @@ impl_trait! {
                 &mut resource,
             ).map_err(DxError::from)?;
 
-            let resource = resource.unwrap();
+            let resource = resource.unwrap_unchecked();
 
             Ok(R::new(resource))
         }
@@ -564,7 +563,7 @@ impl_trait! {
 
             let mut res = None;
             self.0.CreateHeap(&desc, &mut res).map_err(DxError::from)?;
-            let res = res.unwrap();
+            let res = res.unwrap_unchecked();
 
             Ok(H::new(res))
         }
@@ -593,9 +592,22 @@ impl_trait! {
                 &mut resource,
             ).map_err(DxError::from)?;
 
-            let resource = resource.unwrap();
+            let resource = resource.unwrap_unchecked();
 
             Ok(R::new(resource))
+        }
+    }
+
+    fn create_query_heap<Q: QueryHeapInterface>(
+        &self,
+        desc: &QueryHeapDesc,
+    ) -> Result<Q, DxError> {
+        unsafe {
+            let desc = desc.as_raw();
+            let mut res = None;
+            self.0.CreateQueryHeap(&desc, &mut res).map_err(DxError::from)?;
+            let res = res.unwrap_unchecked();
+            Ok(Q::new(res))
         }
     }
 

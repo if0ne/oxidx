@@ -364,6 +364,17 @@ impl HeapProperties {
     }
 }
 
+impl QueryHeapDesc {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_QUERY_HEAP_DESC {
+        D3D12_QUERY_HEAP_DESC {
+            Type: self.r#type.as_raw(),
+            Count: self.count,
+            NodeMask: self.node_mask,
+        }
+    }
+}
+
 impl From<D3D12_HEAP_PROPERTIES> for HeapProperties {
     #[inline]
     fn from(value: D3D12_HEAP_PROPERTIES) -> Self {

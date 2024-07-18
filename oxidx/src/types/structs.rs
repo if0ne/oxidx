@@ -398,6 +398,23 @@ pub struct HeapProperties {
     pub visible_node_mask: u32,
 }
 
+/// Describes the purpose of a query heap. A query heap contains an array of individual queries.
+///
+/// For more information: [`D3D12_QUERY_HEAP_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_query_heap_desc)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct QueryHeapDesc {
+    /// Specifies one member of [`QueryHeapType`].
+    pub r#type: QueryHeapType,
+
+    /// Specifies the number of queries the heap should contain.
+    pub count: u32,
+
+    /// For single GPU operation, set this to zero.
+    /// If there are multiple GPU nodes, set a bit to identify the node (the device's physical adapter) to which the query heap applies.
+    /// Each bit in the mask corresponds to a single node. Only 1 bit must be set.
+    pub node_mask: u32,
+}
+
 /// Describes rasterizer state.
 ///
 /// For more information: [`D3D12_RASTERIZER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_rasterizer_desc)

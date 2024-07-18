@@ -15,12 +15,12 @@ pub mod error;
 pub mod factory;
 pub mod heap;
 pub mod pso;
+pub mod query_heap;
 pub mod resources;
 pub mod root_signature;
 pub mod swapchain;
 pub mod sync;
 pub mod types;
-pub mod query_heap;
 
 pub(crate) mod pix;
 

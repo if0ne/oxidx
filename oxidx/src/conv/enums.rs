@@ -34,6 +34,7 @@ conv_enum!(MinPrecisionSupport to D3D12_SHADER_MIN_PRECISION_SUPPORT);
 conv_enum!(PrimitiveTopology to D3D_PRIMITIVE_TOPOLOGY);
 conv_enum!(PipelinePrimitiveTopology to D3D12_PRIMITIVE_TOPOLOGY_TYPE);
 conv_enum!(ProgrammableSamplePositionsTier to D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER);
+conv_enum!(QueryHeapType to D3D12_QUERY_HEAP_TYPE);
 conv_enum!(ResourceBindingTier to D3D12_RESOURCE_BINDING_TIER);
 conv_enum!(ResourceDimension to D3D12_RESOURCE_DIMENSION);
 conv_enum!(ResourceHeapTier to D3D12_RESOURCE_HEAP_TIER);
@@ -238,7 +239,6 @@ impl RenderTargetBlendDesc {
         }
     }
 }
-
 
 impl<'a> RootParameterType<'a> {
     #[inline]
