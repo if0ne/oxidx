@@ -2133,3 +2133,93 @@ pub enum WaveMmaTier {
     /// Specifies that WaveMMA (wave_matrix) operations are supported.
     Tier1_0 = D3D12_WAVE_MMA_TIER_1_0.0,
 }
+
+/// Identifies unordered-access view options.
+///
+/// For more information: [`D3D12_UAV_DIMENSION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_uav_dimension)
+#[derive(Clone, Copy, Debug)]
+pub enum UavDimension {
+    /// Describes the elements in a buffer to use in a unordered-access view.
+    Buffer {
+        /// The zero-based index of the first element to be accessed.
+        first_element: u64,
+
+        /// The number of elements in the resource. For structured buffers, this is the number of structures in the buffer.
+        num_elements: u32,
+
+        /// The size of each element in the buffer structure (in bytes) when the buffer represents a structured buffer.
+        structure_byte_stride: u32,
+
+        /// The counter offset, in bytes.
+        counter_offset: u64,
+
+        /// A [`BufferUavFlags`]-typed value that specifies the view options for the resource.
+        flags: BufferUavFlags,
+    },
+
+    /// Describes a unordered-access 1D texture resource.
+    Tex1D {
+        /// The mipmap slice index.
+        mip_slice: u32,
+    },
+
+    // Describes an array of unordered-access 1D texture resources.
+    ArrayTex1D {
+        /// The mipmap slice index.
+        mip_slice: u32,
+
+        /// The zero-based index of the first array slice to be accessed.
+        first_array_slice: u32,
+
+        /// The number of slices in the array.
+        array_size: u32,
+    },
+
+    /// Describes a unordered-access 2D texture resource.
+    Tex2D {
+        /// The mipmap slice index.
+        mip_slice: u32,
+
+        /// The index (plane slice number) of the plane to use in the texture.
+        plane_slice: u32,
+    },
+
+    /// Describes an array of unordered-access 2D texture resources.
+    ArrayTex2D {
+        /// The mipmap slice index.
+        mip_slice: u32,
+
+        /// NThe zero-based index of the first array slice to be accessed.
+        first_array_slice: u32,
+
+        /// The number of slices in the array.
+        array_size: u32,
+
+        /// The index (plane slice number) of the plane to use in an array of textures.
+        plane_slice: u32,
+    },
+
+    /// TBD
+    Tex2DMs,
+
+    /// TBD
+    Array2DMs {
+        /// The index of the first texture to use in an array of textures.
+        first_array_slice: u32,
+
+        /// The number of textures to use.
+        array_size: u32,
+    },
+
+    /// The resource will be accessed as a 3D texture.
+    Tex3D {
+        /// The mipmap slice index.
+        mip_slice: u32,
+
+        /// The zero-based index of the first depth slice to be accessed.
+        first_w_slice: u32,
+
+        /// The number of depth slices.
+        w_size: u32,
+    },
+}

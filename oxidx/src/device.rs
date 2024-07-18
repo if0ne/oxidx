@@ -361,6 +361,23 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         name: Option<&CStr>,
     ) -> Result<SharedHandle, DxError>;
 
+    /// Creates a shader-resource view for accessing data in a resource.
+    ///
+    /// # Arguments
+    /// * `resource` - A reference to the [`ResourceInterface`] object that represents the unordered access.
+    /// * `counter_resource` - The [`ResourceInterface`] for the counter (if any) associated with the UAV.
+    /// * `desc` - A reference to a [`UnorderedAccessViewDesc`] structure that describes the unordered-access view.
+    /// * `dest_descriptor` - Describes the CPU descriptor handle that represents the start of the heap that holds the unordered-access view.
+    ///
+    /// For more information: [`ID3D12Device::CreateUnorderedAccessView method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createunorderedaccessview)
+    fn create_unordered_access_view(
+        &self,
+        resource: Option<&impl ResourceInterface>,
+        counter_resource: Option<&impl ResourceInterface>,
+        desc: Option<&UnorderedAccessViewDesc>,
+        handle: CpuDescriptorHandle,
+    );
+
     fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32;
 }
 
@@ -807,6 +824,54 @@ impl_trait! {
             ).map_err(DxError::from)?;
 
             Ok(SharedHandle(handle))
+        }
+    }
+
+    fn create_unordered_access_view(
+        &self,
+        resource: Option<&impl ResourceInterface>,
+        counter_resource: Option<&impl ResourceInterface>,
+        desc: Option<&UnorderedAccessViewDesc>,
+        handle: CpuDescriptorHandle,
+    ) {
+        unsafe {
+            let desc = desc.map(|v| v.as_raw());
+            let desc = desc.as_ref().map(|f| f as *const _);
+
+            match (resource, counter_resource) {
+                (Some(r), Some(c)) => {
+                    self.0.CreateUnorderedAccessView(
+                        r.as_raw_ref(),
+                        c.as_raw_ref(),
+                        desc,
+                        handle.as_raw()
+                    );
+                }
+                (Some(r), None) => {
+                    self.0.CreateUnorderedAccessView(
+                        r.as_raw_ref(),
+                        None,
+                        desc,
+                        handle.as_raw()
+                    );
+                }
+                (None, Some(c)) => {
+                    self.0.CreateUnorderedAccessView(
+                        None,
+                        c.as_raw_ref(),
+                        desc,
+                        handle.as_raw()
+                    );
+                }
+                (None, None) => {
+                    self.0.CreateUnorderedAccessView(
+                        None,
+                        None,
+                        desc,
+                        handle.as_raw()
+                    );
+                }
+            }
         }
     }
 

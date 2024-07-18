@@ -591,3 +591,13 @@ impl TiledResourceCoordinate {
         }
     }
 }
+
+impl UnorderedAccessViewDesc {
+    pub(crate) fn as_raw(&self) -> D3D12_UNORDERED_ACCESS_VIEW_DESC {
+        D3D12_UNORDERED_ACCESS_VIEW_DESC {
+            Format: self.format.as_raw(),
+            ViewDimension: self.dimension.as_type_raw(),
+            Anonymous: self.dimension.as_raw(),
+        }
+    }
+}

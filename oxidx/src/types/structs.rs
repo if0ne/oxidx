@@ -467,7 +467,7 @@ pub struct RenderTargetViewDesc {
     /// A [`Format`]-typed value that specifies the viewing format.
     pub format: Format,
 
-    /// A [`RtvDimension`]-typed value that specifies how the render-target resource will be accessed. This type specifies how the resource will be accessed. This member also determines which _RTV to use in the following union.
+    /// A [`RtvDimension`]-typed value that specifies how the render-target resource will be accessed. This type specifies how the resource will be accessed.
     pub dimension: RtvDimension,
 }
 
@@ -582,15 +582,15 @@ pub struct SamplerDesc {
     pub max_lod: f32,
 }
 
-/// Describes a static sampler.
+/// Describes a shader-resource view (SRV).
 ///
-/// For more information: [`D3D12_STATIC_SAMPLER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_static_sampler_desc)
+/// For more information: [`D3D12_SHADER_RESOURCE_VIEW_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_shader_resource_view_desc)
 #[derive(Clone, Debug)]
 pub struct ShaderResourceViewDesc {
     /// A [`Format`]-typed value that specifies the viewing format.
     pub format: Format,
 
-    /// A [`SrvDimension`]-typed value that specifies the resource type of the view. This type is the same as the resource type of the underlying resource. This member also determines which _SRV to use in the union below.
+    /// A [`SrvDimension`]-typed value that specifies the resource type of the view. This type is the same as the resource type of the underlying resource.
     pub dimension: SrvDimension,
 }
 
@@ -697,4 +697,16 @@ pub struct TiledResourceCoordinate {
 
     /// The index of the subresource for the tiled resource.
     pub subresource: u32,
+}
+
+/// Describes the subresources from a resource that are accessible by using an unordered-access view.
+///
+/// For more information: [`D3D12_UNORDERED_ACCESS_VIEW_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_unordered_access_view_desc)
+#[derive(Debug, Clone)]
+pub struct UnorderedAccessViewDesc {
+    /// A [`Format`]-typed value that specifies the viewing format.
+    pub format: Format,
+
+    /// A [`UavDimension`]-typed value that specifies the resource type of the view. This type specifies how the resource will be accessed.
+    pub dimension: UavDimension,
 }

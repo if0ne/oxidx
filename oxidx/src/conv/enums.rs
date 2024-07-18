@@ -559,3 +559,103 @@ impl SrvDimension {
         }
     }
 }
+
+impl UavDimension {
+    #[inline]
+    pub(crate) fn as_type_raw(&self) -> D3D12_UAV_DIMENSION {
+        match self {
+            UavDimension::Buffer { .. } => D3D12_UAV_DIMENSION_BUFFER,
+            UavDimension::Tex1D { .. } => D3D12_UAV_DIMENSION_TEXTURE1D,
+            UavDimension::Tex2D { .. } => D3D12_UAV_DIMENSION_TEXTURE2D,
+            UavDimension::Tex3D { .. } => D3D12_UAV_DIMENSION_TEXTURE3D,
+            UavDimension::ArrayTex1D { .. } => D3D12_UAV_DIMENSION_TEXTURE1DARRAY,
+            UavDimension::ArrayTex2D { .. } => D3D12_UAV_DIMENSION_TEXTURE2DARRAY,
+            UavDimension::Tex2DMs => D3D12_UAV_DIMENSION_TEXTURE2DMS,
+            UavDimension::Array2DMs { .. } => D3D12_UAV_DIMENSION_TEXTURE2DMSARRAY,
+        }
+    }
+
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_UNORDERED_ACCESS_VIEW_DESC_0 {
+        match self {
+            UavDimension::Buffer {
+                first_element,
+                num_elements,
+                structure_byte_stride,
+                counter_offset,
+                flags,
+            } => D3D12_UNORDERED_ACCESS_VIEW_DESC_0 {
+                Buffer: D3D12_BUFFER_UAV {
+                    FirstElement: *first_element,
+                    NumElements: *num_elements,
+                    StructureByteStride: *structure_byte_stride,
+                    CounterOffsetInBytes: *counter_offset,
+                    Flags: flags.as_raw(),
+                },
+            },
+            UavDimension::Tex1D { mip_slice } => D3D12_UNORDERED_ACCESS_VIEW_DESC_0 {
+                Texture1D: D3D12_TEX1D_UAV {
+                    MipSlice: *mip_slice,
+                },
+            },
+            UavDimension::Tex2D {
+                mip_slice,
+                plane_slice,
+            } => D3D12_UNORDERED_ACCESS_VIEW_DESC_0 {
+                Texture2D: D3D12_TEX2D_UAV {
+                    MipSlice: *mip_slice,
+                    PlaneSlice: *plane_slice,
+                },
+            },
+            UavDimension::Tex3D {
+                mip_slice,
+                first_w_slice,
+                w_size,
+            } => D3D12_UNORDERED_ACCESS_VIEW_DESC_0 {
+                Texture3D: D3D12_TEX3D_UAV {
+                    MipSlice: *mip_slice,
+                    FirstWSlice: *first_w_slice,
+                    WSize: *w_size,
+                },
+            },
+            UavDimension::ArrayTex1D {
+                mip_slice,
+                first_array_slice,
+                array_size,
+            } => D3D12_UNORDERED_ACCESS_VIEW_DESC_0 {
+                Texture1DArray: D3D12_TEX1D_ARRAY_UAV {
+                    MipSlice: *mip_slice,
+                    FirstArraySlice: *first_array_slice,
+                    ArraySize: *array_size,
+                },
+            },
+            UavDimension::ArrayTex2D {
+                mip_slice,
+                plane_slice,
+                first_array_slice,
+                array_size,
+            } => D3D12_UNORDERED_ACCESS_VIEW_DESC_0 {
+                Texture2DArray: D3D12_TEX2D_ARRAY_UAV {
+                    MipSlice: *mip_slice,
+                    PlaneSlice: *plane_slice,
+                    FirstArraySlice: *first_array_slice,
+                    ArraySize: *array_size,
+                },
+            },
+            UavDimension::Tex2DMs => D3D12_UNORDERED_ACCESS_VIEW_DESC_0 {
+                Texture2DMS: D3D12_TEX2DMS_UAV {
+                    UnusedField_NothingToDefine: 0,
+                },
+            },
+            UavDimension::Array2DMs {
+                first_array_slice,
+                array_size,
+            } => D3D12_UNORDERED_ACCESS_VIEW_DESC_0 {
+                Texture2DMSArray: D3D12_TEX2DMS_ARRAY_UAV {
+                    FirstArraySlice: *first_array_slice,
+                    ArraySize: *array_size,
+                },
+            },
+        }
+    }
+}

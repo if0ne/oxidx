@@ -17,6 +17,19 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Identifies unordered-access view options for a buffer resource.
+    ///
+    /// Empty flag - Indicates a default view.
+    ///
+    /// For more information: [`D3D12_BUFFER_UAV_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_buffer_uav_flags)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct BufferUavFlags: i32 {
+        /// Resource contains raw, unstructured data.
+        const Raw = D3D12_BUFFER_UAV_FLAG_RAW.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Identifies which components of each pixel of a render target are writable during blending.
     ///
     /// For more information: [`D3D12_COLOR_WRITE_ENABLE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_color_write_enable)
