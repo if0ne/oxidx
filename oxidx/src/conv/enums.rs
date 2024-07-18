@@ -313,6 +313,7 @@ impl<'a> RootParameterType<'a> {
 }
 
 impl RtvDimension {
+    #[inline]
     pub(crate) fn as_type_raw(&self) -> D3D12_RTV_DIMENSION {
         match self {
             RtvDimension::Buffer { .. } => D3D12_RTV_DIMENSION_BUFFER,
@@ -326,6 +327,7 @@ impl RtvDimension {
         }
     }
 
+    #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_RENDER_TARGET_VIEW_DESC_0 {
         match self {
             RtvDimension::Buffer {
@@ -400,6 +402,160 @@ impl RtvDimension {
                     ArraySize: *array_size,
                 },
             },
+        }
+    }
+}
+
+impl SrvDimension {
+    #[inline]
+    pub(crate) fn as_type_raw(&self) -> D3D12_SRV_DIMENSION {
+        match self {
+            SrvDimension::Buffer { .. } => D3D12_SRV_DIMENSION_BUFFER,
+            SrvDimension::Tex1D { .. } => D3D12_SRV_DIMENSION_TEXTURE1D,
+            SrvDimension::ArrayTex1D { .. } => D3D12_SRV_DIMENSION_TEXTURE1DARRAY,
+            SrvDimension::Tex2D { .. } => D3D12_SRV_DIMENSION_TEXTURE2D,
+            SrvDimension::ArrayTex2D { .. } => D3D12_SRV_DIMENSION_TEXTURE2DARRAY,
+            SrvDimension::Tex2DMs => D3D12_SRV_DIMENSION_TEXTURE2DMS,
+            SrvDimension::Array2DMs { .. } => D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY,
+            SrvDimension::Tex3D { .. } => D3D12_SRV_DIMENSION_TEXTURE3D,
+            SrvDimension::TexCube { .. } => D3D12_SRV_DIMENSION_TEXTURECUBE,
+            SrvDimension::ArrayCube { .. } => D3D12_SRV_DIMENSION_TEXTURECUBEARRAY,
+            SrvDimension::RaytracingAccelerationStructure { .. } => {
+                D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE
+            }
+        }
+    }
+
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+        match self {
+            SrvDimension::Buffer {
+                first_element,
+                num_elements,
+                structure_byte_stride,
+                flags,
+            } => D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                Buffer: D3D12_BUFFER_SRV {
+                    FirstElement: *first_element,
+                    NumElements: *num_elements,
+                    StructureByteStride: *structure_byte_stride,
+                    Flags: flags.as_raw(),
+                },
+            },
+            SrvDimension::Tex1D {
+                most_detailed_mip,
+                mip_levels,
+                resource_min_lod_clamp,
+            } => D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                Texture1D: D3D12_TEX1D_SRV {
+                    MostDetailedMip: *most_detailed_mip,
+                    MipLevels: *mip_levels,
+                    ResourceMinLODClamp: *resource_min_lod_clamp,
+                },
+            },
+            SrvDimension::Tex2D {
+                most_detailed_mip,
+                mip_levels,
+                resource_min_lod_clamp,
+                plane_slice,
+            } => D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                Texture2D: D3D12_TEX2D_SRV {
+                    MostDetailedMip: *most_detailed_mip,
+                    MipLevels: *mip_levels,
+                    ResourceMinLODClamp: *resource_min_lod_clamp,
+                    PlaneSlice: *plane_slice,
+                },
+            },
+            SrvDimension::Tex3D {
+                most_detailed_mip,
+                mip_levels,
+                resource_min_lod_clamp,
+            } => D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                Texture3D: D3D12_TEX3D_SRV {
+                    MostDetailedMip: *most_detailed_mip,
+                    MipLevels: *mip_levels,
+                    ResourceMinLODClamp: *resource_min_lod_clamp,
+                },
+            },
+            SrvDimension::ArrayTex1D {
+                most_detailed_mip,
+                mip_levels,
+                resource_min_lod_clamp,
+                first_array_slice,
+                array_size,
+            } => D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                Texture1DArray: D3D12_TEX1D_ARRAY_SRV {
+                    MostDetailedMip: *most_detailed_mip,
+                    MipLevels: *mip_levels,
+                    ResourceMinLODClamp: *resource_min_lod_clamp,
+                    FirstArraySlice: *first_array_slice,
+                    ArraySize: *array_size,
+                },
+            },
+            SrvDimension::ArrayTex2D {
+                most_detailed_mip,
+                mip_levels,
+                resource_min_lod_clamp,
+                plane_slice,
+                first_array_slice,
+                array_size,
+            } => D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                Texture2DArray: D3D12_TEX2D_ARRAY_SRV {
+                    MostDetailedMip: *most_detailed_mip,
+                    MipLevels: *mip_levels,
+                    ResourceMinLODClamp: *resource_min_lod_clamp,
+                    FirstArraySlice: *first_array_slice,
+                    ArraySize: *array_size,
+                    PlaneSlice: *plane_slice,
+                },
+            },
+            SrvDimension::Tex2DMs => D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                Texture2DMS: D3D12_TEX2DMS_SRV {
+                    UnusedField_NothingToDefine: 0,
+                },
+            },
+            SrvDimension::Array2DMs {
+                first_array_slice,
+                array_size,
+            } => D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                Texture2DMSArray: D3D12_TEX2DMS_ARRAY_SRV {
+                    FirstArraySlice: *first_array_slice,
+                    ArraySize: *array_size,
+                },
+            },
+            SrvDimension::TexCube {
+                most_detailed_mip,
+                mip_levels,
+                resource_min_lod_clamp,
+            } => D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                TextureCube: D3D12_TEXCUBE_SRV {
+                    MostDetailedMip: *most_detailed_mip,
+                    MipLevels: *mip_levels,
+                    ResourceMinLODClamp: *resource_min_lod_clamp,
+                },
+            },
+            SrvDimension::ArrayCube {
+                most_detailed_mip,
+                mip_levels,
+                resource_min_lod_clamp,
+                first_2d_array_face,
+                num_cubes,
+            } => D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                TextureCubeArray: D3D12_TEXCUBE_ARRAY_SRV {
+                    MostDetailedMip: *most_detailed_mip,
+                    MipLevels: *mip_levels,
+                    ResourceMinLODClamp: *resource_min_lod_clamp,
+                    First2DArrayFace: *first_2d_array_face,
+                    NumCubes: *num_cubes,
+                },
+            },
+            SrvDimension::RaytracingAccelerationStructure { location } => {
+                D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                    RaytracingAccelerationStructure: D3D12_RAYTRACING_ACCELERATION_STRUCTURE_SRV {
+                        Location: *location,
+                    },
+                }
+            }
         }
     }
 }

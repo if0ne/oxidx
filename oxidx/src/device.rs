@@ -328,6 +328,21 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// For more information: [`ID3D12Device::CreateRootSignature method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createrootsignature)
     fn create_sampler(&self, desc: &SamplerDesc, dest_descriptor: CpuDescriptorHandle);
 
+    /// Creates a shader-resource view for accessing data in a resource.
+    ///
+    /// # Arguments
+    /// * `resource` - A reference to the [`ResourceInterface`] object that represents the shader resource.
+    /// * `desc` - A reference to a [`RenderTargetViewDesc`] structure that describes the render-target view.
+    /// * `dest_descriptor` - Describes the CPU descriptor handle that represents the shader-resource view. This handle can be created in a shader-visible or non-shader-visible descriptor heap.
+    ///
+    /// For more information: [`ID3D12Device::CreateShaderResourceView method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createshaderresourceview)
+    fn create_shader_resource_view(
+        &self,
+        resource: Option<&impl ResourceInterface>,
+        desc: Option<&ShaderResourceViewDesc>,
+        handle: CpuDescriptorHandle,
+    );
+
     fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32;
 }
 
@@ -484,6 +499,35 @@ impl_trait! {
 
             Ok(R::new(resource))
         }
+    }
+
+    fn create_command_list<CL: CommandListInterface>(
+        &self,
+        node_mask: u32,
+        r#type: CommandListType,
+        command_allocator: &impl CommandAllocatorInterface,
+        pso: Option<&impl PipelineStateInterface>,
+    ) -> Result<CL, DxError> {
+        let res: CL::Raw = unsafe {
+            if let Some(pso) = pso {
+                self.0.CreateCommandList(
+                    node_mask,
+                    r#type.as_raw(),
+                    command_allocator.as_raw_ref(),
+                    pso.as_raw_ref()
+                ).map_err(|_| DxError::Dummy)?
+            } else {
+                self.0.CreateCommandList(
+                    node_mask,
+                    r#type.as_raw(),
+                    command_allocator.as_raw_ref(),
+                    None
+                ).map_err(|_| DxError::Dummy)?
+            }
+
+        };
+
+        Ok(CL::new(res))
     }
 
     fn create_compute_pipeline_state<CPS: PipelineStateInterface>(
@@ -708,38 +752,27 @@ impl_trait! {
         }
     }
 
+    fn create_shader_resource_view(
+        &self,
+        resource: Option<&impl ResourceInterface>,
+        desc: Option<&ShaderResourceViewDesc>,
+        handle: CpuDescriptorHandle,
+    ) {
+        unsafe {
+            let desc = desc.map(|v| v.as_raw());
+            let desc = desc.as_ref().map(|f| f as *const _);
+
+            if let Some(resource) = resource {
+                self.0.CreateShaderResourceView(resource.as_raw_ref(), desc, handle.as_raw());
+            } else {
+                self.0.CreateShaderResourceView(None, desc, handle.as_raw());
+            }
+        }
+    }
+
     fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32 {
         unsafe {
             self.0.GetDescriptorHandleIncrementSize(r#type.as_raw())
         }
-    }
-
-    fn create_command_list<CL: CommandListInterface>(
-        &self,
-        node_mask: u32,
-        r#type: CommandListType,
-        command_allocator: &impl CommandAllocatorInterface,
-        pso: Option<&impl PipelineStateInterface>,
-    ) -> Result<CL, DxError> {
-        let res: CL::Raw = unsafe {
-            if let Some(pso) = pso {
-                self.0.CreateCommandList(
-                    node_mask,
-                    r#type.as_raw(),
-                    command_allocator.as_raw_ref(),
-                    pso.as_raw_ref()
-                ).map_err(|_| DxError::Dummy)?
-            } else {
-                self.0.CreateCommandList(
-                    node_mask,
-                    r#type.as_raw(),
-                    command_allocator.as_raw_ref(),
-                    None
-                ).map_err(|_| DxError::Dummy)?
-            }
-
-        };
-
-        Ok(CL::new(res))
     }
 }

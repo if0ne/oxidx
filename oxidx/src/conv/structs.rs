@@ -555,6 +555,18 @@ impl StaticSamplerDesc {
     }
 }
 
+impl ShaderResourceViewDesc {
+    pub(crate) fn as_raw(&self) -> D3D12_SHADER_RESOURCE_VIEW_DESC {
+        D3D12_SHADER_RESOURCE_VIEW_DESC {
+            Format: self.format.as_raw(),
+            ViewDimension: self.dimension.as_type_raw(),
+            Anonymous: self.dimension.as_raw(),
+            // TODO: Make it in shader resource view desc
+            Shader4ComponentMapping: 0x7,
+        }
+    }
+}
+
 impl TileRegionSize {
     #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_TILE_REGION_SIZE {

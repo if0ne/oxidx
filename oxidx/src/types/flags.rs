@@ -4,6 +4,19 @@ use windows::Win32::Graphics::Direct3D12::*;
 use super::*;
 
 bitflags::bitflags! {
+    /// Identifies how to view a buffer resource.
+    ///
+    /// Empty flag - Indicates a default view.
+    ///
+    /// For more information: [`D3D12_BUFFER_SRV_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_buffer_srv_flags)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct BufferSrvFlags: i32 {
+        /// View the buffer as raw.
+        const Raw = D3D12_BUFFER_SRV_FLAG_RAW.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Identifies which components of each pixel of a render target are writable during blending.
     ///
     /// For more information: [`D3D12_COLOR_WRITE_ENABLE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_color_write_enable)

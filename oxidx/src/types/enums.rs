@@ -1853,6 +1853,154 @@ pub enum SharedResourceCompatibilityTier {
     Tier2 = D3D12_SHARED_RESOURCE_COMPATIBILITY_TIER_2.0,
 }
 
+/// Identifies the type of resource that will be viewed as a shader resource.
+///
+/// For more information: [`D3D12_SRV_DIMENSION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_srv_dimension)
+#[derive(Clone, Copy, Debug)]
+pub enum SrvDimension {
+    /// Describes the elements in a buffer resource to use in a shader-resource view.
+    Buffer {
+        /// The index of the first element to be accessed by the view.
+        first_element: u64,
+
+        /// The number of elements in the resource.
+        num_elements: u32,
+
+        /// The size of each element in the buffer structure (in bytes) when the buffer represents a structured buffer.
+        /// The size must match the struct size declared in shaders that access the view.
+        structure_byte_stride: u32,
+
+        /// A [`BufferSrvFlags`]-typed value that identifies view options for the buffer. Currently, the only option is to identify a raw view of the buffer.
+        flags: BufferSrvFlags,
+    },
+
+    /// Specifies the subresource from a 1D texture to use in a shader-resource view.
+    Tex1D {
+        /// Index of the most detailed mipmap level to use; this number is between 0 and MipLevels
+        most_detailed_mip: u32,
+
+        /// The maximum number of mipmap levels for the view of the texture.
+        mip_levels: u32,
+
+        /// Specifies the minimum mipmap level that you can access.
+        resource_min_lod_clamp: f32,
+    },
+
+    /// Describes the subresources from an array of 1D textures to use in a shader-resource view.
+    ArrayTex1D {
+        /// Index of the most detailed mipmap level to use; this number is between 0 and MipLevels
+        most_detailed_mip: u32,
+
+        /// The maximum number of mipmap levels for the view of the texture.
+        mip_levels: u32,
+
+        /// Specifies the minimum mipmap level that you can access.
+        resource_min_lod_clamp: f32,
+
+        /// The index of the first texture to use in an array of textures.
+        first_array_slice: u32,
+
+        /// Number of textures in the array.
+        array_size: u32,
+    },
+
+    /// Describes the subresource from a 2D texture to use in a shader-resource view.
+    Tex2D {
+        /// Index of the most detailed mipmap level to use; this number is between 0 and MipLevels
+        most_detailed_mip: u32,
+
+        /// The maximum number of mipmap levels for the view of the texture.
+        mip_levels: u32,
+
+        /// Specifies the minimum mipmap level that you can access.
+        resource_min_lod_clamp: f32,
+
+        /// The index (plane slice number) of the plane to use in the texture.
+        plane_slice: u32,
+    },
+
+    /// Describes the subresources from an array of 2D textures to use in a shader-resource view.
+    ArrayTex2D {
+        /// Index of the most detailed mipmap level to use; this number is between 0 and MipLevels
+        most_detailed_mip: u32,
+
+        /// The maximum number of mipmap levels for the view of the texture.
+        mip_levels: u32,
+
+        /// Specifies the minimum mipmap level that you can access.
+        resource_min_lod_clamp: f32,
+
+        /// The index (plane slice number) of the plane to use in the texture.
+        plane_slice: u32,
+
+        /// Number of textures in the array to use in the render target view, starting from FirstArraySlice.
+        first_array_slice: u32,
+
+        /// The index (plane slice number) of the plane to use in an array of textures.
+        array_size: u32,
+    },
+
+    /// Describes the subresources from a multi sampled 2D texture to use in a shader-resource view.
+    Tex2DMs,
+
+    /// Describes the subresources from an array of multi sampled 2D textures to use in a shader-resource view.
+    Array2DMs {
+        /// The index of the first texture to use in an array of textures.
+        first_array_slice: u32,
+
+        /// The number of textures to use.
+        array_size: u32,
+    },
+
+    /// Describes the subresources from a 3D texture to use in a shader-resource view.
+    Tex3D {
+        /// Index of the most detailed mipmap level to use; this number is between 0 and MipLevels
+        most_detailed_mip: u32,
+
+        /// The maximum number of mipmap levels for the view of the texture.
+        mip_levels: u32,
+
+        /// Specifies the minimum mipmap level that you can access.
+        resource_min_lod_clamp: f32,
+    },
+
+    /// Describes the subresource from a cube texture to use in a shader-resource view.
+    TexCube {
+        /// Index of the most detailed mipmap level to use; this number is between 0 and MipLevels
+        most_detailed_mip: u32,
+
+        /// The maximum number of mipmap levels for the view of the texture.
+        mip_levels: u32,
+
+        /// Specifies the minimum mipmap level that you can access.
+        resource_min_lod_clamp: f32,
+    },
+
+    /// Describes the subresources from an array of cube textures to use in a shader-resource view.
+    ArrayCube {
+        /// Index of the most detailed mipmap level to use; this number is between 0 and MipLevels
+        most_detailed_mip: u32,
+
+        /// The maximum number of mipmap levels for the view of the texture.
+        mip_levels: u32,
+
+        /// Specifies the minimum mipmap level that you can access.
+        resource_min_lod_clamp: f32,
+
+        /// Index of the first 2D texture to use.
+        first_2d_array_face: u32,
+
+        /// Number of cube textures in the array.
+        num_cubes: u32,
+    },
+
+    /// A shader resource view (SRV) structure for storing a raytracing acceleration structure.
+    RaytracingAccelerationStructure {
+        /// The GPU virtual address of the SRV.
+        location: u64,
+    },
+}
+
 /// Identifies the stencil operations that can be performed during depth-stencil testing.
 ///
 /// For more information: [`D3D12_STENCIL_OP enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_stencil_op)

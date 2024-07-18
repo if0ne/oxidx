@@ -4,6 +4,7 @@ use crate::conv_flags;
 
 use super::*;
 
+conv_flags!(BufferSrvFlags to D3D12_BUFFER_SRV_FLAGS);
 conv_flags!(ColorWriteEnable to D3D12_COLOR_WRITE_ENABLE);
 conv_flags!(CacheSupportFlags to D3D12_SHADER_CACHE_SUPPORT_FLAGS);
 conv_flags!(CommandQueueFlags to D3D12_COMMAND_QUEUE_FLAGS);

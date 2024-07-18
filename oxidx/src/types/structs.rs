@@ -584,6 +584,18 @@ pub struct SamplerDesc {
 ///
 /// For more information: [`D3D12_STATIC_SAMPLER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_static_sampler_desc)
 #[derive(Clone, Debug)]
+pub struct ShaderResourceViewDesc {
+    /// A [`Format`]-typed value that specifies the viewing format.
+    pub format: Format,
+
+    /// A [`SrvDimension`]-typed value that specifies the resource type of the view. This type is the same as the resource type of the underlying resource. This member also determines which _SRV to use in the union below.
+    pub dimension: SrvDimension,
+}
+
+/// Describes a static sampler.
+///
+/// For more information: [`D3D12_STATIC_SAMPLER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_static_sampler_desc)
+#[derive(Clone, Debug)]
 pub struct StaticSamplerDesc {
     /// The filtering method to use when sampling a texture, as a [`Filter`] enumeration constant.
     pub filter: Filter,
