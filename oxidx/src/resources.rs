@@ -5,7 +5,9 @@ use windows::{
     Win32::Graphics::Direct3D12::*,
 };
 
-use crate::{create_type, error::DxError, impl_trait, types::ResourceStates, HasInterface};
+use crate::{
+    create_type, error::DxError, impl_trait, types::ResourceStates, HasInterface, Shareable,
+};
 
 pub trait ResourceInterface:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12Resource>>
@@ -60,6 +62,8 @@ impl_trait! {
         }
     }
 }
+
+impl Shareable for Resource {}
 
 #[derive(Clone, Debug)]
 pub struct ResourceBarrier<'a> {

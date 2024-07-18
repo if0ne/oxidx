@@ -7,7 +7,7 @@ use windows::{
     },
 };
 
-use crate::{create_type, error::DxError, impl_trait, types::FenceFlags, HasInterface};
+use crate::{create_type, error::DxError, impl_trait, types::FenceFlags, HasInterface, Shareable};
 
 /// Represents a fence, an object used for synchronization of the CPU and one or more GPUs.
 ///
@@ -100,6 +100,9 @@ impl_trait! {
         }
     }
 }
+
+impl Shareable for Fence {}
+impl Shareable for Fence1 {}
 
 /// A handle to the object of event.
 #[derive(Clone, Copy, Debug)]

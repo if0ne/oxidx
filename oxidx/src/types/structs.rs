@@ -1,5 +1,7 @@
 use std::ffi::CStr;
 
+use windows::Win32::Foundation::HANDLE;
+
 use crate::{blob::Blob, root_signature::RootSignature};
 
 use super::*;
@@ -591,6 +593,10 @@ pub struct ShaderResourceViewDesc {
     /// A [`SrvDimension`]-typed value that specifies the resource type of the view. This type is the same as the resource type of the underlying resource. This member also determines which _SRV to use in the union below.
     pub dimension: SrvDimension,
 }
+
+/// A handle to the object of event.
+#[derive(Clone, Copy, Debug)]
+pub struct SharedHandle(pub(crate) HANDLE);
 
 /// Describes a static sampler.
 ///

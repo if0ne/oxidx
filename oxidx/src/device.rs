@@ -1,4 +1,9 @@
-use windows::{core::Interface, Win32::Graphics::Direct3D12::ID3D12Device};
+use std::ffi::CStr;
+
+use windows::{
+    core::{Interface, PCWSTR},
+    Win32::Graphics::Direct3D12::ID3D12Device,
+};
 
 use crate::{
     blob::BlobInterface, command_allocator::CommandAllocatorInterface,
@@ -7,7 +12,7 @@ use crate::{
     descriptor_heap::DescriptorHeapInterface, error::DxError, heap::HeapInterface, impl_trait,
     pso::PipelineStateInterface, query_heap::QueryHeapInterface, resources::ResourceInterface,
     root_signature::RootSignatureInterface, sync::FenceInterface, types::*, FeatureObject,
-    HasInterface,
+    HasInterface, Shareable,
 };
 
 /// Represents a virtual adapter; it is used to create
@@ -342,6 +347,19 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         desc: Option<&ShaderResourceViewDesc>,
         handle: CpuDescriptorHandle,
     );
+
+    /// Creates a shared handle to a heap, resource, or fence object.
+    ///
+    /// # Arguments
+    /// * `shareable` - A reference to the [`Shareable`] interface that represents the heap, resource, or fence object to create for sharing.
+    /// * `name` - A name to associate with the shared heap
+    ///
+    /// For more information: [`ID3D12Device::CreateSharedHandle method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createsharedhandle)
+    fn create_shared_handle(
+        &self,
+        shareable: &impl Shareable,
+        name: Option<&CStr>,
+    ) -> Result<SharedHandle, DxError>;
 
     fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32;
 }
@@ -767,6 +785,28 @@ impl_trait! {
             } else {
                 self.0.CreateShaderResourceView(None, desc, handle.as_raw());
             }
+        }
+    }
+
+    fn create_shared_handle(
+        &self,
+        shareable: &impl Shareable,
+        name: Option<&CStr>,
+    ) -> Result<SharedHandle, DxError> {
+        unsafe {
+            let name = PCWSTR::from_raw(
+                name.map(|name| name.as_ptr())
+                    .unwrap_or(std::ptr::null())
+                    as *const _
+            );
+            let handle = self.0.CreateSharedHandle(
+                shareable.as_raw_ref(),
+                None,
+                0x10000000,
+                name
+            ).map_err(DxError::from)?;
+
+            Ok(SharedHandle(handle))
         }
     }
 

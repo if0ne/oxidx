@@ -2,6 +2,8 @@
 #![allow(dead_code)]
 #![allow(clippy::too_many_arguments)]
 
+use windows::{core::Param, Win32::Graphics::Direct3D12::ID3D12DeviceChild};
+
 pub mod adapter;
 pub mod blob;
 pub mod command_allocator;
@@ -47,6 +49,11 @@ pub(crate) trait HasInterface {
     fn new(raw: Self::Raw) -> Self;
     fn as_raw(&self) -> &Self::Raw;
     fn as_raw_ref(&self) -> Self::RawRef<'_>;
+}
+
+pub(crate) trait Shareable:
+    for<'a> HasInterface<RawRef<'a>: Param<ID3D12DeviceChild>>
+{
 }
 
 pub(crate) trait __Sealed {}
