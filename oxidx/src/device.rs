@@ -274,6 +274,21 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         handle: CpuDescriptorHandle,
     );
 
+    /// Creates a resource that is reserved, and not yet mapped to any pages in a heap.
+    ///
+    /// # Arguments
+    /// * `desc` - A reference to a [`ResourceDesc`] structure that describes the resource.
+    /// * `initial_state` - The initial state of the resource, as a bitwise-OR'd combination of [`ResourceStates`] enumeration constants.
+    /// * `optimized_clear_value` - Specifies a [`ClearValue`] that describes the default value for a clear color.
+    ///
+    /// For more information: [`ID3D12Device::CreateReservedResource method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createreservedresource)
+    fn create_reserved_resource<R: ResourceInterface>(
+        &self,
+        desc: &ResourceDesc,
+        initial_state: ResourceStates,
+        optimized_clear_value: Option<&ClearValue>,
+    ) -> Result<R, DxError>;
+
     /// Creates a root signature layout.
     ///
     /// # Arguments
@@ -626,6 +641,31 @@ impl_trait! {
             } else {
                 self.0.CreateRenderTargetView(None, desc, handle.as_raw());
             }
+        }
+    }
+
+    fn create_reserved_resource<R: ResourceInterface>(
+        &self,
+        desc: &ResourceDesc,
+        initial_state: ResourceStates,
+        optimized_clear_value: Option<&ClearValue>,
+    ) -> Result<R, DxError> {
+        unsafe {
+            let clear_value = optimized_clear_value.as_ref().map(|c| c.as_raw());
+            let clear_value = clear_value.as_ref().map(|c| c as *const _);
+
+            let mut resource = None;
+
+            self.0.CreateReservedResource(
+                &desc.as_raw(),
+                initial_state.as_raw(),
+                clear_value,
+                &mut resource,
+            ).map_err(DxError::from)?;
+
+            let resource = resource.unwrap_unchecked();
+
+            Ok(R::new(resource))
         }
     }
 
