@@ -4,7 +4,12 @@ use windows::{
 };
 
 use crate::{
-    create_type, heap::Heap, impl_trait, impl_up_down_cast, resources::Resource, sync::{Fence, Fence1}, HasInterface
+    create_type,
+    heap::Heap,
+    impl_trait, impl_up_down_cast,
+    resources::Resource,
+    sync::{Fence, Fence1},
+    HasInterface,
 };
 
 pub trait DeviceChildInterface: for<'a> HasInterface<RawRef<'a>: Param<ID3D12DeviceChild>> {}

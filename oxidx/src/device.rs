@@ -9,10 +9,10 @@ use crate::{
     blob::BlobInterface, command_allocator::CommandAllocatorInterface,
     command_list::CommandListInterface, command_queue::CommandQueueInterface,
     command_signature::CommandSignatureInterface, create_type,
-    descriptor_heap::DescriptorHeapInterface, error::DxError, heap::HeapInterface, impl_trait,
-    pso::PipelineStateInterface, query_heap::QueryHeapInterface, resources::ResourceInterface,
-    root_signature::RootSignatureInterface, device_child::DeviceChild, sync::FenceInterface, types::*,
-    FeatureObject, HasInterface,
+    descriptor_heap::DescriptorHeapInterface, device_child::DeviceChild, error::DxError,
+    heap::HeapInterface, impl_trait, pso::PipelineStateInterface, query_heap::QueryHeapInterface,
+    resources::ResourceInterface, root_signature::RootSignatureInterface, sync::FenceInterface,
+    types::*, FeatureObject, HasInterface,
 };
 
 /// Represents a virtual adapter; it is used to create

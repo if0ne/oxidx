@@ -134,12 +134,12 @@ macro_rules! impl_up_down_cast {
 
             #[inline]
             fn try_from(value: $base) -> Result<$child, Self::Error> {
-                let temp = value.0.cast::<_>()
-                    .map_err(|_|
-                        $crate::error::DxError::Cast(
-                            std::any::type_name::<$base>(),
-                            std::any::type_name::<$child>()
-                        ))?;
+                let temp = value.0.cast::<_>().map_err(|_| {
+                    $crate::error::DxError::Cast(
+                        std::any::type_name::<$base>(),
+                        std::any::type_name::<$child>(),
+                    )
+                })?;
 
                 Ok(<$child>::new(temp))
             }
