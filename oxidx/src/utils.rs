@@ -31,12 +31,20 @@ macro_rules! create_type {
 
         $(
             /// Upcast
-            impl TryInto<$name> for $base {
+            impl From<$name> for $base {
+                #[inline]
+                fn from(value: $name) -> Self {
+                    unsafe { <$base>::new(value.0.cast::<_>().unwrap_unchecked()) }
+                }
+            }
+
+            /// Downcast
+            impl TryFrom<$base> for $name {
                 type Error = $crate::error::DxError;
 
                 #[inline]
-                fn try_into(self) -> Result<$name, Self::Error> {
-                    let temp = self.0.cast::<_>()
+                fn try_from(value: $base) -> Result<$name, Self::Error> {
+                    let temp = value.0.cast::<_>()
                         .map_err(|_|
                             $crate::error::DxError::Cast(
                                 std::any::type_name::<$base>(),
@@ -44,23 +52,6 @@ macro_rules! create_type {
                             ))?;
 
                     Ok(<$name>::new(temp))
-                }
-            }
-
-            /// Downcast
-            impl TryInto<$base> for $name {
-                type Error = $crate::error::DxError;
-
-                #[inline]
-                fn try_into(self) -> Result<$base, Self::Error> {
-                    let temp = self.0.cast::<_>()
-                        .map_err(|_|
-                            $crate::error::DxError::Cast(
-                                std::any::type_name::<$name>(),
-                                std::any::type_name::<$base>()
-                            ))?;
-
-                    Ok(<$base>::new(temp))
                 }
             }
         )*
@@ -120,6 +111,37 @@ macro_rules! conv_flags {
             #[inline]
             fn from(value: $l) -> Self {
                 Self::from_bits(value.0).unwrap_or_else(|| unreachable!())
+            }
+        }
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! impl_up_down_cast {
+    ($child:ident inherit $base:ty) => {
+        /// Upcast
+        impl From<$child> for $base {
+            #[inline]
+            fn from(value: $child) -> Self {
+                unsafe { <$base>::new(value.0.cast::<_>().unwrap_unchecked()) }
+            }
+        }
+
+        /// Downcast
+        impl TryFrom<$base> for $child {
+            type Error = $crate::error::DxError;
+
+            #[inline]
+            fn try_from(value: $base) -> Result<$child, Self::Error> {
+                let temp = value.0.cast::<_>()
+                    .map_err(|_|
+                        $crate::error::DxError::Cast(
+                            std::any::type_name::<$base>(),
+                            std::any::type_name::<$child>()
+                        ))?;
+
+                Ok(<$child>::new(temp))
             }
         }
     };

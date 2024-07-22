@@ -69,7 +69,7 @@ create_type! {
     /// This new feature is useful primarily for opening shared fences.
     ///
     /// For more information: [`ID3D12Fence1 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12fence1)
-    Fence1 wrap ID3D12Fence1
+    Fence1 wrap ID3D12Fence1; decorator for Fence
 }
 
 impl_trait! {
