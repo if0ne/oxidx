@@ -395,6 +395,12 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
 
     /// Gets a resource layout that can be copied. Helps the app fill-in [`PlacedSubresourceFootprint`] and [`SubresourceFootprint`] when suballocating space in upload heaps.
     ///
+    /// # Arguments
+    /// * `resource_desc` - A description of the resource, as a pointer to a [`ResourceDesc`] structure.
+    /// * `first_subresource` - Index of the first subresource in the resource. The range of valid values is 0 to D3D12_REQ_SUBRESOURCES.
+    /// * `num_subresources` - The number of subresources in the resource. The range of valid values is 0 to (D3D12_REQ_SUBRESOURCES - FirstSubresource).
+    /// * `base_offset` - The offset, in bytes, to the resource.
+    /// 
     /// For more information: [`ID3D12Device::GetCopyableFootprints method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getcopyablefootprints)
     fn get_copyable_footprints(
         &self,
@@ -403,6 +409,21 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         num_subresources: u32,
         base_offset: u64,
     ) -> CopyableFootprints;
+
+    /// Gets a resource layout that can be copied. Helps the app fill-in [`PlacedSubresourceFootprint`] and [`SubresourceFootprint`] when suballocating space in upload heaps.
+    /// 
+    /// # Arguments
+    /// * `node_mask` - For single-GPU operation, set this to zero. 
+    ///   If there are multiple GPU nodes, set a bit to identify the node (the device's physical adapter). 
+    ///   Each bit in the mask corresponds to a single node. Only 1 bit must be set.
+    /// * `type` - A [`HeapType`]-typed value that specifies the heap to get properties for. [`HeapType::Custom`] is not supported as a parameter value.
+    /// 
+    /// For more information: [`ID3D12Device::GetCopyableFootprints method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getcopyablefootprints)
+    fn get_custom_heap_properties(
+        &self,
+        node_mask: u32,
+        r#type: HeapType,
+    ) -> HeapProperties;
 
     fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32;
 }
@@ -915,6 +936,20 @@ impl_trait! {
                 row_sizes,
                 total_bytes
             }
+        }
+    }
+
+    fn get_custom_heap_properties(
+        &self,
+        node_mask: u32,
+        r#type: HeapType,
+    ) -> HeapProperties {
+        assert_ne!(r#type, HeapType::Custom);
+
+        unsafe {
+            let result = self.0.GetCustomHeapProperties(node_mask, r#type.as_raw());
+
+            result.into()
         }
     }
 

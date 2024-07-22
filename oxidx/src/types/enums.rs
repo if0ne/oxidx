@@ -1167,7 +1167,7 @@ pub enum HeapSerializationTier {
 /// Specifies the type of heap. When resident, heaps reside in a particular physical memory pool with certain CPU cache properties.
 ///
 /// For more information: [`D3D12_HEAP_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_heap_type)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, PartialEq, Eq)]
 #[repr(i32)]
 pub enum HeapType {
     /// Specifies the default heap. This heap type experiences the most bandwidth for the GPU, but cannot provide CPU access.
