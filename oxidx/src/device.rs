@@ -393,6 +393,17 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// For more information: [`ID3D12Device::GetAdapterLuid method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getadapterluid)
     fn get_adapter_luid(&self) -> Luid;
 
+    /// Gets a resource layout that can be copied. Helps the app fill-in [`PlacedSubresourceFootprint`] and [`SubresourceFootprint`] when suballocating space in upload heaps.
+    ///
+    /// For more information: [`ID3D12Device::GetCopyableFootprints method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getcopyablefootprints)
+    fn get_copyable_footprints(
+        &self,
+        resource_desc: &ResourceDesc,
+        first_subresource: u32,
+        num_subresources: u32,
+        base_offset: u64,
+    ) -> CopyableFootprints;
+
     fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32;
 }
 
@@ -869,6 +880,41 @@ impl_trait! {
     fn get_adapter_luid(&self) -> Luid {
         unsafe {
             self.0.GetAdapterLuid().into()
+        }
+    }
+
+    fn get_copyable_footprints(
+        &self,
+        resource_desc: &ResourceDesc,
+        first_subresource: u32,
+        num_subresources: u32,
+        base_offset: u64,
+    ) -> CopyableFootprints {
+        unsafe {
+            let desc = resource_desc.as_raw();
+
+            let mut layouts: SmallVec<[_; 8]> = SmallVec::with_capacity(num_subresources as usize);
+            let mut num_rows: SmallVec<[_; 8]> = SmallVec::with_capacity(num_subresources as usize);
+            let mut row_sizes: SmallVec<[_; 8]> = SmallVec::with_capacity(num_subresources as usize);
+            let mut total_bytes = 0;
+
+            self.0.GetCopyableFootprints(
+                &desc,
+                first_subresource,
+                num_subresources,
+                base_offset,
+                Some(layouts.as_mut_ptr()),
+                Some(num_rows.as_mut_ptr()),
+                Some(row_sizes.as_mut_ptr()),
+                Some(&mut total_bytes)
+            );
+
+            CopyableFootprints {
+                layouts: layouts.into_iter().map(|l| l.into()).collect(),
+                num_rows,
+                row_sizes,
+                total_bytes
+            }
         }
     }
 

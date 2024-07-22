@@ -1,5 +1,6 @@
 use std::ffi::CStr;
 
+use smallvec::SmallVec;
 use windows::Win32::Foundation::HANDLE;
 
 use crate::{blob::Blob, root_signature::RootSignature};
@@ -714,11 +715,61 @@ pub struct TiledResourceCoordinate {
 /// Describes the subresources from a resource that are accessible by using an unordered-access view.
 ///
 /// For more information: [`D3D12_UNORDERED_ACCESS_VIEW_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_unordered_access_view_desc)
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
 pub struct UnorderedAccessViewDesc {
     /// A [`Format`]-typed value that specifies the viewing format.
     pub format: Format,
 
     /// A [`UavDimension`]-typed value that specifies the resource type of the view. This type specifies how the resource will be accessed.
     pub dimension: UavDimension,
+}
+
+/// Describes the format, width, height, depth, and row-pitch of the subresource into the parent resource.
+///
+/// For more information: [`D3D12_SUBRESOURCE_FOOTPRINT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_subresource_footprint)
+#[derive(Clone, Debug)]
+pub struct SubresourceFootprint {
+    /// A [`Format`]-typed value that specifies the viewing format.
+    pub format: Format,
+
+    /// The width of the subresource.
+    pub width: u32,
+
+    /// The height of the subresource.
+    pub height: u32,
+
+    /// The depth of the subresource.
+    pub depth: u32,
+
+    /// The row pitch, or width, or physical size, in bytes, of the subresource data.
+    /// This must be a multiple of [`TEXTURE_DATA_PITCH_ALIGNMENT`], and must be greater than or equal to the size of the data within a row.
+    pub row_pitch: u32,
+}
+
+/// Describes the footprint of a placed subresource, including the offset and the [`SubresourceFootprint`].
+///
+/// For more information: [`D3D12_PLACED_SUBRESOURCE_FOOTPRINT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_placed_subresource_footprint)
+#[derive(Clone, Debug)]
+pub struct PlacedSubresourceFootprint {
+    /// The offset of the subresource within the parent resource, in bytes. The offset between the start of the parent resource and this subresource.
+    pub offset: u64,
+
+    /// The format, width, height, depth, and row-pitch of the subresource, as a [`SubresourceFootprint`] structure.
+    pub footprint: SubresourceFootprint,
+}
+
+/// Type that represent return values of [`DeviceInterface::get_copyable_footprints`](crate::device::DeviceInterface::get_copyable_footprints)
+#[derive(Clone, Debug)]
+pub struct CopyableFootprints {
+    /// An array (of length NumSubresources) of [`PlacedSubresourceFootprint`] structures, to be filled with the description and placement of each subresource.
+    pub layouts: SmallVec<[PlacedSubresourceFootprint; 8]>,
+
+    /// An array (of length NumSubresources) of integer variables, to be filled with the number of rows for each subresource.
+    pub num_rows: SmallVec<[u32; 8]>,
+
+    /// An array (of length NumSubresources) of integer variables, each entry to be filled with the unpadded size in bytes of a row, of each subresource.
+    pub row_sizes: SmallVec<[u64; 8]>,
+
+    /// The total size, in bytes.
+    pub total_bytes: u64,
 }

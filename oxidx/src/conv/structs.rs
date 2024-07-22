@@ -612,11 +612,35 @@ impl TiledResourceCoordinate {
 }
 
 impl UnorderedAccessViewDesc {
+    #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_UNORDERED_ACCESS_VIEW_DESC {
         D3D12_UNORDERED_ACCESS_VIEW_DESC {
             Format: self.format.as_raw(),
             ViewDimension: self.dimension.as_type_raw(),
             Anonymous: self.dimension.as_raw(),
+        }
+    }
+}
+
+impl From<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> for PlacedSubresourceFootprint {
+    #[inline]
+    fn from(value: D3D12_PLACED_SUBRESOURCE_FOOTPRINT) -> Self {
+        Self {
+            offset: value.Offset,
+            footprint: value.Footprint.into(),
+        }
+    }
+}
+
+impl From<D3D12_SUBRESOURCE_FOOTPRINT> for SubresourceFootprint {
+    #[inline]
+    fn from(value: D3D12_SUBRESOURCE_FOOTPRINT) -> Self {
+        Self {
+            format: value.Format.into(),
+            width: value.Width,
+            height: value.Height,
+            depth: value.Depth,
+            row_pitch: value.RowPitch,
         }
     }
 }
