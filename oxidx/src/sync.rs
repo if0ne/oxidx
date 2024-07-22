@@ -2,12 +2,14 @@ use windows::{
     core::{Interface, Param},
     Win32::{
         Foundation::HANDLE,
-        Graphics::Direct3D12::{ID3D12Fence, ID3D12Fence1},
+        Graphics::Direct3D12::{ ID3D12Fence, ID3D12Fence1},
         System::Threading::{CreateEventA, ResetEvent, WaitForSingleObject},
     },
 };
 
-use crate::{create_type, error::DxError, impl_trait, types::FenceFlags, HasInterface, Shareable};
+use crate::{
+    create_type, error::DxError, impl_trait, types::FenceFlags, HasInterface,
+};
 
 /// Represents a fence, an object used for synchronization of the CPU and one or more GPUs.
 ///
@@ -100,9 +102,6 @@ impl_trait! {
         }
     }
 }
-
-impl Shareable for Fence {}
-impl Shareable for Fence1 {}
 
 /// A handle to the object of event.
 #[derive(Clone, Copy, Debug)]

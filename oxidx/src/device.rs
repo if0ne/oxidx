@@ -11,8 +11,8 @@ use crate::{
     command_signature::CommandSignatureInterface, create_type,
     descriptor_heap::DescriptorHeapInterface, error::DxError, heap::HeapInterface, impl_trait,
     pso::PipelineStateInterface, query_heap::QueryHeapInterface, resources::ResourceInterface,
-    root_signature::RootSignatureInterface, sync::FenceInterface, types::*, FeatureObject,
-    HasInterface, Shareable,
+    root_signature::RootSignatureInterface, device_child::DeviceChild, sync::FenceInterface, types::*,
+    FeatureObject, HasInterface,
 };
 
 /// Represents a virtual adapter; it is used to create
@@ -357,7 +357,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// For more information: [`ID3D12Device::CreateSharedHandle method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createsharedhandle)
     fn create_shared_handle(
         &self,
-        shareable: &impl Shareable,
+        shareable: &DeviceChild,
         name: Option<&CStr>,
     ) -> Result<SharedHandle, DxError>;
 
@@ -496,8 +496,8 @@ impl_trait! {
             let mut res: Option<CS::Raw> = None;
 
             self.0.CreateCommandSignature(
-                &desc, 
-                root_signature.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed()), 
+                &desc,
+                root_signature.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed()),
                 &mut res
             ).map_err(DxError::from)?;
 
@@ -596,8 +596,8 @@ impl_trait! {
             let dest_descriptor = dest_descriptor.as_raw();
 
             self.0.CreateDepthStencilView(
-                resource.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed()), 
-                desc, 
+                resource.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed()),
+                desc,
                 dest_descriptor
             );
         }
@@ -706,8 +706,8 @@ impl_trait! {
             let desc = desc.as_ref().map(|f| f as *const _);
 
             self.0.CreateRenderTargetView(
-                resource.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed()), 
-                desc, 
+                resource.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed()),
+                desc,
                 handle.as_raw()
             );
         }
@@ -788,8 +788,8 @@ impl_trait! {
             let desc = desc.as_ref().map(|f| f as *const _);
 
             self.0.CreateShaderResourceView(
-                resource.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed()), 
-                desc, 
+                resource.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed()),
+                desc,
                 handle.as_raw()
             );
         }
@@ -797,7 +797,7 @@ impl_trait! {
 
     fn create_shared_handle(
         &self,
-        shareable: &impl Shareable,
+        shareable: &DeviceChild,
         name: Option<&CStr>,
     ) -> Result<SharedHandle, DxError> {
         unsafe {

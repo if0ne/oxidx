@@ -6,7 +6,8 @@ use windows::{
 };
 
 use crate::{
-    create_type, error::DxError, impl_trait, types::ResourceStates, HasInterface, Shareable,
+    create_type, error::DxError, impl_trait, types::ResourceStates,
+    HasInterface,
 };
 
 pub trait ResourceInterface:
@@ -62,8 +63,6 @@ impl_trait! {
         }
     }
 }
-
-impl Shareable for Resource {}
 
 #[derive(Clone, Debug)]
 pub struct ResourceBarrier<'a> {

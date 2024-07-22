@@ -3,7 +3,7 @@ use windows::{
     Win32::Graphics::Direct3D12::*,
 };
 
-use crate::{create_type, impl_trait, types::HeapDesc, HasInterface, Shareable};
+use crate::{create_type, impl_trait, types::HeapDesc, HasInterface};
 
 /// A heap is an abstraction of contiguous memory allocation, used to manage physical memory.
 /// This heap can be used with [`ResourceInterface`](crate::resources::ResourceInterface) objects to support placed resources or reserved resources.
@@ -33,5 +33,3 @@ impl_trait! {
         }
     }
 }
-
-impl Shareable for Heap {}
