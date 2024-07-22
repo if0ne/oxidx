@@ -439,6 +439,11 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// 
     /// For more information: [`ID3D12Device::GetDeviceRemovedReason method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getdeviceremovedreason)
     fn get_device_removed_reason(&self) -> Result<(), DxError>;
+
+    /// Reports the number of physical adapters (nodes) that are associated with this device.
+    /// 
+    /// For more information: [`ID3D12Device::GetNodeCount method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getnodecount)
+    fn get_node_count(&self) -> u32;
 }
 
 create_type! {
@@ -975,6 +980,12 @@ impl_trait! {
     fn get_device_removed_reason(&self) -> Result<(), DxError> {
         unsafe {
             self.0.GetDeviceRemovedReason().map_err(DxError::from)
+        }
+    }
+
+    fn get_node_count(&self) -> u32 {
+        unsafe {
+            self.0.GetNodeCount()
         }
     }
 }
