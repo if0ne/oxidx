@@ -495,11 +495,11 @@ impl_trait! {
             let desc = desc.as_raw();
             let mut res: Option<CS::Raw> = None;
 
-            if let Some(root) = root_signature {
-                self.0.CreateCommandSignature(&desc, root.as_raw_ref(), &mut res).map_err(DxError::from)?;
-            } else {
-                self.0.CreateCommandSignature(&desc, None, &mut res).map_err(DxError::from)?;
-            };
+            self.0.CreateCommandSignature(
+                &desc, 
+                root_signature.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed()), 
+                &mut res
+            ).map_err(DxError::from)?;
 
             let res = res.unwrap_unchecked();
 
@@ -543,26 +543,16 @@ impl_trait! {
         command_allocator: &impl CommandAllocatorInterface,
         pso: Option<&impl PipelineStateInterface>,
     ) -> Result<CL, DxError> {
-        let res: CL::Raw = unsafe {
-            if let Some(pso) = pso {
-                self.0.CreateCommandList(
-                    node_mask,
-                    r#type.as_raw(),
-                    command_allocator.as_raw_ref(),
-                    pso.as_raw_ref()
-                ).map_err(|_| DxError::Dummy)?
-            } else {
-                self.0.CreateCommandList(
-                    node_mask,
-                    r#type.as_raw(),
-                    command_allocator.as_raw_ref(),
-                    None
-                ).map_err(|_| DxError::Dummy)?
-            }
+        unsafe {
+            let res: CL::Raw = self.0.CreateCommandList(
+                node_mask,
+                r#type.as_raw(),
+                command_allocator.as_raw_ref(),
+                pso.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed())
+            ).map_err(|_| DxError::Dummy)?;
 
-        };
-
-        Ok(CL::new(res))
+            Ok(CL::new(res))
+        }
     }
 
     fn create_compute_pipeline_state<CPS: PipelineStateInterface>(
@@ -605,11 +595,11 @@ impl_trait! {
 
             let dest_descriptor = dest_descriptor.as_raw();
 
-            if let Some(resource) = resource {
-                self.0.CreateDepthStencilView(resource.as_raw_ref(), desc, dest_descriptor);
-            } else {
-                self.0.CreateDepthStencilView(None, desc, dest_descriptor);
-            }
+            self.0.CreateDepthStencilView(
+                resource.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed()), 
+                desc, 
+                dest_descriptor
+            );
         }
     }
 
@@ -715,11 +705,11 @@ impl_trait! {
             let desc = desc.map(|v| v.as_raw());
             let desc = desc.as_ref().map(|f| f as *const _);
 
-            if let Some(resource) = resource {
-                self.0.CreateRenderTargetView(resource.as_raw_ref(), desc, handle.as_raw());
-            } else {
-                self.0.CreateRenderTargetView(None, desc, handle.as_raw());
-            }
+            self.0.CreateRenderTargetView(
+                resource.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed()), 
+                desc, 
+                handle.as_raw()
+            );
         }
     }
 
@@ -797,11 +787,11 @@ impl_trait! {
             let desc = desc.map(|v| v.as_raw());
             let desc = desc.as_ref().map(|f| f as *const _);
 
-            if let Some(resource) = resource {
-                self.0.CreateShaderResourceView(resource.as_raw_ref(), desc, handle.as_raw());
-            } else {
-                self.0.CreateShaderResourceView(None, desc, handle.as_raw());
-            }
+            self.0.CreateShaderResourceView(
+                resource.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed()), 
+                desc, 
+                handle.as_raw()
+            );
         }
     }
 
@@ -838,40 +828,12 @@ impl_trait! {
             let desc = desc.map(|v| v.as_raw());
             let desc = desc.as_ref().map(|f| f as *const _);
 
-            match (resource, counter_resource) {
-                (Some(r), Some(c)) => {
-                    self.0.CreateUnorderedAccessView(
-                        r.as_raw_ref(),
-                        c.as_raw_ref(),
-                        desc,
-                        handle.as_raw()
-                    );
-                }
-                (Some(r), None) => {
-                    self.0.CreateUnorderedAccessView(
-                        r.as_raw_ref(),
-                        None,
-                        desc,
-                        handle.as_raw()
-                    );
-                }
-                (None, Some(c)) => {
-                    self.0.CreateUnorderedAccessView(
-                        None,
-                        c.as_raw_ref(),
-                        desc,
-                        handle.as_raw()
-                    );
-                }
-                (None, None) => {
-                    self.0.CreateUnorderedAccessView(
-                        None,
-                        None,
-                        desc,
-                        handle.as_raw()
-                    );
-                }
-            }
+            self.0.CreateUnorderedAccessView(
+                resource.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed()),
+                counter_resource.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed()),
+                desc,
+                handle.as_raw()
+            );
         }
     }
 
