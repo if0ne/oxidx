@@ -4,7 +4,7 @@ use windows::{
     Win32::Graphics::Dxgi::IDXGIAdapter3,
 };
 
-use crate::{create_type, impl_trait, HasInterface};
+use crate::{create_type, impl_trait, types::Luid, HasInterface};
 
 pub trait AdapterInterface3: for<'a> HasInterface<RawRef<'a>: Param<IUnknown>> {
     fn get_desc1(&self) -> AdapterDesc;
@@ -47,10 +47,4 @@ bitflags::bitflags! {
         const Remote = 1;
         const Sofware = 2;
     }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Luid {
-    pub low_part: u32,
-    pub high_part: i32,
 }

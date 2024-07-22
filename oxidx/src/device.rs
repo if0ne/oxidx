@@ -7,7 +7,14 @@ use windows::{
 };
 
 use crate::{
-    blob::BlobInterface, command_allocator::CommandAllocatorInterface, command_list::CommandListInterface, command_queue::CommandQueueInterface, command_signature::CommandSignatureInterface, create_type, descriptor_heap::DescriptorHeapInterface, device_child::DeviceChild, error::DxError, heap::HeapInterface, impl_trait, pageable::Pageable, pso::PipelineStateInterface, query_heap::QueryHeapInterface, resources::ResourceInterface, root_signature::RootSignatureInterface, sync::FenceInterface, types::*, FeatureObject, HasInterface
+    blob::BlobInterface, command_allocator::CommandAllocatorInterface,
+    command_list::CommandListInterface, command_queue::CommandQueueInterface,
+    command_signature::CommandSignatureInterface, create_type,
+    descriptor_heap::DescriptorHeapInterface, device_child::DeviceChild, error::DxError,
+    heap::HeapInterface, impl_trait, pageable::Pageable, pso::PipelineStateInterface,
+    query_heap::QueryHeapInterface, resources::ResourceInterface,
+    root_signature::RootSignatureInterface, sync::FenceInterface, types::*, FeatureObject,
+    HasInterface,
 };
 
 /// Represents a virtual adapter; it is used to create
@@ -379,10 +386,12 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// * `num_objects` - The number of objects in the array to evict from the device.
     ///
     /// For more information: [`ID3D12Device::Evict method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-evict)
-    fn evict(
-        &self,
-        num_objects: u32,
-    ) -> Result<SmallVec<[Pageable; 16]>, DxError>;
+    fn evict(&self, num_objects: u32) -> Result<SmallVec<[Pageable; 16]>, DxError>;
+
+    /// Gets a locally unique identifier for the current device (adapter).
+    ///
+    /// For more information: [`ID3D12Device::GetAdapterLuid method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getadapterluid)
+    fn get_adapter_luid(&self) -> Luid;
 
     fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32;
 }
@@ -843,10 +852,7 @@ impl_trait! {
         }
     }
 
-    fn evict(
-        &self,
-        num_objects: u32,
-    ) -> Result<SmallVec<[Pageable; 16]>, DxError> {
+    fn evict(&self, num_objects: u32) -> Result<SmallVec<[Pageable; 16]>, DxError> {
         unsafe {
             let mut objects: SmallVec<[_; 16]> = SmallVec::with_capacity(num_objects as usize);
 
@@ -857,6 +863,12 @@ impl_trait! {
                 .collect();
 
             Ok(ojbects)
+        }
+    }
+
+    fn get_adapter_luid(&self) -> Luid {
+        unsafe {
+            self.0.GetAdapterLuid().into()
         }
     }
 

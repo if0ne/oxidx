@@ -400,6 +400,18 @@ pub struct HeapProperties {
     pub visible_node_mask: u32,
 }
 
+/// The LUID structure is an opaque structure that specifies an identifier that is guaranteed to be unique on the local machine.
+///
+/// For more information: [`LUID structure`](https://learn.microsoft.com/en-us/windows/win32/api/ntdef/ns-ntdef-luid)
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+pub struct Luid {
+    /// TBD
+    pub low_part: u32,
+
+    /// TBD
+    pub high_part: i32,
+}
+
 /// Describes the purpose of a query heap. A query heap contains an array of individual queries.
 ///
 /// For more information: [`D3D12_QUERY_HEAP_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_query_heap_desc)

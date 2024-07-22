@@ -18,7 +18,7 @@ use windows::{
 };
 
 use crate::{
-    adapter::{AdapterDesc, AdapterFlags, Luid},
+    adapter::{AdapterDesc, AdapterFlags},
     error::DxError,
     resources::{BarrierType, ResourceBarrier, VertexBufferView},
     swapchain::{Rational, SwapchainDesc, SwapchainFullscreenDesc},

@@ -364,6 +364,25 @@ impl HeapProperties {
     }
 }
 
+impl Luid {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> LUID {
+        LUID {
+            LowPart: self.low_part,
+            HighPart: self.high_part,
+        }
+    }
+}
+
+impl From<LUID> for Luid {
+    fn from(value: LUID) -> Self {
+        Self {
+            low_part: value.LowPart,
+            high_part: value.HighPart,
+        }
+    }
+}
+
 impl QueryHeapDesc {
     #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_QUERY_HEAP_DESC {
