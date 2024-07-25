@@ -487,6 +487,14 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         &self,
         handle: SharedHandle,
     ) -> Result<D, DxError>;
+
+    /// Opens a handle for shared resources, shared heaps, and shared fences, by using Name.
+    ///
+    /// # Arguments
+    /// * `name` - The name that was optionally passed as the Name parameter in the call to [`DeviceInterface::create_shared_handle`]
+    ///
+    /// For more information: [`ID3D12Device::OpenSharedHandleByName method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-opensharedhandlebyname)
+    fn open_shared_handle_by_name(&self, name: &CStr) -> Result<SharedHandle, DxError>;
 }
 
 create_type! {
@@ -1072,6 +1080,21 @@ impl_trait! {
             let res = res.unwrap();
 
             Ok(D::new(res))
+        }
+    }
+
+    fn open_shared_handle_by_name(&self, name: &CStr) -> Result<SharedHandle, DxError> {
+        unsafe {
+            let name = PCWSTR::from_raw(
+                name.as_ptr()
+                    as *const _
+            );
+            let handle = self.0.OpenSharedHandleByName(
+                name,
+                0x10000000,
+            ).map_err(DxError::from)?;
+
+            Ok(SharedHandle(handle))
         }
     }
 }
