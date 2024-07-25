@@ -495,6 +495,14 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     ///
     /// For more information: [`ID3D12Device::OpenSharedHandleByName method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-opensharedhandlebyname)
     fn open_shared_handle_by_name(&self, name: &CStr) -> Result<SharedHandle, DxError>;
+
+    /// A development-time aid for certain types of profiling and experimental prototyping.
+    ///
+    /// # Arguments
+    /// * `enable` - Specifies a BOOL that turns the stable power state on or off.
+    ///
+    /// For more information: [`ID3D12Device::SetStablePowerState method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-setstablepowerstate)
+    fn set_stable_power_state(&self, enable: bool) -> Result<(), DxError>;
 }
 
 create_type! {
@@ -1095,6 +1103,12 @@ impl_trait! {
             ).map_err(DxError::from)?;
 
             Ok(SharedHandle(handle))
+        }
+    }
+
+    fn set_stable_power_state(&self, enable: bool) -> Result<(), DxError> {
+        unsafe {
+            self.0.SetStablePowerState(enable).map_err(DxError::from)
         }
     }
 }
