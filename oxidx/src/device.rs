@@ -400,7 +400,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// * `first_subresource` - Index of the first subresource in the resource. The range of valid values is 0 to D3D12_REQ_SUBRESOURCES.
     /// * `num_subresources` - The number of subresources in the resource. The range of valid values is 0 to (D3D12_REQ_SUBRESOURCES - FirstSubresource).
     /// * `base_offset` - The offset, in bytes, to the resource.
-    /// 
+    ///
     /// For more information: [`ID3D12Device::GetCopyableFootprints method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getcopyablefootprints)
     fn get_copyable_footprints(
         &self,
@@ -411,39 +411,49 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     ) -> CopyableFootprints;
 
     /// Gets a resource layout that can be copied. Helps the app fill-in [`PlacedSubresourceFootprint`] and [`SubresourceFootprint`] when suballocating space in upload heaps.
-    /// 
+    ///
     /// # Arguments
-    /// * `node_mask` - For single-GPU operation, set this to zero. 
-    ///   If there are multiple GPU nodes, set a bit to identify the node (the device's physical adapter). 
+    /// * `node_mask` - For single-GPU operation, set this to zero.
+    ///   If there are multiple GPU nodes, set a bit to identify the node (the device's physical adapter).
     ///   Each bit in the mask corresponds to a single node. Only 1 bit must be set.
     /// * `type` - A [`HeapType`]-typed value that specifies the heap to get properties for. [`HeapType::Custom`] is not supported as a parameter value.
-    /// 
+    ///
     /// For more information: [`ID3D12Device::GetCustomHeapProperties method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getcustomheapproperties(uint_d3d12_heap_types)
-    fn get_custom_heap_properties(
-        &self,
-        node_mask: u32,
-        r#type: HeapType,
-    ) -> HeapProperties;
+    fn get_custom_heap_properties(&self, node_mask: u32, r#type: HeapType) -> HeapProperties;
 
     /// Gets the size of the handle increment for the given type of descriptor heap. This value is typically used to increment a handle into a descriptor array by the correct amount.
-    /// 
+    ///
     /// # Arguments
     /// * `type` - The [`DescriptorHeapType`]-typed value that specifies the type of descriptor heap to get the size of the handle increment for.
-    /// 
+    ///
     /// For more information: [`ID3D12Device::GetDescriptorHandleIncrementSize method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getdescriptorhandleincrementsize)
     fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32;
 
-    /// Gets the reason that the device was removed, or [`Result::Ok`] if the device isn't removed. 
-    /// To be called back when a device is removed, consider using [`FenceInterface::set_event_on_completion`] with a value of [`u64::MAX`]. 
+    /// Gets the reason that the device was removed, or [`Result::Ok`] if the device isn't removed.
+    /// To be called back when a device is removed, consider using [`FenceInterface::set_event_on_completion`] with a value of [`u64::MAX`].
     /// That's because device removal causes all fences to be signaled to that value (which also implies completing all events waited on, because they'll all be less than [`u64::MAX`]).
-    /// 
+    ///
     /// For more information: [`ID3D12Device::GetDeviceRemovedReason method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getdeviceremovedreason)
     fn get_device_removed_reason(&self) -> Result<(), DxError>;
 
     /// Reports the number of physical adapters (nodes) that are associated with this device.
-    /// 
+    ///
     /// For more information: [`ID3D12Device::GetNodeCount method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getnodecount)
     fn get_node_count(&self) -> u32;
+
+    /// Gets the size and alignment of memory required for a collection of resources on this adapter.
+    ///
+    /// # Arguments
+    /// * `visible_mask` - For single-GPU operation, set this to zero. If there are multiple
+    ///   GPU nodes, then set bits to identify the nodes (the device's physical adapters). Each bit in the mask corresponds to a single node.
+    /// * `resource_desc` - An iterator of [`ResourceDesc`] structures that described the resources to get info about.
+    ///
+    /// For more information: [`ID3D12Device::GetResourceAllocationInfo method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getresourceallocationinfo(uint_uint_constd3d12_resource_desc))
+    fn get_resource_allocation_info(
+        &self,
+        visible_mask: u32,
+        resource_desc: impl IntoIterator<Item = ResourceDesc>,
+    ) -> ResourceAllocationInfo;
 }
 
 create_type! {
@@ -986,6 +996,21 @@ impl_trait! {
     fn get_node_count(&self) -> u32 {
         unsafe {
             self.0.GetNodeCount()
+        }
+    }
+
+    fn get_resource_allocation_info(
+        &self,
+        visible_mask: u32,
+        resource_desc: impl IntoIterator<Item = ResourceDesc>,
+    ) -> ResourceAllocationInfo {
+        unsafe {
+            let resource_desc = resource_desc
+                .into_iter()
+                .map(|desc| desc.as_raw())
+                .collect::<SmallVec<[_; 4]>>();
+            
+            self.0.GetResourceAllocationInfo(visible_mask, &resource_desc).into()
         }
     }
 }

@@ -773,3 +773,15 @@ pub struct CopyableFootprints {
     /// The total size, in bytes.
     pub total_bytes: u64,
 }
+
+/// Describes parameters needed to allocate resources.
+///
+/// For more information: [`D3D12_RESOURCE_ALLOCATION_INFO structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_allocation_info)
+#[derive(Clone, Debug)]
+pub struct ResourceAllocationInfo {
+    /// The size, in bytes, of the resource.
+    pub size_in_bytes: u64,
+
+    /// The alignment value for the resource; one of 4KB (4096), 64KB (65536), or 4MB (4194304) alignment.
+    pub alignment: u64,
+}

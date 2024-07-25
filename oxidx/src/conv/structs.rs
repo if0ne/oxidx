@@ -644,3 +644,13 @@ impl From<D3D12_SUBRESOURCE_FOOTPRINT> for SubresourceFootprint {
         }
     }
 }
+
+impl From<D3D12_RESOURCE_ALLOCATION_INFO> for ResourceAllocationInfo {
+    #[inline]
+    fn from(value: D3D12_RESOURCE_ALLOCATION_INFO) -> Self {
+        Self {
+            size_in_bytes: value.SizeInBytes,
+            alignment: value.Alignment,
+        }
+    }
+}
