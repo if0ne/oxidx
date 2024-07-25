@@ -12,7 +12,10 @@ use crate::{
     HasInterface,
 };
 
-pub trait DeviceChildInterface: for<'a> HasInterface<RawRef<'a>: Param<ID3D12DeviceChild>> {}
+pub trait DeviceChildInterface:
+    for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12DeviceChild>>
+{
+}
 
 create_type!(
     DeviceChild wrap ID3D12DeviceChild

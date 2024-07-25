@@ -7,14 +7,25 @@ use windows::{
 };
 
 use crate::{
-    blob::BlobInterface, command_allocator::CommandAllocatorInterface,
-    command_list::CommandListInterface, command_queue::CommandQueueInterface,
-    command_signature::CommandSignatureInterface, create_type,
-    descriptor_heap::DescriptorHeapInterface, device_child::DeviceChild, error::DxError,
-    heap::HeapInterface, impl_trait, pageable::Pageable, pso::PipelineStateInterface,
-    query_heap::QueryHeapInterface, resources::ResourceInterface,
-    root_signature::RootSignatureInterface, sync::FenceInterface, types::*, FeatureObject,
-    HasInterface,
+    blob::BlobInterface,
+    command_allocator::CommandAllocatorInterface,
+    command_list::CommandListInterface,
+    command_queue::CommandQueueInterface,
+    command_signature::CommandSignatureInterface,
+    create_type,
+    descriptor_heap::DescriptorHeapInterface,
+    device_child::{DeviceChild, DeviceChildInterface},
+    error::DxError,
+    heap::HeapInterface,
+    impl_trait,
+    pageable::Pageable,
+    pso::PipelineStateInterface,
+    query_heap::QueryHeapInterface,
+    resources::ResourceInterface,
+    root_signature::RootSignatureInterface,
+    sync::FenceInterface,
+    types::*,
+    FeatureObject, HasInterface,
 };
 
 /// Represents a virtual adapter; it is used to create
@@ -465,6 +476,17 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         &self,
         objects: impl IntoIterator<Item = &'a Pageable>,
     ) -> Result<(), DxError>;
+
+    /// Opens a handle for shared resources, shared heaps, and shared fences, by using [`SharedHandle`].
+    ///
+    /// # Arguments
+    /// * `handle` - The handle that was output by the call to [`DeviceInterface::create_shared_handle`]
+    ///
+    /// For more information: [`ID3D12Device::OpenSharedHandle method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-opensharedhandle)
+    fn open_shared_handle<D: DeviceChildInterface>(
+        &self,
+        handle: SharedHandle,
+    ) -> Result<D, DxError>;
 }
 
 create_type! {
@@ -1037,6 +1059,19 @@ impl_trait! {
                 .collect::<SmallVec<[_; 4]>>();
 
             self.0.MakeResident(&objects).map_err(DxError::from)
+        }
+    }
+
+    fn open_shared_handle<D: DeviceChildInterface>(
+        &self,
+        handle: SharedHandle,
+    ) -> Result<D, DxError> {
+        unsafe {
+            let mut res = None;
+            self.0.OpenSharedHandle(handle.0, &mut res)?;
+            let res = res.unwrap();
+
+            Ok(D::new(res))
         }
     }
 }
