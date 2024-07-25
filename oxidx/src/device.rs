@@ -454,6 +454,17 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         visible_mask: u32,
         resource_desc: impl IntoIterator<Item = ResourceDesc>,
     ) -> ResourceAllocationInfo;
+
+    /// Makes objects resident for the device.
+    ///
+    /// # Arguments
+    /// * `objects` - A iterator to a memory block that contains an array of [`Pageable`] interface pointers for the objects.
+    ///
+    /// For more information: [`ID3D12Device::MakeResident method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-makeresident)
+    fn make_resident<'a>(
+        &self,
+        objects: impl IntoIterator<Item = &'a Pageable>,
+    ) -> Result<(), DxError>;
 }
 
 create_type! {
@@ -1009,8 +1020,23 @@ impl_trait! {
                 .into_iter()
                 .map(|desc| desc.as_raw())
                 .collect::<SmallVec<[_; 4]>>();
-            
+
             self.0.GetResourceAllocationInfo(visible_mask, &resource_desc).into()
+        }
+    }
+
+    fn make_resident<'a>(
+        &self,
+        objects: impl IntoIterator<Item = &'a Pageable>,
+    ) -> Result<(), DxError> {
+        unsafe {
+            let objects = objects
+                .into_iter()
+                .map(|obj| obj.as_raw())
+                .map(|obj| Some(obj.clone()))
+                .collect::<SmallVec<[_; 4]>>();
+
+            self.0.MakeResident(&objects).map_err(DxError::from)
         }
     }
 }
