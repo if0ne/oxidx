@@ -785,3 +785,54 @@ pub struct ResourceAllocationInfo {
     /// The alignment value for the resource; one of 4KB (4096), 64KB (65536), or 4MB (4194304) alignment.
     pub alignment: u64,
 }
+
+/// Describes the tile structure of a tiled resource with mipmaps.
+///
+/// For more information: [`D3D12_PACKED_MIP_INFO structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_packed_mip_info)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct PackedMipDesc {
+    /// The number of standard mipmaps in the tiled resource.
+    pub num_standard_mips: u8,
+
+    /// The number of packed mipmaps in the tiled resource.
+    pub num_packed_mips: u8,
+
+    /// The number of tiles for the packed mipmaps in the tiled resource.
+    pub num_tiles_for_packed_mips: u32,
+
+    /// The offset of the first packed tile for the resource in the overall range of tiles.
+    pub start_tile_index_in_overall_resource: u32,
+}
+
+/// Describes the shape of a tile by specifying its dimensions.
+///
+/// For more information: [`D3D12_TILE_SHAPE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_tile_shape)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct TileShape {
+    /// The width in texels of the tile.
+    pub width_in_texels: u32,
+
+    /// The height in texels of the tile.
+    pub height_in_texels: u32,
+
+    /// The depth in texels of the tile.
+    pub depth_in_texels: u32,
+}
+
+/// Describes a tiled subresource volume.
+///
+/// For more information: [`D3D12_SUBRESOURCE_TILING structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_subresource_tiling)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct SubresourceTiling {
+    /// The width in tiles of the subresource.
+    pub width_in_tiles: u32,
+
+    /// The height in tiles of the subresource.
+    pub height_in_tiles: u16,
+
+    /// The depth in tiles of the subresource.
+    pub depth_in_tiles: u16,
+
+    /// The index of the tile in the overall tiled subresource to start with.
+    pub start_tile_index_in_overall_resource: u32,
+}

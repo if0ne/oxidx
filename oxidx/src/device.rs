@@ -466,6 +466,31 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
         resource_desc: impl IntoIterator<Item = ResourceDesc>,
     ) -> ResourceAllocationInfo;
 
+    /// Gets info about how a tiled resource is broken into tiles.
+    ///
+    /// # Arguments
+    /// * `resource` - Specifies a tiled [`ResourceInterface`] to get info about.
+    /// * `first_subresource_tiling_to_get` - The number of the first subresource tile to get. Method ignores this parameter if the number that num_subresource_tilings points to is 0.
+    /// * `num_tiles_for_entire_resource` - A reference to a variable that receives the number of tiles needed to store the entire tiled resource.
+    /// * `packed_mip_desc` - A reference to a [`PackedMipDesc`] structure that method fills with info about how the tiled resource's mipmaps are packed.
+    /// * `standard_tile_shape_for_non_packed_mips` - Specifies a [`TileShape`] structure that Method fills with info about the tile shape.
+    ///   This is info about how pixels fit in the tiles, independent of tiled resource's dimensions, not including packed mipmaps.
+    ///   If the entire tiled resource is packed, this parameter is meaningless because the tiled resource has no defined layout for packed mipmaps. In this situation, Method sets the members of [`TileShape`] to zeros.
+    /// * `num_subresource_tilings` - A reference to a variable that contains the number of tiles in the subresource.
+    ///   On input, this is the number of subresources to query tilings for;
+    ///   on output, this is the number that was actually retrieved at return value (clamped to what's available).
+    ///
+    /// For more information: [`ID3D12Device::GetResourceTiling method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getresourcetiling)
+    fn get_resource_tiling(
+        &self,
+        resource: &impl ResourceInterface,
+        first_subresource_tiling_to_get: u32,
+        num_tiles_for_entire_resource: Option<&mut [u32]>,
+        packed_mip_desc: Option<&mut [PackedMipDesc]>,
+        standard_tile_shape_for_non_packed_mips: Option<&mut [TileShape]>,
+        num_subresource_tilings: Option<&mut [u32]>,
+    ) -> SubresourceTiling;
+
     /// Makes objects resident for the device.
     ///
     /// # Arguments
@@ -1060,6 +1085,54 @@ impl_trait! {
                 .collect::<SmallVec<[_; 4]>>();
 
             self.0.GetResourceAllocationInfo(visible_mask, &resource_desc).into()
+        }
+    }
+
+    fn get_resource_tiling(
+        &self,
+        resource: &impl ResourceInterface,
+        first_subresource_tiling_to_get: u32,
+        num_tiles_for_entire_resource: Option<&mut [u32]>,
+        mut packed_mip_desc: Option<&mut [PackedMipDesc]>,
+        mut standard_tile_shape_for_non_packed_mips: Option<&mut [TileShape]>,
+        num_subresource_tilings: Option<&mut [u32]>
+    ) -> SubresourceTiling {
+        unsafe {
+            let mut packed_mip_desc_raw = packed_mip_desc
+                .as_ref()
+                .map(|v| SmallVec::<[_; 16]>::with_capacity(v.len()));
+
+            let mut standard_tile_shape_for_non_packed_mips_raw =
+                standard_tile_shape_for_non_packed_mips
+                .as_ref()
+                .map(|v| SmallVec::<[_; 16]>::with_capacity(v.len()));
+
+            let mut res = Default::default();
+            self.0.GetResourceTiling(
+                resource.as_raw_ref(),
+                num_tiles_for_entire_resource.map(|v| v.as_mut_ptr()),
+                packed_mip_desc_raw.as_mut().map(|v| v.as_mut_ptr()),
+                standard_tile_shape_for_non_packed_mips_raw.as_mut().map(|v| v.as_mut_ptr()),
+                num_subresource_tilings.map(|v| v.as_mut_ptr()),
+                first_subresource_tiling_to_get,
+                &mut res
+            );
+
+            if let (Some(src), Some(dst)) = (packed_mip_desc.as_mut(), packed_mip_desc_raw.as_ref()) {
+                src.iter_mut().zip(dst.iter())
+                    .for_each(|(src, &dst)| {
+                        *src = dst.into();
+                    });
+            }
+
+            if let (Some(src), Some(dst)) = (standard_tile_shape_for_non_packed_mips.as_mut(), standard_tile_shape_for_non_packed_mips_raw.as_ref()) {
+                src.iter_mut().zip(dst.iter())
+                    .for_each(|(src, &dst)| {
+                        *src = dst.into();
+                    });
+            }
+
+            res.into()
         }
     }
 

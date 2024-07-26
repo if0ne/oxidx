@@ -654,3 +654,38 @@ impl From<D3D12_RESOURCE_ALLOCATION_INFO> for ResourceAllocationInfo {
         }
     }
 }
+
+impl From<D3D12_SUBRESOURCE_TILING> for SubresourceTiling {
+    #[inline]
+    fn from(value: D3D12_SUBRESOURCE_TILING) -> Self {
+        Self {
+            width_in_tiles: value.WidthInTiles,
+            height_in_tiles: value.HeightInTiles,
+            depth_in_tiles: value.DepthInTiles,
+            start_tile_index_in_overall_resource: value.StartTileIndexInOverallResource,
+        }
+    }
+}
+
+impl From<D3D12_PACKED_MIP_INFO> for PackedMipDesc {
+    #[inline]
+    fn from(value: D3D12_PACKED_MIP_INFO) -> Self {
+        Self {
+            num_standard_mips: value.NumStandardMips,
+            num_packed_mips: value.NumPackedMips,
+            num_tiles_for_packed_mips: value.NumTilesForPackedMips,
+            start_tile_index_in_overall_resource: value.StartTileIndexInOverallResource,
+        }
+    }
+}
+
+impl From<D3D12_TILE_SHAPE> for TileShape {
+    #[inline]
+    fn from(value: D3D12_TILE_SHAPE) -> Self {
+        Self {
+            width_in_texels: value.WidthInTexels,
+            height_in_texels: value.HeightInTexels,
+            depth_in_texels: value.DepthInTexels,
+        }
+    }
+}
