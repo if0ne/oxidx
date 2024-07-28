@@ -5,7 +5,7 @@ use windows::{
 
 use crate::{create_type, impl_trait, HasInterface};
 
-pub trait PipelineStateInterface:
+pub trait IPipelineState:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12PipelineState>>
 {
 }
@@ -13,6 +13,6 @@ pub trait PipelineStateInterface:
 create_type! { PipelineState wrap ID3D12PipelineState }
 
 impl_trait! {
-    impl PipelineStateInterface =>
+    impl IPipelineState =>
     PipelineState;
 }

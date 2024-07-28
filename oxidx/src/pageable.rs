@@ -8,14 +8,14 @@ use crate::{
     query_heap::QueryHeap, resources::Resource, HasInterface,
 };
 
-pub trait PageableInterface: for<'a> HasInterface<RawRef<'a>: Param<ID3D12Pageable>> {}
+pub trait IPageable: for<'a> HasInterface<RawRef<'a>: Param<ID3D12Pageable>> {}
 
 create_type!(
     Pageable wrap ID3D12Pageable
 );
 
 impl_trait! {
-    impl PageableInterface => Pageable;
+    impl IPageable => Pageable;
 }
 
 impl_up_down_cast!(DescriptorHeap inherit Pageable);

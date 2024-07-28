@@ -11,7 +11,7 @@ use crate::{blob::Blob, create_type, error::DxError, impl_trait, types::*, HasIn
 /// Currently, there is one graphics and one compute root signature per app.
 ///
 /// For more information: [`ID3D12RootSignature interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12rootsignature)
-pub trait RootSignatureInterface:
+pub trait IRootSignature:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12RootSignature>>
 {
     fn serialize(
@@ -30,7 +30,7 @@ create_type! {
 }
 
 impl_trait! {
-    impl RootSignatureInterface =>
+    impl IRootSignature =>
     RootSignature;
 
     fn serialize(desc: &RootSignatureDesc<'_>, version: RootSignatureVersion) -> Result<Blob, DxError> {

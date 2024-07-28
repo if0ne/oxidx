@@ -9,7 +9,7 @@ use crate::{create_type, impl_trait, types::HeapDesc, HasInterface};
 /// This heap can be used with [`ResourceInterface`](crate::resources::ResourceInterface) objects to support placed resources or reserved resources.
 ///
 /// For more information: [`ID3D12Heap interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12heap)
-pub trait HeapInterface:
+pub trait IHeap:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12Heap>>
 {
     fn get_desc(&self) -> HeapDesc;
@@ -24,7 +24,7 @@ create_type! {
 }
 
 impl_trait! {
-    impl HeapInterface =>
+    impl IHeap =>
     Heap;
 
     fn get_desc(&self) -> HeapDesc {

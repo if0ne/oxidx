@@ -9,11 +9,11 @@ use windows::Win32::Graphics::Dxgi::{
     DXGI_MWA_NO_WINDOW_CHANGES,
 };
 
-use crate::adapter::AdapterInterface3;
-use crate::command_queue::CommandQueueInterface;
-use crate::debug::DebugInterface;
-use crate::device::DeviceInterface;
-use crate::swapchain::{OutputInterface, Swapchain1, SwapchainDesc, SwapchainFullscreenDesc};
+use crate::adapter::IAdapter3;
+use crate::command_queue::ICommandQueue;
+use crate::debug::IDebug;
+use crate::device::IDevice;
+use crate::swapchain::{IOutput, Swapchain1, SwapchainDesc, SwapchainFullscreenDesc};
 use crate::types::FeatureLevel;
 use crate::{adapter::Adapter3, error::DxError};
 use crate::{create_type, impl_trait, HasInterface};
@@ -27,19 +27,19 @@ pub trait FactoryInterface4: HasInterface<Raw: Interface> {
         hwnd: NonZeroIsize,
         desc: &SwapchainDesc,
         fullscreen_desc: Option<&SwapchainFullscreenDesc>,
-        restrict_to_output: Option<&impl OutputInterface>,
+        restrict_to_output: Option<&impl IOutput>,
     ) -> Result<Swapchain1, DxError>
     where
-        CQ: CommandQueueInterface;
+        CQ: ICommandQueue;
 
     fn create_swapchain_for_composition<CQ>(
         &self,
         command_queue: &CQ,
         desc: &SwapchainDesc,
-        restrict_to_output: Option<&impl OutputInterface>,
+        restrict_to_output: Option<&impl IOutput>,
     ) -> Result<Swapchain1, DxError>
     where
-        CQ: CommandQueueInterface;
+        CQ: ICommandQueue;
 
     fn make_window_association(
         &self,
@@ -88,10 +88,10 @@ impl_trait! {
         hwnd: NonZeroIsize,
         desc: &SwapchainDesc,
         fullscreen_desc: Option<&SwapchainFullscreenDesc>,
-        restrict_to_output: Option<&impl OutputInterface>,
+        restrict_to_output: Option<&impl IOutput>,
     ) -> Result<Swapchain1, DxError>
     where
-        CQ: CommandQueueInterface
+        CQ: ICommandQueue
     {
         let cq = command_queue.as_raw_ref();
         let o = restrict_to_output.as_ref().map(|o| o.as_raw_ref());
@@ -119,10 +119,10 @@ impl_trait! {
         &self,
         command_queue: &CQ,
         desc: &SwapchainDesc,
-        restrict_to_output: Option<&impl OutputInterface>,
+        restrict_to_output: Option<&impl IOutput>,
     ) -> Result<Swapchain1, DxError>
     where
-        CQ: CommandQueueInterface
+        CQ: ICommandQueue
     {
         let cq = command_queue.as_raw_ref();
         let o = restrict_to_output.as_ref().map(|o| o.as_raw_ref());
@@ -172,7 +172,7 @@ impl Entry {
         Ok(F::new(inner))
     }
 
-    pub fn create_device<A: AdapterInterface3, D: DeviceInterface>(
+    pub fn create_device<A: IAdapter3, D: IDevice>(
         &self,
         adapter: &A,
         feature_level: FeatureLevel,
@@ -187,7 +187,7 @@ impl Entry {
         Ok(D::new(inner))
     }
 
-    pub fn create_debug<D: DebugInterface>(&self) -> Result<D, DxError> {
+    pub fn create_debug<D: IDebug>(&self) -> Result<D, DxError> {
         let mut inner: Option<D::Raw> = None;
 
         unsafe { D3D12GetDebugInterface(&mut inner).map_err(DxError::from)? };

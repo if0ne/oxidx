@@ -12,7 +12,7 @@ use crate::{
     HasInterface,
 };
 
-pub trait DeviceChildInterface:
+pub trait IDeviceChild:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12DeviceChild>>
 {
 }
@@ -22,7 +22,7 @@ create_type!(
 );
 
 impl_trait! {
-    impl DeviceChildInterface => DeviceChild;
+    impl IDeviceChild => DeviceChild;
 }
 
 impl_up_down_cast!(Heap inherit DeviceChild);

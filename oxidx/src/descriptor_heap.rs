@@ -9,7 +9,7 @@ use crate::{
 /// A descriptor heap is a collection of contiguous allocations of descriptors, one allocation for every descriptor.
 /// Descriptor heaps contain many object types that are not part of a Pipeline State Object (PSO), such as Shader Resource Views (SRVs), Unordered Access Views (UAVs),
 /// Constant Buffer Views (CBVs), and Samplers.
-pub trait DescriptorHeapInterface: HasInterface<Raw: Interface> {
+pub trait IDescriptorHeap: HasInterface<Raw: Interface> {
     /// Gets the CPU descriptor handle that represents the start of the heap.
     ///
     /// # Returns
@@ -43,7 +43,7 @@ create_type! {
 }
 
 impl_trait! {
-    impl DescriptorHeapInterface =>
+    impl IDescriptorHeap =>
     DescriptorHeap;
 
     fn get_cpu_descriptor_handle_for_heap_start(&self) -> CpuDescriptorHandle {

@@ -13,7 +13,7 @@ use crate::{create_type, error::DxError, impl_trait, HasInterface};
 /// This interface is used to return data of arbitrary length.
 ///
 /// For more information: [`ID3DBlob interface`](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/ff728743(v=vs.85))
-pub trait BlobInterface: HasInterface<Raw: Interface> {
+pub trait IBlob: HasInterface<Raw: Interface> {
     // TODO: type for target
     fn compile_from_file(
         filename: impl AsRef<Path>,
@@ -54,7 +54,7 @@ impl Blob {
 }
 
 impl_trait! {
-    impl BlobInterface =>
+    impl IBlob =>
     Blob;
 
     fn compile_from_file(

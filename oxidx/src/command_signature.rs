@@ -8,7 +8,7 @@ use crate::{create_type, impl_trait, HasInterface};
 /// A command signature object enables apps to specify indirect drawing, including the buffer format, command type and resource bindings to be used.
 ///
 /// For more information: [`ID3D12CommandSignature interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12commandsignature)
-pub trait CommandSignatureInterface:
+pub trait ICommandSignature:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12CommandSignature>>
 {
 }
@@ -21,6 +21,6 @@ create_type! {
 }
 
 impl_trait! {
-    impl CommandSignatureInterface =>
+    impl ICommandSignature =>
     CommandSignature;
 }

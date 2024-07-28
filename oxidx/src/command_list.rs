@@ -5,13 +5,13 @@ use windows::{
 };
 
 use crate::{
-    command_allocator::CommandAllocatorInterface,
+    command_allocator::ICommandAllocator,
     create_type,
     error::DxError,
     impl_trait,
-    pso::PipelineStateInterface,
+    pso::IPipelineState,
     resources::{ResourceBarrier, VertexBufferView},
-    root_signature::RootSignatureInterface,
+    root_signature::IRootSignature,
     types::*,
     HasInterface,
 };
@@ -22,14 +22,14 @@ use crate::{
 /// while allowing for extension to support other command lists than just those for graphics (such as compute and copy).
 ///
 /// For more information: [`ID3D12CommandList interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12commandlist)
-pub trait CommandListInterface: HasInterface<Raw: Interface> {
+pub trait ICommandList: HasInterface<Raw: Interface> {
     /// Gets the type of the command list, such as direct, bundle, compute, or copy.
     ///
     /// For more information: [`ID3D12CommandList::GetType method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandlist-gettype)
     fn get_type(&self) -> CommandListType;
 }
 
-pub trait GraphicsCommandListInterface: CommandListInterface {
+pub trait IGraphicsCommandList: ICommandList {
     // TODO: PIX FUNCTIONS
     // fn begin_event<'a>(&self, color: impl Into<u64>, label: &'a str);
     // fn end_event(&self);
@@ -39,11 +39,11 @@ pub trait GraphicsCommandListInterface: CommandListInterface {
 
     fn reset(
         &self,
-        command_allocator: &impl CommandAllocatorInterface,
-        pso: &impl PipelineStateInterface,
+        command_allocator: &impl ICommandAllocator,
+        pso: &impl IPipelineState,
     ) -> Result<(), DxError>;
 
-    fn set_graphics_root_signature(&self, root_signature: &impl RootSignatureInterface);
+    fn set_graphics_root_signature(&self, root_signature: &impl IRootSignature);
 
     fn rs_set_viewports<'a>(&self, viewport: impl IntoIterator<Item = &'a Viewport>);
     fn rs_set_scissor_rects<'a>(&self, rects: impl IntoIterator<Item = &'a Rect>);
@@ -80,7 +80,7 @@ pub trait GraphicsCommandListInterface: CommandListInterface {
 create_type! { GraphicsCommandList wrap ID3D12GraphicsCommandList }
 
 impl_trait! {
-    impl CommandListInterface =>
+    impl ICommandList =>
     GraphicsCommandList;
 
     fn get_type(&self) -> CommandListType {
@@ -91,7 +91,7 @@ impl_trait! {
 }
 
 impl_trait! {
-    impl GraphicsCommandListInterface =>
+    impl IGraphicsCommandList =>
     GraphicsCommandList;
 
     fn close(&self) {
@@ -102,8 +102,8 @@ impl_trait! {
 
     fn reset(
         &self,
-        command_allocator: &impl CommandAllocatorInterface,
-        pso: &impl PipelineStateInterface,
+        command_allocator: &impl ICommandAllocator,
+        pso: &impl IPipelineState,
     ) -> Result<(), DxError> {
         unsafe {
             self.0
@@ -113,7 +113,7 @@ impl_trait! {
         Ok(())
     }
 
-    fn set_graphics_root_signature(&self, root_signature: &impl RootSignatureInterface) {
+    fn set_graphics_root_signature(&self, root_signature: &impl IRootSignature) {
         unsafe { self.0.SetGraphicsRootSignature(root_signature.as_raw_ref()) }
     }
 

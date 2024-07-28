@@ -2,7 +2,7 @@ use std::num::NonZeroIsize;
 
 use oxidx::{
     adapter::*,
-    blob::{Blob, BlobInterface},
+    blob::{Blob, IBlob},
     command_allocator::*,
     command_list::*,
     command_queue::*,

@@ -7,7 +7,7 @@ use windows::{
 
 use crate::{create_type, error::DxError, impl_trait, types::ResourceStates, HasInterface};
 
-pub trait ResourceInterface:
+pub trait IResource:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12Resource>>
 {
     //TODO: Type for pointer
@@ -19,7 +19,7 @@ pub trait ResourceInterface:
 create_type! { Resource wrap ID3D12Resource }
 
 impl_trait! {
-    impl ResourceInterface =>
+    impl IResource =>
     Resource;
 
     fn map(&self, subresource: u32, read_range: Option<Range<usize>>) -> Result<*mut (), DxError> {

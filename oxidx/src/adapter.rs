@@ -6,14 +6,14 @@ use windows::{
 
 use crate::{create_type, impl_trait, types::Luid, HasInterface};
 
-pub trait AdapterInterface3: for<'a> HasInterface<RawRef<'a>: Param<IUnknown>> {
+pub trait IAdapter3: for<'a> HasInterface<RawRef<'a>: Param<IUnknown>> {
     fn get_desc1(&self) -> AdapterDesc;
 }
 
 create_type! { Adapter3 wrap IDXGIAdapter3 }
 
 impl_trait! {
-    impl AdapterInterface3 =>
+    impl IAdapter3 =>
     Adapter3;
 
     fn get_desc1(&self) -> AdapterDesc {

@@ -7,14 +7,14 @@ use windows::{
 };
 
 use crate::{
-    command_list::CommandListInterface,
+    command_list::ICommandList,
     create_type,
     error::DxError,
-    heap::HeapInterface,
+    heap::IHeap,
     impl_trait,
     pix::{WinPixEventRuntime, WIN_PIX_EVENT_RUNTIME},
-    resources::ResourceInterface,
-    sync::FenceInterface,
+    resources::IResource,
+    sync::IFence,
     types::{CommandQueueDesc, TileRangeFlags, TileRegionSize, TiledResourceCoordinate},
     HasInterface,
 };
@@ -22,7 +22,7 @@ use crate::{
 /// Provides methods for submitting command lists, synchronizing command list execution, instrumenting the command queue, and updating resource tile mappings.
 ///
 /// For more information: [`ID3D12CommandQueue interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12commandqueue)
-pub trait CommandQueueInterface:
+pub trait ICommandQueue:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<IUnknown>>
 {
     /// Marks the start of a user-defined region of work
@@ -44,9 +44,9 @@ pub trait CommandQueueInterface:
     /// For more information: [`ID3D12CommandQueue::CopyTileMappings method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-copytilemappings)
     fn copy_tile_mappings(
         &self,
-        dst_resource: &impl ResourceInterface,
+        dst_resource: &impl IResource,
         dst_region_start_coordinate: &TiledResourceCoordinate,
-        src_resource: &impl ResourceInterface,
+        src_resource: &impl IResource,
         src_region_start_coordinate: &TiledResourceCoordinate,
         region_size: &TileRegionSize,
     );
@@ -62,7 +62,7 @@ pub trait CommandQueueInterface:
     /// For more information: [`ID3D12CommandQueue::ExecuteCommandLists method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-executecommandlists)
     fn execute_command_lists<'cl>(
         &self,
-        command_lists: impl IntoIterator<Item = &'cl (impl CommandListInterface + 'cl)>,
+        command_lists: impl IntoIterator<Item = &'cl (impl ICommandList + 'cl)>,
     );
 
     /// This method samples the CPU and GPU timestamp counters at the same moment in time.
@@ -101,7 +101,7 @@ pub trait CommandQueueInterface:
     /// * `value` - The value to set the fence to.
     ///
     /// For more information: [`ID3D12CommandQueue::Signal method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-signal)
-    fn signal(&self, fence: &impl FenceInterface, value: u64) -> Result<(), DxError>;
+    fn signal(&self, fence: &impl IFence, value: u64) -> Result<(), DxError>;
 
     /// Updates mappings of tile locations in reserved resources to memory locations in a resource heap.
     ///
@@ -117,10 +117,10 @@ pub trait CommandQueueInterface:
     /// For more information: [`ID3D12CommandQueue::UpdateTileMappings method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-updatetilemappings)
     fn update_tile_mappings<const REGIONS: usize, const RANGES: usize>(
         &self,
-        resource: &impl ResourceInterface,
+        resource: &impl IResource,
         resource_region_start_coordinates: Option<[impl AsRef<TiledResourceCoordinate>; REGIONS]>,
         resource_region_sizes: Option<[impl AsRef<TileRegionSize>; REGIONS]>,
-        heap: &impl HeapInterface,
+        heap: &impl IHeap,
         range_flags: Option<[impl AsRef<TileRangeFlags>; RANGES]>,
         heap_range_start_offsets: Option<[u32; RANGES]>,
         range_tile_counts: Option<[u32; RANGES]>,
@@ -133,7 +133,7 @@ pub trait CommandQueueInterface:
     /// * `value` - The value that the command queue is waiting for the fence to reach or exceed. So when [`FenceInterface::get_completed_value`] is greater than or equal to Value, the wait is terminated.
     ///
     /// For more information: [`ID3D12CommandQueue::Wait method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-wait)
-    fn wait(&self, fence: &impl FenceInterface, value: u64) -> Result<(), DxError>;
+    fn wait(&self, fence: &impl IFence, value: u64) -> Result<(), DxError>;
 }
 
 create_type! {
@@ -144,7 +144,7 @@ create_type! {
 }
 
 impl_trait! {
-    impl CommandQueueInterface =>
+    impl ICommandQueue =>
     CommandQueue;
 
     fn begin_event(&self, color: impl Into<u64>, label: impl AsRef<CStr>) {
@@ -160,9 +160,9 @@ impl_trait! {
 
     fn copy_tile_mappings(
         &self,
-        dst_resource: &impl ResourceInterface,
+        dst_resource: &impl IResource,
         dst_region_start_coordinate: &TiledResourceCoordinate,
-        src_resource: &impl ResourceInterface,
+        src_resource: &impl IResource,
         src_region_start_coordinate: &TiledResourceCoordinate,
         region_size: &TileRegionSize,
     ) {
@@ -192,7 +192,7 @@ impl_trait! {
 
     fn execute_command_lists<'cl>(
         &self,
-        command_lists: impl IntoIterator<Item = &'cl (impl CommandListInterface + 'cl)>,
+        command_lists: impl IntoIterator<Item = &'cl (impl ICommandList + 'cl)>,
     ) {
         let command_lists = command_lists
             .into_iter()
@@ -239,7 +239,7 @@ impl_trait! {
         }
     }
 
-    fn signal(&self, fence: &impl FenceInterface, value: u64) -> Result<(), DxError> {
+    fn signal(&self, fence: &impl IFence, value: u64) -> Result<(), DxError> {
         unsafe {
             self.0
                 .Signal(fence.as_raw_ref(), value)
@@ -249,10 +249,10 @@ impl_trait! {
 
     fn update_tile_mappings<const REGIONS: usize, const RANGES: usize>(
         &self,
-        resource: &impl ResourceInterface,
+        resource: &impl IResource,
         resource_region_start_coordinates: Option<[impl AsRef<TiledResourceCoordinate>; REGIONS]>,
         resource_region_sizes: Option<[impl AsRef<TileRegionSize>; REGIONS]>,
-        heap: &impl HeapInterface,
+        heap: &impl IHeap,
         range_flags: Option<[impl AsRef<TileRangeFlags>; RANGES]>,
         heap_range_start_offsets: Option<[u32; RANGES]>,
         range_tile_counts: Option<[u32; RANGES]>,
@@ -297,7 +297,7 @@ impl_trait! {
         }
     }
 
-    fn wait(&self, fence: &impl FenceInterface, value: u64) -> Result<(), DxError> {
+    fn wait(&self, fence: &impl IFence, value: u64) -> Result<(), DxError> {
         unsafe {
             self.0
                 .Wait(fence.as_raw_ref(), value)

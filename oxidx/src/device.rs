@@ -7,23 +7,23 @@ use windows::{
 };
 
 use crate::{
-    blob::BlobInterface,
-    command_allocator::CommandAllocatorInterface,
-    command_list::CommandListInterface,
-    command_queue::CommandQueueInterface,
-    command_signature::CommandSignatureInterface,
+    blob::IBlob,
+    command_allocator::ICommandAllocator,
+    command_list::ICommandList,
+    command_queue::ICommandQueue,
+    command_signature::ICommandSignature,
     create_type,
-    descriptor_heap::DescriptorHeapInterface,
-    device_child::{DeviceChild, DeviceChildInterface},
+    descriptor_heap::IDescriptorHeap,
+    device_child::{DeviceChild, IDeviceChild},
     error::DxError,
-    heap::HeapInterface,
+    heap::IHeap,
     impl_trait,
     pageable::Pageable,
-    pso::PipelineStateInterface,
-    query_heap::QueryHeapInterface,
-    resources::ResourceInterface,
-    root_signature::RootSignatureInterface,
-    sync::FenceInterface,
+    pso::IPipelineState,
+    query_heap::IQueryHeap,
+    resources::IResource,
+    root_signature::IRootSignature,
+    sync::IFence,
     types::*,
     FeatureObject, HasInterface,
 };
@@ -41,7 +41,7 @@ use crate::{
 /// * and many resource views.
 ///
 /// For more information: [`ID3D12Device interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12device)
-pub trait DeviceInterface: HasInterface<Raw: Interface> {
+pub trait IDevice: HasInterface<Raw: Interface> {
     /// Gets information about the features that are supported by the current graphics driver.
     ///
     /// # Arguments
@@ -98,7 +98,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// * `type` - A [`CommandListType`]-typed value that specifies the type of command allocator to create. The type of command allocator can be the type that records either direct command lists or bundles.
     ///
     /// For more information: [`ID3D12Device::CreateCommandAllocator method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommandallocator)
-    fn create_command_allocator<CA: CommandAllocatorInterface>(
+    fn create_command_allocator<CA: ICommandAllocator>(
         &self,
         r#type: CommandListType,
     ) -> Result<CA, DxError>;
@@ -115,12 +115,12 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     ///   setting. So there's little cost in not setting the initial pipeline state parameter, if doing so is inconvenient.
     ///
     /// For more information: [`ID3D12Device::CreateCommandList method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommandlist)
-    fn create_command_list<CL: CommandListInterface>(
+    fn create_command_list<CL: ICommandList>(
         &self,
         node_mask: u32,
         r#type: CommandListType,
-        command_allocator: &impl CommandAllocatorInterface,
-        pso: Option<&impl PipelineStateInterface>,
+        command_allocator: &impl ICommandAllocator,
+        pso: Option<&impl IPipelineState>,
     ) -> Result<CL, DxError>;
 
     /// Creates a command queue.
@@ -129,7 +129,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// * `desc` - Specifies a [`CommandQueueDesc`] that describes the command queue.
     ///
     /// For more information: [`ID3D12Device::CreateCommandQueue method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommandqueue)
-    fn create_command_queue<CQ: CommandQueueInterface>(
+    fn create_command_queue<CQ: ICommandQueue>(
         &self,
         desc: CommandQueueDesc,
     ) -> Result<CQ, DxError>;
@@ -143,10 +143,10 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     ///   If the only command present is a draw or dispatch, the root signature parameter can be set to None.
     ///
     /// For more information: [`ID3D12Device::CreateCommandSignature method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommandsignature)
-    fn create_command_signature<CS: CommandSignatureInterface>(
+    fn create_command_signature<CS: ICommandSignature>(
         &self,
         desc: &CommandSignatureDesc<'_>,
-        root_signature: Option<&impl RootSignatureInterface>,
+        root_signature: Option<&impl IRootSignature>,
     ) -> Result<CS, DxError>;
 
     /// Creates both a resource and an implicit heap, such that the heap is big enough to contain the entire resource, and the resource is mapped to the heap.
@@ -159,7 +159,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// * `optimized_clear_value` - Specifies a [`ClearValue`] structure that describes the default value for a clear color.
     ///
     /// For more information: [`ID3D12Device::CreateCommittedResource method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommittedresource)
-    fn create_committed_resource<R: ResourceInterface>(
+    fn create_committed_resource<R: IResource>(
         &self,
         heap_properties: &HeapProperties,
         heap_flags: HeapFlags,
@@ -174,7 +174,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// * `desc` - A reference to a [`ComputePipelineStateDesc`] structure that describes compute pipeline state.
     ///
     /// For more information: [`ID3D12Device::CreateComputePipelineState method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcomputepipelinestate)
-    fn create_compute_pipeline_state<CPS: PipelineStateInterface>(
+    fn create_compute_pipeline_state<CPS: IPipelineState>(
         &self,
         desc: &ComputePipelineStateDesc<'_>,
     ) -> Result<CPS, DxError>;
@@ -202,7 +202,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// For more information: [`ID3D12Device::CreateDepthStencilView method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createdepthstencilview)
     fn create_depth_stencil_view(
         &self,
-        resource: Option<&impl ResourceInterface>,
+        resource: Option<&impl IResource>,
         desc: Option<&DepthStencilViewDesc>,
         dest_descriptor: CpuDescriptorHandle,
     );
@@ -213,7 +213,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// * `desc` - A reference to a [`DescriptorHeapDesc`] structure that describes the heap.
     ///
     /// For more information: [`ID3D12Device::CreateDescriptorHeap method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createdescriptorheap)
-    fn create_descriptor_heap<H: DescriptorHeapInterface>(
+    fn create_descriptor_heap<H: IDescriptorHeap>(
         &self,
         desc: &DescriptorHeapDesc,
     ) -> Result<H, DxError>;
@@ -225,7 +225,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// * `flags` - A combination of [`FenceFlags`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies options for the fence.
     ///
     /// For more information: [`ID3D12Device::CreateFence method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createfence)
-    fn create_fence<F: FenceInterface>(
+    fn create_fence<F: IFence>(
         &self,
         initial_value: u64,
         flags: FenceFlags,
@@ -237,7 +237,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// * `desc` - A reference to a [`GraphicsPipelineDesc`] structure that describes graphics pipeline state.
     ///
     /// For more information: [`ID3D12Device::CreateGraphicsPipelineState method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-creategraphicspipelinestate)
-    fn create_graphics_pipeline<G: PipelineStateInterface>(
+    fn create_graphics_pipeline<G: IPipelineState>(
         &self,
         desc: &GraphicsPipelineDesc<'_>,
     ) -> Result<G, DxError>;
@@ -248,7 +248,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// * `desc` - A reference to a constant [`HeapDesc`] structure that describes the heap.
     ///
     /// For more information: [`ID3D12Device::CreateHeap method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createheap)
-    fn create_heap<H: HeapInterface>(&self, desc: &HeapDesc) -> Result<H, DxError>;
+    fn create_heap<H: IHeap>(&self, desc: &HeapDesc) -> Result<H, DxError>;
 
     /// Creates a resource that is placed in a specific heap. Placed resources are the lightest weight resource objects available, and are the fastest to create and destroy.
     ///
@@ -260,9 +260,9 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// * `optimized_clear_value` - Specifies a [`ClearValue`] that describes the default value for a clear color.
     ///
     /// For more information: [`ID3D12Device::CreatePlacedResource method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createplacedresource)
-    fn create_placed_resource<R: ResourceInterface>(
+    fn create_placed_resource<R: IResource>(
         &self,
-        heap: &impl HeapInterface,
+        heap: &impl IHeap,
         heap_offset: u64,
         desc: &ResourceDesc,
         initial_state: ResourceStates,
@@ -275,7 +275,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// * `desc` - Specifies the query heap in a [`QueryHeapDesc`] structure.
     ///
     /// For more information: [`ID3D12Device::CreateQueryHeap method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createqueryheap)
-    fn create_query_heap<Q: QueryHeapInterface>(&self, desc: &QueryHeapDesc) -> Result<Q, DxError>;
+    fn create_query_heap<Q: IQueryHeap>(&self, desc: &QueryHeapDesc) -> Result<Q, DxError>;
 
     /// Creates a render-target view for accessing resource data.
     ///
@@ -287,7 +287,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// For more information: [`ID3D12Device::CreateRenderTargetView method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createrendertargetview)
     fn create_render_target_view(
         &self,
-        resource: Option<&impl ResourceInterface>,
+        resource: Option<&impl IResource>,
         desc: Option<&RenderTargetViewDesc>,
         handle: CpuDescriptorHandle,
     );
@@ -300,7 +300,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// * `optimized_clear_value` - Specifies a [`ClearValue`] that describes the default value for a clear color.
     ///
     /// For more information: [`ID3D12Device::CreateReservedResource method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createreservedresource)
-    fn create_reserved_resource<R: ResourceInterface>(
+    fn create_reserved_resource<R: IResource>(
         &self,
         desc: &ResourceDesc,
         initial_state: ResourceStates,
@@ -316,7 +316,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// * `blob` - A reference to the source data for the serialized signature.
     ///
     /// For more information: [`ID3D12Device::CreateRootSignature method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createrootsignature)
-    fn create_root_signature<RS: RootSignatureInterface>(
+    fn create_root_signature<RS: IRootSignature>(
         &self,
         node_mask: u32,
         blob: &[u8],
@@ -330,7 +330,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// * `node_mask` - For single GPU operation, set this to zero.
     ///   If there are multiple GPU nodes, set bits to identify the nodes (the device's physical adapters) to which the root signature is to apply.
     ///   Each bit in the mask corresponds to a single node.
-    fn serialize_and_create_root_signature<RS: RootSignatureInterface>(
+    fn serialize_and_create_root_signature<RS: IRootSignature>(
         &self,
         desc: &RootSignatureDesc<'_>,
         version: RootSignatureVersion,
@@ -356,7 +356,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// For more information: [`ID3D12Device::CreateShaderResourceView method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createshaderresourceview)
     fn create_shader_resource_view(
         &self,
-        resource: Option<&impl ResourceInterface>,
+        resource: Option<&impl IResource>,
         desc: Option<&ShaderResourceViewDesc>,
         handle: CpuDescriptorHandle,
     );
@@ -385,8 +385,8 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// For more information: [`ID3D12Device::CreateUnorderedAccessView method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createunorderedaccessview)
     fn create_unordered_access_view(
         &self,
-        resource: Option<&impl ResourceInterface>,
-        counter_resource: Option<&impl ResourceInterface>,
+        resource: Option<&impl IResource>,
+        counter_resource: Option<&impl IResource>,
         desc: Option<&UnorderedAccessViewDesc>,
         handle: CpuDescriptorHandle,
     );
@@ -483,7 +483,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// For more information: [`ID3D12Device::GetResourceTiling method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getresourcetiling)
     fn get_resource_tiling(
         &self,
-        resource: &impl ResourceInterface,
+        resource: &impl IResource,
         first_subresource_tiling_to_get: u32,
         num_tiles_for_entire_resource: Option<&mut [u32]>,
         packed_mip_desc: Option<&mut [PackedMipDesc]>,
@@ -508,7 +508,7 @@ pub trait DeviceInterface: HasInterface<Raw: Interface> {
     /// * `handle` - The handle that was output by the call to [`DeviceInterface::create_shared_handle`]
     ///
     /// For more information: [`ID3D12Device::OpenSharedHandle method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-opensharedhandle)
-    fn open_shared_handle<D: DeviceChildInterface>(
+    fn open_shared_handle<D: IDeviceChild>(
         &self,
         handle: SharedHandle,
     ) -> Result<D, DxError>;
@@ -548,7 +548,7 @@ create_type! {
 }
 
 impl_trait! {
-    impl DeviceInterface =>
+    impl IDevice =>
     Device;
 
     fn check_feature_support<F: FeatureObject>(&self, feature_input: F::Input<'_>) -> Result<F::Output, DxError> {
@@ -613,7 +613,7 @@ impl_trait! {
         }
     }
 
-    fn create_command_allocator<CA: CommandAllocatorInterface>(
+    fn create_command_allocator<CA: ICommandAllocator>(
         &self,
         r#type: CommandListType
     ) -> Result<CA, DxError> {
@@ -624,7 +624,7 @@ impl_trait! {
         }
     }
 
-    fn create_command_queue<CQ: CommandQueueInterface>(
+    fn create_command_queue<CQ: ICommandQueue>(
         &self,
         desc: CommandQueueDesc,
     ) -> Result<CQ, DxError> {
@@ -635,10 +635,10 @@ impl_trait! {
         }
     }
 
-    fn create_command_signature<CS: CommandSignatureInterface>(
+    fn create_command_signature<CS: ICommandSignature>(
         &self,
         desc: &CommandSignatureDesc<'_>,
-        root_signature: Option<&impl RootSignatureInterface>,
+        root_signature: Option<&impl IRootSignature>,
     ) -> Result<CS, DxError> {
         unsafe {
             let desc = desc.as_raw();
@@ -656,7 +656,7 @@ impl_trait! {
         }
     }
 
-    fn create_committed_resource<R: ResourceInterface>(
+    fn create_committed_resource<R: IResource>(
         &self,
         heap_properties: &HeapProperties,
         heap_flags: HeapFlags,
@@ -685,12 +685,12 @@ impl_trait! {
         }
     }
 
-    fn create_command_list<CL: CommandListInterface>(
+    fn create_command_list<CL: ICommandList>(
         &self,
         node_mask: u32,
         r#type: CommandListType,
-        command_allocator: &impl CommandAllocatorInterface,
-        pso: Option<&impl PipelineStateInterface>,
+        command_allocator: &impl ICommandAllocator,
+        pso: Option<&impl IPipelineState>,
     ) -> Result<CL, DxError> {
         unsafe {
             let res: CL::Raw = self.0.CreateCommandList(
@@ -704,7 +704,7 @@ impl_trait! {
         }
     }
 
-    fn create_compute_pipeline_state<CPS: PipelineStateInterface>(
+    fn create_compute_pipeline_state<CPS: IPipelineState>(
         &self,
         desc: &ComputePipelineStateDesc<'_>,
     ) -> Result<CPS, DxError> {
@@ -734,7 +734,7 @@ impl_trait! {
 
     fn create_depth_stencil_view(
         &self,
-        resource: Option<&impl ResourceInterface>,
+        resource: Option<&impl IResource>,
         desc: Option<&DepthStencilViewDesc>,
         dest_descriptor: CpuDescriptorHandle,
     ) {
@@ -752,7 +752,7 @@ impl_trait! {
         }
     }
 
-    fn create_descriptor_heap<H: DescriptorHeapInterface>(
+    fn create_descriptor_heap<H: IDescriptorHeap>(
         &self,
         desc: &DescriptorHeapDesc,
     ) -> Result<H, DxError> {
@@ -765,7 +765,7 @@ impl_trait! {
         }
     }
 
-    fn create_fence<F: FenceInterface>(
+    fn create_fence<F: IFence>(
         &self,
         initial_value: u64,
         flags: FenceFlags,
@@ -777,7 +777,7 @@ impl_trait! {
         }
     }
 
-    fn create_graphics_pipeline<G: PipelineStateInterface>(
+    fn create_graphics_pipeline<G: IPipelineState>(
         &self,
         desc: &GraphicsPipelineDesc<'_>,
     ) -> Result<G, DxError> {
@@ -790,7 +790,7 @@ impl_trait! {
         }
     }
 
-    fn create_heap<H: HeapInterface>(&self, desc: &HeapDesc) -> Result<H, DxError> {
+    fn create_heap<H: IHeap>(&self, desc: &HeapDesc) -> Result<H, DxError> {
         unsafe {
             let desc = desc.as_raw();
 
@@ -802,9 +802,9 @@ impl_trait! {
         }
     }
 
-    fn create_placed_resource<R: ResourceInterface>(
+    fn create_placed_resource<R: IResource>(
         &self,
-        heap: &impl HeapInterface,
+        heap: &impl IHeap,
         heap_offset: u64,
         desc: &ResourceDesc,
         initial_state: ResourceStates,
@@ -831,7 +831,7 @@ impl_trait! {
         }
     }
 
-    fn create_query_heap<Q: QueryHeapInterface>(
+    fn create_query_heap<Q: IQueryHeap>(
         &self,
         desc: &QueryHeapDesc,
     ) -> Result<Q, DxError> {
@@ -846,7 +846,7 @@ impl_trait! {
 
     fn create_render_target_view(
         &self,
-        resource: Option<&impl ResourceInterface>,
+        resource: Option<&impl IResource>,
         desc: Option<&RenderTargetViewDesc>,
         handle: CpuDescriptorHandle,
     ) {
@@ -862,7 +862,7 @@ impl_trait! {
         }
     }
 
-    fn create_reserved_resource<R: ResourceInterface>(
+    fn create_reserved_resource<R: IResource>(
         &self,
         desc: &ResourceDesc,
         initial_state: ResourceStates,
@@ -887,7 +887,7 @@ impl_trait! {
         }
     }
 
-    fn create_root_signature<RS: RootSignatureInterface>(
+    fn create_root_signature<RS: IRootSignature>(
         &self,
         node_mask: u32,
         blob: &[u8],
@@ -899,7 +899,7 @@ impl_trait! {
         }
     }
 
-    fn serialize_and_create_root_signature<RS: RootSignatureInterface>(
+    fn serialize_and_create_root_signature<RS: IRootSignature>(
         &self,
         desc: &RootSignatureDesc<'_>,
         version: RootSignatureVersion,
@@ -928,7 +928,7 @@ impl_trait! {
 
     fn create_shader_resource_view(
         &self,
-        resource: Option<&impl ResourceInterface>,
+        resource: Option<&impl IResource>,
         desc: Option<&ShaderResourceViewDesc>,
         handle: CpuDescriptorHandle,
     ) {
@@ -968,8 +968,8 @@ impl_trait! {
 
     fn create_unordered_access_view(
         &self,
-        resource: Option<&impl ResourceInterface>,
-        counter_resource: Option<&impl ResourceInterface>,
+        resource: Option<&impl IResource>,
+        counter_resource: Option<&impl IResource>,
         desc: Option<&UnorderedAccessViewDesc>,
         handle: CpuDescriptorHandle,
     ) {
@@ -1090,7 +1090,7 @@ impl_trait! {
 
     fn get_resource_tiling(
         &self,
-        resource: &impl ResourceInterface,
+        resource: &impl IResource,
         first_subresource_tiling_to_get: u32,
         num_tiles_for_entire_resource: Option<&mut [u32]>,
         mut packed_mip_desc: Option<&mut [PackedMipDesc]>,
@@ -1151,7 +1151,7 @@ impl_trait! {
         }
     }
 
-    fn open_shared_handle<D: DeviceChildInterface>(
+    fn open_shared_handle<D: IDeviceChild>(
         &self,
         handle: SharedHandle,
     ) -> Result<D, DxError> {

@@ -11,7 +11,7 @@ use windows::Win32::Graphics::Dxgi::{
 };
 
 use crate::error::DxError;
-use crate::resources::ResourceInterface;
+use crate::resources::IResource;
 use crate::types::{
     AlphaMode, PresentFlags, SampleDesc, Scaling, ScalingMode, ScanlineOrdering, SwapEffect,
 };
@@ -21,14 +21,14 @@ use crate::{
 };
 use crate::{impl_trait, HasInterface};
 
-pub trait SwapchainInterface1: HasInterface {
+pub trait ISwapchain1: HasInterface {
     fn present(&self, interval: u32, flags: PresentFlags) -> Result<(), DxError>;
-    fn get_buffer<R: ResourceInterface>(&self, buffer: u32) -> Result<R, DxError>;
+    fn get_buffer<R: IResource>(&self, buffer: u32) -> Result<R, DxError>;
 }
 
-pub trait SwapchainInterface2: SwapchainInterface1 {}
+pub trait ISwapchain2: ISwapchain1 {}
 
-pub trait SwapchainInterface3: SwapchainInterface2 {
+pub trait ISwapchain3: ISwapchain2 {
     fn get_current_back_buffer_index(&self) -> u32;
 }
 
@@ -37,7 +37,7 @@ create_type! { Swapchain2 wrap IDXGISwapChain2; decorator for Swapchain1 }
 create_type! { Swapchain3 wrap IDXGISwapChain3; decorator for Swapchain2, Swapchain1 }
 
 impl_trait! {
-    impl SwapchainInterface1 =>
+    impl ISwapchain1 =>
     Swapchain1,
     Swapchain2,
     Swapchain3;
@@ -50,7 +50,7 @@ impl_trait! {
         res.ok().map_err(DxError::from)
     }
 
-    fn get_buffer<R: ResourceInterface>(&self, buffer: u32) -> Result<R, DxError> {
+    fn get_buffer<R: IResource>(&self, buffer: u32) -> Result<R, DxError> {
         let buffer: R::Raw = unsafe {
             self.0.GetBuffer(buffer).map_err(|_| DxError::Dummy)?
         };
@@ -60,13 +60,13 @@ impl_trait! {
 }
 
 impl_trait! {
-    impl SwapchainInterface2 =>
+    impl ISwapchain2 =>
     Swapchain2,
     Swapchain3;
 }
 
 impl_trait! {
-    impl SwapchainInterface3 =>
+    impl ISwapchain3 =>
     Swapchain3;
 
     fn get_current_back_buffer_index(&self) -> u32 {
@@ -124,7 +124,7 @@ pub struct SwapchainFullscreenDesc {
     pub windowed: bool,
 }
 
-pub trait OutputInterface:
+pub trait IOutput:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<IDXGIOutput>>
 {
 }
@@ -132,6 +132,6 @@ pub trait OutputInterface:
 create_type! { Output wrap IDXGIOutput }
 
 impl_trait! {
-    impl OutputInterface =>
+    impl IOutput =>
     Output;
 }

@@ -8,7 +8,7 @@ use crate::{create_type, impl_trait, HasInterface};
 /// Manages a query heap. A query heap holds an array of queries, referenced by indexes.
 ///
 /// For more information: [`ID3D12QueryHeap interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12queryheap)
-pub trait QueryHeapInterface:
+pub trait IQueryHeap:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12QueryHeap>>
 {
 }
@@ -21,6 +21,6 @@ create_type! {
 }
 
 impl_trait! {
-    impl QueryHeapInterface =>
+    impl IQueryHeap =>
     QueryHeap;
 }

@@ -8,7 +8,7 @@ use crate::{create_type, error::DxError, impl_trait, HasInterface};
 /// Represents the allocations of storage for graphics processing unit (GPU) commands.
 ///
 /// For more information: [`ID3D12CommandAllocator interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12commandallocator)
-pub trait CommandAllocatorInterface:
+pub trait ICommandAllocator:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12CommandAllocator>>
 {
     /// Indicates to re-use the memory that is associated with the command allocator.
@@ -25,7 +25,7 @@ create_type! {
 }
 
 impl_trait! {
-    impl CommandAllocatorInterface =>
+    impl ICommandAllocator =>
     CommandAllocator;
 
     fn reset(&self) -> Result<(), DxError> {
