@@ -3,7 +3,7 @@ use std::ffi::CStr;
 use smallvec::SmallVec;
 use windows::Win32::Foundation::HANDLE;
 
-use crate::{blob::Blob, root_signature::RootSignature};
+use crate::{blob::Blob, resources::IResource, root_signature::RootSignature};
 
 use super::*;
 
@@ -419,7 +419,7 @@ pub struct Luid {
 #[derive(Clone, Copy, Debug, Default)]
 pub struct QueryHeapDesc {
     /// Specifies one member of [`QueryHeapType`].
-    pub r#type: QueryHeapType,
+    pub r#type: QueryType,
 
     /// Specifies the number of queries the heap should contain.
     pub count: u32,
@@ -835,4 +835,20 @@ pub struct SubresourceTiling {
 
     /// The index of the tile in the overall tiled subresource to start with.
     pub start_tile_index_in_overall_resource: u32,
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Box {
+    pub left: u32,
+    pub top: u32,
+    pub front: u32,
+    pub right: u32,
+    pub bottom: u32,
+    pub back: u32,
+}
+
+#[derive(Debug)]
+pub struct TextureCopyLocation<'a, T: IResource> {
+    pub resource: &'a T,
+    r#type: TextureCopyType,
 }

@@ -645,3 +645,11 @@ bitflags::bitflags! {
         const ReuseSingleTile = D3D12_TILE_RANGE_FLAG_REUSE_SINGLE_TILE.0;
     }
 }
+
+bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct ClearFlags: i32 {
+        const Depth = D3D12_CLEAR_FLAG_DEPTH.0;
+        const Stencil = D3D12_CLEAR_FLAG_STENCIL.0;
+    }
+}

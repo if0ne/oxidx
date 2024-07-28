@@ -124,10 +124,7 @@ pub struct SwapchainFullscreenDesc {
     pub windowed: bool,
 }
 
-pub trait IOutput:
-    for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<IDXGIOutput>>
-{
-}
+pub trait IOutput: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<IDXGIOutput>> {}
 
 create_type! { Output wrap IDXGIOutput }
 

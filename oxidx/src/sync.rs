@@ -12,9 +12,7 @@ use crate::{create_type, error::DxError, impl_trait, types::FenceFlags, HasInter
 /// Represents a fence, an object used for synchronization of the CPU and one or more GPUs.
 ///
 /// For more information: [`ID3D12Fence interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12fence)
-pub trait IFence:
-    for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12Fence>>
-{
+pub trait IFence: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12Fence>> {
     /// Gets the current value of the fence.
     ///
     /// # Returns

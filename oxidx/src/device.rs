@@ -225,11 +225,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// * `flags` - A combination of [`FenceFlags`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies options for the fence.
     ///
     /// For more information: [`ID3D12Device::CreateFence method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createfence)
-    fn create_fence<F: IFence>(
-        &self,
-        initial_value: u64,
-        flags: FenceFlags,
-    ) -> Result<F, DxError>;
+    fn create_fence<F: IFence>(&self, initial_value: u64, flags: FenceFlags) -> Result<F, DxError>;
 
     /// Creates a graphics pipeline state object.
     ///
@@ -508,10 +504,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// * `handle` - The handle that was output by the call to [`DeviceInterface::create_shared_handle`]
     ///
     /// For more information: [`ID3D12Device::OpenSharedHandle method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-opensharedhandle)
-    fn open_shared_handle<D: IDeviceChild>(
-        &self,
-        handle: SharedHandle,
-    ) -> Result<D, DxError>;
+    fn open_shared_handle<D: IDeviceChild>(&self, handle: SharedHandle) -> Result<D, DxError>;
 
     /// Opens a handle for shared resources, shared heaps, and shared fences, by using Name.
     ///

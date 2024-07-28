@@ -1434,7 +1434,7 @@ pub enum ProgrammableSamplePositionsTier {
 /// For more information: [`D3D12_QUERY_HEAP_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_query_heap_type)
 #[derive(Clone, Copy, Debug, Default, FromRepr)]
 #[repr(i32)]
-pub enum QueryHeapType {
+pub enum QueryType {
     /// This returns a binary 0/1 result:
     /// 0 indicates that no samples passed depth and stencil testing,
     /// 1 indicates that at least one sample passed depth and stencil testing.
@@ -2222,4 +2222,10 @@ pub enum UavDimension {
         /// The number of depth slices.
         w_size: u32,
     },
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum TextureCopyType {
+    SubresourceIndex(u32),
+    PlacedFootprint(PlacedSubresourceFootprint),
 }

@@ -22,9 +22,7 @@ use crate::{
 /// Provides methods for submitting command lists, synchronizing command list execution, instrumenting the command queue, and updating resource tile mappings.
 ///
 /// For more information: [`ID3D12CommandQueue interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12commandqueue)
-pub trait ICommandQueue:
-    for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<IUnknown>>
-{
+pub trait ICommandQueue: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<IUnknown>> {
     /// Marks the start of a user-defined region of work
     ///
     /// # Arguments

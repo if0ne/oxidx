@@ -1,3 +1,5 @@
+use std::ffi::CStr;
+
 use smallvec::SmallVec;
 use windows::{
     core::Interface,
@@ -10,7 +12,8 @@ use crate::{
     error::DxError,
     impl_trait,
     pso::IPipelineState,
-    resources::{ResourceBarrier, VertexBufferView},
+    query_heap::IQueryHeap,
+    resources::{IResource, ResourceBarrier, VertexBufferView},
     root_signature::IRootSignature,
     types::*,
     HasInterface,
@@ -31,11 +34,71 @@ pub trait ICommandList: HasInterface<Raw: Interface> {
 
 pub trait IGraphicsCommandList: ICommandList {
     // TODO: PIX FUNCTIONS
-    // fn begin_event<'a>(&self, color: impl Into<u64>, label: &'a str);
+
     // fn end_event(&self);
     // fn set_marker<'a>(&self, color: impl Into<u64>, label: &'a str)
 
-    fn close(&self);
+    fn begin_event(&self, color: impl Into<u64>, label: impl AsRef<CStr>);
+    fn begin_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: u32);
+
+    fn clear_depth_stencil_view(
+        &self,
+        depth_stencil_view: CpuDescriptorHandle,
+        clear_flags: ClearFlags,
+        depth: f32,
+        stencil: u8,
+        rects: impl IntoIterator<Item = Rect>,
+    );
+
+    fn clear_render_target_view(
+        &self,
+        rtv_handle: CpuDescriptorHandle,
+        color: impl Into<[f32; 4]>,
+        rects: impl IntoIterator<Item = Rect>,
+    );
+
+    fn clear_state(&self, pipeline_state: Option<&impl IPipelineState>);
+
+    fn clear_unordered_access_view_float(
+        &self,
+        view_gpu_handle_in_current_heap: GpuDescriptorHandle,
+        view_cpu_handle: CpuDescriptorHandle,
+        resource: &impl IResource,
+        values: impl Into<[f32; 4]>,
+        rects: impl IntoIterator<Item = Rect>,
+    );
+
+    fn clear_unordered_access_view_u32(
+        &self,
+        view_gpu_handle_in_current_heap: GpuDescriptorHandle,
+        view_cpu_handle: CpuDescriptorHandle,
+        resource: &impl IResource,
+        values: impl Into<[u32; 4]>,
+        rects: impl IntoIterator<Item = Rect>,
+    );
+
+    fn close(&self) -> Result<(), DxError>;
+
+    fn copy_buffer_region(
+        &self,
+        dst_buffer: &impl IResource,
+        dst_offset: u64,
+        src_buffer: &impl IResource,
+        src_offset: u64,
+        num_bytes: u64,
+    );
+
+    fn copy_resource(&self, dst_resource: &impl IResource, src_resource: &impl IResource);
+
+    fn copy_texture_region<'a, T: IResource>(
+        &self,
+        dst: &TextureCopyLocation<'a, T>,
+        dst_x: u32,
+        dst_y: u32,
+        dst_z: u32,
+        src: &TextureCopyLocation<'a, T>,
+        src_box: Option<&Box>,
+    );
 
     fn reset(
         &self,
@@ -54,12 +117,7 @@ pub trait IGraphicsCommandList: ICommandList {
         rts_single_handle_to_descriptor_range: bool,
         depth_stencil: Option<&'a CpuDescriptorHandle>,
     );
-    fn clear_render_target_view<'a>(
-        &self,
-        rtv_handle: CpuDescriptorHandle,
-        color: [f32; 4],
-        rects: impl IntoIterator<Item = &'a Rect>,
-    );
+
     fn ia_set_primitive_topology(&self, topology: PrimitiveTopology);
     fn ia_set_vertex_buffers<'a>(
         &self,
