@@ -653,3 +653,12 @@ bitflags::bitflags! {
         const Stencil = D3D12_CLEAR_FLAG_STENCIL.0;
     }
 }
+
+bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct TileCopyFlags: i32 {
+        const NoHazard = D3D12_TILE_COPY_FLAG_NO_HAZARD.0;
+        const LinearBufferToSwizzledTiledResource = D3D12_TILE_COPY_FLAG_LINEAR_BUFFER_TO_SWIZZLED_TILED_RESOURCE.0;
+        const SwizzledTiledResourceToLinearBuffer = D3D12_TILE_COPY_FLAG_SWIZZLED_TILED_RESOURCE_TO_LINEAR_BUFFER.0;
+    }
+}

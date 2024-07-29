@@ -2229,3 +2229,10 @@ pub enum TextureCopyType {
     SubresourceIndex(u32),
     PlacedFootprint(PlacedSubresourceFootprint),
 }
+
+#[derive(Clone, Copy, Debug, FromRepr)]
+#[repr(i32)]
+pub enum PredicationOp {
+    EqualZero = D3D12_PREDICATION_OP_EQUAL_ZERO.0,
+    NotEqualZero = D3D12_PREDICATION_OP_NOT_EQUAL_ZERO.0,
+}

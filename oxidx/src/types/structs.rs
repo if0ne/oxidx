@@ -727,7 +727,7 @@ pub struct UnorderedAccessViewDesc {
 /// Describes the format, width, height, depth, and row-pitch of the subresource into the parent resource.
 ///
 /// For more information: [`D3D12_SUBRESOURCE_FOOTPRINT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_subresource_footprint)
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct SubresourceFootprint {
     /// A [`Format`]-typed value that specifies the viewing format.
     pub format: Format,
@@ -749,7 +749,7 @@ pub struct SubresourceFootprint {
 /// Describes the footprint of a placed subresource, including the offset and the [`SubresourceFootprint`].
 ///
 /// For more information: [`D3D12_PLACED_SUBRESOURCE_FOOTPRINT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_placed_subresource_footprint)
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct PlacedSubresourceFootprint {
     /// The offset of the subresource within the parent resource, in bytes. The offset between the start of the parent resource and this subresource.
     pub offset: u64,
@@ -850,5 +850,26 @@ pub struct Box {
 #[derive(Debug)]
 pub struct TextureCopyLocation<'a, T: IResource> {
     pub resource: &'a T,
-    r#type: TextureCopyType,
+    pub r#type: TextureCopyType,
+}
+
+#[derive(Debug)]
+pub struct DiscardRegion<'a> {
+    pub rects: &'a [Rect],
+    pub first_subresource: u32,
+    pub num_subresource: u32,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct IndexBufferView {
+    pub buffer_location: u64,
+    pub size_in_bytes: u32,
+    pub format: Format,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct StreamOutputBufferView {
+    pub buffer_location: u64,
+    pub size_in_bytes: u64,
+    pub buffer_filled_size_location: u64,
 }

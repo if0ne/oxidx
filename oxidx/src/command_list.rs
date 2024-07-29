@@ -8,7 +8,9 @@ use windows::{
 
 use crate::{
     command_allocator::ICommandAllocator,
+    command_signature::ICommandSignature,
     create_type,
+    descriptor_heap::IDescriptorHeap,
     error::DxError,
     impl_trait,
     pso::IPipelineState,
@@ -33,12 +35,8 @@ pub trait ICommandList: HasInterface<Raw: Interface> {
 }
 
 pub trait IGraphicsCommandList: ICommandList {
-    // TODO: PIX FUNCTIONS
-
-    // fn end_event(&self);
-    // fn set_marker<'a>(&self, color: impl Into<u64>, label: &'a str)
-
     fn begin_event(&self, color: impl Into<u64>, label: impl AsRef<CStr>);
+
     fn begin_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: u32);
 
     fn clear_depth_stencil_view(
@@ -90,40 +88,44 @@ pub trait IGraphicsCommandList: ICommandList {
 
     fn copy_resource(&self, dst_resource: &impl IResource, src_resource: &impl IResource);
 
-    fn copy_texture_region<'a, T: IResource>(
+    fn copy_texture_region<T: IResource>(
         &self,
-        dst: &TextureCopyLocation<'a, T>,
+        dst: &TextureCopyLocation<'_, T>,
         dst_x: u32,
         dst_y: u32,
         dst_z: u32,
-        src: &TextureCopyLocation<'a, T>,
+        src: &TextureCopyLocation<'_, T>,
         src_box: Option<&Box>,
     );
 
-    fn reset(
+    fn copy_tiles(
         &self,
-        command_allocator: &impl ICommandAllocator,
-        pso: &impl IPipelineState,
-    ) -> Result<(), DxError>;
-
-    fn set_graphics_root_signature(&self, root_signature: &impl IRootSignature);
-
-    fn rs_set_viewports<'a>(&self, viewport: impl IntoIterator<Item = &'a Viewport>);
-    fn rs_set_scissor_rects<'a>(&self, rects: impl IntoIterator<Item = &'a Rect>);
-
-    fn om_set_render_targets<'a>(
-        &self,
-        render_targets: impl IntoIterator<Item = &'a CpuDescriptorHandle>,
-        rts_single_handle_to_descriptor_range: bool,
-        depth_stencil: Option<&'a CpuDescriptorHandle>,
+        tiled_resource: &impl IResource,
+        tile_region_start_coordinate: &TiledResourceCoordinate,
+        tile_region_size: &TileRegionSize,
+        buffer: &impl IResource,
+        buffer_start_offset: u64,
+        flags: TileCopyFlags,
     );
 
-    fn ia_set_primitive_topology(&self, topology: PrimitiveTopology);
-    fn ia_set_vertex_buffers<'a>(
+    fn discard_resource(&self, resource: &impl IResource, region: &DiscardRegion<'_>);
+
+    fn dispatch(
         &self,
-        slot: u32,
-        buffers: impl IntoIterator<Item = &'a VertexBufferView>,
+        thread_group_count_x: u32,
+        thread_group_count_y: u32,
+        thread_group_count_z: u32,
     );
+
+    fn draw_indexed_instanced(
+        &self,
+        index_count_per_instance: u32,
+        instance_count: u32,
+        start_index_location: u32,
+        base_vertex_location: i32,
+        start_instance_location: u32,
+    );
+
     fn draw_instanced(
         &self,
         vertex_count_per_instance: u32,
@@ -132,7 +134,175 @@ pub trait IGraphicsCommandList: ICommandList {
         start_instance_location: u32,
     );
 
-    fn resource_barrier<'a>(&self, barriers: impl IntoIterator<Item = &'a ResourceBarrier<'a>>);
+    fn end_event(&self);
+
+    fn end_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: u32);
+
+    fn execute_bundle(&self, command_list: &impl IGraphicsCommandList);
+
+    fn execute_indirect<'a>(
+        &self,
+        command_signature: &impl ICommandSignature,
+        max_command_count: u32,
+        argument_buffer: impl IntoIterator<Item = &'a (impl IResource + 'a)>,
+        argument_buffer_offset: u64,
+        count_buffer: Option<&impl IResource>,
+        count_buffer_offset: u64,
+    );
+
+    fn ia_set_index_buffer(&self, view: Option<&IndexBufferView>);
+
+    fn ia_set_primitive_topology(&self, topology: PrimitiveTopology);
+
+    fn ia_set_vertex_buffers<'a>(
+        &self,
+        slot: u32,
+        buffers: impl IntoIterator<Item = VertexBufferView>,
+    );
+
+    fn om_set_blend_factor(&self, blend_factor: Option<[f32; 4]>);
+
+    fn om_set_render_targets<'a>(
+        &self,
+        render_targets: impl IntoIterator<Item = CpuDescriptorHandle>,
+        rts_single_handle_to_descriptor_range: bool,
+        depth_stencil: Option<CpuDescriptorHandle>,
+    );
+
+    fn om_set_stencil_ref(&self, stencil_ref: u32);
+
+    fn reset(
+        &self,
+        command_allocator: &impl ICommandAllocator,
+        pso: Option<&impl IPipelineState>,
+    ) -> Result<(), DxError>;
+
+    fn resolve_query_data(
+        &self,
+        query_heap: &impl IQueryHeap,
+        r#type: QueryType,
+        start_index: u32,
+        num_queries: u32,
+        dst_buffer: &impl IResource,
+        aligned_dst_buffer_offset: u64,
+    );
+
+    fn resolve_subresource(
+        &self,
+        dst_resource: &impl IResource,
+        dst_subresource: u32,
+        src_resource: &impl IResource,
+        src_subresource: u32,
+        format: Format,
+    );
+
+    fn resource_barrier<'a>(&self, barriers: impl IntoIterator<Item = ResourceBarrier<'a>>);
+
+    fn rs_set_scissor_rects(&self, rects: impl IntoIterator<Item = Rect>);
+
+    fn rs_set_viewports(&self, viewport: impl IntoIterator<Item = Viewport>);
+
+    fn set_compute_root_32bit_constant(
+        &self,
+        root_parameter_index: u32,
+        src_data: u32,
+        dest_offset_in_32bit_values: u32,
+    );
+
+    fn set_compute_root_32bit_constants<T: Copy>(
+        &self,
+        root_parameter_index: u32,
+        src_data: &T,
+        dest_offset_in_32bit_values: u32,
+    );
+
+    fn set_compute_root_constant_buffer_view(
+        &self,
+        root_parameter_index: u32,
+        buffer_location: u64,
+    );
+
+    fn set_compute_root_descriptor_table(
+        &self,
+        root_parameter_index: u32,
+        base_descriptor: GpuDescriptorHandle,
+    );
+
+    fn set_compute_root_shader_resource_view(
+        &self,
+        root_parameter_index: u32,
+        buffer_location: u64,
+    );
+
+    fn set_compute_root_signature(&self, root_signature: Option<&impl IRootSignature>);
+
+    fn set_compute_root_unordered_access_view(
+        &self,
+        root_parameter_index: u32,
+        buffer_location: u64,
+    );
+
+    fn set_descriptor_heaps<'a>(
+        &self,
+        descriptor_heaps: impl IntoIterator<Item = &'a (impl IDescriptorHeap + 'a)>,
+    );
+
+    fn set_graphics_root_32bit_constant(
+        &self,
+        root_parameter_index: u32,
+        src_data: u32,
+        dest_offset_in_32bit_values: u32,
+    );
+
+    fn set_graphics_root_32bit_constants<T: Copy>(
+        &self,
+        root_parameter_index: u32,
+        src_data: &T,
+        dest_offset_in_32bit_values: u32,
+    );
+
+    fn set_graphics_root_constant_buffer_view(
+        &self,
+        root_parameter_index: u32,
+        buffer_location: u64,
+    );
+
+    fn set_graphics_root_descriptor_table(
+        &self,
+        root_parameter_index: u32,
+        base_descriptor: GpuDescriptorHandle,
+    );
+
+    fn set_graphics_root_shader_resource_view(
+        &self,
+        root_parameter_index: u32,
+        buffer_location: u64,
+    );
+
+    fn set_graphics_root_signature(&self, root_signature: Option<&impl IRootSignature>);
+
+    fn set_graphics_root_unordered_access_view(
+        &self,
+        root_parameter_index: u32,
+        buffer_location: u64,
+    );
+
+    fn set_marker(&self, color: impl Into<u64>, label: impl AsRef<CStr>);
+
+    fn set_pipeline_state(&self, pipeline_state: &impl IPipelineState);
+
+    fn set_predication(
+        &self,
+        buffer: Option<&impl IResource>,
+        aligned_buffer_offset: u64,
+        operation: PredicationOp,
+    );
+
+    fn so_set_targets(
+        &self,
+        start_slot: u32,
+        views: impl IntoIterator<Item = StreamOutputBufferView>,
+    );
 }
 
 create_type! { GraphicsCommandList wrap ID3D12GraphicsCommandList }
@@ -161,7 +331,7 @@ impl_trait! {
     fn reset(
         &self,
         command_allocator: &impl ICommandAllocator,
-        pso: &impl IPipelineState,
+        pso: Option<&impl IPipelineState>,
     ) -> Result<(), DxError> {
         unsafe {
             self.0
