@@ -1,22 +1,6 @@
 use std::num::NonZeroIsize;
 
-use oxidx::{
-    adapter::*,
-    blob::{Blob, IBlob},
-    command_allocator::*,
-    command_list::*,
-    command_queue::*,
-    debug::*,
-    descriptor_heap::*,
-    device::*,
-    factory::*,
-    pso::*,
-    resources::*,
-    root_signature::RootSignature,
-    swapchain::*,
-    sync::*,
-    types::*,
-};
+use oxidx::dx::*;
 
 use winit::{
     dpi::PhysicalSize,

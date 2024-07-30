@@ -8,7 +8,8 @@ use windows::{
     },
 };
 
-pub(crate) static WIN_PIX_EVENT_RUNTIME: LazyLock<WinPixEventRuntime> = LazyLock::new(WinPixEventRuntime::new);
+pub(crate) static WIN_PIX_EVENT_RUNTIME: LazyLock<WinPixEventRuntime> =
+    LazyLock::new(WinPixEventRuntime::new);
 
 type BeginEventOnCommandList = fn(ManuallyDrop<ID3D12GraphicsCommandList>, u64, PCSTR);
 type EndEventOnCommandList = fn(ManuallyDrop<ID3D12GraphicsCommandList>);

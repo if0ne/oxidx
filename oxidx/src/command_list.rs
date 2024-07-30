@@ -157,11 +157,7 @@ pub trait IGraphicsCommandList:
 
     fn ia_set_primitive_topology(&self, topology: PrimitiveTopology);
 
-    fn ia_set_vertex_buffers(
-        &self,
-        slot: u32,
-        buffers: impl IntoIterator<Item = VertexBufferView>,
-    );
+    fn ia_set_vertex_buffers(&self, slot: u32, buffers: impl IntoIterator<Item = VertexBufferView>);
 
     fn om_set_blend_factor(&self, blend_factor: Option<[f32; 4]>);
 
