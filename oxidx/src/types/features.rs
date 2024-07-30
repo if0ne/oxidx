@@ -1,6 +1,7 @@
 use std::num::NonZeroU32;
 
 use smallvec::SmallVec;
+use windows::Win32::Graphics::Direct3D::D3D_FEATURE_LEVEL;
 
 use crate::{FeatureObject, __Sealed};
 
@@ -74,11 +75,17 @@ impl FeatureObject for OptionsFeature {
     const TYPE: FeatureType = FeatureType::Options;
 
     type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS;
+    type UserInput<'a> = ();
     type Input<'a> = ();
     type Output = Options;
 
     #[inline]
-    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+    fn into_input(_: Self::UserInput<'_>) -> Self::Input<'_> {
+        ()
+    }
+
+    #[inline]
+    fn from_input(_: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_D3D12_OPTIONS::default()
     }
 
@@ -129,11 +136,17 @@ impl FeatureObject for ArchitectureFeature {
     const TYPE: FeatureType = FeatureType::Architecture;
 
     type Raw = D3D12_FEATURE_DATA_ARCHITECTURE;
+    type UserInput<'a> = u32;
     type Input<'a> = u32;
     type Output = Architecture;
 
     #[inline]
-    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
+    fn into_input(input: Self::UserInput<'_>) -> Self::Input<'_> {
+        input
+    }
+
+    #[inline]
+    fn from_input(input: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_ARCHITECTURE {
             NodeIndex: input,
             ..Default::default()
@@ -162,19 +175,23 @@ impl FeatureObject for FeatureLevelsFeature {
     const TYPE: FeatureType = FeatureType::FeatureLevels;
 
     type Raw = D3D12_FEATURE_DATA_FEATURE_LEVELS;
-    type Input<'a> = &'a [FeatureLevel];
+    type UserInput<'a> = &'a [FeatureLevel];
+    type Input<'a> = SmallVec<[D3D_FEATURE_LEVEL; 8]>;
     type Output = FeatureLevel;
 
-    #[inline(always)]
-    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
-        let raw = input
+    #[inline]
+    fn into_input(input: Self::UserInput<'_>) -> Self::Input<'_> {
+        input
             .iter()
             .map(|feature| feature.as_raw())
-            .collect::<SmallVec<[_; 8]>>();
+            .collect::<SmallVec<[_; 8]>>()
+    }
 
+    #[inline]
+    fn from_input(input: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_FEATURE_LEVELS {
-            NumFeatureLevels: raw.len() as u32,
-            pFeatureLevelsRequested: raw.as_ptr() as *const _,
+            NumFeatureLevels: input.len() as u32,
+            pFeatureLevelsRequested: input.as_ptr() as *const _,
             ..Default::default()
         }
     }
@@ -209,11 +226,17 @@ impl FeatureObject for FormatSupportFeature {
     const TYPE: FeatureType = FeatureType::FormatSupport;
 
     type Raw = D3D12_FEATURE_DATA_FORMAT_SUPPORT;
+    type UserInput<'a> = Format;
     type Input<'a> = Format;
     type Output = FormatSupport;
 
     #[inline]
-    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
+    fn into_input(input: Self::UserInput<'_>) -> Self::Input<'_> {
+        input
+    }
+
+    #[inline]
+    fn from_input(input: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_FORMAT_SUPPORT {
             Format: input.as_raw(),
             ..Default::default()
@@ -265,11 +288,17 @@ impl FeatureObject for MultisampleQualityLevelsFeature {
     const TYPE: FeatureType = FeatureType::MultisampleQualityLevels;
 
     type Raw = D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS;
+    type UserInput<'a> = MultisampleQualityLevelsInfo;
     type Input<'a> = MultisampleQualityLevelsInfo;
     type Output = MultisampleQualityLevels;
 
     #[inline]
-    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
+    fn into_input(input: Self::UserInput<'_>) -> Self::Input<'_> {
+        input
+    }
+
+    #[inline]
+    fn from_input(input: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS {
             Format: input.format.as_raw(),
             SampleCount: input.sample_count.get(),
@@ -298,11 +327,17 @@ impl FeatureObject for FormatInfoFeature {
     const TYPE: FeatureType = FeatureType::FormatInfo;
 
     type Raw = D3D12_FEATURE_DATA_FORMAT_INFO;
+    type UserInput<'a> = Format;
     type Input<'a> = Format;
     type Output = u8;
 
     #[inline]
-    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
+    fn into_input(input: Self::UserInput<'_>) -> Self::Input<'_> {
+        input
+    }
+
+    #[inline]
+    fn from_input(input: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_FORMAT_INFO {
             Format: input.as_raw(),
             ..Default::default()
@@ -339,11 +374,17 @@ impl FeatureObject for GpuVirtualAddressSupportFeature {
     const TYPE: FeatureType = FeatureType::GpuVirtualAddressSupport;
 
     type Raw = D3D12_FEATURE_DATA_GPU_VIRTUAL_ADDRESS_SUPPORT;
+    type UserInput<'a> = ();
     type Input<'a> = ();
     type Output = GpuVirtualAddressSupport;
 
     #[inline]
-    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+    fn into_input(_: Self::UserInput<'_>) -> Self::Input<'_> {
+        ()
+    }
+
+    #[inline]
+    fn from_input(_: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_GPU_VIRTUAL_ADDRESS_SUPPORT::default()
     }
 
@@ -368,11 +409,17 @@ impl FeatureObject for ShaderModelFeature {
     const TYPE: FeatureType = FeatureType::ShaderModel;
 
     type Raw = D3D12_FEATURE_DATA_SHADER_MODEL;
+    type UserInput<'a> = ();
     type Input<'a> = ();
     type Output = ShaderModel;
 
     #[inline]
-    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+    fn into_input(_: Self::UserInput<'_>) -> Self::Input<'_> {
+        ()
+    }
+
+    #[inline]
+    fn from_input(_: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_SHADER_MODEL {
             HighestShaderModel: D3D_SHADER_MODEL_6_6,
         }
@@ -422,11 +469,17 @@ impl FeatureObject for Options1Feature {
     const TYPE: FeatureType = FeatureType::Options1;
 
     type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS1;
+    type UserInput<'a> = ();
     type Input<'a> = ();
     type Output = Options1;
 
     #[inline]
-    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+    fn into_input(_: Self::UserInput<'_>) -> Self::Input<'_> {
+        ()
+    }
+
+    #[inline]
+    fn from_input(_: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_D3D12_OPTIONS1::default()
     }
 
@@ -455,11 +508,17 @@ impl FeatureObject for ProtectedResourceSessionSupportFeature {
     const TYPE: FeatureType = FeatureType::ProtectedResourceSessionSupport;
 
     type Raw = D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_SUPPORT;
+    type UserInput<'a> = u32;
     type Input<'a> = u32;
     type Output = ProtectedResourceSessionSupportFlags;
 
     #[inline]
-    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
+    fn into_input(input: Self::UserInput<'_>) -> Self::Input<'_> {
+        input
+    }
+
+    #[inline]
+    fn from_input(input: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_SUPPORT {
             NodeIndex: input,
             ..Default::default()
@@ -484,11 +543,17 @@ impl FeatureObject for RootSignatureFeature {
     const TYPE: FeatureType = FeatureType::RootSignature;
 
     type Raw = D3D12_FEATURE_DATA_ROOT_SIGNATURE;
+    type UserInput<'a> = ();
     type Input<'a> = ();
     type Output = RootSignatureVersion;
 
     #[inline]
-    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+    fn into_input(_: Self::UserInput<'_>) -> Self::Input<'_> {
+        ()
+    }
+
+    #[inline]
+    fn from_input(_: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_ROOT_SIGNATURE {
             HighestVersion: D3D_ROOT_SIGNATURE_VERSION_1_1,
         }
@@ -530,11 +595,17 @@ impl FeatureObject for Architecture1Feature {
     const TYPE: FeatureType = FeatureType::Architecture1;
 
     type Raw = D3D12_FEATURE_DATA_ARCHITECTURE1;
+    type UserInput<'a> = u32;
     type Input<'a> = u32;
     type Output = Architecture1;
 
     #[inline]
-    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
+    fn into_input(input: Self::UserInput<'_>) -> Self::Input<'_> {
+        input
+    }
+
+    #[inline]
+    fn from_input(input: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_ARCHITECTURE1 {
             NodeIndex: input,
             ..Default::default()
@@ -573,11 +644,17 @@ impl FeatureObject for Options2Feature {
     const TYPE: FeatureType = FeatureType::Options2;
 
     type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS2;
+    type UserInput<'a> = ();
     type Input<'a> = ();
     type Output = Options2;
 
     #[inline]
-    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+    fn into_input(_: Self::UserInput<'_>) -> Self::Input<'_> {
+        ()
+    }
+
+    #[inline]
+    fn from_input(_: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_D3D12_OPTIONS2::default()
     }
 
@@ -602,11 +679,17 @@ impl FeatureObject for ShaderCacheFeature {
     const TYPE: FeatureType = FeatureType::ShaderCache;
 
     type Raw = D3D12_FEATURE_DATA_SHADER_CACHE;
+    type UserInput<'a> = ();
     type Input<'a> = ();
     type Output = CacheSupportFlags;
 
     #[inline]
-    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+    fn into_input(_: Self::UserInput<'_>) -> Self::Input<'_> {
+        ()
+    }
+
+    #[inline]
+    fn from_input(_: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_SHADER_CACHE::default()
     }
 
@@ -640,11 +723,17 @@ impl FeatureObject for CommandQueuePriorityFeature {
     const TYPE: FeatureType = FeatureType::CommandQueuePriority;
 
     type Raw = D3D12_FEATURE_DATA_COMMAND_QUEUE_PRIORITY;
+    type UserInput<'a> = CommandQueuePriorityInput;
     type Input<'a> = CommandQueuePriorityInput;
     type Output = bool;
 
     #[inline]
-    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
+    fn into_input(input: Self::UserInput<'_>) -> Self::Input<'_> {
+        input
+    }
+
+    #[inline]
+    fn from_input(input: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_COMMAND_QUEUE_PRIORITY {
             CommandListType: input.command_list_type.as_raw(),
             Priority: input.priority.as_raw() as u32,
@@ -691,11 +780,17 @@ impl FeatureObject for Options3Feature {
     const TYPE: FeatureType = FeatureType::Options3;
 
     type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS3;
+    type UserInput<'a> = ();
     type Input<'a> = ();
     type Output = Options3;
 
     #[inline]
-    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+    fn into_input(_: Self::UserInput<'_>) -> Self::Input<'_> {
+        ()
+    }
+
+    #[inline]
+    fn from_input(_: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_D3D12_OPTIONS3::default()
     }
 
@@ -725,11 +820,17 @@ impl FeatureObject for ExistingHeapsFeature {
     const TYPE: FeatureType = FeatureType::ExistingHeaps;
 
     type Raw = D3D12_FEATURE_DATA_EXISTING_HEAPS;
+    type UserInput<'a> = ();
     type Input<'a> = ();
     type Output = bool;
 
     #[inline]
-    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+    fn into_input(_: Self::UserInput<'_>) -> Self::Input<'_> {
+        ()
+    }
+
+    #[inline]
+    fn from_input(_: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_EXISTING_HEAPS::default()
     }
 
@@ -766,11 +867,17 @@ impl FeatureObject for Options4Feature {
     const TYPE: FeatureType = FeatureType::Options4;
 
     type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS4;
+    type UserInput<'a> = ();
     type Input<'a> = ();
     type Output = Options4;
 
     #[inline]
-    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+    fn into_input(_: Self::UserInput<'_>) -> Self::Input<'_> {
+        ()
+    }
+
+    #[inline]
+    fn from_input(_: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_D3D12_OPTIONS4::default()
     }
 
@@ -796,11 +903,17 @@ impl FeatureObject for SerializationFeature {
     const TYPE: FeatureType = FeatureType::Serialization;
 
     type Raw = D3D12_FEATURE_DATA_SERIALIZATION;
+    type UserInput<'a> = u32;
     type Input<'a> = u32;
     type Output = HeapSerializationTier;
 
     #[inline]
-    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
+    fn into_input(input: Self::UserInput<'_>) -> Self::Input<'_> {
+        input
+    }
+
+    #[inline]
+    fn from_input(input: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_SERIALIZATION {
             NodeIndex: input,
             ..Default::default()
@@ -837,11 +950,17 @@ impl FeatureObject for CrossNodeFeature {
     const TYPE: FeatureType = FeatureType::CrossNode;
 
     type Raw = D3D12_FEATURE_DATA_CROSS_NODE;
+    type UserInput<'a> = ();
     type Input<'a> = ();
     type Output = CrossNode;
 
     #[inline]
-    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+    fn into_input(_: Self::UserInput<'_>) -> Self::Input<'_> {
+        ()
+    }
+
+    #[inline]
+    fn from_input(_: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_CROSS_NODE::default()
     }
 
@@ -881,11 +1000,17 @@ impl FeatureObject for Options5Feature {
     const TYPE: FeatureType = FeatureType::Options5;
 
     type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS5;
+    type UserInput<'a> = ();
     type Input<'a> = ();
     type Output = Options5;
 
     #[inline]
-    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+    fn into_input(_: Self::UserInput<'_>) -> Self::Input<'_> {
+        ()
+    }
+
+    #[inline]
+    fn from_input(_: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_D3D12_OPTIONS5::default()
     }
 
@@ -923,11 +1048,17 @@ impl FeatureObject for DisplayableFeature {
     const TYPE: FeatureType = FeatureType::Displayable;
 
     type Raw = D3D12_FEATURE_DATA_DISPLAYABLE;
+    type UserInput<'a> = ();
     type Input<'a> = ();
     type Output = Displayable;
 
     #[inline]
-    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+    fn into_input(_: Self::UserInput<'_>) -> Self::Input<'_> {
+        ()
+    }
+
+    #[inline]
+    fn from_input(_: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_DISPLAYABLE::default()
     }
 
@@ -974,11 +1105,17 @@ impl FeatureObject for Options6Feature {
     const TYPE: FeatureType = FeatureType::Options6;
 
     type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS6;
+    type UserInput<'a> = ();
     type Input<'a> = ();
     type Output = Options6;
 
     #[inline]
-    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+    fn into_input(_: Self::UserInput<'_>) -> Self::Input<'_> {
+        ()
+    }
+
+    #[inline]
+    fn from_input(_: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_D3D12_OPTIONS6::default()
     }
 
@@ -1020,11 +1157,17 @@ impl FeatureObject for Options7Feature {
     const TYPE: FeatureType = FeatureType::Options7;
 
     type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS7;
+    type UserInput<'a> = ();
     type Input<'a> = ();
     type Output = Options7;
 
     #[inline]
-    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+    fn into_input(_: Self::UserInput<'_>) -> Self::Input<'_> {
+        ()
+    }
+
+    #[inline]
+    fn from_input(_: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_D3D12_OPTIONS7::default()
     }
 
@@ -1049,11 +1192,17 @@ impl FeatureObject for ProtectedResourceSessionTypeCountFeature {
     const TYPE: FeatureType = FeatureType::ProtectedResourceSessionTypeCount;
 
     type Raw = D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPE_COUNT;
+    type UserInput<'a> = u32;
     type Input<'a> = u32;
     type Output = u32;
 
     #[inline]
-    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
+    fn into_input(input: Self::UserInput<'_>) -> Self::Input<'_> {
+        input
+    }
+
+    #[inline]
+    fn from_input(input: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPE_COUNT {
             NodeIndex: input,
             ..Default::default()
@@ -1093,11 +1242,17 @@ impl FeatureObject for ProtectedResourceSessionTypesFeature {
     const TYPE: FeatureType = FeatureType::ProtectedResourceSessionTypes;
 
     type Raw = D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPES;
+    type UserInput<'a> = ProtectedResourceSessionTypesInput<'a>;
     type Input<'a> = ProtectedResourceSessionTypesInput<'a>;
     type Output = ();
 
     #[inline]
-    fn into_raw(input: Self::Input<'_>) -> Self::Raw {
+    fn into_input(input: Self::UserInput<'_>) -> Self::Input<'_> {
+        input
+    }
+
+    #[inline]
+    fn from_input(input: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPES {
             NodeIndex: input.node_index,
             Count: input.count,
@@ -1121,11 +1276,17 @@ impl FeatureObject for Options8Feature {
     const TYPE: FeatureType = FeatureType::Options8;
 
     type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS8;
+    type UserInput<'a> = ();
     type Input<'a> = ();
     type Output = bool;
 
     #[inline]
-    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+    fn into_input(_: Self::UserInput<'_>) -> Self::Input<'_> {
+        ()
+    }
+
+    #[inline]
+    fn from_input(_: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_D3D12_OPTIONS8::default()
     }
 
@@ -1173,11 +1334,17 @@ impl FeatureObject for Options9Feature {
     const TYPE: FeatureType = FeatureType::Options9;
 
     type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS9;
+    type UserInput<'a> = ();
     type Input<'a> = ();
     type Output = Options9;
 
     #[inline]
-    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+    fn into_input(_: Self::UserInput<'_>) -> Self::Input<'_> {
+        ()
+    }
+
+    #[inline]
+    fn from_input(_: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_D3D12_OPTIONS9::default()
     }
 
@@ -1224,11 +1391,17 @@ impl FeatureObject for Options10Feature {
     const TYPE: FeatureType = FeatureType::Options10;
 
     type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS10;
+    type UserInput<'a> = ();
     type Input<'a> = ();
     type Output = Options10;
 
     #[inline]
-    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+    fn into_input(_: Self::UserInput<'_>) -> Self::Input<'_> {
+        ()
+    }
+
+    #[inline]
+    fn from_input(_: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_D3D12_OPTIONS10::default()
     }
 
@@ -1257,11 +1430,17 @@ impl FeatureObject for Options11Feature {
     const TYPE: FeatureType = FeatureType::Options11;
 
     type Raw = D3D12_FEATURE_DATA_D3D12_OPTIONS11;
+    type UserInput<'a> = ();
     type Input<'a> = ();
     type Output = bool;
 
     #[inline]
-    fn into_raw(_: Self::Input<'_>) -> Self::Raw {
+    fn into_input(_: Self::UserInput<'_>) -> Self::Input<'_> {
+        ()
+    }
+
+    #[inline]
+    fn from_input(_: Self::Input<'_>) -> Self::Raw {
         D3D12_FEATURE_DATA_D3D12_OPTIONS11::default()
     }
 

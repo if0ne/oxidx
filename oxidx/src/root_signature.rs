@@ -36,7 +36,20 @@ impl_trait! {
     fn serialize(desc: &RootSignatureDesc<'_>, version: RootSignatureVersion) -> Result<Blob, DxError> {
         let mut signature = None;
 
-        let parameters = desc.parameters.iter().map(|param| param.as_raw()).collect::<SmallVec<[_; 16]>>();
+        let ranges = desc.parameters
+            .iter()
+            .map(|param| {
+                if let RootParameterType::DescriptorTable { ranges } = param.r#type {
+                    ranges
+                        .iter()
+                        .map(|r| r.as_raw())
+                        .collect::<SmallVec<[_; 8]>>()
+                } else {
+                    SmallVec::new()
+                }
+            }).collect::<SmallVec<[_; 8]>>();
+
+        let parameters = desc.parameters.iter().map(|param| param.as_raw(&ranges)).collect::<SmallVec<[_; 16]>>();
         let sampler = desc.samplers.iter().map(|sampler| sampler.as_raw()).collect::<SmallVec<[_; 16]>>();
 
         let desc = D3D12_ROOT_SIGNATURE_DESC {

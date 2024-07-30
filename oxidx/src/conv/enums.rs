@@ -254,17 +254,11 @@ impl<'a> RootParameterType<'a> {
         }
     }
 
-    #[inline(always)]
-    pub(crate) fn as_raw(&self) -> D3D12_ROOT_PARAMETER_0 {
-        let ranges = if let RootParameterType::DescriptorTable { ranges } = self {
-            ranges
-                .iter()
-                .map(|r| r.as_raw())
-                .collect::<SmallVec<[_; 16]>>()
-        } else {
-            SmallVec::new()
-        };
-
+    #[inline]
+    pub(crate) fn as_raw<const N: usize>(
+        &self,
+        ctx: &[SmallVec<[D3D12_DESCRIPTOR_RANGE; N]>],
+    ) -> D3D12_ROOT_PARAMETER_0 {
         match self {
             RootParameterType::Cbv {
                 shader_register,
@@ -295,8 +289,8 @@ impl<'a> RootParameterType<'a> {
             },
             RootParameterType::DescriptorTable { .. } => D3D12_ROOT_PARAMETER_0 {
                 DescriptorTable: D3D12_ROOT_DESCRIPTOR_TABLE {
-                    NumDescriptorRanges: ranges.len() as u32,
-                    pDescriptorRanges: ranges.as_ptr() as *const _,
+                    NumDescriptorRanges: ctx.len() as u32,
+                    pDescriptorRanges: ctx.as_ptr() as *const _,
                 },
             },
             RootParameterType::Constants32Bit {

@@ -53,7 +53,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// For more information: [`ID3D12Device::CheckFeatureSupport method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-checkfeaturesupport)
     fn check_feature_support<F: FeatureObject>(
         &self,
-        feature_input: F::Input<'_>,
+        feature_input: F::UserInput<'_>,
     ) -> Result<F::Output, DxError>;
 
     /// Copies descriptors from a source to a destination.
@@ -544,9 +544,10 @@ impl_trait! {
     impl IDevice =>
     Device;
 
-    fn check_feature_support<F: FeatureObject>(&self, feature_input: F::Input<'_>) -> Result<F::Output, DxError> {
+    fn check_feature_support<F: FeatureObject>(&self, feature_input: F::UserInput<'_>) -> Result<F::Output, DxError> {
         unsafe {
-            let mut raw = F::into_raw(feature_input);
+            let raw = F::into_input(feature_input);
+            let mut raw = F::from_input(raw);
 
             self.0
                 .CheckFeatureSupport(
@@ -634,7 +635,13 @@ impl_trait! {
         root_signature: Option<&impl IRootSignature>,
     ) -> Result<CS, DxError> {
         unsafe {
-            let desc = desc.as_raw();
+            let argument_descs = desc
+                .argument_descs
+                .iter()
+                .map(|a| a.as_raw())
+                .collect::<SmallVec<[_; 16]>>();
+
+            let desc = desc.as_raw(&argument_descs);
             let mut res: Option<CS::Raw> = None;
 
             self.0.CreateCommandSignature(
@@ -775,7 +782,22 @@ impl_trait! {
         desc: &GraphicsPipelineDesc<'_>,
     ) -> Result<G, DxError> {
         unsafe {
-            let desc = desc.as_raw();
+            let input_layouts = desc
+                .input_layout
+                .iter()
+                .map(|il| il.as_raw())
+                .collect::<SmallVec<[_; 16]>>();
+
+            let entries = if let Some(so) = &desc.stream_output {
+                so.entries
+                    .iter()
+                    .map(|e| e.as_raw())
+                    .collect::<SmallVec<[_; 16]>>()
+            } else {
+                SmallVec::new()
+            };
+
+            let desc = desc.as_raw(&input_layouts, &entries);
 
             let res: G::Raw = self.0.CreateGraphicsPipelineState(&desc).map_err(DxError::from)?;
 

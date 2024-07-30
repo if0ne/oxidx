@@ -45,19 +45,15 @@ impl From<D3D12_COMMAND_QUEUE_DESC> for CommandQueueDesc {
 }
 
 impl<'a> CommandSignatureDesc<'a> {
-    #[inline(always)]
-    pub(crate) fn as_raw(&self) -> D3D12_COMMAND_SIGNATURE_DESC {
-        let num_argument_descs = self.argument_descs.len() as u32;
-        let argument_descs = self
-            .argument_descs
-            .iter()
-            .map(|a| a.as_raw())
-            .collect::<SmallVec<[_; 16]>>();
-
+    #[inline]
+    pub(crate) fn as_raw(
+        &self,
+        arguments: &[D3D12_INDIRECT_ARGUMENT_DESC],
+    ) -> D3D12_COMMAND_SIGNATURE_DESC {
         D3D12_COMMAND_SIGNATURE_DESC {
             ByteStride: self.byte_stride,
-            NumArgumentDescs: num_argument_descs,
-            pArgumentDescs: argument_descs.as_ptr(),
+            NumArgumentDescs: arguments.len() as u32,
+            pArgumentDescs: arguments.as_ptr(),
             NodeMask: self.node_mask,
         }
     }
@@ -106,7 +102,7 @@ impl From<D3D12_CPU_DESCRIPTOR_HANDLE> for CpuDescriptorHandle {
 }
 
 impl DeclarationEntry {
-    #[inline(always)]
+    #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_SO_DECLARATION_ENTRY {
         let semantic_name = PCSTR::from_raw(self.semantic_name.as_ref().as_ptr() as *const _);
 
@@ -163,19 +159,17 @@ impl DescriptorRange {
 }
 
 impl<'a> GraphicsPipelineDesc<'a> {
-    #[inline(always)]
-    pub(crate) fn as_raw(&self) -> D3D12_GRAPHICS_PIPELINE_STATE_DESC {
+    #[inline]
+    pub(crate) fn as_raw(
+        &self,
+        input_layouts: &[D3D12_INPUT_ELEMENT_DESC],
+        so_entries: &[D3D12_SO_DECLARATION_ENTRY],
+    ) -> D3D12_GRAPHICS_PIPELINE_STATE_DESC {
         let mut rtv_formats = [DXGI_FORMAT::default(); 8];
 
         for (i, format) in self.rtv_formats.iter().enumerate() {
             rtv_formats[i] = format.as_raw();
         }
-
-        let input_layouts = self
-            .input_layout
-            .iter()
-            .map(|il| il.as_raw())
-            .collect::<SmallVec<[_; 16]>>();
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC {
             pRootSignature: unsafe { std::mem::transmute_copy(self.root_signature.as_raw()) },
@@ -199,7 +193,7 @@ impl<'a> GraphicsPipelineDesc<'a> {
             StreamOutput: self
                 .stream_output
                 .as_ref()
-                .map(|so| so.as_raw())
+                .map(|so| so.as_raw(&so_entries))
                 .unwrap_or_default(),
             BlendState: self.blend_state.as_raw(),
             SampleMask: self.sample_mask,
@@ -462,12 +456,15 @@ impl ResourceDesc {
 }
 
 impl<'a> RootSignatureDesc<'a> {
-    #[inline(always)]
-    pub(crate) fn as_raw(&self) -> D3D12_ROOT_SIGNATURE_DESC {
+    #[inline]
+    pub(crate) fn as_raw<const N: usize>(
+        &self,
+        params: &[SmallVec<[D3D12_DESCRIPTOR_RANGE; N]>],
+    ) -> D3D12_ROOT_SIGNATURE_DESC {
         let parameters = self
             .parameters
             .iter()
-            .map(|param| param.as_raw())
+            .map(|param| param.as_raw(params))
             .collect::<SmallVec<[_; 16]>>();
         let sampler = self
             .samplers
@@ -496,11 +493,14 @@ impl RenderTargetViewDesc {
 }
 
 impl<'a> RootParameter<'a> {
-    #[inline(always)]
-    pub(crate) fn as_raw(&self) -> D3D12_ROOT_PARAMETER {
+    #[inline]
+    pub(crate) fn as_raw<const N: usize>(
+        &self,
+        param: &[SmallVec<[D3D12_DESCRIPTOR_RANGE; N]>],
+    ) -> D3D12_ROOT_PARAMETER {
         D3D12_ROOT_PARAMETER {
             ParameterType: self.r#type.as_type_raw(),
-            Anonymous: self.r#type.as_raw(),
+            Anonymous: self.r#type.as_raw(param),
             ShaderVisibility: self.visibility.as_raw(),
         }
     }
@@ -517,14 +517,11 @@ impl SampleDesc {
 }
 
 impl<'a> StreamOutputDesc<'a> {
-    #[inline(always)]
-    pub(crate) fn as_raw(&self) -> D3D12_STREAM_OUTPUT_DESC {
-        let entries = self
-            .entries
-            .iter()
-            .map(|e| e.as_raw())
-            .collect::<SmallVec<[_; 16]>>();
-
+    #[inline]
+    pub(crate) fn as_raw(
+        &self,
+        entries: &[D3D12_SO_DECLARATION_ENTRY],
+    ) -> D3D12_STREAM_OUTPUT_DESC {
         D3D12_STREAM_OUTPUT_DESC {
             pSODeclaration: entries.as_ptr(),
             NumEntries: entries.len() as u32,
