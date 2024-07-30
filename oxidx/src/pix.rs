@@ -1,4 +1,4 @@
-use std::{mem::ManuallyDrop, sync::OnceLock};
+use std::{mem::ManuallyDrop, sync::LazyLock};
 
 use windows::{
     core::PCSTR,
@@ -8,7 +8,7 @@ use windows::{
     },
 };
 
-pub(crate) static WIN_PIX_EVENT_RUNTIME: OnceLock<WinPixEventRuntime> = OnceLock::new();
+pub(crate) static WIN_PIX_EVENT_RUNTIME: LazyLock<WinPixEventRuntime> = LazyLock::new(WinPixEventRuntime::new);
 
 type BeginEventOnCommandList = fn(ManuallyDrop<ID3D12GraphicsCommandList>, u64, PCSTR);
 type EndEventOnCommandList = fn(ManuallyDrop<ID3D12GraphicsCommandList>);
@@ -100,9 +100,8 @@ mod tests {
     #[test]
     fn load_test() {
         use super::WIN_PIX_EVENT_RUNTIME;
-        use crate::pix::WinPixEventRuntime;
 
-        let _object = WIN_PIX_EVENT_RUNTIME.get_or_init(WinPixEventRuntime::new);
+        let _object = &*WIN_PIX_EVENT_RUNTIME;
 
         assert!(true);
     }

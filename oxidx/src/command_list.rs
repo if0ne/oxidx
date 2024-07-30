@@ -13,7 +13,7 @@ use crate::{
     descriptor_heap::DescriptorHeap,
     error::DxError,
     impl_trait,
-    pix::{WinPixEventRuntime, WIN_PIX_EVENT_RUNTIME},
+    pix::WIN_PIX_EVENT_RUNTIME,
     pso::IPipelineState,
     query_heap::IQueryHeap,
     resources::{IResource, ResourceBarrier, VertexBufferView},
@@ -330,9 +330,7 @@ impl_trait! {
             let color = color.into();
             let label = PCSTR::from_raw(label.as_ref().as_ptr() as *const _);
 
-            let pix = WIN_PIX_EVENT_RUNTIME.get_or_init(WinPixEventRuntime::new);
-
-            (pix.begin_event_cmd_list)(std::mem::transmute_copy(&self.0), color, label);
+            (WIN_PIX_EVENT_RUNTIME.begin_event_cmd_list)(std::mem::transmute_copy(&self.0), color, label);
         }
     }
 
@@ -572,9 +570,7 @@ impl_trait! {
 
     fn end_event(&self) {
         unsafe {
-            let pix = WIN_PIX_EVENT_RUNTIME.get_or_init(WinPixEventRuntime::new);
-
-            (pix.end_event_cmd_list)(std::mem::transmute_copy(&self.0));
+            (WIN_PIX_EVENT_RUNTIME.end_event_cmd_list)(std::mem::transmute_copy(&self.0));
         }
     }
 
@@ -984,9 +980,7 @@ impl_trait! {
             let color = color.into();
             let label = PCSTR::from_raw(label.as_ref().as_ptr() as *const _);
 
-            let pix = WIN_PIX_EVENT_RUNTIME.get_or_init(WinPixEventRuntime::new);
-
-            (pix.set_marker_cmd_list)(std::mem::transmute_copy(&self.0), color, label);
+            (WIN_PIX_EVENT_RUNTIME.set_marker_cmd_list)(std::mem::transmute_copy(&self.0), color, label);
         }
     }
 

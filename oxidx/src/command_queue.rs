@@ -12,7 +12,7 @@ use crate::{
     error::DxError,
     heap::IHeap,
     impl_trait,
-    pix::{WinPixEventRuntime, WIN_PIX_EVENT_RUNTIME},
+    pix::WIN_PIX_EVENT_RUNTIME,
     resources::IResource,
     sync::IFence,
     types::{CommandQueueDesc, TileRangeFlags, TileRegionSize, TiledResourceCoordinate},
@@ -146,13 +146,11 @@ impl_trait! {
     CommandQueue;
 
     fn begin_event(&self, color: impl Into<u64>, label: impl AsRef<CStr>) {
-        let color = color.into();
-        let label = PCSTR::from_raw(label.as_ref().as_ptr() as *const _);
-
-        let pix = WIN_PIX_EVENT_RUNTIME.get_or_init(WinPixEventRuntime::new);
-
         unsafe {
-            (pix.begin_event_cmd_queue)(std::mem::transmute_copy(&self.0), color, label);
+            let color = color.into();
+            let label = PCSTR::from_raw(label.as_ref().as_ptr() as *const _);
+
+            (WIN_PIX_EVENT_RUNTIME.begin_event_cmd_queue)(std::mem::transmute_copy(&self.0), color, label);
         }
     }
 
@@ -181,10 +179,8 @@ impl_trait! {
     }
 
     fn end_event(&self) {
-        let pix = WIN_PIX_EVENT_RUNTIME.get_or_init(WinPixEventRuntime::new);
-
         unsafe {
-            (pix.end_event_cmd_queue)(std::mem::transmute_copy(&self.0));
+            (WIN_PIX_EVENT_RUNTIME.end_event_cmd_queue)(std::mem::transmute_copy(&self.0));
         }
     }
 
@@ -227,13 +223,11 @@ impl_trait! {
     }
 
     fn set_marker(&self, color: impl Into<u64>, label: impl AsRef<CStr>) {
-        let color = color.into();
-        let label = PCSTR::from_raw(label.as_ref().as_ptr() as *const _);
-
-        let pix = WIN_PIX_EVENT_RUNTIME.get_or_init(WinPixEventRuntime::new);
-
         unsafe {
-            (pix.set_marker_cmd_queue)(std::mem::transmute_copy(&self.0), color, label);
+            let color = color.into();
+            let label = PCSTR::from_raw(label.as_ref().as_ptr() as *const _);
+
+            (WIN_PIX_EVENT_RUNTIME.set_marker_cmd_queue)(std::mem::transmute_copy(&self.0), color, label);
         }
     }
 
