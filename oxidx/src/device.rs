@@ -986,7 +986,7 @@ impl_trait! {
             self.0.Evict(objects.as_mut()).map_err(DxError::from)?;
 
             let ojbects = objects.into_iter()
-                .map_while(|o| o.map(|o| Pageable::new(o)))
+                .map_while(|o| o.map(Pageable::new))
                 .collect();
 
             Ok(ojbects)

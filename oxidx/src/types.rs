@@ -97,7 +97,7 @@ bitflags::bitflags! {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Copy, Debug)]
 pub struct Viewport {
     pub x: f32,
     pub y: f32,
@@ -132,7 +132,7 @@ impl Viewport {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Copy, Debug)]
 pub struct Rect {
     pub left: i32,
     pub top: i32,

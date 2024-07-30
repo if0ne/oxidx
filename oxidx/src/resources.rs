@@ -92,7 +92,7 @@ bitflags::bitflags! {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct VertexBufferView {
     pub buffer_location: u64,
     pub stride_in_bytes: u32,

@@ -689,3 +689,25 @@ impl From<D3D12_TILE_SHAPE> for TileShape {
         }
     }
 }
+
+impl IndexBufferView {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_INDEX_BUFFER_VIEW {
+        D3D12_INDEX_BUFFER_VIEW {
+            BufferLocation: self.buffer_location,
+            SizeInBytes: self.size_in_bytes,
+            Format: self.format.as_raw(),
+        }
+    }
+}
+
+impl StreamOutputBufferView {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_STREAM_OUTPUT_BUFFER_VIEW {
+        D3D12_STREAM_OUTPUT_BUFFER_VIEW {
+            BufferLocation: self.buffer_location,
+            SizeInBytes: self.size_in_bytes,
+            BufferFilledSizeLocation: self.buffer_filled_size_location,
+        }
+    }
+}

@@ -241,7 +241,7 @@ impl DXSample for Sample {
             .create_command_list(0, CommandListType::Direct, &command_allocator, Some(&pso))
             .unwrap();
 
-        command_list.close();
+        command_list.close().unwrap();
 
         let aspect_ratio = width as f32 / height as f32;
 
@@ -312,30 +312,30 @@ fn populate_command_list(resources: &Resources) {
     let command_list = &resources.command_list;
 
     command_list
-        .reset(&resources.command_allocator, &resources.pso)
+        .reset(&resources.command_allocator, Some(&resources.pso))
         .unwrap();
 
-    command_list.set_graphics_root_signature(&resources.root_signature);
-    command_list.rs_set_viewports([&resources.viewport]);
-    command_list.rs_set_scissor_rects([&resources.scissor_rect]);
+    command_list.set_graphics_root_signature(Some(&resources.root_signature));
+    command_list.rs_set_viewports([resources.viewport]);
+    command_list.rs_set_scissor_rects([resources.scissor_rect]);
 
     let barrier = transition_barrier(
         &resources.render_targets[resources.frame_index as usize],
         ResourceStates::Present,
         ResourceStates::RenderTarget,
     );
-    command_list.resource_barrier(&[barrier]);
+    command_list.resource_barrier([barrier]);
 
     let rtv_handle = resources
         .rtv_heap
         .get_cpu_descriptor_handle_for_heap_start()
         .offset(resources.frame_index as usize * resources.rtv_descriptor_size);
 
-    command_list.om_set_render_targets([&rtv_handle], false, None);
+    command_list.om_set_render_targets([rtv_handle], false, None);
 
     command_list.clear_render_target_view(rtv_handle, [0.0_f32, 0.2_f32, 0.4_f32, 1.0_f32], []);
     command_list.ia_set_primitive_topology(PrimitiveTopology::Triangle);
-    command_list.ia_set_vertex_buffers(0, [&resources.vbv]);
+    command_list.ia_set_vertex_buffers(0, [resources.vbv]);
     command_list.draw_instanced(3, 1, 0, 0);
 
     let barrier = transition_barrier(
@@ -343,9 +343,9 @@ fn populate_command_list(resources: &Resources) {
         ResourceStates::RenderTarget,
         ResourceStates::Present,
     );
-    command_list.resource_barrier(&[barrier]);
+    command_list.resource_barrier([barrier]);
 
-    command_list.close();
+    command_list.close().unwrap();
 }
 
 fn transition_barrier(

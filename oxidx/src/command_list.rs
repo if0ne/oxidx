@@ -2,7 +2,7 @@ use std::ffi::CStr;
 
 use smallvec::SmallVec;
 use windows::{
-    core::Interface,
+    core::{Interface, Param, PCSTR},
     Win32::{Foundation::BOOL, Graphics::Direct3D12::*},
 };
 
@@ -10,9 +10,10 @@ use crate::{
     command_allocator::ICommandAllocator,
     command_signature::ICommandSignature,
     create_type,
-    descriptor_heap::IDescriptorHeap,
+    descriptor_heap::DescriptorHeap,
     error::DxError,
     impl_trait,
+    pix::{WinPixEventRuntime, WIN_PIX_EVENT_RUNTIME},
     pso::IPipelineState,
     query_heap::IQueryHeap,
     resources::{IResource, ResourceBarrier, VertexBufferView},
@@ -34,7 +35,9 @@ pub trait ICommandList: HasInterface<Raw: Interface> {
     fn get_type(&self) -> CommandListType;
 }
 
-pub trait IGraphicsCommandList: ICommandList {
+pub trait IGraphicsCommandList:
+    ICommandList + for<'a> HasInterface<RawRef<'a>: Param<ID3D12GraphicsCommandList>>
+{
     fn begin_event(&self, color: impl Into<u64>, label: impl AsRef<CStr>);
 
     fn begin_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: u32);
@@ -140,11 +143,11 @@ pub trait IGraphicsCommandList: ICommandList {
 
     fn execute_bundle(&self, command_list: &impl IGraphicsCommandList);
 
-    fn execute_indirect<'a>(
+    fn execute_indirect(
         &self,
         command_signature: &impl ICommandSignature,
         max_command_count: u32,
-        argument_buffer: impl IntoIterator<Item = &'a (impl IResource + 'a)>,
+        argument_buffer: impl IResource,
         argument_buffer_offset: u64,
         count_buffer: Option<&impl IResource>,
         count_buffer_offset: u64,
@@ -154,7 +157,7 @@ pub trait IGraphicsCommandList: ICommandList {
 
     fn ia_set_primitive_topology(&self, topology: PrimitiveTopology);
 
-    fn ia_set_vertex_buffers<'a>(
+    fn ia_set_vertex_buffers(
         &self,
         slot: u32,
         buffers: impl IntoIterator<Item = VertexBufferView>,
@@ -162,7 +165,7 @@ pub trait IGraphicsCommandList: ICommandList {
 
     fn om_set_blend_factor(&self, blend_factor: Option<[f32; 4]>);
 
-    fn om_set_render_targets<'a>(
+    fn om_set_render_targets(
         &self,
         render_targets: impl IntoIterator<Item = CpuDescriptorHandle>,
         rts_single_handle_to_descriptor_range: bool,
@@ -212,7 +215,7 @@ pub trait IGraphicsCommandList: ICommandList {
     fn set_compute_root_32bit_constants<T: Copy>(
         &self,
         root_parameter_index: u32,
-        src_data: &T,
+        src_data: &[T],
         dest_offset_in_32bit_values: u32,
     );
 
@@ -244,7 +247,7 @@ pub trait IGraphicsCommandList: ICommandList {
 
     fn set_descriptor_heaps<'a>(
         &self,
-        descriptor_heaps: impl IntoIterator<Item = &'a (impl IDescriptorHeap + 'a)>,
+        descriptor_heaps: impl IntoIterator<Item = &'a DescriptorHeap>,
     );
 
     fn set_graphics_root_32bit_constant(
@@ -257,7 +260,7 @@ pub trait IGraphicsCommandList: ICommandList {
     fn set_graphics_root_32bit_constants<T: Copy>(
         &self,
         root_parameter_index: u32,
-        src_data: &T,
+        src_data: &[T],
         dest_offset_in_32bit_values: u32,
     );
 
@@ -301,7 +304,7 @@ pub trait IGraphicsCommandList: ICommandList {
     fn so_set_targets(
         &self,
         start_slot: u32,
-        views: impl IntoIterator<Item = StreamOutputBufferView>,
+        views: Option<impl IntoIterator<Item = StreamOutputBufferView>>,
     );
 }
 
@@ -322,127 +325,232 @@ impl_trait! {
     impl IGraphicsCommandList =>
     GraphicsCommandList;
 
-    fn close(&self) {
+    fn begin_event(&self, color: impl Into<u64>, label: impl AsRef<CStr>) {
         unsafe {
-            self.0.Close().unwrap(/*TODO: Error*/);
+            let color = color.into();
+            let label = PCSTR::from_raw(label.as_ref().as_ptr() as *const _);
+
+            let pix = WIN_PIX_EVENT_RUNTIME.get_or_init(WinPixEventRuntime::new);
+
+            (pix.begin_event_cmd_list)(std::mem::transmute_copy(&self.0), color, label);
         }
     }
 
-    fn reset(
+    fn begin_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: u32) {
+        unsafe {
+            self.0.BeginQuery(
+                query_heap.as_raw_ref(),
+                r#type.as_raw(),
+                index
+            )
+        }
+    }
+
+    fn clear_depth_stencil_view(
         &self,
-        command_allocator: &impl ICommandAllocator,
-        pso: Option<&impl IPipelineState>,
-    ) -> Result<(), DxError> {
-        unsafe {
-            self.0
-                .Reset(command_allocator.as_raw_ref(), pso.as_raw_ref())
-                .map_err(|_| DxError::Dummy)?
-        }
-        Ok(())
-    }
-
-    fn set_graphics_root_signature(&self, root_signature: &impl IRootSignature) {
-        unsafe { self.0.SetGraphicsRootSignature(root_signature.as_raw_ref()) }
-    }
-
-    fn rs_set_viewports<'a>(&self, viewport: impl IntoIterator<Item = &'a Viewport>) {
-        let viewports = viewport
-            .into_iter()
-            .map(|v| v.as_raw())
-            .collect::<SmallVec<[_; 8]>>();
-
-        unsafe {
-            self.0.RSSetViewports(&viewports);
-        }
-    }
-
-    fn rs_set_scissor_rects<'a>(&self, rects: impl IntoIterator<Item = &'a Rect>) {
-        let rects = rects
-            .into_iter()
-            .map(|v| v.as_raw())
-            .collect::<SmallVec<[_; 8]>>();
-
-        unsafe {
-            self.0.RSSetScissorRects(&rects);
-        }
-    }
-
-    fn om_set_render_targets<'a>(
-        &self,
-        render_targets: impl IntoIterator<Item = &'a CpuDescriptorHandle>,
-        rts_single_handle_to_descriptor_range: bool,
-        depth_stencil: Option<&'a CpuDescriptorHandle>,
+        depth_stencil_view: CpuDescriptorHandle,
+        clear_flags: ClearFlags,
+        depth: f32,
+        stencil: u8,
+        rects: impl IntoIterator<Item = Rect>,
     ) {
-        let render_targets = render_targets
-            .into_iter()
-            .map(|rt| rt.as_raw())
-            .collect::<SmallVec<[_; 8]>>();
-
-        let render_targets_raw = if !render_targets.is_empty() {
-            Some(render_targets.as_ptr() as *const _)
-        } else {
-            None
-        };
-
-        let depth_stencil = depth_stencil.map(|ds| ds.as_raw());
-        let depth_stencil = depth_stencil.as_ref().map(|ds| ds as *const _);
-
         unsafe {
-            self.0.OMSetRenderTargets(
-                render_targets.len() as u32,
-                render_targets_raw,
-                BOOL(rts_single_handle_to_descriptor_range as i32),
-                depth_stencil,
+            let rects = rects
+                .into_iter()
+                .map(|r| r.as_raw())
+                .collect::<SmallVec<[_; 8]>>();
+
+            self.0.ClearDepthStencilView(
+                depth_stencil_view.as_raw(),
+                clear_flags.as_raw(),
+                depth,
+                stencil,
+                &rects
             );
         }
     }
 
-    fn clear_render_target_view<'a>(
+    fn clear_render_target_view(
         &self,
         rtv_handle: CpuDescriptorHandle,
-        color: [f32; 4],
-        rects: impl IntoIterator<Item = &'a Rect>,
+        color: impl Into<[f32; 4]>,
+        rects: impl IntoIterator<Item = Rect>,
     ) {
-        let rects = rects
-            .into_iter()
-            .map(|r| r.as_raw())
-            .collect::<SmallVec<[_; 8]>>();
-
-        let rects = if !rects.is_empty() {
-            Some(rects.as_slice())
-        } else {
-            None
-        };
-
         unsafe {
-            self.0
-                .ClearRenderTargetView(rtv_handle.as_raw(), &color, rects);
+            let rects = rects
+                .into_iter()
+                .map(|r| r.as_raw())
+                .collect::<SmallVec<[_; 8]>>();
+
+            let rects = if !rects.is_empty() {
+                Some(rects.as_slice())
+            } else {
+                None
+            };
+
+            let color = color.into();
+
+            self.0.ClearRenderTargetView(rtv_handle.as_raw(), &color, rects);
         }
     }
 
-    fn ia_set_primitive_topology(&self, topology: PrimitiveTopology) {
+    fn clear_state(&self, pipeline_state: Option<&impl IPipelineState>) {
         unsafe {
-            self.0.IASetPrimitiveTopology(topology.as_raw());
+            self.0.ClearState(pipeline_state.map(|p| p.as_raw_ref()).unwrap_or(std::mem::zeroed()));
         }
     }
 
-    fn ia_set_vertex_buffers<'a>(
+    fn clear_unordered_access_view_float(
         &self,
-        slot: u32,
-        buffers: impl IntoIterator<Item = &'a VertexBufferView>,
+        view_gpu_handle_in_current_heap: GpuDescriptorHandle,
+        view_cpu_handle: CpuDescriptorHandle,
+        resource: &impl IResource,
+        values: impl Into<[f32; 4]>,
+        rects: impl IntoIterator<Item = Rect>,
     ) {
-        let buffers = buffers
-            .into_iter()
-            .map(|r| r.as_raw())
-            .collect::<SmallVec<[_; 8]>>();
+        unsafe {
+            let rects = rects
+                .into_iter()
+                .map(|r| r.as_raw())
+                .collect::<SmallVec<[_; 8]>>();
 
-        let buffers = if !buffers.is_empty() {
-            Some(buffers.as_slice())
-        } else {
-            None
-        };
+            self.0.ClearUnorderedAccessViewFloat(
+                view_gpu_handle_in_current_heap.as_raw(),
+                view_cpu_handle.as_raw(),
+                resource.as_raw_ref(),
+                &values.into(),
+                &rects
+            );
+        }
+    }
 
-        unsafe { self.0.IASetVertexBuffers(slot, buffers) }
+    fn clear_unordered_access_view_u32(
+        &self,
+        view_gpu_handle_in_current_heap: GpuDescriptorHandle,
+        view_cpu_handle: CpuDescriptorHandle,
+        resource: &impl IResource,
+        values: impl Into<[u32; 4]>,
+        rects: impl IntoIterator<Item = Rect>,
+    ) {
+        unsafe {
+            let rects = rects
+                .into_iter()
+                .map(|r| r.as_raw())
+                .collect::<SmallVec<[_; 8]>>();
+
+            self.0.ClearUnorderedAccessViewUint(
+                view_gpu_handle_in_current_heap.as_raw(),
+                view_cpu_handle.as_raw(),
+                resource.as_raw_ref(),
+                &values.into(),
+                &rects
+            );
+        }
+    }
+
+    fn close(&self) -> Result<(), DxError> {
+        unsafe {
+            self.0.Close().map_err(DxError::from)
+        }
+    }
+
+    fn copy_buffer_region(
+        &self,
+        dst_buffer: &impl IResource,
+        dst_offset: u64,
+        src_buffer: &impl IResource,
+        src_offset: u64,
+        num_bytes: u64,
+    ) {
+        unsafe {
+            self.0.CopyBufferRegion(
+                dst_buffer.as_raw_ref(),
+                dst_offset,
+                src_buffer.as_raw_ref(),
+                src_offset,
+                num_bytes
+            );
+        }
+    }
+
+    fn copy_resource(&self, dst_resource: &impl IResource, src_resource: &impl IResource) {
+        unsafe {
+            self.0.CopyResource(
+                dst_resource.as_raw_ref(),
+                src_resource.as_raw_ref(),
+            );
+        }
+    }
+
+    fn copy_texture_region<T: IResource>(
+        &self,
+        dst: &TextureCopyLocation<'_, T>,
+        dst_x: u32,
+        dst_y: u32,
+        dst_z: u32,
+        src: &TextureCopyLocation<'_, T>,
+        src_box: Option<&Box>,
+    ) {
+        todo!()
+    }
+
+    fn copy_tiles(
+        &self,
+        tiled_resource: &impl IResource,
+        tile_region_start_coordinate: &TiledResourceCoordinate,
+        tile_region_size: &TileRegionSize,
+        buffer: &impl IResource,
+        buffer_start_offset: u64,
+        flags: TileCopyFlags,
+    ) {
+        unsafe {
+            self.0.CopyTiles(
+                tiled_resource.as_raw_ref(),
+                &tile_region_start_coordinate.as_raw(),
+                &tile_region_size.as_raw(),
+                buffer.as_raw_ref(),
+                buffer_start_offset,
+                flags.as_raw(),
+            );
+        }
+    }
+
+    fn discard_resource(&self, resource: &impl IResource, region: &DiscardRegion<'_>) {
+        todo!();
+    }
+
+    fn dispatch(
+        &self,
+        thread_group_count_x: u32,
+        thread_group_count_y: u32,
+        thread_group_count_z: u32,
+    ) {
+        unsafe {
+            self.0.Dispatch(
+                thread_group_count_x,
+                thread_group_count_y,
+                thread_group_count_z
+            )
+        }
+    }
+
+    fn draw_indexed_instanced(
+        &self,
+        index_count_per_instance: u32,
+        instance_count: u32,
+        start_index_location: u32,
+        base_vertex_location: i32,
+        start_instance_location: u32,
+    ) {
+        unsafe {
+            self.0.DrawIndexedInstanced(
+                index_count_per_instance,
+                instance_count,
+                start_index_location,
+                base_vertex_location,
+                start_instance_location,
+            );
+        }
     }
 
     fn draw_instanced(
@@ -458,16 +566,469 @@ impl_trait! {
                 instance_count,
                 start_vertex_location,
                 start_instance_location,
+            );
+        }
+    }
+
+    fn end_event(&self) {
+        unsafe {
+            let pix = WIN_PIX_EVENT_RUNTIME.get_or_init(WinPixEventRuntime::new);
+
+            (pix.end_event_cmd_list)(std::mem::transmute_copy(&self.0));
+        }
+    }
+
+    fn end_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: u32) {
+        unsafe {
+            self.0.EndQuery(
+                query_heap.as_raw_ref(),
+                r#type.as_raw(),
+                index
             )
         }
     }
 
-    fn resource_barrier<'a>(&self, barriers: impl IntoIterator<Item = &'a ResourceBarrier<'a>>) {
-        let barriers = barriers
-            .into_iter()
-            .map(|r| r.as_raw())
-            .collect::<SmallVec<[_; 8]>>();
+    fn execute_bundle(&self, command_list: &impl IGraphicsCommandList) {
+        unsafe {
+            self.0.ExecuteBundle(command_list.as_raw_ref());
+        }
+    }
 
-        unsafe { self.0.ResourceBarrier(barriers.as_slice()) }
+    fn execute_indirect(
+        &self,
+        command_signature: &impl ICommandSignature,
+        max_command_count: u32,
+        argument_buffer: impl IResource,
+        argument_buffer_offset: u64,
+        count_buffer: Option<&impl IResource>,
+        count_buffer_offset: u64,
+    ) {
+        unsafe {
+            self.0.ExecuteIndirect(
+                command_signature.as_raw_ref(),
+                max_command_count,
+                argument_buffer.as_raw_ref(),
+                argument_buffer_offset,
+                count_buffer.map(|c| c.as_raw_ref()).unwrap_or(std::mem::zeroed()),
+                count_buffer_offset
+            )
+        }
+    }
+
+    fn ia_set_index_buffer(&self, view: Option<&IndexBufferView>) {
+        unsafe {
+            let view = view.map(|view| view.as_raw());
+            let view = view.as_ref().map(|view| view as *const _);
+
+            self.0.IASetIndexBuffer(view);
+        }
+    }
+
+    fn ia_set_primitive_topology(&self, topology: PrimitiveTopology) {
+        unsafe {
+            self.0.IASetPrimitiveTopology(topology.as_raw());
+        }
+    }
+
+    fn ia_set_vertex_buffers(
+        &self,
+        slot: u32,
+        buffers: impl IntoIterator<Item = VertexBufferView>,
+    ) {
+        unsafe {
+            let buffers = buffers
+                .into_iter()
+                .map(|r| r.as_raw())
+                .collect::<SmallVec<[_; 8]>>();
+
+            let buffers = if !buffers.is_empty() {
+                Some(buffers.as_slice())
+            } else {
+                None
+            };
+
+            self.0.IASetVertexBuffers(slot, buffers);
+        }
+    }
+
+    fn om_set_blend_factor(&self, blend_factor: Option<[f32; 4]>) {
+        unsafe {
+            self.0.OMSetBlendFactor(blend_factor.as_ref());
+        }
+    }
+
+    fn om_set_render_targets(
+        &self,
+        render_targets: impl IntoIterator<Item = CpuDescriptorHandle>,
+        rts_single_handle_to_descriptor_range: bool,
+        depth_stencil: Option<CpuDescriptorHandle>,
+    ) {
+        unsafe {
+            let render_targets = render_targets
+                .into_iter()
+                .map(|rt| rt.as_raw())
+                .collect::<SmallVec<[_; 8]>>();
+
+            let render_targets_raw = if !render_targets.is_empty() {
+                Some(render_targets.as_ptr() as *const _)
+            } else {
+                None
+            };
+
+            let depth_stencil = depth_stencil.map(|ds| ds.as_raw());
+            let depth_stencil = depth_stencil.as_ref().map(|ds| ds as *const _);
+
+            self.0.OMSetRenderTargets(
+                render_targets.len() as u32,
+                render_targets_raw,
+                BOOL(rts_single_handle_to_descriptor_range as i32),
+                depth_stencil,
+            );
+        }
+    }
+
+    fn om_set_stencil_ref(&self, stencil_ref: u32) {
+        unsafe {
+            self.0.OMSetStencilRef(stencil_ref);
+        }
+    }
+
+    fn reset(
+        &self,
+        command_allocator: &impl ICommandAllocator,
+        pso: Option<&impl IPipelineState>,
+    ) -> Result<(), DxError> {
+        unsafe {
+            self.0
+                .Reset(
+                    command_allocator.as_raw_ref(),
+                    pso.map(|pso| pso.as_raw_ref()).unwrap_or(std::mem::zeroed())
+                )
+                .map_err(DxError::from)
+        }
+    }
+
+    fn resolve_query_data(
+        &self,
+        query_heap: &impl IQueryHeap,
+        r#type: QueryType,
+        start_index: u32,
+        num_queries: u32,
+        dst_buffer: &impl IResource,
+        aligned_dst_buffer_offset: u64,
+    ) {
+        unsafe {
+            self.0.ResolveQueryData(
+                query_heap.as_raw_ref(),
+                r#type.as_raw(),
+                start_index,
+                num_queries,
+                dst_buffer.as_raw_ref(),
+                aligned_dst_buffer_offset
+            );
+        }
+    }
+
+    fn resolve_subresource(
+        &self,
+        dst_resource: &impl IResource,
+        dst_subresource: u32,
+        src_resource: &impl IResource,
+        src_subresource: u32,
+        format: Format,
+    ) {
+        unsafe {
+            self.0.ResolveSubresource(
+                dst_resource.as_raw_ref(),
+                dst_subresource,
+                src_resource.as_raw_ref(),
+                src_subresource,
+                format.as_raw()
+            );
+        }
+    }
+
+    fn resource_barrier<'a>(&self, barriers: impl IntoIterator<Item = ResourceBarrier<'a>>) {
+        unsafe {
+            let barriers = barriers
+                .into_iter()
+                .map(|r| r.as_raw())
+                .collect::<SmallVec<[_; 8]>>();
+
+            self.0.ResourceBarrier(barriers.as_slice());
+        }
+    }
+
+    fn rs_set_scissor_rects(&self, rects: impl IntoIterator<Item = Rect>) {
+        unsafe {
+            let rects = rects
+                .into_iter()
+                .map(|v| v.as_raw())
+                .collect::<SmallVec<[_; 8]>>();
+
+            self.0.RSSetScissorRects(&rects);
+        }
+    }
+
+    fn rs_set_viewports(&self, viewport: impl IntoIterator<Item = Viewport>) {
+        unsafe {
+            let viewports = viewport
+                .into_iter()
+                .map(|v| v.as_raw())
+                .collect::<SmallVec<[_; 8]>>();
+
+            self.0.RSSetViewports(&viewports);
+        }
+    }
+
+    fn set_compute_root_32bit_constant(
+        &self,
+        root_parameter_index: u32,
+        src_data: u32,
+        dest_offset_in_32bit_values: u32,
+    ) {
+        unsafe {
+            self.0.SetComputeRoot32BitConstant(
+                root_parameter_index,
+                src_data,
+                dest_offset_in_32bit_values
+            );
+        }
+    }
+
+    fn set_compute_root_32bit_constants<T: Copy>(
+        &self,
+        root_parameter_index: u32,
+        src_data: &[T],
+        dest_offset_in_32bit_values: u32,
+    ) {
+        unsafe {
+            self.0.SetComputeRoot32BitConstants(
+                root_parameter_index,
+                src_data.len() as u32,
+                src_data.as_ptr() as *const _,
+                dest_offset_in_32bit_values
+            );
+        }
+    }
+
+    fn set_compute_root_constant_buffer_view(
+        &self,
+        root_parameter_index: u32,
+        buffer_location: u64,
+    ) {
+        unsafe {
+            self.0.SetComputeRootConstantBufferView(
+                root_parameter_index,
+                buffer_location
+            );
+        }
+    }
+
+    fn set_compute_root_descriptor_table(
+        &self,
+        root_parameter_index: u32,
+        base_descriptor: GpuDescriptorHandle,
+    ) {
+        unsafe {
+            self.0.SetComputeRootDescriptorTable(
+                root_parameter_index,
+                base_descriptor.as_raw()
+            );
+        }
+    }
+
+    fn set_compute_root_shader_resource_view(
+        &self,
+        root_parameter_index: u32,
+        buffer_location: u64,
+    ) {
+        unsafe {
+            self.0.SetComputeRootShaderResourceView(
+                root_parameter_index,
+                buffer_location
+            );
+        }
+    }
+
+    fn set_compute_root_signature(&self, root_signature: Option<&impl IRootSignature>) {
+        unsafe {
+            self.0.SetComputeRootSignature(
+                root_signature.map(|rs| rs.as_raw_ref()).unwrap_or(std::mem::zeroed())
+            );
+        }
+    }
+
+    fn set_compute_root_unordered_access_view(
+        &self,
+        root_parameter_index: u32,
+        buffer_location: u64,
+    ) {
+        unsafe {
+            self.0.SetComputeRootUnorderedAccessView(
+                root_parameter_index,
+                buffer_location
+            );
+        }
+    }
+
+    fn set_descriptor_heaps<'a>(
+        &self,
+        descriptor_heaps: impl IntoIterator<Item = &'a DescriptorHeap>,
+    ) {
+        unsafe {
+            let descriptor_heaps = descriptor_heaps
+                .into_iter()
+                .map(|dh| Some(dh.as_raw().clone()))
+                .collect::<SmallVec<[_; 16]>>();
+
+            self.0.SetDescriptorHeaps(
+                descriptor_heaps.as_slice()
+            );
+        }
+    }
+
+    fn set_graphics_root_32bit_constant(
+        &self,
+        root_parameter_index: u32,
+        src_data: u32,
+        dest_offset_in_32bit_values: u32,
+    ) {
+        unsafe {
+            self.0.SetGraphicsRoot32BitConstant(
+                root_parameter_index,
+                src_data,
+                dest_offset_in_32bit_values
+            );
+        }
+    }
+
+    fn set_graphics_root_32bit_constants<T: Copy>(
+        &self,
+        root_parameter_index: u32,
+        src_data: &[T],
+        dest_offset_in_32bit_values: u32,
+    ) {
+        unsafe {
+            self.0.SetGraphicsRoot32BitConstants(
+                root_parameter_index,
+                src_data.len() as u32,
+                src_data.as_ptr() as *const _,
+                dest_offset_in_32bit_values
+            );
+        }
+    }
+
+    fn set_graphics_root_constant_buffer_view(
+        &self,
+        root_parameter_index: u32,
+        buffer_location: u64,
+    ) {
+        unsafe {
+            self.0.SetGraphicsRootConstantBufferView(
+                root_parameter_index,
+                buffer_location,
+            );
+        }
+    }
+
+    fn set_graphics_root_descriptor_table(
+        &self,
+        root_parameter_index: u32,
+        base_descriptor: GpuDescriptorHandle,
+    ) {
+        unsafe {
+            self.0.SetGraphicsRootDescriptorTable(
+                root_parameter_index,
+                base_descriptor.as_raw(),
+            );
+        }
+    }
+
+    fn set_graphics_root_shader_resource_view(
+        &self,
+        root_parameter_index: u32,
+        buffer_location: u64,
+    ) {
+        unsafe {
+            self.0.SetGraphicsRootShaderResourceView(
+                root_parameter_index,
+                buffer_location,
+            );
+        }
+    }
+
+    fn set_graphics_root_signature(&self, root_signature: Option<&impl IRootSignature>) {
+        unsafe {
+            self.0.SetGraphicsRootSignature(
+                root_signature.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed())
+            )
+        }
+    }
+
+    fn set_graphics_root_unordered_access_view(
+        &self,
+        root_parameter_index: u32,
+        buffer_location: u64,
+    ) {
+        unsafe {
+            self.0.SetGraphicsRootUnorderedAccessView(
+                root_parameter_index,
+                buffer_location,
+            );
+        }
+    }
+
+    fn set_marker(&self, color: impl Into<u64>, label: impl AsRef<CStr>) {
+        unsafe {
+            let color = color.into();
+            let label = PCSTR::from_raw(label.as_ref().as_ptr() as *const _);
+
+            let pix = WIN_PIX_EVENT_RUNTIME.get_or_init(WinPixEventRuntime::new);
+
+            (pix.set_marker_cmd_list)(std::mem::transmute_copy(&self.0), color, label);
+        }
+    }
+
+    fn set_pipeline_state(&self, pipeline_state: &impl IPipelineState) {
+        unsafe {
+            self.0.SetPipelineState(pipeline_state.as_raw_ref());
+        }
+    }
+
+    fn set_predication(
+        &self,
+        buffer: Option<&impl IResource>,
+        aligned_buffer_offset: u64,
+        operation: PredicationOp,
+    ) {
+        unsafe {
+            self.0.SetPredication(
+                buffer.map(|b| b.as_raw_ref()).unwrap_or(std::mem::zeroed()),
+                aligned_buffer_offset,
+                operation.as_raw()
+            )
+        }
+    }
+
+    fn so_set_targets(
+        &self,
+        start_slot: u32,
+        views: Option<impl IntoIterator<Item = StreamOutputBufferView>>,
+    ) {
+        unsafe {
+            let views = views
+                .map(|views|
+                    views
+                    .into_iter()
+                    .map(|view| view.as_raw())
+                    .collect::<SmallVec<[_; 16]>>()
+                );
+
+            self.0.SOSetTargets(
+                start_slot,
+                views.as_ref().map(|v| v.as_slice())
+            )
+        }
     }
 }

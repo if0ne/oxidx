@@ -1434,7 +1434,7 @@ pub enum ProgrammableSamplePositionsTier {
 /// For more information: [`D3D12_QUERY_HEAP_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_query_heap_type)
 #[derive(Clone, Copy, Debug, Default, FromRepr)]
 #[repr(i32)]
-pub enum QueryType {
+pub enum QueryHeapType {
     /// This returns a binary 0/1 result:
     /// 0 indicates that no samples passed depth and stencil testing,
     /// 1 indicates that at least one sample passed depth and stencil testing.
@@ -1460,6 +1460,31 @@ pub enum QueryType {
 
     /// TBD
     PipelineStatistics1 = D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1.0,
+}
+
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum QueryType {
+    #[default]
+    Occlusion = D3D12_QUERY_TYPE_OCCLUSION.0,
+
+    BinaryOcclusion = D3D12_QUERY_TYPE_BINARY_OCCLUSION.0,
+
+    Timestamp = D3D12_QUERY_TYPE_TIMESTAMP.0,
+
+    PipelineStatistics = D3D12_QUERY_TYPE_PIPELINE_STATISTICS.0,
+
+    SoStatisticsStream0 = D3D12_QUERY_TYPE_SO_STATISTICS_STREAM0.0,
+
+    SoStatisticsStream1 = D3D12_QUERY_TYPE_SO_STATISTICS_STREAM1.0,
+
+    SoStatisticsStream2 = D3D12_QUERY_TYPE_SO_STATISTICS_STREAM2.0,
+
+    SoStatisticsStream3 = D3D12_QUERY_TYPE_SO_STATISTICS_STREAM3.0,
+
+    VideoDecodeStatistics = D3D12_QUERY_TYPE_VIDEO_DECODE_STATISTICS.0,
+
+    PipelineStatistics1 = D3D12_QUERY_TYPE_PIPELINE_STATISTICS1.0,
 }
 
 /// Specifies the level of ray tracing support on the graphics device.

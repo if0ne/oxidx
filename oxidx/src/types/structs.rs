@@ -419,7 +419,7 @@ pub struct Luid {
 #[derive(Clone, Copy, Debug, Default)]
 pub struct QueryHeapDesc {
     /// Specifies one member of [`QueryHeapType`].
-    pub r#type: QueryType,
+    pub r#type: QueryHeapType,
 
     /// Specifies the number of queries the heap should contain.
     pub count: u32,
