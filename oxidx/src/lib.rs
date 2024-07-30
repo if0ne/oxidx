@@ -4,28 +4,29 @@
 
 pub mod dx;
 
-pub(crate) mod adapter;
-pub(crate) mod blob;
-pub(crate) mod command_allocator;
-pub(crate) mod command_list;
-pub(crate) mod command_queue;
-pub(crate) mod command_signature;
-pub(crate) mod debug;
-pub(crate) mod descriptor_heap;
-pub(crate) mod device;
-pub(crate) mod device_child;
-pub(crate) mod error;
-pub(crate) mod factory;
-pub(crate) mod heap;
-pub(crate) mod pageable;
+pub mod adapter;
+pub mod blob;
+pub mod command_allocator;
+pub mod command_list;
+pub mod command_queue;
+pub mod command_signature;
+pub mod debug;
+pub mod descriptor_heap;
+pub mod device;
+pub mod device_child;
+pub mod error;
+pub mod factory;
+pub mod heap;
+pub mod pageable;
+pub mod pso;
+pub mod query_heap;
+pub mod resources;
+pub mod root_signature;
+pub mod swapchain;
+pub mod sync;
+pub mod types;
+
 pub(crate) mod pix;
-pub(crate) mod pso;
-pub(crate) mod query_heap;
-pub(crate) mod resources;
-pub(crate) mod root_signature;
-pub(crate) mod swapchain;
-pub(crate) mod sync;
-pub(crate) mod types;
 
 mod conv;
 mod utils;
