@@ -644,11 +644,19 @@ impl_trait! {
             let desc = desc.as_raw(&argument_descs);
             let mut res: Option<CS::Raw> = None;
 
-            self.0.CreateCommandSignature(
-                &desc,
-                root_signature.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed()),
-                &mut res
-            ).map_err(DxError::from)?;
+            if let Some(root_signature) = root_signature {
+                self.0.CreateCommandSignature(
+                    &desc,
+                    root_signature.as_raw_ref(),
+                    &mut res
+                ).map_err(DxError::from)?;
+            } else {
+                self.0.CreateCommandSignature(
+                    &desc,
+                    None,
+                    &mut res
+                ).map_err(DxError::from)?;
+            } 
 
             let res = res.unwrap_unchecked();
 
@@ -693,13 +701,22 @@ impl_trait! {
         pso: Option<&impl IPipelineState>,
     ) -> Result<CL, DxError> {
         unsafe {
-            let res: CL::Raw = self.0.CreateCommandList(
-                node_mask,
-                r#type.as_raw(),
-                command_allocator.as_raw_ref(),
-                pso.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed())
-            ).map_err(|_| DxError::Dummy)?;
-
+            let res: CL::Raw = if let Some(pso) = pso {
+                self.0.CreateCommandList(
+                    node_mask,
+                    r#type.as_raw(),
+                    command_allocator.as_raw_ref(),
+                    pso.as_raw_ref()
+                ).map_err(DxError::from)?
+            } else {
+                self.0.CreateCommandList(
+                    node_mask,
+                    r#type.as_raw(),
+                    command_allocator.as_raw_ref(),
+                    None
+                ).map_err(DxError::from)?
+            };
+           
             Ok(CL::new(res))
         }
     }
@@ -744,11 +761,19 @@ impl_trait! {
 
             let dest_descriptor = dest_descriptor.as_raw();
 
-            self.0.CreateDepthStencilView(
-                resource.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed()),
-                desc,
-                dest_descriptor
-            );
+            if let Some(resource) = resource {
+                self.0.CreateDepthStencilView(
+                    resource.as_raw_ref(),
+                    desc,
+                    dest_descriptor
+                );
+            } else {
+                self.0.CreateDepthStencilView(
+                    None,
+                    desc,
+                    dest_descriptor
+                );
+            }
         }
     }
 
@@ -869,11 +894,19 @@ impl_trait! {
             let desc = desc.map(|v| v.as_raw());
             let desc = desc.as_ref().map(|f| f as *const _);
 
-            self.0.CreateRenderTargetView(
-                resource.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed()),
-                desc,
-                handle.as_raw()
-            );
+            if let Some(resource) = resource {
+                self.0.CreateRenderTargetView(
+                    resource.as_raw_ref(),
+                    desc,
+                    handle.as_raw()
+                );
+            } else {
+                self.0.CreateRenderTargetView(
+                    None,
+                    desc,
+                    handle.as_raw()
+                );
+            }
         }
     }
 
@@ -951,11 +984,20 @@ impl_trait! {
             let desc = desc.map(|v| v.as_raw());
             let desc = desc.as_ref().map(|f| f as *const _);
 
-            self.0.CreateShaderResourceView(
-                resource.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed()),
-                desc,
-                handle.as_raw()
-            );
+            if let Some(resource) = resource {
+                self.0.CreateShaderResourceView(
+                    resource.as_raw_ref(),
+                    desc,
+                    handle.as_raw()
+                );
+            } else {
+                self.0.CreateShaderResourceView(
+                    None,
+                    desc,
+                    handle.as_raw()
+                );
+            }
+            
         }
     }
 
@@ -992,12 +1034,40 @@ impl_trait! {
             let desc = desc.map(|v| v.as_raw());
             let desc = desc.as_ref().map(|f| f as *const _);
 
-            self.0.CreateUnorderedAccessView(
-                resource.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed()),
-                counter_resource.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed()),
-                desc,
-                handle.as_raw()
-            );
+            match (resource, counter_resource) {
+                (Some(r), Some(c)) => {
+                    self.0.CreateUnorderedAccessView(
+                        r.as_raw_ref(),
+                        c.as_raw_ref(),
+                        desc,
+                        handle.as_raw()
+                    );
+                },
+                (Some(r), None) => {
+                    self.0.CreateUnorderedAccessView(
+                        r.as_raw_ref(),
+                        None,
+                        desc,
+                        handle.as_raw()
+                    );
+                },
+                (None, Some(c)) => {
+                    self.0.CreateUnorderedAccessView(
+                        None,
+                        c.as_raw_ref(),
+                        desc,
+                        handle.as_raw()
+                    );
+                },
+                (None, None) => {
+                    self.0.CreateUnorderedAccessView(
+                        None,
+                        None,
+                        desc,
+                        handle.as_raw()
+                    );
+                } 
+            }
         }
     }
 

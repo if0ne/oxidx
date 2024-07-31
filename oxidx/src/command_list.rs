@@ -381,7 +381,11 @@ impl_trait! {
 
     fn clear_state(&self, pipeline_state: Option<&impl IPipelineState>) {
         unsafe {
-            self.0.ClearState(pipeline_state.map(|p| p.as_raw_ref()).unwrap_or(std::mem::zeroed()));
+            if let Some(pipeline_state) = pipeline_state {
+                self.0.ClearState(pipeline_state.as_raw_ref());
+            } else {
+                self.0.ClearState(None);
+            }
         }
     }
 
@@ -614,14 +618,25 @@ impl_trait! {
         count_buffer_offset: u64,
     ) {
         unsafe {
-            self.0.ExecuteIndirect(
-                command_signature.as_raw_ref(),
-                max_command_count,
-                argument_buffer.as_raw_ref(),
-                argument_buffer_offset,
-                count_buffer.map(|c| c.as_raw_ref()).unwrap_or(std::mem::zeroed()),
-                count_buffer_offset
-            )
+            if let Some(count_buffer) = count_buffer {
+                self.0.ExecuteIndirect(
+                    command_signature.as_raw_ref(),
+                    max_command_count,
+                    argument_buffer.as_raw_ref(),
+                    argument_buffer_offset,
+                    count_buffer.as_raw_ref(),
+                    count_buffer_offset
+                );
+            } else {
+                self.0.ExecuteIndirect(
+                    command_signature.as_raw_ref(),
+                    max_command_count,
+                    argument_buffer.as_raw_ref(),
+                    argument_buffer_offset,
+                    None,
+                    count_buffer_offset
+                );
+            }
         }
     }
 
@@ -709,12 +724,19 @@ impl_trait! {
         pso: Option<&impl IPipelineState>,
     ) -> Result<(), DxError> {
         unsafe {
-            self.0
-                .Reset(
-                    command_allocator.as_raw_ref(),
-                    pso.map(|pso| pso.as_raw_ref()).unwrap_or(std::mem::zeroed())
-                )
-                .map_err(DxError::from)
+            if let Some(pso) = pso {
+                self.0.Reset(
+                        command_allocator.as_raw_ref(),
+                        pso.as_raw_ref()
+                    )
+                    .map_err(DxError::from)
+            } else {
+                self.0.Reset(
+                        command_allocator.as_raw_ref(),
+                        None
+                    )
+                    .map_err(DxError::from)
+            }
         }
     }
 
@@ -863,9 +885,11 @@ impl_trait! {
 
     fn set_compute_root_signature(&self, root_signature: Option<&impl IRootSignature>) {
         unsafe {
-            self.0.SetComputeRootSignature(
-                root_signature.map(|rs| rs.as_raw_ref()).unwrap_or(std::mem::zeroed())
-            );
+            if let Some(root_signature) = root_signature {
+                self.0.SetComputeRootSignature(root_signature.as_raw_ref());
+            } else {
+                self.0.SetComputeRootSignature(None);
+            }
         }
     }
 
@@ -970,9 +994,11 @@ impl_trait! {
 
     fn set_graphics_root_signature(&self, root_signature: Option<&impl IRootSignature>) {
         unsafe {
-            self.0.SetGraphicsRootSignature(
-                root_signature.map(|r| r.as_raw_ref()).unwrap_or(std::mem::zeroed())
-            )
+            if let Some(root_signature) = root_signature {
+                self.0.SetGraphicsRootSignature(root_signature.as_raw_ref());
+            } else {
+                self.0.SetGraphicsRootSignature(None);
+            }
         }
     }
 
@@ -1011,11 +1037,19 @@ impl_trait! {
         operation: PredicationOp,
     ) {
         unsafe {
-            self.0.SetPredication(
-                buffer.map(|b| b.as_raw_ref()).unwrap_or(std::mem::zeroed()),
-                aligned_buffer_offset,
-                operation.as_raw()
-            )
+            if let Some(buffer) = buffer {
+                self.0.SetPredication(
+                    buffer.as_raw_ref(),
+                    aligned_buffer_offset,
+                    operation.as_raw()
+                );
+            } else {
+                self.0.SetPredication(
+                    None,
+                    aligned_buffer_offset,
+                    operation.as_raw()
+                )
+            }
         }
     }
 
