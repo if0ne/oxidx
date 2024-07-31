@@ -55,7 +55,7 @@ pub trait ICommandQueue: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<
     /// Submits an iterator of command lists for execution.
     ///
     /// # Arguments
-    /// * `command_lists` - The iterator of [`CommandListInterface`] command lists to be executed.
+    /// * `command_lists` - The iterator of [`ICommandList`] command lists to be executed.
     ///
     /// For more information: [`ID3D12CommandQueue::ExecuteCommandLists method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-executecommandlists)
     fn execute_command_lists<'cl>(
@@ -95,7 +95,7 @@ pub trait ICommandQueue: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<
     /// Updates a fence to a specified value.
     ///
     /// # Arguments
-    /// * `fence` - A reference to the [`FenceInterface`] object.
+    /// * `fence` - A reference to the [`IFence`] object.
     /// * `value` - The value to set the fence to.
     ///
     /// For more information: [`ID3D12CommandQueue::Signal method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-signal)
@@ -127,8 +127,8 @@ pub trait ICommandQueue: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<
     /// Queues a GPU-side wait, and returns immediately. A GPU-side wait is where the GPU waits until the specified fence reaches or exceeds the specified value.
     ///
     /// # Arguments
-    /// * `fence` - A reference to the [`FenceInterface`] object.
-    /// * `value` - The value that the command queue is waiting for the fence to reach or exceed. So when [`FenceInterface::get_completed_value`] is greater than or equal to Value, the wait is terminated.
+    /// * `fence` - A reference to the [`IFence`] object.
+    /// * `value` - The value that the command queue is waiting for the fence to reach or exceed. So when [`IFence::get_completed_value`] is greater than or equal to Value, the wait is terminated.
     ///
     /// For more information: [`ID3D12CommandQueue::Wait method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-wait)
     fn wait(&self, fence: &impl IFence, value: u64) -> Result<(), DxError>;

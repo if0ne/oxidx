@@ -13,7 +13,7 @@ use crate::{
     root_signature::IRootSignature, types::*, HasInterface,
 };
 
-/// An interface from which [`GraphicsCommandListInterface`] inherits.
+/// An interface from which [`IGraphicsCommandList`] inherits.
 ///
 /// It represents an ordered set of commands that the GPU executes,
 /// while allowing for extension to support other command lists than just those for graphics (such as compute and copy).

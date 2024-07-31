@@ -67,10 +67,10 @@ pub enum Blend {
     /// The blend factor is (f, f, f, 1); where f = min(Aₛ, 1 - Ad). The pre-blend operation clamps the data to 1 or less.
     SrcAlphaSat = D3D12_BLEND_SRC_ALPHA_SAT.0,
 
-    /// The blend factor is the blend factor set with [`GraphicsCommandListInterface::om_set_blend_factor`]. No pre-blend operation.
+    /// The blend factor is the blend factor set with [`IGraphicsCommandList::om_set_blend_factor`](crate::command_list::IGraphicsCommandList::om_set_blend_factor). No pre-blend operation.
     BlendFactor = D3D12_BLEND_BLEND_FACTOR.0,
 
-    /// The blend factor is the blend factor set with [`GraphicsCommandListInterface::om_set_blend_factor`]. The pre-blend operation inverts the blend factor, generating 1 - blend_factor.
+    /// The blend factor is the blend factor set with [`IGraphicsCommandList::om_set_blend_factor`](crate::command_list::IGraphicsCommandList::om_set_blend_factor). The pre-blend operation inverts the blend factor, generating 1 - blend_factor.
     InvBlendFactor = D3D12_BLEND_INV_BLEND_FACTOR.0,
 
     /// The blend factor is data sources both as color data output by a pixel shader. There is no pre-blend operation. This blend factor supports dual-source color blending.
@@ -85,10 +85,10 @@ pub enum Blend {
     /// The blend factor is data sources as alpha data output by a pixel shader. The pre-blend operation inverts the data, generating 1 - A. This blend factor supports dual-source color blending.
     InvSrc1Alpha = D3D12_BLEND_INV_SRC1_ALPHA.0,
 
-    /// The blend factor is (A, A, A, A), where the constant, A, is taken from the blend factor set with [`GraphicsCommandListInterface::om_set_blend_factor`].
+    /// The blend factor is (A, A, A, A), where the constant, A, is taken from the blend factor set with [`IGraphicsCommandList::om_set_blend_factor`](crate::command_list::IGraphicsCommandList::om_set_blend_factor).
     AlphaFactor = D3D12_BLEND_ALPHA_FACTOR.0,
 
-    /// The blend factor is (1 – A, 1 – A, 1 – A, 1 – A), where the constant, A, is taken from the blend factor set with [`GraphicsCommandListInterface::om_set_blend_factor`].
+    /// The blend factor is (1 – A, 1 – A, 1 – A, 1 – A), where the constant, A, is taken from the blend factor set with [`IGraphicsCommandList::om_set_blend_factor`](crate::command_list::IGraphicsCommandList::om_set_blend_factor).
     InvAlphaFactor = D3D12_BLEND_INV_ALPHA_FACTOR.0,
 }
 
@@ -310,18 +310,18 @@ pub enum CrossNodeSharingTier {
     #[default]
     NotSupported = D3D12_CROSS_NODE_SHARING_TIER_NOT_SUPPORTED.0,
 
-    /// Tier 1 Emulated. Devices that set the [`CrossNodeSharingTier`] member of the [`Options`] structure to [`CrossNodeSharingTier::Tier1Emulated`] have Tier 1 support.
+    /// Tier 1 Emulated. Devices that set the [`CrossNodeSharingTier`] member of the [`Options`](crate::types::features::Options) structure to [`CrossNodeSharingTier::Tier1Emulated`] have Tier 1 support.
     ///
     /// However, drivers stage these copy operations through a driver-internal system memory allocation. This will cause these copy operations to consume time on the destination GPU as well as the source.
     Tier1Emulated = D3D12_CROSS_NODE_SHARING_TIER_1_EMULATED.0,
 
-    /// Tier 1. Devices that set the [`CrossNodeSharingTier`] member of the [`Options`] structure to [`CrossNodeSharingTier::Tier1`] only support the following cross-node copy operations:
-    /// * [GraphicsCommandList::copy_buffer_region](crate::command_list::GraphicsCommandList::copy_buffer_region)
-    /// * [GraphicsCommandList::copy_texture_region](crate::command_list::GraphicsCommandList::copy_texture_region)
-    /// * [GraphicsCommandList::copy_resource](crate::command_list::GraphicsCommandList::copy_resource)
+    /// Tier 1. Devices that set the [`CrossNodeSharingTier`] member of the [`Options`](crate::types::features::Options) structure to [`CrossNodeSharingTier::Tier1`] only support the following cross-node copy operations:
+    /// * [GraphicsCommandList::copy_buffer_region](crate::command_list::IGraphicsCommandList::copy_buffer_region)
+    /// * [GraphicsCommandList::copy_texture_region](crate::command_list::IGraphicsCommandList::copy_texture_region)
+    /// * [GraphicsCommandList::copy_resource](crate::command_list::IGraphicsCommandList::copy_resource)
     Tier1 = D3D12_CROSS_NODE_SHARING_TIER_1.0,
 
-    /// Tier 2. Devices that set the [`CrossNodeSharingTier`] member of the [`Options`] structure to D3D12_CROSS_NODE_SHARING_TIER_2 support all operations across nodes, except for the following:
+    /// Tier 2. Devices that set the [`CrossNodeSharingTier`] member of the [`Options`](crate::types::features::Options) structure to D3D12_CROSS_NODE_SHARING_TIER_2 support all operations across nodes, except for the following:
     /// * Render target views.
     /// * Depth stencil views.
     /// * UAV atomic operations. Similar to CPU/GPU interop, shaders may perform UAV atomic operations; however, no atomicity across adapters is guaranteed.
@@ -2040,7 +2040,7 @@ pub enum StencilOp {
     /// Set the stencil data to 0.
     Zero = D3D12_STENCIL_OP_ZERO.0,
 
-    /// Set the stencil data to the reference value set by calling [`GraphicsCommandListInterface::om_set_stencil_ref`](crate::command_list::GraphicsCommandListInterface).
+    /// Set the stencil data to the reference value set by calling [`IGraphicsCommandList::om_set_stencil_ref`](crate::command_list::IGraphicsCommandList::om_set_stencil_ref).
     Replace = D3D12_STENCIL_OP_REPLACE.0,
 
     /// Increment the stencil value by 1, and clamp the result.
@@ -2089,11 +2089,11 @@ pub enum TextureLayout {
 #[derive(Clone, Copy, Debug, Default, FromRepr)]
 #[repr(i32)]
 pub enum TiledResourcesTier {
-    /// Indicates that textures cannot be created with the [`TextureLayout64kbUndefinedSwizzle`] layout.
+    /// Indicates that textures cannot be created with the [`TextureLayout::UndefinedSwizzle64Kb`] layout.
     #[default]
     NotSupported = D3D12_TILED_RESOURCES_TIER_NOT_SUPPORTED.0,
 
-    /// Indicates that 2D textures can be created with the [`TextureLayout64kbUndefinedSwizzle`] layout.
+    /// Indicates that 2D textures can be created with the [`TextureLayout::UndefinedSwizzle64Kb`] layout.
     /// Limitations exist for certain resource formats and properties.
     Tier1 = D3D12_TILED_RESOURCES_TIER_1.0,
 

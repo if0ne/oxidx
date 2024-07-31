@@ -17,7 +17,7 @@ pub struct BlendDesc {
     pub alpha_to_coverage_enable: bool,
 
     /// Specifies whether to enable independent blending in simultaneous render targets.
-    /// Set to TRUE to enable independent blending. If set to FALSE, only the RenderTarget[0] members are used; RenderTarget[1..7] are ignored.
+    /// Set to TRUE to enable independent blending. If set to FALSE, only the RenderTarget\[0\] members are used; RenderTarget\[1..7\] are ignored.
     pub independent_blend_enable: bool,
 
     /// An array of [`RenderTargetBlendDesc`] structures that describe the blend states for render targets;
@@ -65,10 +65,10 @@ pub struct CommandSignatureDesc<'a> {
 /// For more information: [`D3D12_COMPUTE_PIPELINE_STATE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_compute_pipeline_state_desc)
 #[derive(Debug)]
 pub struct ComputePipelineStateDesc<'a> {
-    /// A reference to the [`RootSignatureInterface`] object.
+    /// A reference to the [`RootSignature`] object.
     pub root_signature: &'a RootSignature,
 
-    /// /// A reference to the [`BlobInterface`] object that contains compute shader.
+    /// /// A reference to the [`Blob`] object that contains compute shader.
     pub cs: &'a Blob,
 
     /// For single GPU operation, set this to zero.
@@ -76,7 +76,7 @@ pub struct ComputePipelineStateDesc<'a> {
     /// Each bit in the mask corresponds to a single node.
     pub node_mask: u32,
 
-    /// A cached pipeline state object, as a [`CachedPipelineState`] structure. `cached_blob` and `cached_blob_size_in_bytes` may be set to None and 0 respectively.
+    /// A cached pipeline state object, as a [`Blob`] structure. `cached_blob` and `cached_blob_size_in_bytes` may be set to None and 0 respectively.
     pub cached_pso: Option<&'a Blob>,
 
     /// A [`PipelineStateFlags`] enumeration constant such as for "tool debug".
@@ -359,7 +359,7 @@ pub struct InputElementDesc {
 pub struct HeapDesc {
     /// The size, in bytes, of the heap. To avoid wasting memory, applications should pass size values which are multiples of the effective Alignment;
     /// but non-aligned size is also supported, for convenience.
-    /// To find out how large a heap must be to support textures with undefined layouts and adapter-specific sizes, call [`get_resource_allocation_info`](crate::device::DeviceInterface::get_resource_allocation_info)
+    /// To find out how large a heap must be to support textures with undefined layouts and adapter-specific sizes, call [`crate::device::IDevice::get_resource_allocation_info`](crate::device::IDevice::get_resource_allocation_info)
     pub size: u64,
 
     /// A [`HeapProperties`] structure that describes the heap properties.
@@ -759,7 +759,7 @@ pub struct PlacedSubresourceFootprint {
     pub footprint: SubresourceFootprint,
 }
 
-/// Type that represent return values of [`DeviceInterface::get_copyable_footprints`](crate::device::DeviceInterface::get_copyable_footprints)
+/// Type that represent return values of [`IDevice::get_copyable_footprints`](crate::device::IDevice::get_copyable_footprints)
 #[derive(Clone, Debug)]
 pub struct CopyableFootprints {
     /// An array (of length NumSubresources) of [`PlacedSubresourceFootprint`] structures, to be filled with the description and placement of each subresource.

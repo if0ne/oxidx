@@ -39,7 +39,7 @@ pub trait IFence: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12F
     fn signal(&self, value: u64) -> Result<(), DxError>;
 }
 
-/// Represents a fence. This interface extends [`FenceInterface1`], and supports the retrieval of the flags used to create the original fence.
+/// Represents a fence. This interface extends [`IFence1`], and supports the retrieval of the flags used to create the original fence.
 /// This new feature is useful primarily for opening shared fences.
 ///
 /// For more information: [`ID3D12Fence1 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12fence1)
@@ -61,7 +61,7 @@ create_type! {
 }
 
 create_type! {
-    /// Represents a fence. This interface extends [`FenceInterface1`], and supports the retrieval of the flags used to create the original fence.
+    /// Represents a fence. This interface extends [`IFence1`], and supports the retrieval of the flags used to create the original fence.
     /// This new feature is useful primarily for opening shared fences.
     ///
     /// For more information: [`ID3D12Fence1 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12fence1)

@@ -456,7 +456,7 @@ pub struct Options1 {
     pub total_lane_count: u32,
 
     /// Indicates transitions are possible in and out of the CBV, and indirect argument states, on compute command lists.
-    /// If [`DeviceInterface::check_feature_support`](crate::device::DeviceInterface::check_feature_support) succeeds this value will always be true.
+    /// If [`IDevice::check_feature_support`](crate::device::IDevice::check_feature_support) succeeds this value will always be true.
     pub expanded_compute_resource_states: bool,
 
     /// Indicates that 64bit integer operations are supported.

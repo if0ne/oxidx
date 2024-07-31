@@ -6,7 +6,7 @@ use windows::{
 use crate::{create_type, impl_trait, types::HeapDesc, HasInterface};
 
 /// A heap is an abstraction of contiguous memory allocation, used to manage physical memory.
-/// This heap can be used with [`ResourceInterface`](crate::resources::ResourceInterface) objects to support placed resources or reserved resources.
+/// This heap can be used with [`IResource`](crate::resources::IResource)  objects to support placed resources or reserved resources.
 ///
 /// For more information: [`ID3D12Heap interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12heap)
 pub trait IHeap: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12Heap>> {
@@ -15,7 +15,7 @@ pub trait IHeap: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12He
 
 create_type! {
     /// A heap is an abstraction of contiguous memory allocation, used to manage physical memory.
-    /// This heap can be used with [`ResourceInterface`](crate::resources::ResourceInterface) objects to support placed resources or reserved resources.
+    /// This heap can be used with [`IResource`](crate::resources::IResource) objects to support placed resources or reserved resources.
     ///
     /// For more information: [`ID3D12Heap interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12heap)
     Heap wrap ID3D12Heap

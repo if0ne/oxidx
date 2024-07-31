@@ -138,7 +138,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     ///
     /// # Arguments
     /// * `desc` - Describes the command signature to be created with the [`CommandSignatureDesc`] structure.
-    /// * `root_signature` - Specifies the [`RootSignatureInterface`] that the command signature applies to.
+    /// * `root_signature` - Specifies the [`IRootSignature`] that the command signature applies to.
     ///   The root signature is required if any of the commands in the signature will update bindings on the pipeline.
     ///   If the only command present is a draw or dispatch, the root signature parameter can be set to None.
     ///
@@ -155,7 +155,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// * `heap_properties` - A reference to a [`HeapProperties`] structure that provides properties for the resource's heap.
     /// * `heap_flags` - Heap options, as a bitwise-OR'd combination of [`HeapFlags`] enumeration constants.
     /// * `desc` - A reference to a [`ResourceDesc`] structure that describes the resource.
-    /// * `initial_state` - The initial state of the resource, as a bitwise-OR'd combination of [`ResourceState`] enumeration constants.
+    /// * `initial_state` - The initial state of the resource, as a bitwise-OR'd combination of [`ResourceStates`] enumeration constants.
     /// * `optimized_clear_value` - Specifies a [`ClearValue`] structure that describes the default value for a clear color.
     ///
     /// For more information: [`ID3D12Device::CreateCommittedResource method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommittedresource)
@@ -195,7 +195,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// Creates a depth-stencil view for accessing resource data.
     ///
     /// # Arguments
-    /// * `resource` - A reference to the [`ResourceInterface`] object that represents the depth stencil.
+    /// * `resource` - A reference to the [`IResource`] object that represents the depth stencil.
     /// * `desc` - A reference to a [`ConstantBufferViewDesc`] structure that describes the constant-buffer view.
     /// * `dest_descriptor` - Describes the CPU descriptor handle that represents the start of the heap that holds the constant-buffer view.
     ///
@@ -249,7 +249,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// Creates a resource that is placed in a specific heap. Placed resources are the lightest weight resource objects available, and are the fastest to create and destroy.
     ///
     /// # Arguments
-    /// * `heap` - A reference to the [`HeapInterface`] interface that represents the heap in which the resource is placed.
+    /// * `heap` - A reference to the [`IHeap`] interface that represents the heap in which the resource is placed.
     /// * `heap_offset` - The offset, in bytes, to the resource.
     /// * `desc` - A reference to a [`ResourceDesc`] structure that describes the resource.
     /// * `initial_state` - The initial state of the resource, as a bitwise-OR'd combination of [`ResourceStates`] enumeration constants.
@@ -276,7 +276,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// Creates a render-target view for accessing resource data.
     ///
     /// # Arguments
-    /// * `resource` - A reference to the [`ResourceInterface`] object that represents the render target.
+    /// * `resource` - A reference to the [`IResource`] object that represents the render target.
     /// * `desc` - A reference to a [`RenderTargetViewDesc`] structure that describes the render-target view.
     /// * `dest_descriptor` - Describes the CPU descriptor handle that represents the destination where the newly-created render target view will reside.
     ///
@@ -345,7 +345,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// Creates a shader-resource view for accessing data in a resource.
     ///
     /// # Arguments
-    /// * `resource` - A reference to the [`ResourceInterface`] object that represents the shader resource.
+    /// * `resource` - A reference to the [`IResource`] object that represents the shader resource.
     /// * `desc` - A reference to a [`RenderTargetViewDesc`] structure that describes the render-target view.
     /// * `dest_descriptor` - Describes the CPU descriptor handle that represents the shader-resource view. This handle can be created in a shader-visible or non-shader-visible descriptor heap.
     ///
@@ -360,7 +360,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// Creates a shared handle to a heap, resource, or fence object.
     ///
     /// # Arguments
-    /// * `shareable` - A reference to the [`Shareable`] interface that represents the heap, resource, or fence object to create for sharing.
+    /// * `shareable` - A reference to the [`DeviceChild`] interface that represents the heap, resource, or fence object to create for sharing.
     /// * `name` - A name to associate with the shared heap
     ///
     /// For more information: [`ID3D12Device::CreateSharedHandle method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createsharedhandle)
@@ -373,8 +373,8 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// Creates a shader-resource view for accessing data in a resource.
     ///
     /// # Arguments
-    /// * `resource` - A reference to the [`ResourceInterface`] object that represents the unordered access.
-    /// * `counter_resource` - The [`ResourceInterface`] for the counter (if any) associated with the UAV.
+    /// * `resource` - A reference to the [`IResource`] object that represents the unordered access.
+    /// * `counter_resource` - The [`IResource`] for the counter (if any) associated with the UAV.
     /// * `desc` - A reference to a [`UnorderedAccessViewDesc`] structure that describes the unordered-access view.
     /// * `dest_descriptor` - Describes the CPU descriptor handle that represents the start of the heap that holds the unordered-access view.
     ///
@@ -425,7 +425,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     ///   Each bit in the mask corresponds to a single node. Only 1 bit must be set.
     /// * `type` - A [`HeapType`]-typed value that specifies the heap to get properties for. [`HeapType::Custom`] is not supported as a parameter value.
     ///
-    /// For more information: [`ID3D12Device::GetCustomHeapProperties method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getcustomheapproperties(uint_d3d12_heap_types)
+    /// For more information: [`ID3D12Device::GetCustomHeapProperties method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getcustomheapproperties(uint_d3d12_heap_types))
     fn get_custom_heap_properties(&self, node_mask: u32, r#type: HeapType) -> HeapProperties;
 
     /// Gets the size of the handle increment for the given type of descriptor heap. This value is typically used to increment a handle into a descriptor array by the correct amount.
@@ -437,7 +437,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32;
 
     /// Gets the reason that the device was removed, or [`Result::Ok`] if the device isn't removed.
-    /// To be called back when a device is removed, consider using [`FenceInterface::set_event_on_completion`] with a value of [`u64::MAX`].
+    /// To be called back when a device is removed, consider using [`IFence::set_event_on_completion`] with a value of [`u64::MAX`].
     /// That's because device removal causes all fences to be signaled to that value (which also implies completing all events waited on, because they'll all be less than [`u64::MAX`]).
     ///
     /// For more information: [`ID3D12Device::GetDeviceRemovedReason method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getdeviceremovedreason)
@@ -465,7 +465,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// Gets info about how a tiled resource is broken into tiles.
     ///
     /// # Arguments
-    /// * `resource` - Specifies a tiled [`ResourceInterface`] to get info about.
+    /// * `resource` - Specifies a tiled [`IResource`] to get info about.
     /// * `first_subresource_tiling_to_get` - The number of the first subresource tile to get. Method ignores this parameter if the number that num_subresource_tilings points to is 0.
     /// * `num_tiles_for_entire_resource` - A reference to a variable that receives the number of tiles needed to store the entire tiled resource.
     /// * `packed_mip_desc` - A reference to a [`PackedMipDesc`] structure that method fills with info about how the tiled resource's mipmaps are packed.
@@ -501,7 +501,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// Opens a handle for shared resources, shared heaps, and shared fences, by using [`SharedHandle`].
     ///
     /// # Arguments
-    /// * `handle` - The handle that was output by the call to [`DeviceInterface::create_shared_handle`]
+    /// * `handle` - The handle that was output by the call to [`IDevice::create_shared_handle`]
     ///
     /// For more information: [`ID3D12Device::OpenSharedHandle method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-opensharedhandle)
     fn open_shared_handle<D: IDeviceChild>(&self, handle: SharedHandle) -> Result<D, DxError>;
@@ -509,7 +509,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// Opens a handle for shared resources, shared heaps, and shared fences, by using Name.
     ///
     /// # Arguments
-    /// * `name` - The name that was optionally passed as the Name parameter in the call to [`DeviceInterface::create_shared_handle`]
+    /// * `name` - The name that was optionally passed as the Name parameter in the call to [`IDevice::create_shared_handle`]
     ///
     /// For more information: [`ID3D12Device::OpenSharedHandleByName method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-opensharedhandlebyname)
     fn open_shared_handle_by_name(&self, name: &CStr) -> Result<SharedHandle, DxError>;
