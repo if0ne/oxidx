@@ -7,19 +7,10 @@ use windows::{
 };
 
 use crate::{
-    command_allocator::ICommandAllocator,
-    command_signature::ICommandSignature,
-    create_type,
-    descriptor_heap::DescriptorHeap,
-    error::DxError,
-    impl_trait,
-    pix::WIN_PIX_EVENT_RUNTIME,
-    pso::IPipelineState,
-    query_heap::IQueryHeap,
-    resources::{IResource, ResourceBarrier, VertexBufferView},
-    root_signature::IRootSignature,
-    types::*,
-    HasInterface,
+    command_allocator::ICommandAllocator, command_signature::ICommandSignature, create_type,
+    descriptor_heap::DescriptorHeap, error::DxError, impl_trait, pix::WIN_PIX_EVENT_RUNTIME,
+    pso::IPipelineState, query_heap::IQueryHeap, resources::IResource,
+    root_signature::IRootSignature, types::*, HasInterface,
 };
 
 /// An interface from which [`GraphicsCommandListInterface`] inherits.
@@ -494,7 +485,7 @@ impl_trait! {
                 dst_x,
                 dst_y,
                 dst_z,
-                &src.as_raw(), 
+                &src.as_raw(),
                 src_box,
             );
         }

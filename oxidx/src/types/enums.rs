@@ -3,6 +3,7 @@ use windows::Win32::Graphics::{Direct3D::*, Direct3D12::*};
 
 #[allow(unused_imports)]
 use super::*;
+use crate::resources::Resource;
 
 /// Identifies a technique for resolving texture coordinates that are outside of the boundaries of a texture.
 ///
@@ -2260,4 +2261,69 @@ pub enum TextureCopyType {
 pub enum PredicationOp {
     EqualZero = D3D12_PREDICATION_OP_EQUAL_ZERO.0,
     NotEqualZero = D3D12_PREDICATION_OP_NOT_EQUAL_ZERO.0,
+}
+
+#[derive(Debug, Default, Clone, Copy, FromRepr)]
+#[repr(i32)]
+pub enum Scaling {
+    #[default]
+    Stretch = DXGI_SCALING_STRETCH.0,
+    None = DXGI_SCALING_NONE.0,
+    AspectRatioStretch = DXGI_SCALING_ASPECT_RATIO_STRETCH.0,
+}
+
+#[derive(Debug, Default, Clone, Copy, FromRepr)]
+#[repr(i32)]
+pub enum ScalingMode {
+    #[default]
+    Unspecified = DXGI_MODE_SCALING_UNSPECIFIED.0,
+    Centered = DXGI_MODE_SCALING_CENTERED.0,
+    Stretched = DXGI_MODE_SCALING_STRETCHED.0,
+}
+
+#[derive(Debug, Default, Clone, Copy, FromRepr)]
+#[repr(i32)]
+pub enum ScanlineOrdering {
+    #[default]
+    Unspecified = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED.0,
+    Progressive = DXGI_MODE_SCANLINE_ORDER_PROGRESSIVE.0,
+    UpperFieldFirst = DXGI_MODE_SCANLINE_ORDER_LOWER_FIELD_FIRST.0,
+    LowerFieldFirst = DXGI_MODE_SCANLINE_ORDER_UPPER_FIELD_FIRST.0,
+}
+
+#[derive(Debug, Default, Clone, Copy, FromRepr)]
+#[repr(i32)]
+pub enum SwapEffect {
+    #[default]
+    Discard = DXGI_SWAP_EFFECT_DISCARD.0,
+    Sequential = DXGI_SWAP_EFFECT_SEQUENTIAL.0,
+    FlipSequential = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL.0,
+    FlipDiscard = DXGI_SWAP_EFFECT_FLIP_DISCARD.0,
+}
+
+#[derive(Debug, Default, Clone, Copy, FromRepr)]
+#[repr(i32)]
+pub enum AlphaMode {
+    #[default]
+    Unspecified = DXGI_ALPHA_MODE_UNSPECIFIED.0,
+    Premultiplied = DXGI_ALPHA_MODE_PREMULTIPLIED.0,
+    Straight = DXGI_ALPHA_MODE_STRAIGHT.0,
+    Ignore = DXGI_ALPHA_MODE_IGNORE.0,
+}
+
+#[derive(Clone, Debug)]
+pub enum BarrierType<'a> {
+    Transition {
+        resource: &'a Resource,
+        subresource: u32,
+        before: ResourceStates,
+        after: ResourceStates,
+    },
+    Aliasing {
+        before: &'a Resource,
+        after: &'a Resource,
+    },
+    Uav {
+        resource: &'a Resource,
+    },
 }

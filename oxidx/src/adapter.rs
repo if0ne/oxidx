@@ -1,10 +1,9 @@
-use compact_str::CompactString;
 use windows::{
     core::{IUnknown, Param},
     Win32::Graphics::Dxgi::IDXGIAdapter3,
 };
 
-use crate::{create_type, impl_trait, types::Luid, HasInterface};
+use crate::{create_type, impl_trait, types::AdapterDesc, HasInterface};
 
 pub trait IAdapter3: for<'a> HasInterface<RawRef<'a>: Param<IUnknown>> {
     fn get_desc1(&self) -> AdapterDesc;
@@ -24,27 +23,5 @@ impl_trait! {
         }
 
         desc.into()
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct AdapterDesc {
-    pub description: CompactString,
-    pub vendor_id: u32,
-    pub device_id: u32,
-    pub sub_sys_id: u32,
-    pub revision: u32,
-    pub dedicated_video_memory: usize,
-    pub dedicated_system_memory: usize,
-    pub shared_system_memory: usize,
-    pub adapter_luid: Luid,
-    pub flags: AdapterFlags,
-}
-
-bitflags::bitflags! {
-    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct AdapterFlags: u32 {
-        const Remote = 1;
-        const Sofware = 2;
     }
 }

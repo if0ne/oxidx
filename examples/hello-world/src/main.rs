@@ -344,7 +344,7 @@ fn transition_barrier(
             before: state_before,
             after: state_after,
         },
-        flags: BarrierFlags::empty(),
+        flags: ResourceBarrierFlags::empty(),
     }
 }
 

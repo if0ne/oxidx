@@ -27,3 +27,5 @@ conv_flags!(ResourceStates to D3D12_RESOURCE_STATES);
 conv_flags!(RootSignatureFlags to D3D12_ROOT_SIGNATURE_FLAGS);
 conv_flags!(TileRangeFlags to D3D12_TILE_RANGE_FLAGS);
 conv_flags!(TileCopyFlags to D3D12_TILE_COPY_FLAGS);
+conv_flags!(FrameBufferUsage to DXGI_USAGE);
+conv_flags!(ResourceBarrierFlags to D3D12_RESOURCE_BARRIER_FLAGS);

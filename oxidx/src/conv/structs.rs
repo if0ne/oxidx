@@ -753,7 +753,7 @@ impl<'a> TextureCopyLocation<'a> {
                 Type: self.r#type.as_raw_type(),
                 Anonymous: self.r#type.as_raw(),
             }
-        } 
+        }
     }
 }
 
@@ -767,6 +767,108 @@ impl Box {
             right: self.right,
             bottom: self.bottom,
             back: self.back,
+        }
+    }
+}
+
+impl SwapchainDesc {
+    pub(crate) fn as_raw(&self) -> DXGI_SWAP_CHAIN_DESC1 {
+        DXGI_SWAP_CHAIN_DESC1 {
+            Width: self.width,
+            Height: self.height,
+            Format: self.format.as_raw(),
+            Stereo: self.stereo.into(),
+            SampleDesc: self.sample_desc.as_raw(),
+            BufferUsage: self.usage.as_raw(),
+            BufferCount: self.buffer_count,
+            Scaling: self.scaling.as_raw(),
+            SwapEffect: self.swap_effect.as_raw(),
+            AlphaMode: self.alpha_mode.as_raw(),
+            Flags: self.flags.bits() as u32,
+        }
+    }
+}
+
+impl SwapchainFullscreenDesc {
+    pub(crate) fn as_raw(&self) -> DXGI_SWAP_CHAIN_FULLSCREEN_DESC {
+        DXGI_SWAP_CHAIN_FULLSCREEN_DESC {
+            RefreshRate: self.rational.as_raw(),
+            ScanlineOrdering: self.scanline_ordering.as_raw(),
+            Scaling: self.scaling.as_raw(),
+            Windowed: self.windowed.into(),
+        }
+    }
+}
+
+impl Rational {
+    pub(crate) fn as_raw(&self) -> DXGI_RATIONAL {
+        DXGI_RATIONAL {
+            Numerator: self.numerator,
+            Denominator: self.denominator,
+        }
+    }
+}
+
+impl Viewport {
+    pub(crate) fn as_raw(&self) -> D3D12_VIEWPORT {
+        D3D12_VIEWPORT {
+            TopLeftX: self.x,
+            TopLeftY: self.y,
+            Width: self.width,
+            Height: self.height,
+            MinDepth: self.min_depth,
+            MaxDepth: self.max_depth,
+        }
+    }
+}
+
+impl Rect {
+    pub(crate) fn as_raw(&self) -> RECT {
+        RECT {
+            left: self.left,
+            top: self.top,
+            right: self.right,
+            bottom: self.bottom,
+        }
+    }
+}
+
+impl VertexBufferView {
+    pub(crate) fn as_raw(&self) -> D3D12_VERTEX_BUFFER_VIEW {
+        D3D12_VERTEX_BUFFER_VIEW {
+            BufferLocation: self.buffer_location,
+            SizeInBytes: self.size_in_bytes,
+            StrideInBytes: self.stride_in_bytes,
+        }
+    }
+}
+
+impl<'a> ResourceBarrier<'a> {
+    pub(crate) fn as_raw(&self) -> D3D12_RESOURCE_BARRIER {
+        D3D12_RESOURCE_BARRIER {
+            Type: self.r#type.as_type_raw(),
+            Flags: D3D12_RESOURCE_BARRIER_FLAGS(self.flags.bits()),
+            Anonymous: self.r#type.as_raw(),
+        }
+    }
+}
+
+impl From<DXGI_ADAPTER_DESC1> for AdapterDesc {
+    fn from(value: DXGI_ADAPTER_DESC1) -> Self {
+        AdapterDesc {
+            description: CompactString::from_utf16_lossy(value.Description),
+            vendor_id: value.VendorId,
+            device_id: value.DeviceId,
+            sub_sys_id: value.SubSysId,
+            revision: value.Revision,
+            dedicated_video_memory: value.DedicatedVideoMemory,
+            dedicated_system_memory: value.SharedSystemMemory,
+            shared_system_memory: value.SharedSystemMemory,
+            adapter_luid: Luid {
+                low_part: value.AdapterLuid.LowPart,
+                high_part: value.AdapterLuid.HighPart,
+            },
+            flags: AdapterFlags::from_bits(value.Flags).unwrap_or(AdapterFlags::empty()),
         }
     }
 }

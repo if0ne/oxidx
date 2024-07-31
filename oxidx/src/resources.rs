@@ -5,7 +5,7 @@ use windows::{
     Win32::Graphics::Direct3D12::*,
 };
 
-use crate::{create_type, error::DxError, impl_trait, types::ResourceStates, HasInterface};
+use crate::{create_type, error::DxError, impl_trait, HasInterface};
 
 pub trait IResource:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12Resource>>
@@ -59,42 +59,4 @@ impl_trait! {
             self.0.GetGPUVirtualAddress()
         }
     }
-}
-
-#[derive(Clone, Debug)]
-pub struct ResourceBarrier<'a> {
-    pub r#type: BarrierType<'a>,
-    pub flags: BarrierFlags,
-}
-
-#[derive(Clone, Debug)]
-pub enum BarrierType<'a> {
-    Transition {
-        resource: &'a Resource,
-        subresource: u32,
-        before: ResourceStates,
-        after: ResourceStates,
-    },
-    Aliasing {
-        before: &'a Resource,
-        after: &'a Resource,
-    },
-    Uav {
-        resource: &'a Resource,
-    },
-}
-
-bitflags::bitflags! {
-    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct BarrierFlags: i32 {
-        const BeginOnly = D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY.0;
-        const EndOnly = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY.0;
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct VertexBufferView {
-    pub buffer_location: u64,
-    pub stride_in_bytes: u32,
-    pub size_in_bytes: u32,
 }

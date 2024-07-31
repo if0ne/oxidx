@@ -662,3 +662,81 @@ bitflags::bitflags! {
         const SwizzledTiledResourceToLinearBuffer = D3D12_TILE_COPY_FLAG_SWIZZLED_TILED_RESOURCE_TO_LINEAR_BUFFER.0;
     }
 }
+
+bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct SwapchainFlags: i32 {
+        const NonPrerotated = DXGI_SWAP_CHAIN_FLAG_NONPREROTATED.0;
+        const AllowModeSwitch = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH.0;
+        const GdiCompatible = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE.0;
+        const RestrictContent = DXGI_SWAP_CHAIN_FLAG_RESTRICTED_CONTENT.0;
+        const RestrictSharedResourceDriver = DXGI_SWAP_CHAIN_FLAG_RESTRICT_SHARED_RESOURCE_DRIVER.0;
+        const DisplayOnly = DXGI_SWAP_CHAIN_FLAG_DISPLAY_ONLY.0;
+        const FrameLatencyWaitableObject = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT.0;
+        const ForegroundLayer = DXGI_SWAP_CHAIN_FLAG_FOREGROUND_LAYER.0;
+        const FullscreenVideo = DXGI_SWAP_CHAIN_FLAG_FULLSCREEN_VIDEO.0;
+        const YuvVideo = DXGI_SWAP_CHAIN_FLAG_YUV_VIDEO.0;
+        const Protected = DXGI_SWAP_CHAIN_FLAG_HW_PROTECTED.0;
+        const AllowTearing = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING.0;
+        const RestrictedToAllHolographicDisplays = DXGI_SWAP_CHAIN_FLAG_RESTRICTED_TO_ALL_HOLOGRAPHIC_DISPLAYS.0;
+    }
+}
+
+bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct FrameBufferUsage: u32 {
+        const BackBuffer = DXGI_USAGE_BACK_BUFFER.0;
+        const ReadOnly = DXGI_USAGE_READ_ONLY.0;
+        const RenderTargetOutput = DXGI_USAGE_RENDER_TARGET_OUTPUT.0;
+        const ShaderInput = DXGI_USAGE_SHADER_INPUT.0;
+        const Shared = DXGI_USAGE_SHARED.0;
+        const UnorderedAccess = DXGI_USAGE_UNORDERED_ACCESS.0;
+    }
+}
+
+bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct PresentFlags: u32 {
+        const DoNotSequence = DXGI_PRESENT_DO_NOT_SEQUENCE;
+        const Test = DXGI_PRESENT_TEST;
+        const Restart = DXGI_PRESENT_RESTART;
+        const DoNotWait = DXGI_PRESENT_DO_NOT_WAIT;
+        const RestrictToOutput = DXGI_PRESENT_RESTRICT_TO_OUTPUT;
+        const StereoPreferRight = DXGI_PRESENT_STEREO_PREFER_RIGHT;
+        const StereoTemporaryMono = DXGI_PRESENT_STEREO_TEMPORARY_MONO;
+        const UseDuration = DXGI_PRESENT_USE_DURATION;
+        const AllowTearing = DXGI_PRESENT_ALLOW_TEARING;
+    }
+}
+
+bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct ResourceBarrierFlags: i32 {
+        const BeginOnly = D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY.0;
+        const EndOnly = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY.0;
+    }
+}
+
+bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct FactoryCreationFlags: u32 {
+        const Debug = DXGI_CREATE_FACTORY_DEBUG;
+    }
+}
+
+bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct WindowAssociationFlags: u32 {
+        const NoWindowChanges = DXGI_MWA_NO_WINDOW_CHANGES;
+        const NoAltEnter = DXGI_MWA_NO_ALT_ENTER;
+        const NoPrintScreen = DXGI_MWA_NO_PRINT_SCREEN;
+    }
+}
+
+bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct AdapterFlags: u32 {
+        const Remote = 1;
+        const Sofware = 2;
+    }
+}

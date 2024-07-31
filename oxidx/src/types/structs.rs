@@ -1,5 +1,6 @@
 use std::ffi::CStr;
 
+use compact_str::CompactString;
 use smallvec::SmallVec;
 use windows::Win32::Foundation::HANDLE;
 
@@ -872,4 +873,117 @@ pub struct StreamOutputBufferView {
     pub buffer_location: u64,
     pub size_in_bytes: u64,
     pub buffer_filled_size_location: u64,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Rational {
+    pub numerator: u32,
+    pub denominator: u32,
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct SwapchainDesc {
+    pub width: u32,
+    pub height: u32,
+    pub format: Format,
+    pub stereo: bool,
+    pub sample_desc: SampleDesc,
+    pub usage: FrameBufferUsage,
+    pub buffer_count: u32,
+    pub scaling: Scaling,
+    pub swap_effect: SwapEffect,
+    pub alpha_mode: AlphaMode,
+    pub flags: SwapchainFlags,
+}
+
+#[derive(Debug, Clone)]
+pub struct SwapchainFullscreenDesc {
+    pub rational: Rational,
+    pub scanline_ordering: ScanlineOrdering,
+    pub scaling: ScalingMode,
+    pub windowed: bool,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct Viewport {
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+    pub min_depth: f32,
+    pub max_depth: f32,
+}
+
+impl Viewport {
+    #[inline]
+    pub fn from_position_and_size(
+        position: impl Into<(f32, f32)>,
+        size: impl Into<(f32, f32)>,
+    ) -> Self {
+        let (width, height) = size.into();
+        let (x, y) = position.into();
+
+        Self {
+            x,
+            y,
+            width,
+            height,
+            min_depth: MIN_DEPTH,
+            max_depth: MAX_DEPTH,
+        }
+    }
+
+    #[inline]
+    pub fn from_size(size: impl Into<(f32, f32)>) -> Self {
+        Self::from_position_and_size((0.0, 0.0), size)
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct Rect {
+    pub left: i32,
+    pub top: i32,
+    pub right: i32,
+    pub bottom: i32,
+}
+
+impl Rect {
+    #[inline]
+    pub fn from_size(size: impl Into<(i32, i32)>) -> Self {
+        let (width, height) = size.into();
+
+        Self {
+            left: 0,
+            top: 0,
+            right: width,
+            bottom: height,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct ResourceBarrier<'a> {
+    pub r#type: BarrierType<'a>,
+    pub flags: ResourceBarrierFlags,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct VertexBufferView {
+    pub buffer_location: u64,
+    pub stride_in_bytes: u32,
+    pub size_in_bytes: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct AdapterDesc {
+    pub description: CompactString,
+    pub vendor_id: u32,
+    pub device_id: u32,
+    pub sub_sys_id: u32,
+    pub revision: u32,
+    pub dedicated_video_memory: usize,
+    pub dedicated_system_memory: usize,
+    pub shared_system_memory: usize,
+    pub adapter_luid: Luid,
+    pub flags: AdapterFlags,
 }

@@ -5,16 +5,17 @@ use windows::Win32::Foundation::HWND;
 use windows::Win32::Graphics::Direct3D12::{D3D12CreateDevice, D3D12GetDebugInterface};
 use windows::Win32::Graphics::Dxgi::{
     CreateDXGIFactory2, IDXGIAdapter, IDXGIAdapter3, IDXGIFactory4, IDXGIFactory6, IDXGIFactory7,
-    DXGI_CREATE_FACTORY_DEBUG, DXGI_MWA_NO_ALT_ENTER, DXGI_MWA_NO_PRINT_SCREEN,
-    DXGI_MWA_NO_WINDOW_CHANGES,
 };
 
 use crate::adapter::IAdapter3;
 use crate::command_queue::ICommandQueue;
 use crate::debug::IDebug;
 use crate::device::IDevice;
-use crate::swapchain::{IOutput, Swapchain1, SwapchainDesc, SwapchainFullscreenDesc};
-use crate::types::FeatureLevel;
+use crate::swapchain::{IOutput, Swapchain1};
+use crate::types::{
+    FactoryCreationFlags, FeatureLevel, SwapchainDesc, SwapchainFullscreenDesc,
+    WindowAssociationFlags,
+};
 use crate::{adapter::Adapter3, error::DxError};
 use crate::{create_type, impl_trait, HasInterface};
 
@@ -153,13 +154,6 @@ impl_trait! {
     }
 }
 
-bitflags::bitflags! {
-    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct FactoryCreationFlags: u32 {
-        const Debug = DXGI_CREATE_FACTORY_DEBUG;
-    }
-}
-
 pub struct Entry;
 
 impl Entry {
@@ -197,18 +191,9 @@ impl Entry {
     }
 }
 
-bitflags::bitflags! {
-    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct WindowAssociationFlags: u32 {
-        const NoWindowChanges = DXGI_MWA_NO_WINDOW_CHANGES;
-        const NoAltEnter = DXGI_MWA_NO_ALT_ENTER;
-        const NoPrintScreen = DXGI_MWA_NO_PRINT_SCREEN;
-    }
-}
-
 #[cfg(test)]
 mod test {
-    use crate::device::Device;
+    use crate::{device::Device, types::FactoryCreationFlags};
 
     use super::*;
 

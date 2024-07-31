@@ -1,3 +1,5 @@
+use std::mem::ManuallyDrop;
+
 use smallvec::SmallVec;
 use windows::Win32::Graphics::Direct3D12::*;
 
@@ -53,6 +55,11 @@ conv_enum!(VariableShadingRateTier to D3D12_VARIABLE_SHADING_RATE_TIER);
 conv_enum!(ViewInstancingTier to D3D12_VIEW_INSTANCING_TIER);
 conv_enum!(WaveMmaTier to D3D12_WAVE_MMA_TIER);
 conv_enum!(PredicationOp to D3D12_PREDICATION_OP);
+conv_enum!(Scaling to DXGI_SCALING);
+conv_enum!(ScalingMode to DXGI_MODE_SCALING);
+conv_enum!(ScanlineOrdering to DXGI_MODE_SCANLINE_ORDER);
+conv_enum!(SwapEffect to DXGI_SWAP_EFFECT);
+conv_enum!(AlphaMode to DXGI_ALPHA_MODE);
 
 impl ClearValue {
     #[inline]
@@ -669,11 +676,50 @@ impl TextureCopyType {
     pub(crate) fn as_raw(&self) -> D3D12_TEXTURE_COPY_LOCATION_0 {
         match self {
             TextureCopyType::SubresourceIndex(index) => D3D12_TEXTURE_COPY_LOCATION_0 {
-                SubresourceIndex: *index
+                SubresourceIndex: *index,
             },
             TextureCopyType::PlacedFootprint(footprint) => D3D12_TEXTURE_COPY_LOCATION_0 {
-                PlacedFootprint: footprint.as_raw()
+                PlacedFootprint: footprint.as_raw(),
             },
+        }
+    }
+}
+
+impl<'a> BarrierType<'a> {
+    pub(crate) fn as_raw(&self) -> D3D12_RESOURCE_BARRIER_0 {
+        match self {
+            BarrierType::Transition {
+                resource,
+                subresource,
+                before,
+                after,
+            } => D3D12_RESOURCE_BARRIER_0 {
+                Transition: ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
+                    pResource: unsafe { std::mem::transmute_copy(resource.as_raw()) },
+                    Subresource: *subresource,
+                    StateBefore: before.as_raw(),
+                    StateAfter: after.as_raw(),
+                }),
+            },
+            BarrierType::Aliasing { before, after } => D3D12_RESOURCE_BARRIER_0 {
+                Aliasing: ManuallyDrop::new(D3D12_RESOURCE_ALIASING_BARRIER {
+                    pResourceBefore: unsafe { std::mem::transmute_copy(before.as_raw()) },
+                    pResourceAfter: unsafe { std::mem::transmute_copy(after.as_raw()) },
+                }),
+            },
+            BarrierType::Uav { resource } => D3D12_RESOURCE_BARRIER_0 {
+                UAV: ManuallyDrop::new(D3D12_RESOURCE_UAV_BARRIER {
+                    pResource: unsafe { std::mem::transmute_copy(resource.as_raw_ref()) },
+                }),
+            },
+        }
+    }
+
+    pub(crate) fn as_type_raw(&self) -> D3D12_RESOURCE_BARRIER_TYPE {
+        match self {
+            BarrierType::Transition { .. } => D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+            BarrierType::Aliasing { .. } => D3D12_RESOURCE_BARRIER_TYPE_ALIASING,
+            BarrierType::Uav { .. } => D3D12_RESOURCE_BARRIER_TYPE_UAV,
         }
     }
 }
