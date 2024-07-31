@@ -3,6 +3,26 @@ use windows::Win32::Graphics::Direct3D12::*;
 
 use super::*;
 
+impl From<DXGI_ADAPTER_DESC1> for AdapterDesc {
+    fn from(value: DXGI_ADAPTER_DESC1) -> Self {
+        AdapterDesc {
+            description: CompactString::from_utf16_lossy(value.Description),
+            vendor_id: value.VendorId,
+            device_id: value.DeviceId,
+            sub_sys_id: value.SubSysId,
+            revision: value.Revision,
+            dedicated_video_memory: value.DedicatedVideoMemory,
+            dedicated_system_memory: value.SharedSystemMemory,
+            shared_system_memory: value.SharedSystemMemory,
+            adapter_luid: Luid {
+                low_part: value.AdapterLuid.LowPart,
+                high_part: value.AdapterLuid.HighPart,
+            },
+            flags: AdapterFlags::from_bits(value.Flags).unwrap(),
+        }
+    }
+}
+
 impl BlendDesc {
     #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_BLEND_DESC {
@@ -16,6 +36,20 @@ impl BlendDesc {
             AlphaToCoverageEnable: self.alpha_to_coverage_enable.into(),
             IndependentBlendEnable: self.independent_blend_enable.into(),
             RenderTarget: render_target,
+        }
+    }
+}
+
+impl Box {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_BOX {
+        D3D12_BOX {
+            left: self.left,
+            top: self.top,
+            front: self.front,
+            right: self.right,
+            bottom: self.bottom,
+            back: self.back,
         }
     }
 }
@@ -145,6 +179,87 @@ impl DepthStencilOpDesc {
     }
 }
 
+impl DepthStencilViewDesc {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_DEPTH_STENCIL_VIEW_DESC {
+        D3D12_DEPTH_STENCIL_VIEW_DESC {
+            Format: self.format.as_raw(),
+            ViewDimension: self.view_dimension.as_raw(),
+            Flags: self.flags.as_raw(),
+            Anonymous: match self.view_dimension {
+                DsvDimension::Tex1D { mip_slice } => D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
+                    Texture1D: D3D12_TEX1D_DSV {
+                        MipSlice: mip_slice,
+                    },
+                },
+                DsvDimension::ArrayTex1D {
+                    mip_slice,
+                    first_array_slice,
+                    array_size,
+                } => D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
+                    Texture1DArray: D3D12_TEX1D_ARRAY_DSV {
+                        MipSlice: mip_slice,
+                        FirstArraySlice: first_array_slice,
+                        ArraySize: array_size,
+                    },
+                },
+                DsvDimension::Tex2D { mip_slice } => D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
+                    Texture2D: D3D12_TEX2D_DSV {
+                        MipSlice: mip_slice,
+                    },
+                },
+                DsvDimension::ArrayTex2D {
+                    mip_slice,
+                    first_array_slice,
+                    array_size,
+                } => D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
+                    Texture2DArray: D3D12_TEX2D_ARRAY_DSV {
+                        MipSlice: mip_slice,
+                        FirstArraySlice: first_array_slice,
+                        ArraySize: array_size,
+                    },
+                },
+                DsvDimension::Tex2DMs => D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
+                    Texture2DMS: D3D12_TEX2DMS_DSV::default(),
+                },
+                DsvDimension::ArrayTex2DMs {
+                    first_array_slice,
+                    array_size,
+                } => D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
+                    Texture2DMSArray: D3D12_TEX2DMS_ARRAY_DSV {
+                        FirstArraySlice: first_array_slice,
+                        ArraySize: array_size,
+                    },
+                },
+            },
+        }
+    }
+}
+
+impl DescriptorHeapDesc {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_DESCRIPTOR_HEAP_DESC {
+        D3D12_DESCRIPTOR_HEAP_DESC {
+            Type: self.r#type.as_raw(),
+            NumDescriptors: self.num,
+            Flags: self.flags.as_raw(),
+            NodeMask: self.node_mask,
+        }
+    }
+}
+
+impl From<D3D12_DESCRIPTOR_HEAP_DESC> for DescriptorHeapDesc {
+    #[inline]
+    fn from(value: D3D12_DESCRIPTOR_HEAP_DESC) -> Self {
+        Self {
+            r#type: value.Type.into(),
+            num: value.NumDescriptors,
+            flags: value.Flags.into(),
+            node_mask: value.NodeMask,
+        }
+    }
+}
+
 impl DescriptorRange {
     #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_DESCRIPTOR_RANGE {
@@ -155,6 +270,32 @@ impl DescriptorRange {
             RegisterSpace: self.register_space,
             OffsetInDescriptorsFromTableStart: self.offset_in_descriptors_from_table_start,
         }
+    }
+}
+
+impl<'a> DiscardRegion<'a> {
+    #[inline]
+    pub(crate) fn as_raw(&self, rects: &[RECT]) -> D3D12_DISCARD_REGION {
+        D3D12_DISCARD_REGION {
+            NumRects: rects.len() as u32,
+            pRects: rects.as_ptr(),
+            FirstSubresource: self.first_subresource,
+            NumSubresources: self.num_subresource,
+        }
+    }
+}
+
+impl GpuDescriptorHandle {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_GPU_DESCRIPTOR_HANDLE {
+        D3D12_GPU_DESCRIPTOR_HANDLE { ptr: self.0 as u64 }
+    }
+}
+
+impl From<D3D12_GPU_DESCRIPTOR_HANDLE> for GpuDescriptorHandle {
+    #[inline]
+    fn from(value: D3D12_GPU_DESCRIPTOR_HANDLE) -> Self {
+        Self(value.ptr as usize)
     }
 }
 
@@ -226,101 +367,6 @@ impl<'a> GraphicsPipelineDesc<'a> {
     }
 }
 
-impl GpuDescriptorHandle {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_GPU_DESCRIPTOR_HANDLE {
-        D3D12_GPU_DESCRIPTOR_HANDLE { ptr: self.0 as u64 }
-    }
-}
-
-impl From<D3D12_GPU_DESCRIPTOR_HANDLE> for GpuDescriptorHandle {
-    #[inline]
-    fn from(value: D3D12_GPU_DESCRIPTOR_HANDLE) -> Self {
-        Self(value.ptr as usize)
-    }
-}
-
-impl DescriptorHeapDesc {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_DESCRIPTOR_HEAP_DESC {
-        D3D12_DESCRIPTOR_HEAP_DESC {
-            Type: self.r#type.as_raw(),
-            NumDescriptors: self.num,
-            Flags: self.flags.as_raw(),
-            NodeMask: self.node_mask,
-        }
-    }
-}
-
-impl From<D3D12_DESCRIPTOR_HEAP_DESC> for DescriptorHeapDesc {
-    #[inline]
-    fn from(value: D3D12_DESCRIPTOR_HEAP_DESC) -> Self {
-        Self {
-            r#type: value.Type.into(),
-            num: value.NumDescriptors,
-            flags: value.Flags.into(),
-            node_mask: value.NodeMask,
-        }
-    }
-}
-
-impl DepthStencilViewDesc {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_DEPTH_STENCIL_VIEW_DESC {
-        D3D12_DEPTH_STENCIL_VIEW_DESC {
-            Format: self.format.as_raw(),
-            ViewDimension: self.view_dimension.as_raw(),
-            Flags: self.flags.as_raw(),
-            Anonymous: match self.view_dimension {
-                DsvDimension::Tex1D { mip_slice } => D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
-                    Texture1D: D3D12_TEX1D_DSV {
-                        MipSlice: mip_slice,
-                    },
-                },
-                DsvDimension::ArrayTex1D {
-                    mip_slice,
-                    first_array_slice,
-                    array_size,
-                } => D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
-                    Texture1DArray: D3D12_TEX1D_ARRAY_DSV {
-                        MipSlice: mip_slice,
-                        FirstArraySlice: first_array_slice,
-                        ArraySize: array_size,
-                    },
-                },
-                DsvDimension::Tex2D { mip_slice } => D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
-                    Texture2D: D3D12_TEX2D_DSV {
-                        MipSlice: mip_slice,
-                    },
-                },
-                DsvDimension::ArrayTex2D {
-                    mip_slice,
-                    first_array_slice,
-                    array_size,
-                } => D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
-                    Texture2DArray: D3D12_TEX2D_ARRAY_DSV {
-                        MipSlice: mip_slice,
-                        FirstArraySlice: first_array_slice,
-                        ArraySize: array_size,
-                    },
-                },
-                DsvDimension::Tex2DMs => D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
-                    Texture2DMS: D3D12_TEX2DMS_DSV::default(),
-                },
-                DsvDimension::ArrayTex2DMs {
-                    first_array_slice,
-                    array_size,
-                } => D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
-                    Texture2DMSArray: D3D12_TEX2DMS_ARRAY_DSV {
-                        FirstArraySlice: first_array_slice,
-                        ArraySize: array_size,
-                    },
-                },
-            },
-        }
-    }
-}
-
 impl HeapDesc {
     #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_HEAP_DESC {
@@ -358,6 +404,47 @@ impl HeapProperties {
     }
 }
 
+impl From<D3D12_HEAP_PROPERTIES> for HeapProperties {
+    #[inline]
+    fn from(value: D3D12_HEAP_PROPERTIES) -> Self {
+        Self {
+            r#type: value.Type.into(),
+            cpu_page_propery: value.CPUPageProperty.into(),
+            memory_pool_preference: value.MemoryPoolPreference.into(),
+            creation_node_mask: value.CreationNodeMask,
+            visible_node_mask: value.VisibleNodeMask,
+        }
+    }
+}
+
+impl IndexBufferView {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_INDEX_BUFFER_VIEW {
+        D3D12_INDEX_BUFFER_VIEW {
+            BufferLocation: self.buffer_location,
+            SizeInBytes: self.size_in_bytes,
+            Format: self.format.as_raw(),
+        }
+    }
+}
+
+impl InputElementDesc {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_INPUT_ELEMENT_DESC {
+        let semantic_name = PCSTR::from_raw(self.semantic_name.as_ref().as_ptr() as *const _);
+
+        D3D12_INPUT_ELEMENT_DESC {
+            SemanticName: semantic_name,
+            SemanticIndex: self.semantic_index,
+            Format: self.format.as_raw(),
+            InputSlot: self.input_slot,
+            AlignedByteOffset: self.offset,
+            InputSlotClass: self.slot_class.as_raw(),
+            InstanceDataStepRate: self.instance_data_step_rate,
+        }
+    }
+}
+
 impl Luid {
     #[inline]
     pub(crate) fn as_raw(&self) -> LUID {
@@ -377,6 +464,38 @@ impl From<LUID> for Luid {
     }
 }
 
+impl From<D3D12_PACKED_MIP_INFO> for PackedMipDesc {
+    #[inline]
+    fn from(value: D3D12_PACKED_MIP_INFO) -> Self {
+        Self {
+            num_standard_mips: value.NumStandardMips,
+            num_packed_mips: value.NumPackedMips,
+            num_tiles_for_packed_mips: value.NumTilesForPackedMips,
+            start_tile_index_in_overall_resource: value.StartTileIndexInOverallResource,
+        }
+    }
+}
+
+impl PlacedSubresourceFootprint {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_PLACED_SUBRESOURCE_FOOTPRINT {
+        D3D12_PLACED_SUBRESOURCE_FOOTPRINT {
+            Offset: self.offset,
+            Footprint: self.footprint.as_raw(),
+        }
+    }
+}
+
+impl From<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> for PlacedSubresourceFootprint {
+    #[inline]
+    fn from(value: D3D12_PLACED_SUBRESOURCE_FOOTPRINT) -> Self {
+        Self {
+            offset: value.Offset,
+            footprint: value.Footprint.into(),
+        }
+    }
+}
+
 impl QueryHeapDesc {
     #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_QUERY_HEAP_DESC {
@@ -384,36 +503,6 @@ impl QueryHeapDesc {
             Type: self.r#type.as_raw(),
             Count: self.count,
             NodeMask: self.node_mask,
-        }
-    }
-}
-
-impl From<D3D12_HEAP_PROPERTIES> for HeapProperties {
-    #[inline]
-    fn from(value: D3D12_HEAP_PROPERTIES) -> Self {
-        Self {
-            r#type: value.Type.into(),
-            cpu_page_propery: value.CPUPageProperty.into(),
-            memory_pool_preference: value.MemoryPoolPreference.into(),
-            creation_node_mask: value.CreationNodeMask,
-            visible_node_mask: value.VisibleNodeMask,
-        }
-    }
-}
-
-impl InputElementDesc {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_INPUT_ELEMENT_DESC {
-        let semantic_name = PCSTR::from_raw(self.semantic_name.as_ref().as_ptr() as *const _);
-
-        D3D12_INPUT_ELEMENT_DESC {
-            SemanticName: semantic_name,
-            SemanticIndex: self.semantic_index,
-            Format: self.format.as_raw(),
-            InputSlot: self.input_slot,
-            AlignedByteOffset: self.offset,
-            InputSlotClass: self.slot_class.as_raw(),
-            InstanceDataStepRate: self.instance_data_step_rate,
         }
     }
 }
@@ -437,6 +526,56 @@ impl RasterizerDesc {
     }
 }
 
+impl Rational {
+    pub(crate) fn as_raw(&self) -> DXGI_RATIONAL {
+        DXGI_RATIONAL {
+            Numerator: self.numerator,
+            Denominator: self.denominator,
+        }
+    }
+}
+
+impl Rect {
+    pub(crate) fn as_raw(&self) -> RECT {
+        RECT {
+            left: self.left,
+            top: self.top,
+            right: self.right,
+            bottom: self.bottom,
+        }
+    }
+}
+
+impl RenderTargetViewDesc {
+    pub(crate) fn as_raw(&self) -> D3D12_RENDER_TARGET_VIEW_DESC {
+        D3D12_RENDER_TARGET_VIEW_DESC {
+            Format: self.format.as_raw(),
+            ViewDimension: self.dimension.as_type_raw(),
+            Anonymous: self.dimension.as_raw(),
+        }
+    }
+}
+
+impl From<D3D12_RESOURCE_ALLOCATION_INFO> for ResourceAllocationInfo {
+    #[inline]
+    fn from(value: D3D12_RESOURCE_ALLOCATION_INFO) -> Self {
+        Self {
+            size_in_bytes: value.SizeInBytes,
+            alignment: value.Alignment,
+        }
+    }
+}
+
+impl<'a> ResourceBarrier<'a> {
+    pub(crate) fn as_raw(&self) -> D3D12_RESOURCE_BARRIER {
+        D3D12_RESOURCE_BARRIER {
+            Type: self.r#type.as_type_raw(),
+            Flags: D3D12_RESOURCE_BARRIER_FLAGS(self.flags.bits()),
+            Anonymous: self.r#type.as_raw(),
+        }
+    }
+}
+
 impl ResourceDesc {
     #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_RESOURCE_DESC {
@@ -451,6 +590,20 @@ impl ResourceDesc {
             SampleDesc: self.sample_desc.as_raw(),
             Layout: self.layout.as_raw(),
             Flags: self.flags.as_raw(),
+        }
+    }
+}
+
+impl<'a> RootParameter<'a> {
+    #[inline]
+    pub(crate) fn as_raw<const N: usize>(
+        &self,
+        param: &[SmallVec<[D3D12_DESCRIPTOR_RANGE; N]>],
+    ) -> D3D12_ROOT_PARAMETER {
+        D3D12_ROOT_PARAMETER {
+            ParameterType: self.r#type.as_type_raw(),
+            Anonymous: self.r#type.as_raw(param),
+            ShaderVisibility: self.visibility.as_raw(),
         }
     }
 }
@@ -482,52 +635,12 @@ impl<'a> RootSignatureDesc<'a> {
     }
 }
 
-impl RenderTargetViewDesc {
-    pub(crate) fn as_raw(&self) -> D3D12_RENDER_TARGET_VIEW_DESC {
-        D3D12_RENDER_TARGET_VIEW_DESC {
-            Format: self.format.as_raw(),
-            ViewDimension: self.dimension.as_type_raw(),
-            Anonymous: self.dimension.as_raw(),
-        }
-    }
-}
-
-impl<'a> RootParameter<'a> {
-    #[inline]
-    pub(crate) fn as_raw<const N: usize>(
-        &self,
-        param: &[SmallVec<[D3D12_DESCRIPTOR_RANGE; N]>],
-    ) -> D3D12_ROOT_PARAMETER {
-        D3D12_ROOT_PARAMETER {
-            ParameterType: self.r#type.as_type_raw(),
-            Anonymous: self.r#type.as_raw(param),
-            ShaderVisibility: self.visibility.as_raw(),
-        }
-    }
-}
-
 impl SampleDesc {
     #[inline]
     pub(crate) fn as_raw(&self) -> DXGI_SAMPLE_DESC {
         DXGI_SAMPLE_DESC {
             Count: self.count,
             Quality: self.quality,
-        }
-    }
-}
-
-impl<'a> StreamOutputDesc<'a> {
-    #[inline]
-    pub(crate) fn as_raw(
-        &self,
-        entries: &[D3D12_SO_DECLARATION_ENTRY],
-    ) -> D3D12_STREAM_OUTPUT_DESC {
-        D3D12_STREAM_OUTPUT_DESC {
-            pSODeclaration: entries.as_ptr(),
-            NumEntries: entries.len() as u32,
-            pBufferStrides: self.buffer_strides.as_ptr(),
-            NumStrides: self.buffer_strides.len() as u32,
-            RasterizedStream: self.rasterized_stream,
         }
     }
 }
@@ -546,6 +659,18 @@ impl SamplerDesc {
             BorderColor: self.border_color,
             MinLOD: self.min_lod,
             MaxLOD: self.max_lod,
+        }
+    }
+}
+
+impl ShaderResourceViewDesc {
+    pub(crate) fn as_raw(&self) -> D3D12_SHADER_RESOURCE_VIEW_DESC {
+        D3D12_SHADER_RESOURCE_VIEW_DESC {
+            Format: self.format.as_raw(),
+            ViewDimension: self.dimension.as_type_raw(),
+            Anonymous: self.dimension.as_raw(),
+            // TODO: Make it in shader resource view desc
+            Shader4ComponentMapping: 0x7,
         }
     }
 }
@@ -571,70 +696,29 @@ impl StaticSamplerDesc {
     }
 }
 
-impl ShaderResourceViewDesc {
-    pub(crate) fn as_raw(&self) -> D3D12_SHADER_RESOURCE_VIEW_DESC {
-        D3D12_SHADER_RESOURCE_VIEW_DESC {
-            Format: self.format.as_raw(),
-            ViewDimension: self.dimension.as_type_raw(),
-            Anonymous: self.dimension.as_raw(),
-            // TODO: Make it in shader resource view desc
-            Shader4ComponentMapping: 0x7,
+impl StreamOutputBufferView {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_STREAM_OUTPUT_BUFFER_VIEW {
+        D3D12_STREAM_OUTPUT_BUFFER_VIEW {
+            BufferLocation: self.buffer_location,
+            SizeInBytes: self.size_in_bytes,
+            BufferFilledSizeLocation: self.buffer_filled_size_location,
         }
     }
 }
 
-impl TileRegionSize {
+impl<'a> StreamOutputDesc<'a> {
     #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_TILE_REGION_SIZE {
-        D3D12_TILE_REGION_SIZE {
-            NumTiles: self.num_tiles,
-            UseBox: self.use_box.into(),
-            Width: self.width,
-            Height: self.height,
-            Depth: self.depth,
-        }
-    }
-}
-
-impl TiledResourceCoordinate {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_TILED_RESOURCE_COORDINATE {
-        D3D12_TILED_RESOURCE_COORDINATE {
-            X: self.x,
-            Y: self.y,
-            Z: self.z,
-            Subresource: self.subresource,
-        }
-    }
-}
-
-impl UnorderedAccessViewDesc {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_UNORDERED_ACCESS_VIEW_DESC {
-        D3D12_UNORDERED_ACCESS_VIEW_DESC {
-            Format: self.format.as_raw(),
-            ViewDimension: self.dimension.as_type_raw(),
-            Anonymous: self.dimension.as_raw(),
-        }
-    }
-}
-
-impl PlacedSubresourceFootprint {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_PLACED_SUBRESOURCE_FOOTPRINT {
-        D3D12_PLACED_SUBRESOURCE_FOOTPRINT {
-            Offset: self.offset,
-            Footprint: self.footprint.as_raw(),
-        }
-    }
-}
-
-impl From<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> for PlacedSubresourceFootprint {
-    #[inline]
-    fn from(value: D3D12_PLACED_SUBRESOURCE_FOOTPRINT) -> Self {
-        Self {
-            offset: value.Offset,
-            footprint: value.Footprint.into(),
+    pub(crate) fn as_raw(
+        &self,
+        entries: &[D3D12_SO_DECLARATION_ENTRY],
+    ) -> D3D12_STREAM_OUTPUT_DESC {
+        D3D12_STREAM_OUTPUT_DESC {
+            pSODeclaration: entries.as_ptr(),
+            NumEntries: entries.len() as u32,
+            pBufferStrides: self.buffer_strides.as_ptr(),
+            NumStrides: self.buffer_strides.len() as u32,
+            RasterizedStream: self.rasterized_stream,
         }
     }
 }
@@ -665,16 +749,6 @@ impl From<D3D12_SUBRESOURCE_FOOTPRINT> for SubresourceFootprint {
     }
 }
 
-impl From<D3D12_RESOURCE_ALLOCATION_INFO> for ResourceAllocationInfo {
-    #[inline]
-    fn from(value: D3D12_RESOURCE_ALLOCATION_INFO) -> Self {
-        Self {
-            size_in_bytes: value.SizeInBytes,
-            alignment: value.Alignment,
-        }
-    }
-}
-
 impl From<D3D12_SUBRESOURCE_TILING> for SubresourceTiling {
     #[inline]
     fn from(value: D3D12_SUBRESOURCE_TILING) -> Self {
@@ -687,91 +761,8 @@ impl From<D3D12_SUBRESOURCE_TILING> for SubresourceTiling {
     }
 }
 
-impl From<D3D12_PACKED_MIP_INFO> for PackedMipDesc {
-    #[inline]
-    fn from(value: D3D12_PACKED_MIP_INFO) -> Self {
-        Self {
-            num_standard_mips: value.NumStandardMips,
-            num_packed_mips: value.NumPackedMips,
-            num_tiles_for_packed_mips: value.NumTilesForPackedMips,
-            start_tile_index_in_overall_resource: value.StartTileIndexInOverallResource,
-        }
-    }
-}
-
-impl From<D3D12_TILE_SHAPE> for TileShape {
-    #[inline]
-    fn from(value: D3D12_TILE_SHAPE) -> Self {
-        Self {
-            width_in_texels: value.WidthInTexels,
-            height_in_texels: value.HeightInTexels,
-            depth_in_texels: value.DepthInTexels,
-        }
-    }
-}
-
-impl IndexBufferView {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_INDEX_BUFFER_VIEW {
-        D3D12_INDEX_BUFFER_VIEW {
-            BufferLocation: self.buffer_location,
-            SizeInBytes: self.size_in_bytes,
-            Format: self.format.as_raw(),
-        }
-    }
-}
-
-impl StreamOutputBufferView {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_STREAM_OUTPUT_BUFFER_VIEW {
-        D3D12_STREAM_OUTPUT_BUFFER_VIEW {
-            BufferLocation: self.buffer_location,
-            SizeInBytes: self.size_in_bytes,
-            BufferFilledSizeLocation: self.buffer_filled_size_location,
-        }
-    }
-}
-
-impl<'a> DiscardRegion<'a> {
-    #[inline]
-    pub(crate) fn as_raw(&self, rects: &[RECT]) -> D3D12_DISCARD_REGION {
-        D3D12_DISCARD_REGION {
-            NumRects: rects.len() as u32,
-            pRects: rects.as_ptr(),
-            FirstSubresource: self.first_subresource,
-            NumSubresources: self.num_subresource,
-        }
-    }
-}
-
-impl<'a> TextureCopyLocation<'a> {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_TEXTURE_COPY_LOCATION {
-        unsafe {
-            D3D12_TEXTURE_COPY_LOCATION {
-                pResource: std::mem::transmute_copy(self.resource.as_raw()),
-                Type: self.r#type.as_raw_type(),
-                Anonymous: self.r#type.as_raw(),
-            }
-        }
-    }
-}
-
-impl Box {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_BOX {
-        D3D12_BOX {
-            left: self.left,
-            top: self.top,
-            front: self.front,
-            right: self.right,
-            bottom: self.bottom,
-            back: self.back,
-        }
-    }
-}
-
 impl SwapchainDesc {
+    #[inline]
     pub(crate) fn as_raw(&self) -> DXGI_SWAP_CHAIN_DESC1 {
         DXGI_SWAP_CHAIN_DESC1 {
             Width: self.width,
@@ -800,35 +791,62 @@ impl SwapchainFullscreenDesc {
     }
 }
 
-impl Rational {
-    pub(crate) fn as_raw(&self) -> DXGI_RATIONAL {
-        DXGI_RATIONAL {
-            Numerator: self.numerator,
-            Denominator: self.denominator,
+impl<'a> TextureCopyLocation<'a> {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_TEXTURE_COPY_LOCATION {
+        unsafe {
+            D3D12_TEXTURE_COPY_LOCATION {
+                pResource: std::mem::transmute_copy(self.resource.as_raw()),
+                Type: self.r#type.as_raw_type(),
+                Anonymous: self.r#type.as_raw(),
+            }
         }
     }
 }
 
-impl Viewport {
-    pub(crate) fn as_raw(&self) -> D3D12_VIEWPORT {
-        D3D12_VIEWPORT {
-            TopLeftX: self.x,
-            TopLeftY: self.y,
+impl TileRegionSize {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_TILE_REGION_SIZE {
+        D3D12_TILE_REGION_SIZE {
+            NumTiles: self.num_tiles,
+            UseBox: self.use_box.into(),
             Width: self.width,
             Height: self.height,
-            MinDepth: self.min_depth,
-            MaxDepth: self.max_depth,
+            Depth: self.depth,
         }
     }
 }
 
-impl Rect {
-    pub(crate) fn as_raw(&self) -> RECT {
-        RECT {
-            left: self.left,
-            top: self.top,
-            right: self.right,
-            bottom: self.bottom,
+impl From<D3D12_TILE_SHAPE> for TileShape {
+    #[inline]
+    fn from(value: D3D12_TILE_SHAPE) -> Self {
+        Self {
+            width_in_texels: value.WidthInTexels,
+            height_in_texels: value.HeightInTexels,
+            depth_in_texels: value.DepthInTexels,
+        }
+    }
+}
+
+impl TiledResourceCoordinate {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_TILED_RESOURCE_COORDINATE {
+        D3D12_TILED_RESOURCE_COORDINATE {
+            X: self.x,
+            Y: self.y,
+            Z: self.z,
+            Subresource: self.subresource,
+        }
+    }
+}
+
+impl UnorderedAccessViewDesc {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_UNORDERED_ACCESS_VIEW_DESC {
+        D3D12_UNORDERED_ACCESS_VIEW_DESC {
+            Format: self.format.as_raw(),
+            ViewDimension: self.dimension.as_type_raw(),
+            Anonymous: self.dimension.as_raw(),
         }
     }
 }
@@ -843,32 +861,15 @@ impl VertexBufferView {
     }
 }
 
-impl<'a> ResourceBarrier<'a> {
-    pub(crate) fn as_raw(&self) -> D3D12_RESOURCE_BARRIER {
-        D3D12_RESOURCE_BARRIER {
-            Type: self.r#type.as_type_raw(),
-            Flags: D3D12_RESOURCE_BARRIER_FLAGS(self.flags.bits()),
-            Anonymous: self.r#type.as_raw(),
-        }
-    }
-}
-
-impl From<DXGI_ADAPTER_DESC1> for AdapterDesc {
-    fn from(value: DXGI_ADAPTER_DESC1) -> Self {
-        AdapterDesc {
-            description: CompactString::from_utf16_lossy(value.Description),
-            vendor_id: value.VendorId,
-            device_id: value.DeviceId,
-            sub_sys_id: value.SubSysId,
-            revision: value.Revision,
-            dedicated_video_memory: value.DedicatedVideoMemory,
-            dedicated_system_memory: value.SharedSystemMemory,
-            shared_system_memory: value.SharedSystemMemory,
-            adapter_luid: Luid {
-                low_part: value.AdapterLuid.LowPart,
-                high_part: value.AdapterLuid.HighPart,
-            },
-            flags: AdapterFlags::from_bits(value.Flags).unwrap_or(AdapterFlags::empty()),
+impl Viewport {
+    pub(crate) fn as_raw(&self) -> D3D12_VIEWPORT {
+        D3D12_VIEWPORT {
+            TopLeftX: self.x,
+            TopLeftY: self.y,
+            Width: self.width,
+            Height: self.height,
+            MinDepth: self.min_depth,
+            MaxDepth: self.max_depth,
         }
     }
 }

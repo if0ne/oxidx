@@ -8,6 +8,20 @@ use crate::{blob::Blob, resources::Resource, root_signature::RootSignature};
 
 use super::*;
 
+#[derive(Debug, Clone)]
+pub struct AdapterDesc {
+    pub description: CompactString,
+    pub vendor_id: u32,
+    pub device_id: u32,
+    pub sub_sys_id: u32,
+    pub revision: u32,
+    pub dedicated_video_memory: usize,
+    pub dedicated_system_memory: usize,
+    pub shared_system_memory: usize,
+    pub adapter_luid: Luid,
+    pub flags: AdapterFlags,
+}
+
 /// Describes the blend state.
 ///
 /// For more information: [`D3D12_BLEND_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_blend_desc)
@@ -23,6 +37,16 @@ pub struct BlendDesc {
     /// An array of [`RenderTargetBlendDesc`] structures that describe the blend states for render targets;
     /// these correspond to the eight render targets that can be bound to the output-merger stage at one time.
     pub render_targets: [RenderTargetBlendDesc; 8],
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Box {
+    pub left: u32,
+    pub top: u32,
+    pub front: u32,
+    pub right: u32,
+    pub bottom: u32,
+    pub back: u32,
 }
 
 /// Describes a command queue.
@@ -93,6 +117,22 @@ pub struct ConstantBufferViewDesc {
 
     /// The size in bytes of the constant buffer.
     pub size_in_bytes: u32,
+}
+
+/// Type that represent return values of [`IDevice::get_copyable_footprints`](crate::device::IDevice::get_copyable_footprints)
+#[derive(Clone, Debug)]
+pub struct CopyableFootprints {
+    /// An array (of length NumSubresources) of [`PlacedSubresourceFootprint`] structures, to be filled with the description and placement of each subresource.
+    pub layouts: SmallVec<[PlacedSubresourceFootprint; 8]>,
+
+    /// An array (of length NumSubresources) of integer variables, to be filled with the number of rows for each subresource.
+    pub num_rows: SmallVec<[u32; 8]>,
+
+    /// An array (of length NumSubresources) of integer variables, each entry to be filled with the unpadded size in bytes of a row, of each subresource.
+    pub row_sizes: SmallVec<[u64; 8]>,
+
+    /// The total size, in bytes.
+    pub total_bytes: u64,
 }
 
 /// Describes a CPU descriptor handle.
@@ -238,6 +278,13 @@ pub struct DescriptorRange {
     pub offset_in_descriptors_from_table_start: u32,
 }
 
+#[derive(Debug)]
+pub struct DiscardRegion<'a> {
+    pub rects: &'a [Rect],
+    pub first_subresource: u32,
+    pub num_subresource: u32,
+}
+
 /// Describes a GPU descriptor handle.
 ///
 /// For more information: [`D3D12_GPU_DESCRIPTOR_HANDLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_gpu_descriptor_handle)
@@ -321,37 +368,6 @@ pub struct GraphicsPipelineDesc<'a> {
     pub flags: PipelineStateFlags,
 }
 
-/// Describes a single element for the input-assembler stage of the graphics pipeline.
-///
-/// For more information: [`D3D12_INPUT_ELEMENT_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_input_element_desc)
-#[derive(Clone, Debug)]
-pub struct InputElementDesc {
-    /// The HLSL semantic associated with this element in a shader input-signature.
-    pub semantic_name: &'static CStr,
-
-    /// The semantic index for the element.
-    /// A semantic index modifies a semantic, with an integer index number.
-    ///  A semantic index is only needed in a case where there is more than one element with the same semantic.
-    /// For example, a 4x4 matrix would have four components each with the semantic name matrix, however each of the four component would have different semantic indices (0, 1, 2, and 3).
-    pub semantic_index: u32,
-
-    /// A [`Format`]-typed value that specifies the format of the element data.
-    pub format: Format,
-
-    /// An integer value that identifies the input-assembler. Valid values are between 0 and 15.
-    pub input_slot: u32,
-
-    /// Optional. Offset, in bytes, to this element from the start of the vertex.
-    /// Use `0xffffffff` for convenience to define the current element directly after the previous one, including any packing if necessary.
-    pub offset: u32,
-
-    /// A value that identifies the input data class for a single input slot.
-    pub slot_class: InputSlotClass,
-
-    /// The number of instances to draw using the same per-instance data before advancing in the buffer by one element.
-    pub instance_data_step_rate: u32,
-}
-
 /// Describes a heap.
 ///
 /// For more information: [`D3D12_HEAP_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_heap_desc)
@@ -402,6 +418,44 @@ pub struct HeapProperties {
     pub visible_node_mask: u32,
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct IndexBufferView {
+    pub buffer_location: u64,
+    pub size_in_bytes: u32,
+    pub format: Format,
+}
+
+/// Describes a single element for the input-assembler stage of the graphics pipeline.
+///
+/// For more information: [`D3D12_INPUT_ELEMENT_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_input_element_desc)
+#[derive(Clone, Debug)]
+pub struct InputElementDesc {
+    /// The HLSL semantic associated with this element in a shader input-signature.
+    pub semantic_name: &'static CStr,
+
+    /// The semantic index for the element.
+    /// A semantic index modifies a semantic, with an integer index number.
+    ///  A semantic index is only needed in a case where there is more than one element with the same semantic.
+    /// For example, a 4x4 matrix would have four components each with the semantic name matrix, however each of the four component would have different semantic indices (0, 1, 2, and 3).
+    pub semantic_index: u32,
+
+    /// A [`Format`]-typed value that specifies the format of the element data.
+    pub format: Format,
+
+    /// An integer value that identifies the input-assembler. Valid values are between 0 and 15.
+    pub input_slot: u32,
+
+    /// Optional. Offset, in bytes, to this element from the start of the vertex.
+    /// Use `0xffffffff` for convenience to define the current element directly after the previous one, including any packing if necessary.
+    pub offset: u32,
+
+    /// A value that identifies the input data class for a single input slot.
+    pub slot_class: InputSlotClass,
+
+    /// The number of instances to draw using the same per-instance data before advancing in the buffer by one element.
+    pub instance_data_step_rate: u32,
+}
+
 /// The LUID structure is an opaque structure that specifies an identifier that is guaranteed to be unique on the local machine.
 ///
 /// For more information: [`LUID structure`](https://learn.microsoft.com/en-us/windows/win32/api/ntdef/ns-ntdef-luid)
@@ -412,6 +466,36 @@ pub struct Luid {
 
     /// TBD
     pub high_part: i32,
+}
+
+/// Describes the tile structure of a tiled resource with mipmaps.
+///
+/// For more information: [`D3D12_PACKED_MIP_INFO structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_packed_mip_info)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct PackedMipDesc {
+    /// The number of standard mipmaps in the tiled resource.
+    pub num_standard_mips: u8,
+
+    /// The number of packed mipmaps in the tiled resource.
+    pub num_packed_mips: u8,
+
+    /// The number of tiles for the packed mipmaps in the tiled resource.
+    pub num_tiles_for_packed_mips: u32,
+
+    /// The offset of the first packed tile for the resource in the overall range of tiles.
+    pub start_tile_index_in_overall_resource: u32,
+}
+
+/// Describes the footprint of a placed subresource, including the offset and the [`SubresourceFootprint`].
+///
+/// For more information: [`D3D12_PLACED_SUBRESOURCE_FOOTPRINT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_placed_subresource_footprint)
+#[derive(Clone, Copy, Debug)]
+pub struct PlacedSubresourceFootprint {
+    /// The offset of the subresource within the parent resource, in bytes. The offset between the start of the parent resource and this subresource.
+    pub offset: u64,
+
+    /// The format, width, height, depth, and row-pitch of the subresource, as a [`SubresourceFootprint`] structure.
+    pub footprint: SubresourceFootprint,
 }
 
 /// Describes the purpose of a query heap. A query heap contains an array of individual queries.
@@ -473,6 +557,34 @@ pub struct RasterizerDesc {
     pub conservative_raster: ConservativeRaster,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct Rational {
+    pub numerator: u32,
+    pub denominator: u32,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct Rect {
+    pub left: i32,
+    pub top: i32,
+    pub right: i32,
+    pub bottom: i32,
+}
+
+impl Rect {
+    #[inline]
+    pub fn from_size(size: impl Into<(i32, i32)>) -> Self {
+        let (width, height) = size.into();
+
+        Self {
+            left: 0,
+            top: 0,
+            right: width,
+            bottom: height,
+        }
+    }
+}
+
 /// Describes the subresources from a resource that are accessible by using a render-target view.
 ///
 /// For more information: [`D3D12_RENDER_TARGET_VIEW_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_render_target_view_desc)
@@ -483,6 +595,24 @@ pub struct RenderTargetViewDesc {
 
     /// A [`RtvDimension`]-typed value that specifies how the render-target resource will be accessed. This type specifies how the resource will be accessed.
     pub dimension: RtvDimension,
+}
+
+/// Describes parameters needed to allocate resources.
+///
+/// For more information: [`D3D12_RESOURCE_ALLOCATION_INFO structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_allocation_info)
+#[derive(Clone, Debug)]
+pub struct ResourceAllocationInfo {
+    /// The size, in bytes, of the resource.
+    pub size_in_bytes: u64,
+
+    /// The alignment value for the resource; one of 4KB (4096), 64KB (65536), or 4MB (4194304) alignment.
+    pub alignment: u64,
+}
+
+#[derive(Clone, Debug)]
+pub struct ResourceBarrier<'a> {
+    pub r#type: BarrierType<'a>,
+    pub flags: ResourceBarrierFlags,
 }
 
 /// Describes a resource, such as a texture. This structure is used extensively.
@@ -521,6 +651,18 @@ pub struct ResourceDesc {
     pub flags: ResourceFlags,
 }
 
+/// Describes the slot of a root signature version 1.0.
+///
+/// For more information: [`D3D12_ROOT_PARAMETER structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_root_parameter)
+#[derive(Clone, Debug)]
+pub struct RootParameter<'a> {
+    /// A [`RootParameterType`]-typed value that specifies the type of root signature slot. This member determines which type to use in the union below.
+    pub r#type: RootParameterType<'a>,
+
+    /// A [`ShaderVisibility`]-typed value that specifies the shaders that can access the contents of the root signature slot.
+    pub visibility: ShaderVisibility,
+}
+
 /// Describes the layout of a root signature version 1.0.
 ///
 /// For more information: [`D3D12_ROOT_SIGNATURE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_root_signature_desc)
@@ -534,18 +676,6 @@ pub struct RootSignatureDesc<'a> {
 
     /// A combination of [`RootSignatureFlags`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies options for the root signature layout.
     pub flags: RootSignatureFlags,
-}
-
-/// Describes the slot of a root signature version 1.0.
-///
-/// For more information: [`D3D12_ROOT_PARAMETER structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_root_parameter)
-#[derive(Clone, Debug)]
-pub struct RootParameter<'a> {
-    /// A [`RootParameterType`]-typed value that specifies the type of root signature slot. This member determines which type to use in the union below.
-    pub r#type: RootParameterType<'a>,
-
-    /// A [`ShaderVisibility`]-typed value that specifies the shaders that can access the contents of the root signature slot.
-    pub visibility: ShaderVisibility,
 }
 
 /// Describes multi-sampling parameters for a resource.
@@ -657,6 +787,13 @@ pub struct StaticSamplerDesc {
     pub visibility: ShaderVisibility,
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct StreamOutputBufferView {
+    pub buffer_location: u64,
+    pub size_in_bytes: u64,
+    pub buffer_filled_size_location: u64,
+}
+
 /// Describes a streaming output buffer.
 ///
 /// For more information: [`D3D12_STREAM_OUTPUT_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_stream_output_desc)
@@ -670,6 +807,75 @@ pub struct StreamOutputDesc<'a> {
 
     /// The index number of the stream to be sent to the rasterizer stage.
     pub rasterized_stream: u32,
+}
+
+/// Describes the format, width, height, depth, and row-pitch of the subresource into the parent resource.
+///
+/// For more information: [`D3D12_SUBRESOURCE_FOOTPRINT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_subresource_footprint)
+#[derive(Clone, Copy, Debug)]
+pub struct SubresourceFootprint {
+    /// A [`Format`]-typed value that specifies the viewing format.
+    pub format: Format,
+
+    /// The width of the subresource.
+    pub width: u32,
+
+    /// The height of the subresource.
+    pub height: u32,
+
+    /// The depth of the subresource.
+    pub depth: u32,
+
+    /// The row pitch, or width, or physical size, in bytes, of the subresource data.
+    /// This must be a multiple of [`TEXTURE_DATA_PITCH_ALIGNMENT`], and must be greater than or equal to the size of the data within a row.
+    pub row_pitch: u32,
+}
+
+/// Describes a tiled subresource volume.
+///
+/// For more information: [`D3D12_SUBRESOURCE_TILING structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_subresource_tiling)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct SubresourceTiling {
+    /// The width in tiles of the subresource.
+    pub width_in_tiles: u32,
+
+    /// The height in tiles of the subresource.
+    pub height_in_tiles: u16,
+
+    /// The depth in tiles of the subresource.
+    pub depth_in_tiles: u16,
+
+    /// The index of the tile in the overall tiled subresource to start with.
+    pub start_tile_index_in_overall_resource: u32,
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct SwapchainDesc {
+    pub width: u32,
+    pub height: u32,
+    pub format: Format,
+    pub stereo: bool,
+    pub sample_desc: SampleDesc,
+    pub usage: FrameBufferUsage,
+    pub buffer_count: u32,
+    pub scaling: Scaling,
+    pub swap_effect: SwapEffect,
+    pub alpha_mode: AlphaMode,
+    pub flags: SwapchainFlags,
+}
+
+#[derive(Debug, Clone)]
+pub struct SwapchainFullscreenDesc {
+    pub rational: Rational,
+    pub scanline_ordering: ScanlineOrdering,
+    pub scaling: ScalingMode,
+    pub windowed: bool,
+}
+
+#[derive(Debug)]
+pub struct TextureCopyLocation<'a> {
+    pub resource: &'a Resource,
+    pub r#type: TextureCopyType,
 }
 
 /// Describes the size of a tiled region.
@@ -693,6 +899,21 @@ pub struct TileRegionSize {
     /// For arrays, used for advancing in depth jumps to next slice of same mipmap size, which isn't contiguous in the subresource counting space
     /// if there are multiple mipmaps.
     pub depth: u16,
+}
+
+/// Describes the shape of a tile by specifying its dimensions.
+///
+/// For more information: [`D3D12_TILE_SHAPE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_tile_shape)
+#[derive(Clone, Copy, Debug, Default)]
+pub struct TileShape {
+    /// The width in texels of the tile.
+    pub width_in_texels: u32,
+
+    /// The height in texels of the tile.
+    pub height_in_texels: u32,
+
+    /// The depth in texels of the tile.
+    pub depth_in_texels: u32,
 }
 
 /// Describes the coordinates of a tiled resource.
@@ -725,183 +946,11 @@ pub struct UnorderedAccessViewDesc {
     pub dimension: UavDimension,
 }
 
-/// Describes the format, width, height, depth, and row-pitch of the subresource into the parent resource.
-///
-/// For more information: [`D3D12_SUBRESOURCE_FOOTPRINT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_subresource_footprint)
 #[derive(Clone, Copy, Debug)]
-pub struct SubresourceFootprint {
-    /// A [`Format`]-typed value that specifies the viewing format.
-    pub format: Format,
-
-    /// The width of the subresource.
-    pub width: u32,
-
-    /// The height of the subresource.
-    pub height: u32,
-
-    /// The depth of the subresource.
-    pub depth: u32,
-
-    /// The row pitch, or width, or physical size, in bytes, of the subresource data.
-    /// This must be a multiple of [`TEXTURE_DATA_PITCH_ALIGNMENT`], and must be greater than or equal to the size of the data within a row.
-    pub row_pitch: u32,
-}
-
-/// Describes the footprint of a placed subresource, including the offset and the [`SubresourceFootprint`].
-///
-/// For more information: [`D3D12_PLACED_SUBRESOURCE_FOOTPRINT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_placed_subresource_footprint)
-#[derive(Clone, Copy, Debug)]
-pub struct PlacedSubresourceFootprint {
-    /// The offset of the subresource within the parent resource, in bytes. The offset between the start of the parent resource and this subresource.
-    pub offset: u64,
-
-    /// The format, width, height, depth, and row-pitch of the subresource, as a [`SubresourceFootprint`] structure.
-    pub footprint: SubresourceFootprint,
-}
-
-/// Type that represent return values of [`IDevice::get_copyable_footprints`](crate::device::IDevice::get_copyable_footprints)
-#[derive(Clone, Debug)]
-pub struct CopyableFootprints {
-    /// An array (of length NumSubresources) of [`PlacedSubresourceFootprint`] structures, to be filled with the description and placement of each subresource.
-    pub layouts: SmallVec<[PlacedSubresourceFootprint; 8]>,
-
-    /// An array (of length NumSubresources) of integer variables, to be filled with the number of rows for each subresource.
-    pub num_rows: SmallVec<[u32; 8]>,
-
-    /// An array (of length NumSubresources) of integer variables, each entry to be filled with the unpadded size in bytes of a row, of each subresource.
-    pub row_sizes: SmallVec<[u64; 8]>,
-
-    /// The total size, in bytes.
-    pub total_bytes: u64,
-}
-
-/// Describes parameters needed to allocate resources.
-///
-/// For more information: [`D3D12_RESOURCE_ALLOCATION_INFO structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_allocation_info)
-#[derive(Clone, Debug)]
-pub struct ResourceAllocationInfo {
-    /// The size, in bytes, of the resource.
-    pub size_in_bytes: u64,
-
-    /// The alignment value for the resource; one of 4KB (4096), 64KB (65536), or 4MB (4194304) alignment.
-    pub alignment: u64,
-}
-
-/// Describes the tile structure of a tiled resource with mipmaps.
-///
-/// For more information: [`D3D12_PACKED_MIP_INFO structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_packed_mip_info)
-#[derive(Clone, Copy, Debug, Default)]
-pub struct PackedMipDesc {
-    /// The number of standard mipmaps in the tiled resource.
-    pub num_standard_mips: u8,
-
-    /// The number of packed mipmaps in the tiled resource.
-    pub num_packed_mips: u8,
-
-    /// The number of tiles for the packed mipmaps in the tiled resource.
-    pub num_tiles_for_packed_mips: u32,
-
-    /// The offset of the first packed tile for the resource in the overall range of tiles.
-    pub start_tile_index_in_overall_resource: u32,
-}
-
-/// Describes the shape of a tile by specifying its dimensions.
-///
-/// For more information: [`D3D12_TILE_SHAPE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_tile_shape)
-#[derive(Clone, Copy, Debug, Default)]
-pub struct TileShape {
-    /// The width in texels of the tile.
-    pub width_in_texels: u32,
-
-    /// The height in texels of the tile.
-    pub height_in_texels: u32,
-
-    /// The depth in texels of the tile.
-    pub depth_in_texels: u32,
-}
-
-/// Describes a tiled subresource volume.
-///
-/// For more information: [`D3D12_SUBRESOURCE_TILING structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_subresource_tiling)
-#[derive(Clone, Copy, Debug, Default)]
-pub struct SubresourceTiling {
-    /// The width in tiles of the subresource.
-    pub width_in_tiles: u32,
-
-    /// The height in tiles of the subresource.
-    pub height_in_tiles: u16,
-
-    /// The depth in tiles of the subresource.
-    pub depth_in_tiles: u16,
-
-    /// The index of the tile in the overall tiled subresource to start with.
-    pub start_tile_index_in_overall_resource: u32,
-}
-
-#[derive(Clone, Copy, Debug, Default)]
-pub struct Box {
-    pub left: u32,
-    pub top: u32,
-    pub front: u32,
-    pub right: u32,
-    pub bottom: u32,
-    pub back: u32,
-}
-
-#[derive(Debug)]
-pub struct TextureCopyLocation<'a> {
-    pub resource: &'a Resource,
-    pub r#type: TextureCopyType,
-}
-
-#[derive(Debug)]
-pub struct DiscardRegion<'a> {
-    pub rects: &'a [Rect],
-    pub first_subresource: u32,
-    pub num_subresource: u32,
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct IndexBufferView {
+pub struct VertexBufferView {
     pub buffer_location: u64,
+    pub stride_in_bytes: u32,
     pub size_in_bytes: u32,
-    pub format: Format,
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct StreamOutputBufferView {
-    pub buffer_location: u64,
-    pub size_in_bytes: u64,
-    pub buffer_filled_size_location: u64,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct Rational {
-    pub numerator: u32,
-    pub denominator: u32,
-}
-
-#[derive(Debug, Default, Clone)]
-pub struct SwapchainDesc {
-    pub width: u32,
-    pub height: u32,
-    pub format: Format,
-    pub stereo: bool,
-    pub sample_desc: SampleDesc,
-    pub usage: FrameBufferUsage,
-    pub buffer_count: u32,
-    pub scaling: Scaling,
-    pub swap_effect: SwapEffect,
-    pub alpha_mode: AlphaMode,
-    pub flags: SwapchainFlags,
-}
-
-#[derive(Debug, Clone)]
-pub struct SwapchainFullscreenDesc {
-    pub rational: Rational,
-    pub scanline_ordering: ScanlineOrdering,
-    pub scaling: ScalingMode,
-    pub windowed: bool,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -937,53 +986,4 @@ impl Viewport {
     pub fn from_size(size: impl Into<(f32, f32)>) -> Self {
         Self::from_position_and_size((0.0, 0.0), size)
     }
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct Rect {
-    pub left: i32,
-    pub top: i32,
-    pub right: i32,
-    pub bottom: i32,
-}
-
-impl Rect {
-    #[inline]
-    pub fn from_size(size: impl Into<(i32, i32)>) -> Self {
-        let (width, height) = size.into();
-
-        Self {
-            left: 0,
-            top: 0,
-            right: width,
-            bottom: height,
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct ResourceBarrier<'a> {
-    pub r#type: BarrierType<'a>,
-    pub flags: ResourceBarrierFlags,
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct VertexBufferView {
-    pub buffer_location: u64,
-    pub stride_in_bytes: u32,
-    pub size_in_bytes: u32,
-}
-
-#[derive(Debug, Clone)]
-pub struct AdapterDesc {
-    pub description: CompactString,
-    pub vendor_id: u32,
-    pub device_id: u32,
-    pub sub_sys_id: u32,
-    pub revision: u32,
-    pub dedicated_video_memory: usize,
-    pub dedicated_system_memory: usize,
-    pub shared_system_memory: usize,
-    pub adapter_luid: Luid,
-    pub flags: AdapterFlags,
 }

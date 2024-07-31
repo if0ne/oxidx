@@ -656,7 +656,7 @@ impl_trait! {
                     None,
                     &mut res
                 ).map_err(DxError::from)?;
-            } 
+            }
 
             let res = res.unwrap_unchecked();
 
@@ -716,7 +716,7 @@ impl_trait! {
                     None
                 ).map_err(DxError::from)?
             };
-           
+
             Ok(CL::new(res))
         }
     }
@@ -997,7 +997,7 @@ impl_trait! {
                     handle.as_raw()
                 );
             }
-            
+
         }
     }
 
@@ -1066,7 +1066,7 @@ impl_trait! {
                         desc,
                         handle.as_raw()
                     );
-                } 
+                }
             }
         }
     }

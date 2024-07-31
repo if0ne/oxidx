@@ -4,6 +4,14 @@ use windows::Win32::Graphics::Direct3D12::*;
 use super::*;
 
 bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct AdapterFlags: u32 {
+        const Remote = 1;
+        const Sofware = 2;
+    }
+}
+
+bitflags::bitflags! {
     /// Identifies how to view a buffer resource.
     ///
     /// Empty flag - Indicates a default view.
@@ -26,26 +34,6 @@ bitflags::bitflags! {
     pub struct BufferUavFlags: i32 {
         /// Resource contains raw, unstructured data.
         const Raw = D3D12_BUFFER_UAV_FLAG_RAW.0;
-    }
-}
-
-bitflags::bitflags! {
-    /// Identifies which components of each pixel of a render target are writable during blending.
-    ///
-    /// For more information: [`D3D12_COLOR_WRITE_ENABLE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_color_write_enable)
-    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct ColorWriteEnable: i32 {
-        /// Allow data to be stored in the red component.
-        const R = D3D12_COLOR_WRITE_ENABLE_RED.0;
-
-        /// Allow data to be stored in the green component.
-        const G = D3D12_COLOR_WRITE_ENABLE_GREEN.0;
-
-        /// Allow data to be stored in the blue component.
-        const B = D3D12_COLOR_WRITE_ENABLE_BLUE.0;
-
-        /// Allow data to be stored in the alpha component.
-        const A = D3D12_COLOR_WRITE_ENABLE_ALPHA.0;
     }
 }
 
@@ -82,15 +70,30 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
-    /// Specifies flags to be used when creating a command queue.
-    ///
-    /// Empty flag - Indicates a default command queue.
-    ///
-    /// For more information: [`D3D12_COMMAND_QUEUE_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_command_queue_flags)
     #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct CommandQueueFlags: i32 {
-        /// Indicates that the GPU timeout should be disabled for this command queue.
-        const DisableGpuTimeout = D3D12_COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT.0;
+    pub struct ClearFlags: i32 {
+        const Depth = D3D12_CLEAR_FLAG_DEPTH.0;
+        const Stencil = D3D12_CLEAR_FLAG_STENCIL.0;
+    }
+}
+
+bitflags::bitflags! {
+    /// Identifies which components of each pixel of a render target are writable during blending.
+    ///
+    /// For more information: [`D3D12_COLOR_WRITE_ENABLE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_color_write_enable)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct ColorWriteEnable: i32 {
+        /// Allow data to be stored in the red component.
+        const R = D3D12_COLOR_WRITE_ENABLE_RED.0;
+
+        /// Allow data to be stored in the green component.
+        const G = D3D12_COLOR_WRITE_ENABLE_GREEN.0;
+
+        /// Allow data to be stored in the blue component.
+        const B = D3D12_COLOR_WRITE_ENABLE_BLUE.0;
+
+        /// Allow data to be stored in the alpha component.
+        const A = D3D12_COLOR_WRITE_ENABLE_ALPHA.0;
     }
 }
 
@@ -122,6 +125,19 @@ bitflags::bitflags! {
 
         /// Specifies that video-encode command lists can support the operation in question.
         const VideoEncode = D3D12_COMMAND_LIST_SUPPORT_FLAG_VIDEO_ENCODE.0;
+    }
+}
+
+bitflags::bitflags! {
+    /// Specifies flags to be used when creating a command queue.
+    ///
+    /// Empty flag - Indicates a default command queue.
+    ///
+    /// For more information: [`D3D12_COMMAND_QUEUE_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_command_queue_flags)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct CommandQueueFlags: i32 {
+        /// Indicates that the GPU timeout should be disabled for this command queue.
+        const DisableGpuTimeout = D3D12_COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT.0;
     }
 }
 
@@ -167,6 +183,13 @@ bitflags::bitflags! {
 
         /// Indicates that stencil values are read only.
         const ReadOnlyStencil = D3D12_DSV_FLAG_READ_ONLY_STENCIL.0;
+    }
+}
+
+bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct FactoryCreationFlags: u32 {
+        const Debug = DXGI_CREATE_FACTORY_DEBUG;
     }
 }
 
@@ -331,6 +354,18 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct FrameBufferUsage: u32 {
+        const BackBuffer = DXGI_USAGE_BACK_BUFFER.0;
+        const ReadOnly = DXGI_USAGE_READ_ONLY.0;
+        const RenderTargetOutput = DXGI_USAGE_RENDER_TARGET_OUTPUT.0;
+        const ShaderInput = DXGI_USAGE_SHADER_INPUT.0;
+        const Shared = DXGI_USAGE_SHARED.0;
+        const UnorderedAccess = DXGI_USAGE_UNORDERED_ACCESS.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Describes the level of GPU-based validation to perform at runtime.
     ///
     /// Empty flag - Default behavior; resource states, descriptors, and descriptor tables are all validated.
@@ -439,6 +474,21 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct PresentFlags: u32 {
+        const DoNotSequence = DXGI_PRESENT_DO_NOT_SEQUENCE;
+        const Test = DXGI_PRESENT_TEST;
+        const Restart = DXGI_PRESENT_RESTART;
+        const DoNotWait = DXGI_PRESENT_DO_NOT_WAIT;
+        const RestrictToOutput = DXGI_PRESENT_RESTRICT_TO_OUTPUT;
+        const StereoPreferRight = DXGI_PRESENT_STEREO_PREFER_RIGHT;
+        const StereoTemporaryMono = DXGI_PRESENT_STEREO_TEMPORARY_MONO;
+        const UseDuration = DXGI_PRESENT_USE_DURATION;
+        const AllowTearing = DXGI_PRESENT_ALLOW_TEARING;
+    }
+}
+
+bitflags::bitflags! {
     /// Specifies options for determining quality levels.
     ///
     /// Empty flag - Indicates that protected resource sessions are not supported.
@@ -448,6 +498,14 @@ bitflags::bitflags! {
     pub struct ProtectedResourceSessionSupportFlags: i32 {
         /// Indicates that protected resource sessions are supported.
         const Supported = D3D12_PROTECTED_RESOURCE_SESSION_SUPPORT_FLAG_SUPPORTED.0;
+    }
+}
+
+bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct ResourceBarrierFlags: i32 {
+        const BeginOnly = D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY.0;
+        const EndOnly = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY.0;
     }
 }
 
@@ -628,6 +686,15 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct TileCopyFlags: i32 {
+        const NoHazard = D3D12_TILE_COPY_FLAG_NO_HAZARD.0;
+        const LinearBufferToSwizzledTiledResource = D3D12_TILE_COPY_FLAG_LINEAR_BUFFER_TO_SWIZZLED_TILED_RESOURCE.0;
+        const SwizzledTiledResourceToLinearBuffer = D3D12_TILE_COPY_FLAG_SWIZZLED_TILED_RESOURCE_TO_LINEAR_BUFFER.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Specifies a range of tile mappings.
     ///
     /// Empty flag - No tile-mapping flags are specified.
@@ -643,23 +710,6 @@ bitflags::bitflags! {
 
         /// Reuse a single tile in the tile range.
         const ReuseSingleTile = D3D12_TILE_RANGE_FLAG_REUSE_SINGLE_TILE.0;
-    }
-}
-
-bitflags::bitflags! {
-    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct ClearFlags: i32 {
-        const Depth = D3D12_CLEAR_FLAG_DEPTH.0;
-        const Stencil = D3D12_CLEAR_FLAG_STENCIL.0;
-    }
-}
-
-bitflags::bitflags! {
-    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct TileCopyFlags: i32 {
-        const NoHazard = D3D12_TILE_COPY_FLAG_NO_HAZARD.0;
-        const LinearBufferToSwizzledTiledResource = D3D12_TILE_COPY_FLAG_LINEAR_BUFFER_TO_SWIZZLED_TILED_RESOURCE.0;
-        const SwizzledTiledResourceToLinearBuffer = D3D12_TILE_COPY_FLAG_SWIZZLED_TILED_RESOURCE_TO_LINEAR_BUFFER.0;
     }
 }
 
@@ -683,60 +733,10 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
-    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct FrameBufferUsage: u32 {
-        const BackBuffer = DXGI_USAGE_BACK_BUFFER.0;
-        const ReadOnly = DXGI_USAGE_READ_ONLY.0;
-        const RenderTargetOutput = DXGI_USAGE_RENDER_TARGET_OUTPUT.0;
-        const ShaderInput = DXGI_USAGE_SHADER_INPUT.0;
-        const Shared = DXGI_USAGE_SHARED.0;
-        const UnorderedAccess = DXGI_USAGE_UNORDERED_ACCESS.0;
-    }
-}
-
-bitflags::bitflags! {
-    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct PresentFlags: u32 {
-        const DoNotSequence = DXGI_PRESENT_DO_NOT_SEQUENCE;
-        const Test = DXGI_PRESENT_TEST;
-        const Restart = DXGI_PRESENT_RESTART;
-        const DoNotWait = DXGI_PRESENT_DO_NOT_WAIT;
-        const RestrictToOutput = DXGI_PRESENT_RESTRICT_TO_OUTPUT;
-        const StereoPreferRight = DXGI_PRESENT_STEREO_PREFER_RIGHT;
-        const StereoTemporaryMono = DXGI_PRESENT_STEREO_TEMPORARY_MONO;
-        const UseDuration = DXGI_PRESENT_USE_DURATION;
-        const AllowTearing = DXGI_PRESENT_ALLOW_TEARING;
-    }
-}
-
-bitflags::bitflags! {
-    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct ResourceBarrierFlags: i32 {
-        const BeginOnly = D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY.0;
-        const EndOnly = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY.0;
-    }
-}
-
-bitflags::bitflags! {
-    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct FactoryCreationFlags: u32 {
-        const Debug = DXGI_CREATE_FACTORY_DEBUG;
-    }
-}
-
-bitflags::bitflags! {
     #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct WindowAssociationFlags: u32 {
         const NoWindowChanges = DXGI_MWA_NO_WINDOW_CHANGES;
         const NoAltEnter = DXGI_MWA_NO_ALT_ENTER;
         const NoPrintScreen = DXGI_MWA_NO_PRINT_SCREEN;
-    }
-}
-
-bitflags::bitflags! {
-    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct AdapterFlags: u32 {
-        const Remote = 1;
-        const Sofware = 2;
     }
 }
