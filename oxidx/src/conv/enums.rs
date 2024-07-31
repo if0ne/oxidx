@@ -655,3 +655,25 @@ impl UavDimension {
         }
     }
 }
+
+impl TextureCopyType {
+    #[inline]
+    pub(crate) fn as_raw_type(&self) -> D3D12_TEXTURE_COPY_TYPE {
+        match self {
+            TextureCopyType::SubresourceIndex(_) => D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+            TextureCopyType::PlacedFootprint(_) => D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,
+        }
+    }
+
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_TEXTURE_COPY_LOCATION_0 {
+        match self {
+            TextureCopyType::SubresourceIndex(index) => D3D12_TEXTURE_COPY_LOCATION_0 {
+                SubresourceIndex: *index
+            },
+            TextureCopyType::PlacedFootprint(footprint) => D3D12_TEXTURE_COPY_LOCATION_0 {
+                PlacedFootprint: footprint.as_raw()
+            },
+        }
+    }
+}

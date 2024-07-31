@@ -3,7 +3,7 @@ use std::ffi::CStr;
 use smallvec::SmallVec;
 use windows::Win32::Foundation::HANDLE;
 
-use crate::{blob::Blob, resources::IResource, root_signature::RootSignature};
+use crate::{blob::Blob, resources::Resource, root_signature::RootSignature};
 
 use super::*;
 
@@ -848,8 +848,8 @@ pub struct Box {
 }
 
 #[derive(Debug)]
-pub struct TextureCopyLocation<'a, T: IResource> {
-    pub resource: &'a T,
+pub struct TextureCopyLocation<'a> {
+    pub resource: &'a Resource,
     pub r#type: TextureCopyType,
 }
 

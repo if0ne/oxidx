@@ -91,13 +91,13 @@ pub trait IGraphicsCommandList:
 
     fn copy_resource(&self, dst_resource: &impl IResource, src_resource: &impl IResource);
 
-    fn copy_texture_region<T: IResource>(
+    fn copy_texture_region(
         &self,
-        dst: &TextureCopyLocation<'_, T>,
+        dst: &TextureCopyLocation<'_>,
         dst_x: u32,
         dst_y: u32,
         dst_z: u32,
-        src: &TextureCopyLocation<'_, T>,
+        src: &TextureCopyLocation<'_>,
         src_box: Option<&Box>,
     );
 
@@ -111,7 +111,7 @@ pub trait IGraphicsCommandList:
         flags: TileCopyFlags,
     );
 
-    fn discard_resource(&self, resource: &impl IResource, region: &DiscardRegion<'_>);
+    fn discard_resource(&self, resource: &impl IResource, region: Option<&DiscardRegion<'_>>);
 
     fn dispatch(
         &self,
@@ -476,16 +476,28 @@ impl_trait! {
         }
     }
 
-    fn copy_texture_region<T: IResource>(
+    fn copy_texture_region(
         &self,
-        dst: &TextureCopyLocation<'_, T>,
+        dst: &TextureCopyLocation<'_>,
         dst_x: u32,
         dst_y: u32,
         dst_z: u32,
-        src: &TextureCopyLocation<'_, T>,
+        src: &TextureCopyLocation<'_>,
         src_box: Option<&Box>,
     ) {
-        todo!()
+        unsafe {
+            let src_box = src_box.map(|b| b.as_raw());
+            let src_box = src_box.as_ref().map(|b| b as *const _);
+
+            self.0.CopyTextureRegion(
+                &dst.as_raw(),
+                dst_x,
+                dst_y,
+                dst_z,
+                &src.as_raw(), 
+                src_box,
+            );
+        }
     }
 
     fn copy_tiles(
@@ -509,8 +521,23 @@ impl_trait! {
         }
     }
 
-    fn discard_resource(&self, resource: &impl IResource, region: &DiscardRegion<'_>) {
-        todo!();
+    fn discard_resource(&self, resource: &impl IResource, region: Option<&DiscardRegion<'_>>) {
+        unsafe {
+            let rects = if let Some(region) = region {
+                region
+                    .rects
+                    .iter()
+                    .map(|r| r.as_raw())
+                    .collect::<SmallVec<[_; 16]>>()
+            } else {
+                SmallVec::new()
+            };
+
+            let region = region.map(|r| r.as_raw(&rects));
+            let region = region.as_ref().map(|r| r as *const _);
+
+            self.0.DiscardResource(resource.as_raw_ref(), region);
+        }
     }
 
     fn dispatch(

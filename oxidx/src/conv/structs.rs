@@ -619,12 +619,35 @@ impl UnorderedAccessViewDesc {
     }
 }
 
+impl PlacedSubresourceFootprint {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_PLACED_SUBRESOURCE_FOOTPRINT {
+        D3D12_PLACED_SUBRESOURCE_FOOTPRINT {
+            Offset: self.offset,
+            Footprint: self.footprint.as_raw(),
+        }
+    }
+}
+
 impl From<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> for PlacedSubresourceFootprint {
     #[inline]
     fn from(value: D3D12_PLACED_SUBRESOURCE_FOOTPRINT) -> Self {
         Self {
             offset: value.Offset,
             footprint: value.Footprint.into(),
+        }
+    }
+}
+
+impl SubresourceFootprint {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_SUBRESOURCE_FOOTPRINT {
+        D3D12_SUBRESOURCE_FOOTPRINT {
+            Format: self.format.as_raw(),
+            Width: self.width,
+            Height: self.height,
+            Depth: self.depth,
+            RowPitch: self.row_pitch,
         }
     }
 }
@@ -705,6 +728,45 @@ impl StreamOutputBufferView {
             BufferLocation: self.buffer_location,
             SizeInBytes: self.size_in_bytes,
             BufferFilledSizeLocation: self.buffer_filled_size_location,
+        }
+    }
+}
+
+impl<'a> DiscardRegion<'a> {
+    #[inline]
+    pub(crate) fn as_raw(&self, rects: &[RECT]) -> D3D12_DISCARD_REGION {
+        D3D12_DISCARD_REGION {
+            NumRects: rects.len() as u32,
+            pRects: rects.as_ptr(),
+            FirstSubresource: self.first_subresource,
+            NumSubresources: self.num_subresource,
+        }
+    }
+}
+
+impl<'a> TextureCopyLocation<'a> {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_TEXTURE_COPY_LOCATION {
+        unsafe {
+            D3D12_TEXTURE_COPY_LOCATION {
+                pResource: std::mem::transmute_copy(self.resource.as_raw()),
+                Type: self.r#type.as_raw_type(),
+                Anonymous: self.r#type.as_raw(),
+            }
+        } 
+    }
+}
+
+impl Box {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_BOX {
+        D3D12_BOX {
+            left: self.left,
+            top: self.top,
+            front: self.front,
+            right: self.right,
+            bottom: self.bottom,
+            back: self.back,
         }
     }
 }
