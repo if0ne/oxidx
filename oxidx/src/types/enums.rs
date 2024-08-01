@@ -27,6 +27,33 @@ pub enum AddressMode {
     MirrorOnce = D3D12_TEXTURE_ADDRESS_MODE_MIRROR_ONCE.0,
 }
 
+#[derive(Debug, Default, Clone, Copy, FromRepr)]
+#[repr(i32)]
+pub enum AlphaMode {
+    #[default]
+    Unspecified = DXGI_ALPHA_MODE_UNSPECIFIED.0,
+    Premultiplied = DXGI_ALPHA_MODE_PREMULTIPLIED.0,
+    Straight = DXGI_ALPHA_MODE_STRAIGHT.0,
+    Ignore = DXGI_ALPHA_MODE_IGNORE.0,
+}
+
+#[derive(Clone, Debug)]
+pub enum BarrierType<'a> {
+    Transition {
+        resource: &'a Resource,
+        subresource: u32,
+        before: ResourceStates,
+        after: ResourceStates,
+    },
+    Aliasing {
+        before: &'a Resource,
+        after: &'a Resource,
+    },
+    Uav {
+        resource: &'a Resource,
+    },
+}
+
 /// Specifies blend factors, which modulate values for the pixel shader and render target.
 ///
 /// For more information: [`D3D12_BLEND enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_blend)
@@ -161,37 +188,6 @@ pub enum ClearValue {
     },
 }
 
-/// Identifies whether conservative rasterization is on or off.
-///
-/// For more information: [`D3D12_CONSERVATIVE_RASTERIZATION_MODE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_conservative_rasterization_mode)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
-#[repr(i32)]
-pub enum ConservativeRaster {
-    /// Conservative rasterization is off.
-    #[default]
-    Off = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF.0,
-
-    /// Conservative rasterization is on.
-    On = D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON.0,
-}
-
-/// Defines priority levels for a command queue.
-///
-/// For more information: [`D3D12_COMMAND_QUEUE_PRIORITY enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_command_queue_priority)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
-#[repr(i32)]
-pub enum CommandQueuePriority {
-    #[default]
-    /// Normal priority.
-    Normal = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL.0,
-
-    /// High priority.
-    High = D3D12_COMMAND_QUEUE_PRIORITY_HIGH.0,
-
-    /// Global realtime priority.
-    GlobalRealtime = D3D12_COMMAND_QUEUE_PRIORITY_GLOBAL_REALTIME.0,
-}
-
 /// Specifies the type of a command list.
 ///
 /// For more information: [`D3D12_COMMAND_LIST_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_command_list_type)
@@ -220,6 +216,23 @@ pub enum CommandListType {
 
     /// Specifies a command buffer for video encoding.
     VideoEncode = D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE.0,
+}
+
+/// Defines priority levels for a command queue.
+///
+/// For more information: [`D3D12_COMMAND_QUEUE_PRIORITY enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_command_queue_priority)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum CommandQueuePriority {
+    #[default]
+    /// Normal priority.
+    Normal = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL.0,
+
+    /// High priority.
+    High = D3D12_COMMAND_QUEUE_PRIORITY_HIGH.0,
+
+    /// Global realtime priority.
+    GlobalRealtime = D3D12_COMMAND_QUEUE_PRIORITY_GLOBAL_REALTIME.0,
 }
 
 /// Specifies comparison options.
@@ -255,6 +268,20 @@ pub enum ComparisonFunc {
 
     /// Always pass the comparison.
     Always = D3D12_COMPARISON_FUNC_ALWAYS.0,
+}
+
+/// Identifies whether conservative rasterization is on or off.
+///
+/// For more information: [`D3D12_CONSERVATIVE_RASTERIZATION_MODE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_conservative_rasterization_mode)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum ConservativeRaster {
+    /// Conservative rasterization is off.
+    #[default]
+    Off = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF.0,
+
+    /// Conservative rasterization is on.
+    On = D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON.0,
 }
 
 /// Identifies the tier level of conservative rasterization.
@@ -441,6 +468,30 @@ pub enum DsvDimension {
     },
 }
 
+/// Describes the set of features targeted by a Direct3D device.
+///
+/// For more information: [`D3D_FEATURE_LEVEL enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_feature_level)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum FeatureLevel {
+    /// Targets features supported by Direct3D 11.0, including shader model 5.
+    #[default]
+    Level11 = D3D_FEATURE_LEVEL_11_0.0,
+
+    /// Targets features supported by Direct3D 11.1, including shader model 5 and logical blend operations.
+    /// This feature level requires a display driver that is at least implemented to WDDM for Windows 8 (WDDM 1.2).
+    Level11_1 = D3D_FEATURE_LEVEL_11_1.0,
+
+    /// Targets features supported by Direct3D 12.0, including shader model 5.
+    Level12 = D3D_FEATURE_LEVEL_12_0.0,
+
+    /// Targets features supported by Direct3D 12.1, including shader model 5.
+    Level12_1 = D3D_FEATURE_LEVEL_12_1.0,
+
+    /// Targets features supported by Direct3D 12.2, including shader model 6.5.
+    Level12_2 = D3D_FEATURE_LEVEL_12_2.0,
+}
+
 /// Defines constants that specify a Direct3D 12 feature or feature set to query about.
 ///
 /// For more information: [`D3D12_FEATURE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_feature)
@@ -576,28 +627,18 @@ pub enum FeatureType {
     HardwareCopy = D3D12_FEATURE_HARDWARE_COPY.0,
 }
 
-/// Describes the set of features targeted by a Direct3D device.
+/// Specifies the fill mode to use when rendering triangles.
 ///
-/// For more information: [`D3D_FEATURE_LEVEL enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_feature_level)
+/// For more information: [`D3D12_FILL_MODE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_fill_mode)
 #[derive(Clone, Copy, Debug, Default, FromRepr)]
 #[repr(i32)]
-pub enum FeatureLevel {
-    /// Targets features supported by Direct3D 11.0, including shader model 5.
+pub enum FillMode {
+    /// Draw lines connecting the vertices. Adjacent vertices are not drawn.
+    Wireframe = D3D12_FILL_MODE_WIREFRAME.0,
+
+    /// Fill the triangles formed by the vertices. Adjacent vertices are not drawn.
     #[default]
-    Level11 = D3D_FEATURE_LEVEL_11_0.0,
-
-    /// Targets features supported by Direct3D 11.1, including shader model 5 and logical blend operations.
-    /// This feature level requires a display driver that is at least implemented to WDDM for Windows 8 (WDDM 1.2).
-    Level11_1 = D3D_FEATURE_LEVEL_11_1.0,
-
-    /// Targets features supported by Direct3D 12.0, including shader model 5.
-    Level12 = D3D_FEATURE_LEVEL_12_0.0,
-
-    /// Targets features supported by Direct3D 12.1, including shader model 5.
-    Level12_1 = D3D_FEATURE_LEVEL_12_1.0,
-
-    /// Targets features supported by Direct3D 12.2, including shader model 6.5.
-    Level12_2 = D3D_FEATURE_LEVEL_12_2.0,
+    Solid = D3D12_FILL_MODE_SOLID.0,
 }
 
 /// Specifies filtering options during texture sampling.
@@ -725,20 +766,6 @@ pub enum Filter {
 
     /// Fetch the same set of texels as [`Filter::Anisotropic`] and instead of filtering them return the maximum of the texels.
     MaximumAnisotropic = D3D12_FILTER_MAXIMUM_ANISOTROPIC.0,
-}
-
-/// Specifies the fill mode to use when rendering triangles.
-///
-/// For more information: [`D3D12_FILL_MODE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_fill_mode)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
-#[repr(i32)]
-pub enum FillMode {
-    /// Draw lines connecting the vertices. Adjacent vertices are not drawn.
-    Wireframe = D3D12_FILL_MODE_WIREFRAME.0,
-
-    /// Fill the triangles formed by the vertices. Adjacent vertices are not drawn.
-    #[default]
-    Solid = D3D12_FILL_MODE_SOLID.0,
 }
 
 /// Resource data formats, including fully-typed and typeless formats. A list of modifiers at the bottom of the page more fully describes each format type.
@@ -1105,36 +1132,6 @@ pub enum Format {
     V408 = DXGI_FORMAT_V408.0,
 }
 
-/// When using triangle strip primitive topology, vertex positions are interpreted as vertices of a continuous triangle “strip”.
-/// There is a special index value that represents the desire to have a discontinuity in the strip, the cut index value. This enum lists the supported cut values.
-///
-/// For more information: [`D3D12_INDEX_BUFFER_STRIP_CUT_VALUE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_index_buffer_strip_cut_value)
-#[derive(Clone, Copy, Debug, FromRepr)]
-#[repr(i32)]
-pub enum IndexBufferStripCutValue {
-    /// Indicates that there is no cut value.
-    Disabled = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED.0,
-
-    /// Indicates that 0xFFFF should be used as the cut value.
-    _0xFFFF = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFF.0,
-
-    /// Indicates that 0xFFFFFFFF should be used as the cut value.
-    _0xFFFFFFFF = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFFFFFF.0,
-}
-
-/// Identifies the type of data contained in an input slot.
-///
-/// For more information: [`D3D12_INPUT_CLASSIFICATION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_input_classification)
-#[derive(Clone, Copy, Debug, FromRepr)]
-#[repr(i32)]
-pub enum InputSlotClass {
-    /// Input data is per-vertex data.
-    PerVertex = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA.0,
-
-    /// Input data is per-instance data.
-    InstanceData = D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA.0,
-}
-
 /// Heap alignment variants.
 #[derive(Clone, Copy, Debug, Default, FromRepr)]
 #[repr(u64)]
@@ -1198,6 +1195,23 @@ pub enum HeapType {
     GpuUpload = D3D12_HEAP_TYPE_GPU_UPLOAD.0,
 }
 
+/// When using triangle strip primitive topology, vertex positions are interpreted as vertices of a continuous triangle “strip”.
+/// There is a special index value that represents the desire to have a discontinuity in the strip, the cut index value. This enum lists the supported cut values.
+///
+/// For more information: [`D3D12_INDEX_BUFFER_STRIP_CUT_VALUE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_index_buffer_strip_cut_value)
+#[derive(Clone, Copy, Debug, FromRepr)]
+#[repr(i32)]
+pub enum IndexBufferStripCutValue {
+    /// Indicates that there is no cut value.
+    Disabled = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED.0,
+
+    /// Indicates that 0xFFFF should be used as the cut value.
+    _0xFFFF = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFF.0,
+
+    /// Indicates that 0xFFFFFFFF should be used as the cut value.
+    _0xFFFFFFFF = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFFFFFF.0,
+}
+
 /// Specifies the type of the indirect parameter.
 ///
 /// For more information: [`D3D12_INDIRECT_ARGUMENT_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_indirect_argument_desc)
@@ -1251,6 +1265,19 @@ pub enum IndirectArgumentDesc {
         /// Specifies the root index of the UAV.
         root_parameter_index: u32,
     },
+}
+
+/// Identifies the type of data contained in an input slot.
+///
+/// For more information: [`D3D12_INPUT_CLASSIFICATION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_input_classification)
+#[derive(Clone, Copy, Debug, FromRepr)]
+#[repr(i32)]
+pub enum InputSlotClass {
+    /// Input data is per-vertex data.
+    PerVertex = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA.0,
+
+    /// Input data is per-instance data.
+    InstanceData = D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA.0,
 }
 
 /// Defines constants that specify logical operations to configure for a render target.
@@ -1367,26 +1394,6 @@ pub enum MinPrecisionSupport {
     Support16Bit = D3D12_SHADER_MIN_PRECISION_SUPPORT_16_BIT.0,
 }
 
-/// Values that indicate how the pipeline interprets vertex data that is bound to the input-assembler stage. These primitive topology values determine how the vertex data is rendered on screen.
-///
-/// For more information: [`D3D_PRIMITIVE_TOPOLOGY enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_primitive_topology)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
-#[repr(i32)]
-pub enum PrimitiveTopology {
-    /// The IA stage has not been initialized with a primitive topology. The IA stage will not function properly unless a primitive topology is defined.
-    #[default]
-    Undefined = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED.0,
-
-    /// Interpret the vertex data as a list of points.
-    Point = D3D_PRIMITIVE_TOPOLOGY_POINTLIST.0,
-
-    /// Interpret the vertex data as a list of lines.
-    Line = D3D_PRIMITIVE_TOPOLOGY_LINELIST.0,
-
-    /// Interpret the vertex data as a list of triangles.
-    Triangle = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST.0,
-}
-
 /// Specifies the level of support for programmable sample positions that's offered by the adapter.
 ///
 /// For more information: [`D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_programmable_sample_positions_tier)
@@ -1408,6 +1415,33 @@ pub enum PipelinePrimitiveTopology {
 
     /// Interpret the input primitive as a control point patch.
     Patch = D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH.0,
+}
+
+#[derive(Clone, Copy, Debug, FromRepr)]
+#[repr(i32)]
+pub enum PredicationOp {
+    EqualZero = D3D12_PREDICATION_OP_EQUAL_ZERO.0,
+    NotEqualZero = D3D12_PREDICATION_OP_NOT_EQUAL_ZERO.0,
+}
+
+/// Values that indicate how the pipeline interprets vertex data that is bound to the input-assembler stage. These primitive topology values determine how the vertex data is rendered on screen.
+///
+/// For more information: [`D3D_PRIMITIVE_TOPOLOGY enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_primitive_topology)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum PrimitiveTopology {
+    /// The IA stage has not been initialized with a primitive topology. The IA stage will not function properly unless a primitive topology is defined.
+    #[default]
+    Undefined = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED.0,
+
+    /// Interpret the vertex data as a list of points.
+    Point = D3D_PRIMITIVE_TOPOLOGY_POINTLIST.0,
+
+    /// Interpret the vertex data as a list of lines.
+    Line = D3D_PRIMITIVE_TOPOLOGY_LINELIST.0,
+
+    /// Interpret the vertex data as a list of triangles.
+    Triangle = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST.0,
 }
 
 /// Specifies the level of support for programmable sample positions that's offered by the adapter.
@@ -1622,23 +1656,6 @@ pub enum ResourceHeapTier {
     Tier2 = D3D12_RESOURCE_HEAP_TIER_2.0,
 }
 
-/// Specifies the version of root signature layout.
-///
-/// For more information: [`D3D_ROOT_SIGNATURE_VERSION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d_root_signature_version)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
-#[repr(i32)]
-pub enum RootSignatureVersion {
-    /// Version one of root signature layout.
-    #[default]
-    V1_0 = D3D_ROOT_SIGNATURE_VERSION_1_0.0,
-
-    /// Version 1.1 of root signature layout.
-    V1_1 = D3D_ROOT_SIGNATURE_VERSION_1_1.0,
-
-    /// TBD
-    V1_2 = D3D_ROOT_SIGNATURE_VERSION_1_2.0,
-}
-
 /// Specifies the type of root signature slot.
 ///
 /// For more information: [`D3D12_ROOT_PARAMETER_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_root_parameter_type)
@@ -1688,6 +1705,23 @@ pub enum RootParameterType<'a> {
         /// The register space.
         register_space: u32,
     },
+}
+
+/// Specifies the version of root signature layout.
+///
+/// For more information: [`D3D_ROOT_SIGNATURE_VERSION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d_root_signature_version)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[repr(i32)]
+pub enum RootSignatureVersion {
+    /// Version one of root signature layout.
+    #[default]
+    V1_0 = D3D_ROOT_SIGNATURE_VERSION_1_0.0,
+
+    /// Version 1.1 of root signature layout.
+    V1_1 = D3D_ROOT_SIGNATURE_VERSION_1_1.0,
+
+    /// TBD
+    V1_2 = D3D_ROOT_SIGNATURE_VERSION_1_2.0,
 }
 
 /// Identifies the type of resource to view as a render target.
@@ -1788,6 +1822,34 @@ pub enum SamplerFeedbackTier {
     /// This indicates that sampler feedback is supported for all texture addressing modes, and feedback-writing methods are supported irrespective of the passed-in
     /// shader resource view.
     Tier1_0 = D3D12_SAMPLER_FEEDBACK_TIER_1_0.0,
+}
+
+#[derive(Debug, Default, Clone, Copy, FromRepr)]
+#[repr(i32)]
+pub enum Scaling {
+    #[default]
+    Stretch = DXGI_SCALING_STRETCH.0,
+    None = DXGI_SCALING_NONE.0,
+    AspectRatioStretch = DXGI_SCALING_ASPECT_RATIO_STRETCH.0,
+}
+
+#[derive(Debug, Default, Clone, Copy, FromRepr)]
+#[repr(i32)]
+pub enum ScalingMode {
+    #[default]
+    Unspecified = DXGI_MODE_SCALING_UNSPECIFIED.0,
+    Centered = DXGI_MODE_SCALING_CENTERED.0,
+    Stretched = DXGI_MODE_SCALING_STRETCHED.0,
+}
+
+#[derive(Debug, Default, Clone, Copy, FromRepr)]
+#[repr(i32)]
+pub enum ScanlineOrdering {
+    #[default]
+    Unspecified = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED.0,
+    Progressive = DXGI_MODE_SCANLINE_ORDER_PROGRESSIVE.0,
+    UpperFieldFirst = DXGI_MODE_SCANLINE_ORDER_LOWER_FIELD_FIRST.0,
+    LowerFieldFirst = DXGI_MODE_SCANLINE_ORDER_UPPER_FIELD_FIRST.0,
 }
 
 /// Specifies a shader model.
@@ -2059,6 +2121,22 @@ pub enum StencilOp {
     Decr = D3D12_STENCIL_OP_DECR.0,
 }
 
+#[derive(Debug, Default, Clone, Copy, FromRepr)]
+#[repr(i32)]
+pub enum SwapEffect {
+    #[default]
+    Discard = DXGI_SWAP_EFFECT_DISCARD.0,
+    Sequential = DXGI_SWAP_EFFECT_SEQUENTIAL.0,
+    FlipSequential = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL.0,
+    FlipDiscard = DXGI_SWAP_EFFECT_FLIP_DISCARD.0,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum TextureCopyType {
+    SubresourceIndex(u32),
+    PlacedFootprint(PlacedSubresourceFootprint),
+}
+
 /// Specifies texture layout options.
 ///
 /// For more information: [`D3D12_TEXTURE_LAYOUT enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_texture_layout)
@@ -2105,59 +2183,6 @@ pub enum TiledResourcesTier {
 
     /// TBD
     Tier4 = D3D12_TILED_RESOURCES_TIER_4.0,
-}
-
-/// Defines constants that specify a shading rate tier (for variable-rate shading, or VRS).
-///
-/// For more information: [`D3D12_VARIABLE_SHADING_RATE_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_variable_shading_rate_tier)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
-#[repr(i32)]
-pub enum VariableShadingRateTier {
-    ///Specifies that variable-rate shading is not supported.
-    #[default]
-    NotSupported = D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED.0,
-
-    /// Specifies that variable-rate shading tier 1 is supported.
-    Tier1 = D3D12_VARIABLE_SHADING_RATE_TIER_1.0,
-
-    /// Specifies that variable-rate shading tier 2 is supported.
-    Tier2 = D3D12_VARIABLE_SHADING_RATE_TIER_2.0,
-}
-
-/// Indicates the tier level at which view instancing is supported.
-///
-/// For more information: [`D3D12_VIEW_INSTANCING_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_view_instancing_tier)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
-#[repr(i32)]
-pub enum ViewInstancingTier {
-    /// View instancing is not supported.
-    #[default]
-    NotSupported = D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED.0,
-
-    /// View instancing is supported by draw-call level looping only.
-    Tier1 = D3D12_VIEW_INSTANCING_TIER_1.0,
-
-    /// View instancing is supported by draw-call level looping at worst, but the GPU can perform view instancing more efficiently in certain circumstances which are architecture-dependent.
-    Tier2 = D3D12_VIEW_INSTANCING_TIER_2.0,
-
-    /// View instancing is supported and instancing begins with the first shader stage that references SV_ViewID or with rasterization
-    /// if no shader stage references SV_ViewID. This means that redundant work is eliminated across view instances when it's not dependent on SV_ViewID.
-    /// Before rasterization, work that doesn't directly depend on SV_ViewID is shared across all views; only work that depends on SV_ViewID is repeated for each view.
-    Tier3 = D3D12_VIEW_INSTANCING_TIER_3.0,
-}
-
-/// Defines constants that specify a level of support for WaveMMA (wave_matrix) operations.
-///
-/// For more information: [`D3D12_WAVE_MMA_TIER  enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_wave_mma_tier)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
-#[repr(i32)]
-pub enum WaveMmaTier {
-    /// Specifies that WaveMMA (wave_matrix) operations are not supported.
-    #[default]
-    NotSupported = D3D12_WAVE_MMA_TIER_NOT_SUPPORTED.0,
-
-    /// Specifies that WaveMMA (wave_matrix) operations are supported.
-    Tier1_0 = D3D12_WAVE_MMA_TIER_1_0.0,
 }
 
 /// Identifies unordered-access view options.
@@ -2250,80 +2275,55 @@ pub enum UavDimension {
     },
 }
 
-#[derive(Clone, Copy, Debug)]
-pub enum TextureCopyType {
-    SubresourceIndex(u32),
-    PlacedFootprint(PlacedSubresourceFootprint),
-}
-
-#[derive(Clone, Copy, Debug, FromRepr)]
+/// Defines constants that specify a shading rate tier (for variable-rate shading, or VRS).
+///
+/// For more information: [`D3D12_VARIABLE_SHADING_RATE_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_variable_shading_rate_tier)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
 #[repr(i32)]
-pub enum PredicationOp {
-    EqualZero = D3D12_PREDICATION_OP_EQUAL_ZERO.0,
-    NotEqualZero = D3D12_PREDICATION_OP_NOT_EQUAL_ZERO.0,
-}
-
-#[derive(Debug, Default, Clone, Copy, FromRepr)]
-#[repr(i32)]
-pub enum Scaling {
+pub enum VariableShadingRateTier {
+    ///Specifies that variable-rate shading is not supported.
     #[default]
-    Stretch = DXGI_SCALING_STRETCH.0,
-    None = DXGI_SCALING_NONE.0,
-    AspectRatioStretch = DXGI_SCALING_ASPECT_RATIO_STRETCH.0,
+    NotSupported = D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED.0,
+
+    /// Specifies that variable-rate shading tier 1 is supported.
+    Tier1 = D3D12_VARIABLE_SHADING_RATE_TIER_1.0,
+
+    /// Specifies that variable-rate shading tier 2 is supported.
+    Tier2 = D3D12_VARIABLE_SHADING_RATE_TIER_2.0,
 }
 
-#[derive(Debug, Default, Clone, Copy, FromRepr)]
+/// Indicates the tier level at which view instancing is supported.
+///
+/// For more information: [`D3D12_VIEW_INSTANCING_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_view_instancing_tier)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
 #[repr(i32)]
-pub enum ScalingMode {
+pub enum ViewInstancingTier {
+    /// View instancing is not supported.
     #[default]
-    Unspecified = DXGI_MODE_SCALING_UNSPECIFIED.0,
-    Centered = DXGI_MODE_SCALING_CENTERED.0,
-    Stretched = DXGI_MODE_SCALING_STRETCHED.0,
+    NotSupported = D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED.0,
+
+    /// View instancing is supported by draw-call level looping only.
+    Tier1 = D3D12_VIEW_INSTANCING_TIER_1.0,
+
+    /// View instancing is supported by draw-call level looping at worst, but the GPU can perform view instancing more efficiently in certain circumstances which are architecture-dependent.
+    Tier2 = D3D12_VIEW_INSTANCING_TIER_2.0,
+
+    /// View instancing is supported and instancing begins with the first shader stage that references SV_ViewID or with rasterization
+    /// if no shader stage references SV_ViewID. This means that redundant work is eliminated across view instances when it's not dependent on SV_ViewID.
+    /// Before rasterization, work that doesn't directly depend on SV_ViewID is shared across all views; only work that depends on SV_ViewID is repeated for each view.
+    Tier3 = D3D12_VIEW_INSTANCING_TIER_3.0,
 }
 
-#[derive(Debug, Default, Clone, Copy, FromRepr)]
+/// Defines constants that specify a level of support for WaveMMA (wave_matrix) operations.
+///
+/// For more information: [`D3D12_WAVE_MMA_TIER  enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_wave_mma_tier)
+#[derive(Clone, Copy, Debug, Default, FromRepr)]
 #[repr(i32)]
-pub enum ScanlineOrdering {
+pub enum WaveMmaTier {
+    /// Specifies that WaveMMA (wave_matrix) operations are not supported.
     #[default]
-    Unspecified = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED.0,
-    Progressive = DXGI_MODE_SCANLINE_ORDER_PROGRESSIVE.0,
-    UpperFieldFirst = DXGI_MODE_SCANLINE_ORDER_LOWER_FIELD_FIRST.0,
-    LowerFieldFirst = DXGI_MODE_SCANLINE_ORDER_UPPER_FIELD_FIRST.0,
-}
+    NotSupported = D3D12_WAVE_MMA_TIER_NOT_SUPPORTED.0,
 
-#[derive(Debug, Default, Clone, Copy, FromRepr)]
-#[repr(i32)]
-pub enum SwapEffect {
-    #[default]
-    Discard = DXGI_SWAP_EFFECT_DISCARD.0,
-    Sequential = DXGI_SWAP_EFFECT_SEQUENTIAL.0,
-    FlipSequential = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL.0,
-    FlipDiscard = DXGI_SWAP_EFFECT_FLIP_DISCARD.0,
-}
-
-#[derive(Debug, Default, Clone, Copy, FromRepr)]
-#[repr(i32)]
-pub enum AlphaMode {
-    #[default]
-    Unspecified = DXGI_ALPHA_MODE_UNSPECIFIED.0,
-    Premultiplied = DXGI_ALPHA_MODE_PREMULTIPLIED.0,
-    Straight = DXGI_ALPHA_MODE_STRAIGHT.0,
-    Ignore = DXGI_ALPHA_MODE_IGNORE.0,
-}
-
-#[derive(Clone, Debug)]
-pub enum BarrierType<'a> {
-    Transition {
-        resource: &'a Resource,
-        subresource: u32,
-        before: ResourceStates,
-        after: ResourceStates,
-    },
-    Aliasing {
-        before: &'a Resource,
-        after: &'a Resource,
-    },
-    Uav {
-        resource: &'a Resource,
-    },
+    /// Specifies that WaveMMA (wave_matrix) operations are supported.
+    Tier1_0 = D3D12_WAVE_MMA_TIER_1_0.0,
 }

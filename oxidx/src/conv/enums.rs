@@ -8,20 +8,21 @@ use crate::conv_enum;
 use super::*;
 
 conv_enum!(AddressMode to D3D12_TEXTURE_ADDRESS_MODE);
+conv_enum!(AlphaMode to DXGI_ALPHA_MODE);
 conv_enum!(Blend to D3D12_BLEND);
 conv_enum!(BlendOp to D3D12_BLEND_OP);
 conv_enum!(BorderColor to D3D12_STATIC_BORDER_COLOR);
 conv_enum!(CommandListType to D3D12_COMMAND_LIST_TYPE);
-conv_enum!(CpuPageProperty to D3D12_CPU_PAGE_PROPERTY);
 conv_enum!(ComparisonFunc to D3D12_COMPARISON_FUNC);
 conv_enum!(ConservativeRaster to D3D12_CONSERVATIVE_RASTERIZATION_MODE);
 conv_enum!(ConservativeRasterizationTier to D3D12_CONSERVATIVE_RASTERIZATION_TIER);
+conv_enum!(CpuPageProperty to D3D12_CPU_PAGE_PROPERTY);
 conv_enum!(CrossNodeSharingTier to D3D12_CROSS_NODE_SHARING_TIER);
 conv_enum!(CullMode to D3D12_CULL_MODE);
 conv_enum!(DescriptorHeapType to D3D12_DESCRIPTOR_HEAP_TYPE);
 conv_enum!(DescriptorRangeType to D3D12_DESCRIPTOR_RANGE_TYPE);
-conv_enum!(FeatureType to D3D12_FEATURE);
 conv_enum!(FeatureLevel to D3D_FEATURE_LEVEL);
+conv_enum!(FeatureType to D3D12_FEATURE);
 conv_enum!(FillMode to D3D12_FILL_MODE);
 conv_enum!(Filter to D3D12_FILTER);
 conv_enum!(Format to DXGI_FORMAT);
@@ -33,33 +34,71 @@ conv_enum!(LogicOp to D3D12_LOGIC_OP);
 conv_enum!(MemoryPool to D3D12_MEMORY_POOL);
 conv_enum!(MeshShaderTier to D3D12_MESH_SHADER_TIER);
 conv_enum!(MinPrecisionSupport to D3D12_SHADER_MIN_PRECISION_SUPPORT);
-conv_enum!(PrimitiveTopology to D3D_PRIMITIVE_TOPOLOGY);
 conv_enum!(PipelinePrimitiveTopology to D3D12_PRIMITIVE_TOPOLOGY_TYPE);
+conv_enum!(PredicationOp to D3D12_PREDICATION_OP);
+conv_enum!(PrimitiveTopology to D3D_PRIMITIVE_TOPOLOGY);
 conv_enum!(ProgrammableSamplePositionsTier to D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER);
 conv_enum!(QueryHeapType to D3D12_QUERY_HEAP_TYPE);
 conv_enum!(QueryType to D3D12_QUERY_TYPE);
+conv_enum!(RaytracingTier to D3D12_RAYTRACING_TIER);
+conv_enum!(RenderPassTier to D3D12_RENDER_PASS_TIER);
 conv_enum!(ResourceBindingTier to D3D12_RESOURCE_BINDING_TIER);
 conv_enum!(ResourceDimension to D3D12_RESOURCE_DIMENSION);
 conv_enum!(ResourceHeapTier to D3D12_RESOURCE_HEAP_TIER);
-conv_enum!(RaytracingTier to D3D12_RAYTRACING_TIER);
-conv_enum!(RenderPassTier to D3D12_RENDER_PASS_TIER);
 conv_enum!(RootSignatureVersion to D3D_ROOT_SIGNATURE_VERSION);
 conv_enum!(SamplerFeedbackTier to D3D12_SAMPLER_FEEDBACK_TIER);
+conv_enum!(Scaling to DXGI_SCALING);
+conv_enum!(ScalingMode to DXGI_MODE_SCALING);
+conv_enum!(ScanlineOrdering to DXGI_MODE_SCANLINE_ORDER);
 conv_enum!(ShaderModel to D3D_SHADER_MODEL);
 conv_enum!(ShaderVisibility to D3D12_SHADER_VISIBILITY);
 conv_enum!(SharedResourceCompatibilityTier to D3D12_SHARED_RESOURCE_COMPATIBILITY_TIER);
 conv_enum!(StencilOp to D3D12_STENCIL_OP);
+conv_enum!(SwapEffect to DXGI_SWAP_EFFECT);
 conv_enum!(TextureLayout to D3D12_TEXTURE_LAYOUT);
 conv_enum!(TiledResourcesTier to D3D12_TILED_RESOURCES_TIER);
 conv_enum!(VariableShadingRateTier to D3D12_VARIABLE_SHADING_RATE_TIER);
 conv_enum!(ViewInstancingTier to D3D12_VIEW_INSTANCING_TIER);
 conv_enum!(WaveMmaTier to D3D12_WAVE_MMA_TIER);
-conv_enum!(PredicationOp to D3D12_PREDICATION_OP);
-conv_enum!(Scaling to DXGI_SCALING);
-conv_enum!(ScalingMode to DXGI_MODE_SCALING);
-conv_enum!(ScanlineOrdering to DXGI_MODE_SCANLINE_ORDER);
-conv_enum!(SwapEffect to DXGI_SWAP_EFFECT);
-conv_enum!(AlphaMode to DXGI_ALPHA_MODE);
+
+impl<'a> BarrierType<'a> {
+    pub(crate) fn as_raw(&self) -> D3D12_RESOURCE_BARRIER_0 {
+        match self {
+            BarrierType::Transition {
+                resource,
+                subresource,
+                before,
+                after,
+            } => D3D12_RESOURCE_BARRIER_0 {
+                Transition: ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
+                    pResource: unsafe { std::mem::transmute_copy(resource.as_raw()) },
+                    Subresource: *subresource,
+                    StateBefore: before.as_raw(),
+                    StateAfter: after.as_raw(),
+                }),
+            },
+            BarrierType::Aliasing { before, after } => D3D12_RESOURCE_BARRIER_0 {
+                Aliasing: ManuallyDrop::new(D3D12_RESOURCE_ALIASING_BARRIER {
+                    pResourceBefore: unsafe { std::mem::transmute_copy(before.as_raw()) },
+                    pResourceAfter: unsafe { std::mem::transmute_copy(after.as_raw()) },
+                }),
+            },
+            BarrierType::Uav { resource } => D3D12_RESOURCE_BARRIER_0 {
+                UAV: ManuallyDrop::new(D3D12_RESOURCE_UAV_BARRIER {
+                    pResource: unsafe { std::mem::transmute_copy(resource.as_raw_ref()) },
+                }),
+            },
+        }
+    }
+
+    pub(crate) fn as_type_raw(&self) -> D3D12_RESOURCE_BARRIER_TYPE {
+        match self {
+            BarrierType::Transition { .. } => D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+            BarrierType::Aliasing { .. } => D3D12_RESOURCE_BARRIER_TYPE_ALIASING,
+            BarrierType::Uav { .. } => D3D12_RESOURCE_BARRIER_TYPE_UAV,
+        }
+    }
+}
 
 impl ClearValue {
     #[inline]
@@ -116,6 +155,25 @@ impl DsvDimension {
             DsvDimension::ArrayTex2D { .. } => D3D12_DSV_DIMENSION_TEXTURE2DARRAY,
             DsvDimension::Tex2DMs => D3D12_DSV_DIMENSION_TEXTURE2DMS,
             DsvDimension::ArrayTex2DMs { .. } => D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY,
+        }
+    }
+}
+
+impl HeapAlignment {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> u64 {
+        *self as u64
+    }
+}
+
+impl From<u64> for HeapAlignment {
+    #[inline]
+    fn from(value: u64) -> Self {
+        match value as u32 {
+            0 => HeapAlignment::Default,
+            D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT => HeapAlignment::ResourcePlacement,
+            D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT => HeapAlignment::MsaaResourcePlacement,
+            _ => unreachable!(),
         }
     }
 }
@@ -189,25 +247,6 @@ impl IndirectArgumentDesc {
             IndirectArgumentDesc::UnorderedAccessView { .. } => {
                 D3D12_INDIRECT_ARGUMENT_TYPE_UNORDERED_ACCESS_VIEW
             }
-        }
-    }
-}
-
-impl HeapAlignment {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> u64 {
-        *self as u64
-    }
-}
-
-impl From<u64> for HeapAlignment {
-    #[inline]
-    fn from(value: u64) -> Self {
-        match value as u32 {
-            0 => HeapAlignment::Default,
-            D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT => HeapAlignment::ResourcePlacement,
-            D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT => HeapAlignment::MsaaResourcePlacement,
-            _ => unreachable!(),
         }
     }
 }
@@ -563,6 +602,28 @@ impl SrvDimension {
     }
 }
 
+impl TextureCopyType {
+    #[inline]
+    pub(crate) fn as_raw_type(&self) -> D3D12_TEXTURE_COPY_TYPE {
+        match self {
+            TextureCopyType::SubresourceIndex(_) => D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+            TextureCopyType::PlacedFootprint(_) => D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,
+        }
+    }
+
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_TEXTURE_COPY_LOCATION_0 {
+        match self {
+            TextureCopyType::SubresourceIndex(index) => D3D12_TEXTURE_COPY_LOCATION_0 {
+                SubresourceIndex: *index,
+            },
+            TextureCopyType::PlacedFootprint(footprint) => D3D12_TEXTURE_COPY_LOCATION_0 {
+                PlacedFootprint: footprint.as_raw(),
+            },
+        }
+    }
+}
+
 impl UavDimension {
     #[inline]
     pub(crate) fn as_type_raw(&self) -> D3D12_UAV_DIMENSION {
@@ -659,67 +720,6 @@ impl UavDimension {
                     ArraySize: *array_size,
                 },
             },
-        }
-    }
-}
-
-impl TextureCopyType {
-    #[inline]
-    pub(crate) fn as_raw_type(&self) -> D3D12_TEXTURE_COPY_TYPE {
-        match self {
-            TextureCopyType::SubresourceIndex(_) => D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
-            TextureCopyType::PlacedFootprint(_) => D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,
-        }
-    }
-
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_TEXTURE_COPY_LOCATION_0 {
-        match self {
-            TextureCopyType::SubresourceIndex(index) => D3D12_TEXTURE_COPY_LOCATION_0 {
-                SubresourceIndex: *index,
-            },
-            TextureCopyType::PlacedFootprint(footprint) => D3D12_TEXTURE_COPY_LOCATION_0 {
-                PlacedFootprint: footprint.as_raw(),
-            },
-        }
-    }
-}
-
-impl<'a> BarrierType<'a> {
-    pub(crate) fn as_raw(&self) -> D3D12_RESOURCE_BARRIER_0 {
-        match self {
-            BarrierType::Transition {
-                resource,
-                subresource,
-                before,
-                after,
-            } => D3D12_RESOURCE_BARRIER_0 {
-                Transition: ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
-                    pResource: unsafe { std::mem::transmute_copy(resource.as_raw()) },
-                    Subresource: *subresource,
-                    StateBefore: before.as_raw(),
-                    StateAfter: after.as_raw(),
-                }),
-            },
-            BarrierType::Aliasing { before, after } => D3D12_RESOURCE_BARRIER_0 {
-                Aliasing: ManuallyDrop::new(D3D12_RESOURCE_ALIASING_BARRIER {
-                    pResourceBefore: unsafe { std::mem::transmute_copy(before.as_raw()) },
-                    pResourceAfter: unsafe { std::mem::transmute_copy(after.as_raw()) },
-                }),
-            },
-            BarrierType::Uav { resource } => D3D12_RESOURCE_BARRIER_0 {
-                UAV: ManuallyDrop::new(D3D12_RESOURCE_UAV_BARRIER {
-                    pResource: unsafe { std::mem::transmute_copy(resource.as_raw_ref()) },
-                }),
-            },
-        }
-    }
-
-    pub(crate) fn as_type_raw(&self) -> D3D12_RESOURCE_BARRIER_TYPE {
-        match self {
-            BarrierType::Transition { .. } => D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-            BarrierType::Aliasing { .. } => D3D12_RESOURCE_BARRIER_TYPE_ALIASING,
-            BarrierType::Uav { .. } => D3D12_RESOURCE_BARRIER_TYPE_UAV,
         }
     }
 }
