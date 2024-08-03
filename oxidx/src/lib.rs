@@ -2,6 +2,8 @@
 #![allow(dead_code)]
 #![allow(clippy::too_many_arguments)]
 
+#![warn(missing_docs)]
+
 pub mod dx;
 
 pub mod adapter;

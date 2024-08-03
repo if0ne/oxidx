@@ -27,29 +27,62 @@ pub enum AddressMode {
     MirrorOnce = D3D12_TEXTURE_ADDRESS_MODE_MIRROR_ONCE.0,
 }
 
+/// Identifies the alpha value, transparency behavior, of a surface.
+/// 
+/// For more information: [`DXGI_ALPHA_MODE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/ne-dxgi1_2-dxgi_alpha_mode)
 #[derive(Debug, Default, Clone, Copy, FromRepr)]
 #[repr(i32)]
 pub enum AlphaMode {
+    /// Indicates that the transparency behavior is not specified.
     #[default]
     Unspecified = DXGI_ALPHA_MODE_UNSPECIFIED.0,
+
+    /// Indicates that the transparency behavior is premultiplied. Each color is first scaled by the alpha value. 
+    /// The alpha value itself is the same in both straight and premultiplied alpha. 
+    /// Typically, no color channel value is greater than the alpha channel value. 
+    /// If a color channel value in a premultiplied format is greater than the alpha channel, 
+    /// the standard source-over blending math results in an additive blend.
     Premultiplied = DXGI_ALPHA_MODE_PREMULTIPLIED.0,
+
+    /// Indicates that the transparency behavior is not premultiplied. The alpha channel indicates the transparency of the color.
     Straight = DXGI_ALPHA_MODE_STRAIGHT.0,
+
+    /// Indicates to ignore the transparency behavior.
     Ignore = DXGI_ALPHA_MODE_IGNORE.0,
 }
 
+/// Specifies a type of resource barrier (transition in resource use) description.
+/// 
+/// For more information: [`D3D12_RESOURCE_BARRIER_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_barrier_type)
 #[derive(Clone, Debug)]
 pub enum BarrierType<'a> {
+    /// Describes the transition of subresources between different usages.
     Transition {
+        /// A reference to the [`Resource`] object that represents the resource used in the transition.
         resource: &'a Resource,
+
+        /// The index of the subresource for the transition. Use the 0xffffffff to transition all subresources in a resource at the same time.
         subresource: u32,
+
+        /// The "before" usages of the subresources, as a bitwise-OR'd combination of [`ResourceStates`] enumeration constants.
         before: ResourceStates,
+
+        /// The "after" usages of the subresources, as a bitwise-OR'd combination of [`ResourceStates`] enumeration constants.
         after: ResourceStates,
     },
+
+    /// Describes the transition between usages of two different resources that have mappings into the same heap.
     Aliasing {
+        /// A reference to the [`Resource`] object that represents the before resource used in the transition.
         before: &'a Resource,
+
+        /// A reference to the [`Resource`] object that represents the after resource used in the transition.
         after: &'a Resource,
     },
+
+    /// Represents a resource in which all UAV accesses must complete before any future UAV accesses can begin.
     Uav {
+        /// The resource used in the transition, as a reference to [`Resource`].
         resource: &'a Resource,
     },
 }
@@ -169,6 +202,7 @@ pub enum BorderColor {
 /// For more information: [`D3D12_CLEAR_VALUE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_clear_value)
 #[derive(Clone, Copy, Debug)]
 pub enum ClearValue {
+    /// Specifies a color value.
     Color {
         /// Specifies one member of the [`Format`] enum.
         format: Format,
@@ -176,6 +210,8 @@ pub enum ClearValue {
         /// Specifies a 4-entry array of float values, determining the RGBA value.
         value: [f32; 4],
     },
+
+    /// Specifies a depth and stencil value.
     Depth {
         /// Specifies one member of the [`Format`] enum.
         format: Format,
@@ -1417,10 +1453,16 @@ pub enum PipelinePrimitiveTopology {
     Patch = D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH.0,
 }
 
+/// Specifies the predication operation to apply.
+///
+/// For more information: [`D3D12_PREDICATION_OP enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_predication_op)
 #[derive(Clone, Copy, Debug, FromRepr)]
 #[repr(i32)]
 pub enum PredicationOp {
+    /// Enables predication if all 64-bits are zero.
     EqualZero = D3D12_PREDICATION_OP_EQUAL_ZERO.0,
+
+    /// Enables predication if at least one of the 64-bits are not zero.
     NotEqualZero = D3D12_PREDICATION_OP_NOT_EQUAL_ZERO.0,
 }
 
@@ -1497,28 +1539,43 @@ pub enum QueryHeapType {
     PipelineStatistics1 = D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1.0,
 }
 
+/// Specifies the type of query.
+///
+/// For more information: [`D3D12_QUERY_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_query_type)
 #[derive(Clone, Copy, Debug, Default, FromRepr)]
 #[repr(i32)]
 pub enum QueryType {
+    /// Indicates the query is for depth/stencil occlusion counts.
     #[default]
     Occlusion = D3D12_QUERY_TYPE_OCCLUSION.0,
 
+    /// Indicates the query is for a binary depth/stencil occlusion statistics.
     BinaryOcclusion = D3D12_QUERY_TYPE_BINARY_OCCLUSION.0,
 
+    /// Indicates the query is for high definition GPU and CPU timestamps.
     Timestamp = D3D12_QUERY_TYPE_TIMESTAMP.0,
 
+    /// Indicates the query type is for graphics pipeline statistics.
     PipelineStatistics = D3D12_QUERY_TYPE_PIPELINE_STATISTICS.0,
 
+    /// Stream 0 output statistics. In Direct3D 12 there is no single stream output (SO) overflow query for all the output streams.
+    /// Apps need to issue multiple single-stream queries, and then correlate the results. 
+    /// Stream output is the ability of the GPU to write vertices to a buffer. The stream output counters monitor progress.
     SoStatisticsStream0 = D3D12_QUERY_TYPE_SO_STATISTICS_STREAM0.0,
 
+    /// Stream 1 output statistics.
     SoStatisticsStream1 = D3D12_QUERY_TYPE_SO_STATISTICS_STREAM1.0,
 
+    /// Stream 2 output statistics.
     SoStatisticsStream2 = D3D12_QUERY_TYPE_SO_STATISTICS_STREAM2.0,
 
+    /// Stream 3 output statistics.
     SoStatisticsStream3 = D3D12_QUERY_TYPE_SO_STATISTICS_STREAM3.0,
 
+    /// Video decode statistics.
     VideoDecodeStatistics = D3D12_QUERY_TYPE_VIDEO_DECODE_STATISTICS.0,
 
+    /// TBD
     PipelineStatistics1 = D3D12_QUERY_TYPE_PIPELINE_STATISTICS1.0,
 }
 
@@ -1744,7 +1801,7 @@ pub enum RtvDimension {
         mip_slice: u32,
     },
 
-    // The resource will be accessed as an array of 1D textures.
+    /// The resource will be accessed as an array of 1D textures.
     ArrayTex1D {
         /// The index of the mipmap level to use mip slice.
         mip_slice: u32,
@@ -1824,31 +1881,58 @@ pub enum SamplerFeedbackTier {
     Tier1_0 = D3D12_SAMPLER_FEEDBACK_TIER_1_0.0,
 }
 
+/// Identifies resize behavior when the back-buffer size does not match the size of the target output.
+///
+/// For more information: [`DXGI_SCALING enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/ne-dxgi1_2-dxgi_scaling)
 #[derive(Debug, Default, Clone, Copy, FromRepr)]
 #[repr(i32)]
 pub enum Scaling {
+    /// Directs DXGI to make the back-buffer contents scale to fit the presentation target size.
     #[default]
     Stretch = DXGI_SCALING_STRETCH.0,
+
+    /// Directs DXGI to make the back-buffer contents appear without any scaling when the presentation target size is not equal to the back-buffer size.
     None = DXGI_SCALING_NONE.0,
+
+    /// Directs DXGI to make the back-buffer contents scale to fit the presentation target size, while preserving the aspect ratio of the back-buffer. 
+    /// If the scaled back-buffer does not fill the presentation area, it will be centered with black borders.
     AspectRatioStretch = DXGI_SCALING_ASPECT_RATIO_STRETCH.0,
 }
 
+/// Flags indicating how an image is stretched to fit a given monitor's resolution.
+///
+/// For more information: [`DXGI_MODE_SCALING enumeration`](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/bb173066(v=vs.85))
 #[derive(Debug, Default, Clone, Copy, FromRepr)]
 #[repr(i32)]
 pub enum ScalingMode {
+    /// Unspecified scaling.
     #[default]
     Unspecified = DXGI_MODE_SCALING_UNSPECIFIED.0,
+
+    /// Specifies no scaling. The image is centered on the display. This flag is typically used for a fixed-dot-pitch display (such as an LED display).
     Centered = DXGI_MODE_SCALING_CENTERED.0,
+
+    /// Specifies stretched scaling.
     Stretched = DXGI_MODE_SCALING_STRETCHED.0,
 }
 
+/// Flags indicating the method the raster uses to create an image on a surface.
+///
+/// For more information: [`DXGI_MODE_SCANLINE_ORDER enumeration`](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/bb173067(v=vs.85))
 #[derive(Debug, Default, Clone, Copy, FromRepr)]
 #[repr(i32)]
 pub enum ScanlineOrdering {
+    /// Scanline order is unspecified.
     #[default]
     Unspecified = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED.0,
+
+    /// The image is created from the first scanline to the last without skipping any.
     Progressive = DXGI_MODE_SCANLINE_ORDER_PROGRESSIVE.0,
+
+    /// The image is created beginning with the upper field.
     UpperFieldFirst = DXGI_MODE_SCANLINE_ORDER_LOWER_FIELD_FIRST.0,
+
+    /// The image is created beginning with the lower field.
     LowerFieldFirst = DXGI_MODE_SCANLINE_ORDER_UPPER_FIELD_FIRST.0,
 }
 
@@ -2121,19 +2205,35 @@ pub enum StencilOp {
     Decr = D3D12_STENCIL_OP_DECR.0,
 }
 
+/// Options for handling pixels in a display surface.
+///
+/// For more information: [`DXGI_SWAP_EFFECT enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/ne-dxgi-dxgi_swap_effect)
 #[derive(Debug, Default, Clone, Copy, FromRepr)]
 #[repr(i32)]
 pub enum SwapEffect {
+    /// Use this flag to specify the bit-block transfer (bitblt) model and to specify that DXGI discard the contents of the back buffer.
     #[default]
     Discard = DXGI_SWAP_EFFECT_DISCARD.0,
+
+    /// Use this flag to specify the bitblt model and to specify that DXGI persist the contents of the back buffer.
     Sequential = DXGI_SWAP_EFFECT_SEQUENTIAL.0,
+
+    /// Use this flag to specify the flip presentation model and to specify that DXGI persist the contents of the back buffer.
     FlipSequential = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL.0,
+
+    /// Use this flag to specify the flip presentation model and to specify that DXGI discard the contents of the back buffer after.
     FlipDiscard = DXGI_SWAP_EFFECT_FLIP_DISCARD.0,
 }
 
+/// Specifies what type of texture copy is to take place.
+///
+/// For more information: [`D3D12_TEXTURE_COPY_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_texture_copy_type)
 #[derive(Clone, Copy, Debug)]
 pub enum TextureCopyType {
+    /// Indicates a subresource, identified by an index, is to be copied.
     SubresourceIndex(u32),
+
+    /// Indicates a place footprint, identified by a [`PlacedSubresourceFootprint`] structure, is to be copied.
     PlacedFootprint(PlacedSubresourceFootprint),
 }
 
@@ -2214,7 +2314,7 @@ pub enum UavDimension {
         mip_slice: u32,
     },
 
-    // Describes an array of unordered-access 1D texture resources.
+    /// Describes an array of unordered-access 1D texture resources.
     ArrayTex1D {
         /// The mipmap slice index.
         mip_slice: u32,

@@ -629,6 +629,9 @@ impl FeatureObject for Architecture1Feature {
 #[derive(Debug)]
 pub struct Options2Feature;
 
+/// Indicates the level of support that the adapter provides for depth-bounds tests and programmable sample positions.
+///
+/// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS2 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options2)
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Options2 {
     /// On return, contains true if depth-bounds tests are supported; otherwise, false.
