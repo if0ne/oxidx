@@ -4,10 +4,18 @@ use windows::Win32::Graphics::Direct3D12::*;
 use super::*;
 
 bitflags::bitflags! {
+    /// Identifies the type of DXGI adapter.
+    ///
+    /// Empty flag - Specifies no flags.
+    ///
+    /// For more information: [`DXGI_ADAPTER_FLAG enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/ne-dxgi-dxgi_adapter_flag)
     #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct AdapterFlags: u32 {
-        const Remote = 1;
-        const Sofware = 2;
+    pub struct AdapterFlags: i32 {
+        /// Value always set to 0. This flag is reserved.
+        const Remote = DXGI_ADAPTER_FLAG_REMOTE.0;
+
+        /// Specifies a software adapter.
+        const Sofware = DXGI_ADAPTER_FLAG_SOFTWARE.0;
     }
 }
 
@@ -70,9 +78,15 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Specifies what to clear from the depth stencil view.
+    ///
+    /// For more information: [`D3D12_CLEAR_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_clear_flags)
     #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct ClearFlags: i32 {
+        /// Indicates the depth buffer should be cleared.
         const Depth = D3D12_CLEAR_FLAG_DEPTH.0;
+
+        /// Indicates the stencil buffer should be cleared.
         const Stencil = D3D12_CLEAR_FLAG_STENCIL.0;
     }
 }
@@ -187,8 +201,10 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Valid values include the `Debug` flag, and zero.
     #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct FactoryCreationFlags: u32 {
+        /// Request DXGIDebug.dll; the DLL will be loaded if it is present on the system.
         const Debug = DXGI_CREATE_FACTORY_DEBUG;
     }
 }
@@ -354,13 +370,30 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Flags for surface and resource creation options.
+    /// 
+    /// For more information: [`DXGI_USAGE`](https://learn.microsoft.com/en-us/windows/win32/direct3ddxgi/dxgi-usage)
     #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct FrameBufferUsage: u32 {
+        /// The surface or resource is used as a back buffer. You don’t need to pass `BackBuffer` when you create a swap chain.
         const BackBuffer = DXGI_USAGE_BACK_BUFFER.0;
+
+        /// This flag is for internal use only.
+        const DiscardOnPresent = DXGI_USAGE_DISCARD_ON_PRESENT.0;
+
+        /// Use the surface or resource for reading only.
         const ReadOnly = DXGI_USAGE_READ_ONLY.0;
+
+        /// Use the surface or resource as an output render target.
         const RenderTargetOutput = DXGI_USAGE_RENDER_TARGET_OUTPUT.0;
+
+        /// Use the surface or resource as an input to a shader.
         const ShaderInput = DXGI_USAGE_SHADER_INPUT.0;
+
+        /// Share the surface or resource.
         const Shared = DXGI_USAGE_SHARED.0;
+
+        /// Use the surface or resource for unordered access.
         const UnorderedAccess = DXGI_USAGE_UNORDERED_ACCESS.0;
     }
 }
@@ -474,16 +507,39 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// The [`PresentFlags`] constants specify options for presenting frames to the output.
+    ///
+    /// Empty flag - Present a frame from each buffer (starting with the current buffer) to the output.
+    ///
+    /// For more information: [`DXGI_PRESENT`](https://learn.microsoft.com/en-us/windows/win32/direct3ddxgi/dxgi-present)
     #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct PresentFlags: u32 {
+        /// Present a frame from the current buffer to the output. 
+        /// Use this flag so that the presentation can use vertical-blank synchronization instead of sequencing buffers in the chain in the usual manner.
         const DoNotSequence = DXGI_PRESENT_DO_NOT_SEQUENCE;
+
+        /// Do not present the frame to the output.
         const Test = DXGI_PRESENT_TEST;
+
+        /// Specifies that the runtime will discard outstanding queued presents.
         const Restart = DXGI_PRESENT_RESTART;
+
+        /// Specifies that the runtime will fail the presentation with the error code if the calling thread is blocked.
         const DoNotWait = DXGI_PRESENT_DO_NOT_WAIT;
+
+        /// Indicates that presentation content will be shown only on the particular output. The content will not be visible on other outputs.
         const RestrictToOutput = DXGI_PRESENT_RESTRICT_TO_OUTPUT;
+
+        /// Indicates that if the stereo present must be reduced to mono, right-eye viewing is used rather than left-eye viewing.
         const StereoPreferRight = DXGI_PRESENT_STEREO_PREFER_RIGHT;
+
+        /// Indicates that the presentation should use the left buffer as a mono buffer.
         const StereoTemporaryMono = DXGI_PRESENT_STEREO_TEMPORARY_MONO;
+
+        /// This flag must be set by media apps that are currently using a custom present duration (custom refresh rate).
         const UseDuration = DXGI_PRESENT_USE_DURATION;
+
+        /// Allowing tearing is a requirement of variable refresh rate displays.
         const AllowTearing = DXGI_PRESENT_ALLOW_TEARING;
     }
 }
@@ -502,9 +558,17 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Flags for setting split resource barriers.
+    ///
+    /// Empty flag - No flags.
+    ///
+    /// For more information: [`D3D12_RESOURCE_BARRIER_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_barrier_flags)
     #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct ResourceBarrierFlags: i32 {
+        /// This starts a barrier transition in a new state, putting a resource in a temporary no-access condition.
         const BeginOnly = D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY.0;
+
+        /// This barrier completes a transition, setting a new state and restoring active access to a resource.
         const EndOnly = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY.0;
     }
 }
@@ -686,10 +750,20 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Specifies how to copy a tile.
+    ///
+    /// Empty flag - No tile-copy flags are specified.
+    ///
+    /// For more information: [`D3D12_TILE_COPY_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_tile_copy_flags)
     #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct TileCopyFlags: i32 {
+        /// Indicates that the GPU isn't currently referencing any of the portions of destination memory being written.
         const NoHazard = D3D12_TILE_COPY_FLAG_NO_HAZARD.0;
+
+        /// Indicates that the [`IGraphicsCommandList::copy_tiles`](crate::command_list::IGraphicsCommandList) operation involves copying a linear buffer to a swizzled tiled resource.
         const LinearBufferToSwizzledTiledResource = D3D12_TILE_COPY_FLAG_LINEAR_BUFFER_TO_SWIZZLED_TILED_RESOURCE.0;
+
+        /// Indicates that the [`IGraphicsCommandList::copy_tiles`](crate::command_list::IGraphicsCommandList) operation involves copying a swizzled tiled resource to a linear buffer. This means to copy tile data from the tile region, reading tiles sequentially (in x,y,z order if the region is a box),
         const SwizzledTiledResourceToLinearBuffer = D3D12_TILE_COPY_FLAG_SWIZZLED_TILED_RESOURCE_TO_LINEAR_BUFFER.0;
     }
 }
@@ -714,29 +788,65 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Options for swap-chain behavior.
+    ///
+    /// For more information: [`DXGI_SWAP_CHAIN_FLAG enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/ne-dxgi-dxgi_swap_chain_flag)
     #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct SwapchainFlags: i32 {
+        /// Set this flag to turn off automatic image rotation; that is, do not perform a rotation when transferring the contents of the front buffer to the monitor. 
         const NonPrerotated = DXGI_SWAP_CHAIN_FLAG_NONPREROTATED.0;
+
+        /// Set this flag to enable an application to switch modes.
         const AllowModeSwitch = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH.0;
+
+        /// Set this flag to enable an application to render using GDI on a swap chain or a surface. 
         const GdiCompatible = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE.0;
+
+        /// Set this flag to indicate that the swap chain might contain protected content; 
+        /// therefore, the operating system supports the creation of the swap chain only when driver and hardware protection is used. 
+        /// If the driver and hardware do not support content protection, the call to create a resource for the swap chain fails.
         const RestrictContent = DXGI_SWAP_CHAIN_FLAG_RESTRICTED_CONTENT.0;
+
+        /// Set this flag to indicate that shared resources that are created within the swap chain must be protected by using the driver’s mechanism for restricting access to shared surfaces.
         const RestrictSharedResourceDriver = DXGI_SWAP_CHAIN_FLAG_RESTRICT_SHARED_RESOURCE_DRIVER.0;
+
+        /// Set this flag to restrict presented content to the local displays. 
         const DisplayOnly = DXGI_SWAP_CHAIN_FLAG_DISPLAY_ONLY.0;
+
+        /// Set this flag to create a waitable object you can use to ensure rendering does not begin while a frame is still being presented.
         const FrameLatencyWaitableObject = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT.0;
+
+        /// Set this flag to create a swap chain in the foreground layer for multi-plane rendering.
         const ForegroundLayer = DXGI_SWAP_CHAIN_FLAG_FOREGROUND_LAYER.0;
+
+        /// Set this flag to create a swap chain for full-screen video. 
         const FullscreenVideo = DXGI_SWAP_CHAIN_FLAG_FULLSCREEN_VIDEO.0;
+
+        /// Set this flag to create a swap chain for YUV video.
         const YuvVideo = DXGI_SWAP_CHAIN_FLAG_YUV_VIDEO.0;
+
+        /// Indicates that the swap chain should be created such that all underlying resources can be protected by the hardware.
         const Protected = DXGI_SWAP_CHAIN_FLAG_HW_PROTECTED.0;
+
+        /// Tearing support is a requirement to enable displays that support variable refresh rates to function properly when the application presents a swap chain tied to a full screen borderless window.
         const AllowTearing = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING.0;
+
+        /// TBD
         const RestrictedToAllHolographicDisplays = DXGI_SWAP_CHAIN_FLAG_RESTRICTED_TO_ALL_HOLOGRAPHIC_DISPLAYS.0;
     }
 }
 
 bitflags::bitflags! {
+    /// TBD
     #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct WindowAssociationFlags: u32 {
+        /// revent DXGI from monitoring an applications message queue; this makes DXGI unable to respond to mode changes.
         const NoWindowChanges = DXGI_MWA_NO_WINDOW_CHANGES;
+
+        /// Prevent DXGI from responding to an alt-enter sequence.
         const NoAltEnter = DXGI_MWA_NO_ALT_ENTER;
+
+        /// Prevent DXGI from responding to a print-screen key.
         const NoPrintScreen = DXGI_MWA_NO_PRINT_SCREEN;
     }
 }
