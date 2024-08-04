@@ -13,7 +13,7 @@ use crate::debug::IDebug;
 use crate::device::IDevice;
 use crate::swapchain::{IOutput, Swapchain1};
 use crate::types::{
-    FactoryCreationFlags, FeatureLevel, SwapchainDesc, SwapchainFullscreenDesc,
+    FactoryCreationFlags, FeatureLevel, SwapchainDesc1, SwapchainFullscreenDesc,
     WindowAssociationFlags,
 };
 use crate::{adapter::Adapter3, error::DxError};
@@ -26,7 +26,7 @@ pub trait FactoryInterface4: HasInterface<Raw: Interface> {
         &self,
         command_queue: &CQ,
         hwnd: NonZeroIsize,
-        desc: &SwapchainDesc,
+        desc: &SwapchainDesc1,
         fullscreen_desc: Option<&SwapchainFullscreenDesc>,
         restrict_to_output: Option<&impl IOutput>,
     ) -> Result<Swapchain1, DxError>
@@ -36,7 +36,7 @@ pub trait FactoryInterface4: HasInterface<Raw: Interface> {
     fn create_swapchain_for_composition<CQ>(
         &self,
         command_queue: &CQ,
-        desc: &SwapchainDesc,
+        desc: &SwapchainDesc1,
         restrict_to_output: Option<&impl IOutput>,
     ) -> Result<Swapchain1, DxError>
     where
@@ -87,7 +87,7 @@ impl_trait! {
         &self,
         command_queue: &CQ,
         hwnd: NonZeroIsize,
-        desc: &SwapchainDesc,
+        desc: &SwapchainDesc1,
         fullscreen_desc: Option<&SwapchainFullscreenDesc>,
         restrict_to_output: Option<&impl IOutput>,
     ) -> Result<Swapchain1, DxError>
@@ -119,7 +119,7 @@ impl_trait! {
     fn create_swapchain_for_composition<CQ>(
         &self,
         command_queue: &CQ,
-        desc: &SwapchainDesc,
+        desc: &SwapchainDesc1,
         restrict_to_output: Option<&impl IOutput>,
     ) -> Result<Swapchain1, DxError>
     where

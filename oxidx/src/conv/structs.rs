@@ -3,9 +3,9 @@ use windows::Win32::Graphics::Direct3D12::*;
 
 use super::*;
 
-impl From<DXGI_ADAPTER_DESC1> for AdapterDesc {
+impl From<DXGI_ADAPTER_DESC1> for AdapterDesc1 {
     fn from(value: DXGI_ADAPTER_DESC1) -> Self {
-        AdapterDesc {
+        AdapterDesc1 {
             description: CompactString::from_utf16_lossy(value.Description),
             vendor_id: value.VendorId,
             device_id: value.DeviceId,
@@ -761,7 +761,7 @@ impl From<D3D12_SUBRESOURCE_TILING> for SubresourceTiling {
     }
 }
 
-impl SwapchainDesc {
+impl SwapchainDesc1 {
     #[inline]
     pub(crate) fn as_raw(&self) -> DXGI_SWAP_CHAIN_DESC1 {
         DXGI_SWAP_CHAIN_DESC1 {

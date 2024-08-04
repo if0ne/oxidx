@@ -150,7 +150,7 @@ impl DXSample for Sample {
 
         let (width, height) = self.window_size();
 
-        let swap_chain_desc = SwapchainDesc {
+        let swap_chain_desc = SwapchainDesc1 {
             buffer_count: FRAME_COUNT,
             width: width as u32,
             height: height as u32,

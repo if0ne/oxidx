@@ -8,17 +8,39 @@ use crate::{blob::Blob, resources::Resource, root_signature::RootSignature};
 
 use super::*;
 
+/// Describes an adapter (or video card) using DXGI 1.1.
+///
+/// For more information: [`DXGI_ADAPTER_DESC1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/ns-dxgi-dxgi_adapter_desc1)
 #[derive(Debug, Clone)]
-pub struct AdapterDesc {
+pub struct AdapterDesc1 {
+    /// A string that contains the adapter description.
     pub description: CompactString,
+
+    /// The PCI ID or ACPI ID of the adapter's hardware vendor.
     pub vendor_id: u32,
+
+    /// The PCI ID or ACPI ID of the adapter's hardware device.
     pub device_id: u32,
+
+    /// The PCI ID or ACPI ID of the adapter's hardware subsystem.
     pub sub_sys_id: u32,
+
+    /// The adapter's PCI or ACPI revision number.
     pub revision: u32,
+
+    /// The number of bytes of dedicated video memory that are not shared with the CPU.
     pub dedicated_video_memory: usize,
+
+    /// The number of bytes of dedicated system memory that are not shared with the CPU. This memory is allocated from available system memory at boot time.
     pub dedicated_system_memory: usize,
+
+    /// The number of bytes of shared system memory. This is the maximum value of system memory that may be consumed by the adapter during operation. Any incidental memory consumed by the driver as it manages and uses video memory is additional.
     pub shared_system_memory: usize,
+
+    /// A unique value that identifies the adapter.
     pub adapter_luid: Luid,
+
+    /// A value of the [`AdapterFlags`] enumerated type that describes the adapter type.
     pub flags: AdapterFlags,
 }
 
@@ -39,13 +61,27 @@ pub struct BlendDesc {
     pub render_targets: [RenderTargetBlendDesc; 8],
 }
 
+/// Describes a 3D box.
+///
+/// For more information: [`D3D12_BOX structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_box)
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Box {
+    /// The x position of the left hand side of the box.
     pub left: u32,
+
+    /// The y position of the top of the box.
     pub top: u32,
+
+    /// The z position of the front of the box.
     pub front: u32,
+
+    /// The x position of the right hand side of the box, plus 1. This means that `right - left` equals the width of the box.
     pub right: u32,
+
+    /// The y position of the bottom of the box, plus 1. This means that `bottom - top` equals the height of the box.
     pub bottom: u32,
+
+    /// The z position of the back of the box, plus 1. This means that `back - front` equals the depth of the box.
     pub back: u32,
 }
 
@@ -112,7 +148,7 @@ pub struct ComputePipelineStateDesc<'a> {
 /// For more information: [`D3D12_CONSTANT_BUFFER_VIEW_DESC structure `](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_constant_buffer_view_desc)
 #[derive(Clone, Copy, Debug)]
 pub struct ConstantBufferViewDesc {
-    // GPU virtual address
+    /// GPU virtual address
     pub buffer_location: u64,
 
     /// The size in bytes of the constant buffer.
@@ -142,6 +178,7 @@ pub struct CopyableFootprints {
 pub struct CpuDescriptorHandle(pub(crate) usize);
 
 impl CpuDescriptorHandle {
+    /// Returns a new handle with offset relative to the current handle.
     pub fn offset(&self, offset: usize) -> Self {
         Self(self.0 + offset)
     }
@@ -278,10 +315,18 @@ pub struct DescriptorRange {
     pub offset_in_descriptors_from_table_start: u32,
 }
 
+/// Describes details for the discard-resource operation.
+///
+/// For more information: [`D3D12_DISCARD_REGION structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_discard_region)
 #[derive(Debug)]
 pub struct DiscardRegion<'a> {
+    /// A reference of [`Rect`] structures for the rectangles in the resource to discard.
     pub rects: &'a [Rect],
+
+    /// Index of the first subresource in the resource to discard.
     pub first_subresource: u32,
+
+    /// The number of subresources in the resource to discard.
     pub num_subresource: u32,
 }
 
@@ -292,6 +337,7 @@ pub struct DiscardRegion<'a> {
 pub struct GpuDescriptorHandle(pub(crate) usize);
 
 impl GpuDescriptorHandle {
+    /// Returns a new handle with offset relative to the current handle.
     pub fn offset(&self, offset: usize) -> Self {
         Self(self.0 + offset)
     }
@@ -418,10 +464,18 @@ pub struct HeapProperties {
     pub visible_node_mask: u32,
 }
 
+/// Describes the index buffer to view.
+///
+/// For more information: [`D3D12_INDEX_BUFFER_VIEW structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_index_buffer_view)
 #[derive(Clone, Copy, Debug)]
 pub struct IndexBufferView {
+    /// The GPU virtual address of the index buffer.
     pub buffer_location: u64,
+
+    /// The size in bytes of the index buffer.
     pub size_in_bytes: u32,
+
+    /// A [`Format`]-typed value for the index-buffer format.
     pub format: Format,
 }
 
@@ -557,21 +611,38 @@ pub struct RasterizerDesc {
     pub conservative_raster: ConservativeRaster,
 }
 
+/// Represents a rational number.
+///
+/// For more information: [`DXGI_RATIONAL structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgicommon/ns-dxgicommon-dxgi_rational)
 #[derive(Debug, Clone, Copy)]
 pub struct Rational {
+    /// An unsigned integer value representing the top of the rational number.
     pub numerator: u32,
+
+    /// An unsigned integer value representing the bottom of the rational number.
     pub denominator: u32,
 }
 
+/// The RECT structure defines a rectangle by the coordinates of its upper-left and lower-right corners.
+///
+/// For more information: [`RECT structure`](https://learn.microsoft.com/en-us/windows/win32/api/windef/ns-windef-rect)
 #[derive(Clone, Copy, Debug)]
 pub struct Rect {
+    /// Specifies the x-coordinate of the upper-left corner of the rectangle.
     pub left: i32,
+
+    /// Specifies the y-coordinate of the upper-left corner of the rectangle.
     pub top: i32,
+
+    /// Specifies the x-coordinate of the lower-right corner of the rectangle.
     pub right: i32,
+
+    /// Specifies the y-coordinate of the lower-right corner of the rectangle.
     pub bottom: i32,
 }
 
 impl Rect {
+    /// Create rect with left and top equal to 0.
     #[inline]
     pub fn from_size(size: impl Into<(i32, i32)>) -> Self {
         let (width, height) = size.into();
@@ -609,9 +680,15 @@ pub struct ResourceAllocationInfo {
     pub alignment: u64,
 }
 
+/// Describes a resource barrier (transition in resource use).
+///
+/// For more information: [`D3D12_RESOURCE_BARRIER structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_barrier)
 #[derive(Clone, Debug)]
 pub struct ResourceBarrier<'a> {
+    /// A [`BarrierType`]-typed value that specifies the type of resource barrier. This member determines which type to use in the union below.
     pub r#type: BarrierType<'a>,
+
+    /// Specifies a [`ResourceBarrierFlags`] enumeration constant such as for "begin only" or "end only".
     pub flags: ResourceBarrierFlags,
 }
 
@@ -787,10 +864,19 @@ pub struct StaticSamplerDesc {
     pub visibility: ShaderVisibility,
 }
 
+/// Describes a stream output buffer.
+///
+/// For more information: [`D3D12_STREAM_OUTPUT_BUFFER_VIEW structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_stream_output_buffer_view)
 #[derive(Clone, Copy, Debug)]
 pub struct StreamOutputBufferView {
+    /// A u64 that points to the stream output buffer. If `size_in_bytes` is 0, this member isn't used and can be any value.
     pub buffer_location: u64,
+
+    /// The size of the stream output buffer in bytes.
     pub size_in_bytes: u64,
+
+    /// The location of the value of how much data has been filled into the buffer, as a u64. 
+    /// This member can't be NULL; a filled size location must be supplied (which the hardware will increment as data is output). If `size_in_bytes` is 0, this member isn't used and can be any value.
     pub buffer_filled_size_location: u64,
 }
 
@@ -849,32 +935,72 @@ pub struct SubresourceTiling {
     pub start_tile_index_in_overall_resource: u32,
 }
 
+/// Describes a swap chain.
+///
+/// For more information: [`DXGI_SWAP_CHAIN_DESC1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/ns-dxgi1_2-dxgi_swap_chain_desc1)
 #[derive(Debug, Default, Clone)]
-pub struct SwapchainDesc {
+pub struct SwapchainDesc1 {
+    /// A value that describes the resolution width.
     pub width: u32,
+
+    /// A value that describes the resolution height.
     pub height: u32,
+
+    /// A [`Format`] structure that describes the display format.
     pub format: Format,
+
+    /// Specifies whether the full-screen display mode or the swap-chain back buffer is stereo. 
     pub stereo: bool,
+
+    /// A [`SampleDesc`] structure that describes multi-sampling parameters. This member is valid only with bit-block transfer (bitblt) model swap chains.
     pub sample_desc: SampleDesc,
+
+    /// A [`FrameBufferUsage`]-typed value that describes the surface usage and CPU access options for the back buffer. The back buffer can be used for shader input or render-target output.
     pub usage: FrameBufferUsage,
+
+    /// A value that describes the number of buffers in the swap chain. When you create a full-screen swap chain, you typically include the front buffer in this value.
     pub buffer_count: u32,
+
+    /// A [`Scaling`]-typed value that identifies resize behavior if the size of the back buffer is not equal to the target output.
     pub scaling: Scaling,
+
+    /// A [`SwapEffect`]-typed value that describes the presentation model that is used by the swap chain and options for handling the contents of the presentation buffer after presenting a surface.
     pub swap_effect: SwapEffect,
+
+    /// A [`AlphaMode`]-typed value that identifies the transparency behavior of the swap-chain back buffer.
     pub alpha_mode: AlphaMode,
+
+    /// A combination of [`SwapchainFlags`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies options for swap-chain behavior.
     pub flags: SwapchainFlags,
 }
 
+/// Describes a swap chain.
+///
+/// For more information: [`DXGI_SWAP_CHAIN_FULLSCREEN_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/ns-dxgi1_2-dxgi_swap_chain_fullscreen_desc)
 #[derive(Debug, Clone)]
 pub struct SwapchainFullscreenDesc {
+    /// A [`Rational`] structure that describes the refresh rate in hertz.
     pub rational: Rational,
+
+    /// A member of the [`ScanlineOrdering`] enumerated type that describes the scan-line drawing mode.
     pub scanline_ordering: ScanlineOrdering,
+
+    /// A member of the [`ScalingMode`] enumerated type that describes the scaling mode.
     pub scaling: ScalingMode,
+
+    /// A Boolean value that specifies whether the swap chain is in windowed mode.
     pub windowed: bool,
 }
 
+/// Describes a portion of a texture for the purpose of texture copies.
+///
+/// For more information: [`D3D12_TEXTURE_COPY_LOCATION structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_texture_copy_location)
 #[derive(Debug)]
 pub struct TextureCopyLocation<'a> {
+    /// Specifies the resource which will be used for the copy operation.
     pub resource: &'a Resource,
+
+    /// Specifies which type of resource location this is: a subresource of a texture, or a description of a texture layout which can be applied to a buffer.
     pub r#type: TextureCopyType,
 }
 
@@ -946,24 +1072,47 @@ pub struct UnorderedAccessViewDesc {
     pub dimension: UavDimension,
 }
 
+/// Describes a vertex buffer view.
+///
+/// For more information: [`D3D12_VERTEX_BUFFER_VIEW structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_vertex_buffer_view)
 #[derive(Clone, Copy, Debug)]
 pub struct VertexBufferView {
+    /// Specifies a u64 that identifies the address of the buffer.
     pub buffer_location: u64,
+
+    /// Specifies the size in bytes of the buffer.
     pub stride_in_bytes: u32,
+
+    /// Specifies the size in bytes of each vertex entry.
     pub size_in_bytes: u32,
 }
 
+/// Describes the dimensions of a viewport.
+///
+/// For more information: [`D3D12_VIEWPORT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_viewport)
 #[derive(Clone, Copy, Debug)]
 pub struct Viewport {
+    /// X position of the left hand side of the viewport.
     pub x: f32,
+
+    /// Y position of the top of the viewport.
     pub y: f32,
+
+    /// Width of the viewport.
     pub width: f32,
+
+    /// Height of the viewport.
     pub height: f32,
+
+    /// Minimum depth of the viewport. Ranges between 0 and 1.
     pub min_depth: f32,
+
+    /// Maximum depth of the viewport. Ranges between 0 and 1.
     pub max_depth: f32,
 }
 
 impl Viewport {
+    /// Creates a viewport with a minimum depth of 0 and a maximum depth of 1.
     #[inline]
     pub fn from_position_and_size(
         position: impl Into<(f32, f32)>,
@@ -982,6 +1131,7 @@ impl Viewport {
         }
     }
 
+    /// Creates a viewport with a minimum depth of 0 and a maximum depth of 1 and with position in (0, 0).
     #[inline]
     pub fn from_size(size: impl Into<(f32, f32)>) -> Self {
         Self::from_position_and_size((0.0, 0.0), size)
