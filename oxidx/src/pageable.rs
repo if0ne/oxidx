@@ -8,11 +8,21 @@ use crate::{
     query_heap::QueryHeap, resources::Resource, HasInterface,
 };
 
+/// An interface from which many other core interfaces inherit from.
+/// It indicates that the object type encapsulates some amount of GPU-accessible memory;
+/// but does not strongly indicate whether the application can manipulate the object's residency.
+///
+/// For more information: [`ID3D12Pageable interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12pageable)
 pub trait IPageable: for<'a> HasInterface<RawRef<'a>: Param<ID3D12Pageable>> {}
 
-create_type!(
+create_type! {
+    /// An interface from which many other core interfaces inherit from.
+    /// It indicates that the object type encapsulates some amount of GPU-accessible memory;
+    /// but does not strongly indicate whether the application can manipulate the object's residency.
+    ///
+    /// For more information: [`ID3D12Pageable interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12pageable)
     Pageable wrap ID3D12Pageable
-);
+}
 
 impl_trait! {
     impl IPageable => Pageable;

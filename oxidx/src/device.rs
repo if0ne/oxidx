@@ -149,7 +149,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     );
 
     /// Creates a descriptor heap object.
-    /// 
+    ///
     /// For more information: [`ID3D12Device::CreateDescriptorHeap method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createdescriptorheap)
     fn create_descriptor_heap<H: IDescriptorHeap>(
         &self,

@@ -875,7 +875,7 @@ pub struct StreamOutputBufferView {
     /// The size of the stream output buffer in bytes.
     pub size_in_bytes: u64,
 
-    /// The location of the value of how much data has been filled into the buffer, as a u64. 
+    /// The location of the value of how much data has been filled into the buffer, as a u64.
     /// This member can't be NULL; a filled size location must be supplied (which the hardware will increment as data is output). If `size_in_bytes` is 0, this member isn't used and can be any value.
     pub buffer_filled_size_location: u64,
 }
@@ -949,7 +949,7 @@ pub struct SwapchainDesc1 {
     /// A [`Format`] structure that describes the display format.
     pub format: Format,
 
-    /// Specifies whether the full-screen display mode or the swap-chain back buffer is stereo. 
+    /// Specifies whether the full-screen display mode or the swap-chain back buffer is stereo.
     pub stereo: bool,
 
     /// A [`SampleDesc`] structure that describes multi-sampling parameters. This member is valid only with bit-block transfer (bitblt) model swap chains.

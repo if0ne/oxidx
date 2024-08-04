@@ -28,7 +28,7 @@ pub enum AddressMode {
 }
 
 /// Identifies the alpha value, transparency behavior, of a surface.
-/// 
+///
 /// For more information: [`DXGI_ALPHA_MODE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/ne-dxgi1_2-dxgi_alpha_mode)
 #[derive(Debug, Default, Clone, Copy, FromRepr)]
 #[repr(i32)]
@@ -37,10 +37,10 @@ pub enum AlphaMode {
     #[default]
     Unspecified = DXGI_ALPHA_MODE_UNSPECIFIED.0,
 
-    /// Indicates that the transparency behavior is premultiplied. Each color is first scaled by the alpha value. 
-    /// The alpha value itself is the same in both straight and premultiplied alpha. 
-    /// Typically, no color channel value is greater than the alpha channel value. 
-    /// If a color channel value in a premultiplied format is greater than the alpha channel, 
+    /// Indicates that the transparency behavior is premultiplied. Each color is first scaled by the alpha value.
+    /// The alpha value itself is the same in both straight and premultiplied alpha.
+    /// Typically, no color channel value is greater than the alpha channel value.
+    /// If a color channel value in a premultiplied format is greater than the alpha channel,
     /// the standard source-over blending math results in an additive blend.
     Premultiplied = DXGI_ALPHA_MODE_PREMULTIPLIED.0,
 
@@ -52,7 +52,7 @@ pub enum AlphaMode {
 }
 
 /// Specifies a type of resource barrier (transition in resource use) description.
-/// 
+///
 /// For more information: [`D3D12_RESOURCE_BARRIER_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_barrier_type)
 #[derive(Clone, Debug)]
 pub enum BarrierType<'a> {
@@ -1559,7 +1559,7 @@ pub enum QueryType {
     PipelineStatistics = D3D12_QUERY_TYPE_PIPELINE_STATISTICS.0,
 
     /// Stream 0 output statistics. In Direct3D 12 there is no single stream output (SO) overflow query for all the output streams.
-    /// Apps need to issue multiple single-stream queries, and then correlate the results. 
+    /// Apps need to issue multiple single-stream queries, and then correlate the results.
     /// Stream output is the ability of the GPU to write vertices to a buffer. The stream output counters monitor progress.
     SoStatisticsStream0 = D3D12_QUERY_TYPE_SO_STATISTICS_STREAM0.0,
 
@@ -1894,7 +1894,7 @@ pub enum Scaling {
     /// Directs DXGI to make the back-buffer contents appear without any scaling when the presentation target size is not equal to the back-buffer size.
     None = DXGI_SCALING_NONE.0,
 
-    /// Directs DXGI to make the back-buffer contents scale to fit the presentation target size, while preserving the aspect ratio of the back-buffer. 
+    /// Directs DXGI to make the back-buffer contents scale to fit the presentation target size, while preserving the aspect ratio of the back-buffer.
     /// If the scaled back-buffer does not fill the presentation area, it will be centered with black borders.
     AspectRatioStretch = DXGI_SCALING_ASPECT_RATIO_STRETCH.0,
 }

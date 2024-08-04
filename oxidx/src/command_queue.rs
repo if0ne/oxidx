@@ -71,7 +71,7 @@ pub trait ICommandQueue: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<
     fn signal(&self, fence: &impl IFence, value: u64) -> Result<(), DxError>;
 
     /// Updates mappings of tile locations in reserved resources to memory locations in a resource heap.
-    /// 
+    ///
     /// For more information: [`ID3D12CommandQueue::UpdateTileMappings method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-updatetilemappings)
     fn update_tile_mappings<const REGIONS: usize, const RANGES: usize>(
         &self,

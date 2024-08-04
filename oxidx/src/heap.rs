@@ -10,6 +10,9 @@ use crate::{create_type, impl_trait, types::HeapDesc, HasInterface};
 ///
 /// For more information: [`ID3D12Heap interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12heap)
 pub trait IHeap: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12Heap>> {
+    /// Gets the heap description.
+    ///
+    /// For more information: [`ID3D12Heap::GetDesc method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12heap-getdesc)
     fn get_desc(&self) -> HeapDesc;
 }
 

@@ -8,6 +8,7 @@ pub use crate::debug::*;
 pub use crate::descriptor_heap::*;
 pub use crate::device::*;
 pub use crate::device_child::*;
+pub use crate::entry::*;
 pub use crate::error::*;
 pub use crate::factory::*;
 pub use crate::heap::*;

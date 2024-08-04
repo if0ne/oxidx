@@ -2,26 +2,45 @@ use std::num::NonZeroIsize;
 
 use windows::core::Interface;
 use windows::Win32::Foundation::HWND;
-use windows::Win32::Graphics::Direct3D12::{D3D12CreateDevice, D3D12GetDebugInterface};
 use windows::Win32::Graphics::Dxgi::{
-    CreateDXGIFactory2, IDXGIAdapter, IDXGIAdapter3, IDXGIFactory4, IDXGIFactory6, IDXGIFactory7,
+    IDXGIAdapter, IDXGIAdapter3, IDXGIFactory4, IDXGIFactory6, IDXGIFactory7,
 };
 
-use crate::adapter::IAdapter3;
 use crate::command_queue::ICommandQueue;
-use crate::debug::IDebug;
-use crate::device::IDevice;
 use crate::swapchain::{IOutput, Swapchain1};
-use crate::types::{
-    FactoryCreationFlags, FeatureLevel, SwapchainDesc1, SwapchainFullscreenDesc,
-    WindowAssociationFlags,
-};
+use crate::types::{SwapchainDesc1, SwapchainFullscreenDesc, WindowAssociationFlags};
 use crate::{adapter::Adapter3, error::DxError};
 use crate::{create_type, impl_trait, HasInterface};
 
-pub trait FactoryInterface4: HasInterface<Raw: Interface> {
+/// Enables creating Microsoft DirectX Graphics Infrastructure (DXGI) objects.
+///
+/// For more information: [`IDXGIFactory4 interface`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_4/nn-dxgi1_4-idxgifactory4)
+pub trait IFactory4: HasInterface<Raw: Interface> {
+    /// Enumerates the adapters (video cards).
+    ///
+    /// For more information: [`IDXGIFactory::EnumAdapters method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgifactory-enumadapters)
     fn enum_adapters(&self, index: usize) -> Result<Adapter3, DxError>;
+
+    /// Provides an adapter which can be provided to D3D12CreateDevice to use the WARP renderer.
+    ///
+    /// For more information: [`IDXGIFactory4::EnumWarpAdapter method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_4/nf-dxgi1_4-idxgifactory4-enumwarpadapter)
     fn enum_warp_adapters(&self) -> Result<Adapter3, DxError>;
+
+    /// Creates a swap chain that you can use to send Direct3D content into the DirectComposition API, to the Windows.UI.Xaml framework, or to Windows UI Library (WinUI) XAML, to compose in a window.
+    ///
+    /// For more information: [`IDXGIFactory2::CreateSwapChainForComposition method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgifactory2-createswapchainforcomposition)
+    fn create_swapchain_for_composition<CQ>(
+        &self,
+        command_queue: &CQ,
+        desc: &SwapchainDesc1,
+        restrict_to_output: Option<&impl IOutput>,
+    ) -> Result<Swapchain1, DxError>
+    where
+        CQ: ICommandQueue;
+
+    /// Creates a swap chain that is associated with an HWND handle to the output window for the swap chain.
+    ///
+    /// For more information: [`IDXGIFactory2::CreateSwapChainForHwnd method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgifactory2-createswapchainforhwnd)
     fn create_swapchain_for_hwnd<CQ>(
         &self,
         command_queue: &CQ,
@@ -33,15 +52,9 @@ pub trait FactoryInterface4: HasInterface<Raw: Interface> {
     where
         CQ: ICommandQueue;
 
-    fn create_swapchain_for_composition<CQ>(
-        &self,
-        command_queue: &CQ,
-        desc: &SwapchainDesc1,
-        restrict_to_output: Option<&impl IOutput>,
-    ) -> Result<Swapchain1, DxError>
-    where
-        CQ: ICommandQueue;
-
+    /// Allows DXGI to monitor an application's message queue for the alt-enter key sequence (which causes the application to switch from windowed to full screen or vice versa).
+    ///
+    /// For more information: [`IDXGIFactory::MakeWindowAssociation method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgifactory-makewindowassociation)
     fn make_window_association(
         &self,
         hwnd: NonZeroIsize,
@@ -54,33 +67,37 @@ create_type! { Factory6 wrap IDXGIFactory6; decorator for Factory4 }
 create_type! { Factory7 wrap IDXGIFactory7; decorator for Factory4, Factory6 }
 
 impl_trait! {
-    impl FactoryInterface4 =>
+    impl IFactory4 =>
     Factory4,
     Factory6,
     Factory7;
 
     fn enum_adapters(&self, index: usize) -> Result<Adapter3, DxError> {
-        let adapter = unsafe {
-            self.0
+        unsafe {
+            let adapter = self.0
                 .EnumAdapters1(index as u32)
-                .map_err(DxError::from)?
-        }
-        .cast::<IDXGIAdapter3>()
-        .expect("IDXGIFactory4 should support IDXGIAdapter3");
+                .map_err(DxError::from)?;
 
-        Ok(Adapter3::new(adapter))
+            let adapter = adapter
+                .cast::<IDXGIAdapter3>()
+                .map_err(|_| DxError::Cast("IUnknown", "IAdapter3"))?;
+
+            Ok(Adapter3::new(adapter))
+        }
     }
 
     fn enum_warp_adapters(&self) -> Result<Adapter3, DxError> {
-        let adapter = unsafe {
-            self.0
+        unsafe {
+            let adapter = self.0
                 .EnumWarpAdapter::<IDXGIAdapter>()
-                .map_err(DxError::from)?
-        }
-        .cast::<IDXGIAdapter3>()
-        .expect("IDXGIFactory4 should support IDXGIAdapter3");
+                .map_err(DxError::from)?;
 
-        Ok(Adapter3::new(adapter))
+            let adapter = adapter
+                .cast::<IDXGIAdapter3>()
+                .map_err(|_| DxError::Cast("IUnknown", "IAdapter3"))?;
+
+            Ok(Adapter3::new(adapter))
+        }
     }
 
     fn create_swapchain_for_hwnd<CQ>(
@@ -94,15 +111,15 @@ impl_trait! {
     where
         CQ: ICommandQueue
     {
-        let cq = command_queue.as_raw_ref();
-        let o = restrict_to_output.as_ref().map(|o| o.as_raw_ref());
+        unsafe {
+            let cq = command_queue.as_raw_ref();
+            let o = restrict_to_output.as_ref().map(|o| o.as_raw_ref());
 
-        let desc = desc.as_raw();
-        let fullscreen_desc = fullscreen_desc.map(|f| f.as_raw());
-        let fullscreen_desc = fullscreen_desc.as_ref().map(|f| f as *const _);
+            let desc = desc.as_raw();
+            let fullscreen_desc = fullscreen_desc.map(|f| f.as_raw());
+            let fullscreen_desc = fullscreen_desc.as_ref().map(|f| f as *const _);
 
-        let swapchain = unsafe {
-            if let Some(o) = o {
+            let swapchain = if let Some(o) = o {
                 self.0
                     .CreateSwapChainForHwnd(cq, HWND(hwnd.get()), &desc, fullscreen_desc, o)
                     .map_err(DxError::from)?
@@ -110,10 +127,10 @@ impl_trait! {
                 self.0
                     .CreateSwapChainForHwnd(cq, HWND(hwnd.get()), &desc, fullscreen_desc, None)
                     .map_err(DxError::from)?
-            }
-        };
+            };
 
-        Ok(Swapchain1::new(swapchain))
+            Ok(Swapchain1::new(swapchain))
+        }
     }
 
     fn create_swapchain_for_composition<CQ>(
@@ -125,13 +142,13 @@ impl_trait! {
     where
         CQ: ICommandQueue
     {
-        let cq = command_queue.as_raw_ref();
-        let o = restrict_to_output.as_ref().map(|o| o.as_raw_ref());
+        unsafe {
+            let cq = command_queue.as_raw_ref();
+            let o = restrict_to_output.as_ref().map(|o| o.as_raw_ref());
 
-        let desc = desc.as_raw();
+            let desc = desc.as_raw();
 
-        let swapchain = unsafe {
-            if let Some(o) = o {
+            let swapchain = if let Some(o) = o {
                 self.0
                     .CreateSwapChainForComposition(cq, &desc, o)
                     .map_err(DxError::from)?
@@ -139,101 +156,17 @@ impl_trait! {
                 self.0
                     .CreateSwapChainForComposition(cq, &desc, None)
                     .map_err(DxError::from)?
-            }
-        };
+            };
 
-        Ok(Swapchain1::new(swapchain))
+            Ok(Swapchain1::new(swapchain))
+        }
     }
 
     fn make_window_association(&self, hwnd: NonZeroIsize, flags: WindowAssociationFlags) -> Result<(), DxError> {
         unsafe {
-            self.0.MakeWindowAssociation(HWND(hwnd.get()), flags.bits()).map_err(|_| DxError::Dummy)?;
+            self.0.MakeWindowAssociation(HWND(hwnd.get()), flags.bits()).map_err(DxError::from)?;
+
+            Ok(())
         }
-
-        Ok(())
-    }
-}
-
-pub struct Entry;
-
-impl Entry {
-    pub fn create_factory<F: FactoryInterface4>(
-        &self,
-        flags: FactoryCreationFlags,
-    ) -> Result<F, DxError> {
-        let inner: F::Raw = unsafe { CreateDXGIFactory2(flags.bits()) }.map_err(DxError::from)?;
-
-        Ok(F::new(inner))
-    }
-
-    pub fn create_device<A: IAdapter3, D: IDevice>(
-        &self,
-        adapter: &A,
-        feature_level: FeatureLevel,
-    ) -> Result<D, DxError> {
-        let mut inner: Option<D::Raw> = None;
-        unsafe {
-            D3D12CreateDevice(adapter.as_raw_ref(), feature_level.as_raw(), &mut inner)
-                .map_err(DxError::from)?
-        };
-        let inner = inner.unwrap();
-
-        Ok(D::new(inner))
-    }
-
-    pub fn create_debug<D: IDebug>(&self) -> Result<D, DxError> {
-        let mut inner: Option<D::Raw> = None;
-
-        unsafe { D3D12GetDebugInterface(&mut inner).map_err(DxError::from)? };
-        let inner = inner.unwrap();
-
-        Ok(D::new(inner))
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use crate::{device::Device, types::FactoryCreationFlags};
-
-    use super::*;
-
-    #[test]
-    fn create_factory4_test() {
-        let entry = Entry;
-        let factory = entry.create_factory::<Factory4>(FactoryCreationFlags::Debug);
-
-        assert!(factory.is_ok())
-    }
-
-    #[test]
-    fn create_factory6_test() {
-        let entry = Entry;
-        let factory = entry.create_factory::<Factory6>(FactoryCreationFlags::Debug);
-
-        assert!(factory.is_ok())
-    }
-
-    #[test]
-    fn create_factory7_test() {
-        let entry = Entry;
-        let factory = entry.create_factory::<Factory7>(FactoryCreationFlags::Debug);
-
-        assert!(factory.is_ok())
-    }
-
-    #[test]
-    fn create_device_test() {
-        let entry = Entry;
-
-        let factory = entry.create_factory::<Factory4>(FactoryCreationFlags::Debug);
-        assert!(factory.is_ok());
-        let factory = factory.unwrap();
-
-        let adapter = factory.enum_adapters(0);
-        assert!(adapter.is_ok());
-        let adapter = adapter.unwrap();
-
-        let device = entry.create_device::<_, Device>(&adapter, FeatureLevel::Level11);
-        assert!(device.is_ok());
     }
 }

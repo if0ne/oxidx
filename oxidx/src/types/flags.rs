@@ -371,7 +371,7 @@ bitflags::bitflags! {
 
 bitflags::bitflags! {
     /// Flags for surface and resource creation options.
-    /// 
+    ///
     /// For more information: [`DXGI_USAGE`](https://learn.microsoft.com/en-us/windows/win32/direct3ddxgi/dxgi-usage)
     #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct FrameBufferUsage: u32 {
@@ -514,7 +514,7 @@ bitflags::bitflags! {
     /// For more information: [`DXGI_PRESENT`](https://learn.microsoft.com/en-us/windows/win32/direct3ddxgi/dxgi-present)
     #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct PresentFlags: u32 {
-        /// Present a frame from the current buffer to the output. 
+        /// Present a frame from the current buffer to the output.
         /// Use this flag so that the presentation can use vertical-blank synchronization instead of sequencing buffers in the chain in the usual manner.
         const DoNotSequence = DXGI_PRESENT_DO_NOT_SEQUENCE;
 
@@ -793,24 +793,24 @@ bitflags::bitflags! {
     /// For more information: [`DXGI_SWAP_CHAIN_FLAG enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/ne-dxgi-dxgi_swap_chain_flag)
     #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct SwapchainFlags: i32 {
-        /// Set this flag to turn off automatic image rotation; that is, do not perform a rotation when transferring the contents of the front buffer to the monitor. 
+        /// Set this flag to turn off automatic image rotation; that is, do not perform a rotation when transferring the contents of the front buffer to the monitor.
         const NonPrerotated = DXGI_SWAP_CHAIN_FLAG_NONPREROTATED.0;
 
         /// Set this flag to enable an application to switch modes.
         const AllowModeSwitch = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH.0;
 
-        /// Set this flag to enable an application to render using GDI on a swap chain or a surface. 
+        /// Set this flag to enable an application to render using GDI on a swap chain or a surface.
         const GdiCompatible = DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE.0;
 
-        /// Set this flag to indicate that the swap chain might contain protected content; 
-        /// therefore, the operating system supports the creation of the swap chain only when driver and hardware protection is used. 
+        /// Set this flag to indicate that the swap chain might contain protected content;
+        /// therefore, the operating system supports the creation of the swap chain only when driver and hardware protection is used.
         /// If the driver and hardware do not support content protection, the call to create a resource for the swap chain fails.
         const RestrictContent = DXGI_SWAP_CHAIN_FLAG_RESTRICTED_CONTENT.0;
 
         /// Set this flag to indicate that shared resources that are created within the swap chain must be protected by using the driver’s mechanism for restricting access to shared surfaces.
         const RestrictSharedResourceDriver = DXGI_SWAP_CHAIN_FLAG_RESTRICT_SHARED_RESOURCE_DRIVER.0;
 
-        /// Set this flag to restrict presented content to the local displays. 
+        /// Set this flag to restrict presented content to the local displays.
         const DisplayOnly = DXGI_SWAP_CHAIN_FLAG_DISPLAY_ONLY.0;
 
         /// Set this flag to create a waitable object you can use to ensure rendering does not begin while a frame is still being presented.
@@ -819,7 +819,7 @@ bitflags::bitflags! {
         /// Set this flag to create a swap chain in the foreground layer for multi-plane rendering.
         const ForegroundLayer = DXGI_SWAP_CHAIN_FLAG_FOREGROUND_LAYER.0;
 
-        /// Set this flag to create a swap chain for full-screen video. 
+        /// Set this flag to create a swap chain for full-screen video.
         const FullscreenVideo = DXGI_SWAP_CHAIN_FLAG_FULLSCREEN_VIDEO.0;
 
         /// Set this flag to create a swap chain for YUV video.

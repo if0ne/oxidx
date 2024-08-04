@@ -14,6 +14,9 @@ use crate::{blob::Blob, create_type, error::DxError, impl_trait, types::*, HasIn
 pub trait IRootSignature:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12RootSignature>>
 {
+    /// Serializes a root signature version 1.0
+    ///
+    /// For more information: [`D3D12SerializeRootSignature function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-d3d12serializerootsignature)
     fn serialize(
         desc: &RootSignatureDesc<'_>,
         version: RootSignatureVersion,
@@ -69,7 +72,7 @@ impl_trait! {
             )
         }
         .map(|()| signature.unwrap())
-        .map_err(|_| DxError::Dummy)?;
+        .map_err(DxError::from)?;
 
         Ok(Blob::new(signature))
     }

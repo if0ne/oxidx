@@ -380,7 +380,7 @@ fn get_hardware_adapter(factory: &Factory4) -> Adapter3 {
     for i in 0.. {
         let adapter = factory.enum_adapters(i).unwrap();
 
-        let desc = adapter.get_desc1();
+        let desc = adapter.get_desc1().unwrap();
 
         if (desc.flags & AdapterFlags::Sofware) != AdapterFlags::empty() {
             continue;

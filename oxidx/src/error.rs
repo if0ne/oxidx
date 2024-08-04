@@ -1,3 +1,4 @@
+/// Error values of `HRESULT`.
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum DxError {
     /// Occurs when trying to cast an interface to a higher version interface

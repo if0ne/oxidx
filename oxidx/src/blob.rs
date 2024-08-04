@@ -14,7 +14,7 @@ use crate::{create_type, error::DxError, impl_trait, HasInterface};
 ///
 /// For more information: [`ID3DBlob interface`](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/ff728743(v=vs.85))
 pub trait IBlob: HasInterface<Raw: Interface> {
-    // TODO: type for target
+    /// TODO: type for target
     fn compile_from_file(
         filename: impl AsRef<Path>,
         /*defines, includes,*/
@@ -26,14 +26,21 @@ pub trait IBlob: HasInterface<Raw: Interface> {
     where
         Self: Sized;
 
+    /// Gets a pointer to the data.
+    ///
+    /// For more information: [`ID3D10Blob::GetBufferPointer method`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/nf-d3dcommon-id3d10blob-getbufferpointer)
     fn get_buffer_ptr(&self) -> *mut ();
+
+    /// Gets the size.
+    ///
+    /// For more information: [`ID3D10Blob::GetBufferSize method`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/nf-d3dcommon-id3d10blob-getbuffersize)
     fn get_buffer_size(&self) -> usize;
 }
 
 create_type! {
     /// This interface is used to return data of arbitrary length.
     ///
-    /// For more information: [`ID3DBlob interface`](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/ff728743(v=vs.85))
+    /// For more information: [`ID3DBlob interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/nn-d3dcommon-id3d10blob)
     Blob wrap ID3DBlob
 }
 
@@ -73,7 +80,6 @@ impl_trait! {
         let target = PCSTR::from_raw(target.as_ref().as_ptr() as *const _);
 
         let mut shader = None;
-        let mut error = None;
 
         unsafe {
             D3DCompileFromFile(
@@ -85,12 +91,11 @@ impl_trait! {
                 flags1,
                 flags2,
                 &mut shader,
-                Some(&mut error),
+                None,
             )
-            .map_err(|_| DxError::Dummy)?;
+            .map_err(DxError::from)?;
         }
 
-        //TODO: Error message to error
         Ok(Blob::new(shader.unwrap()))
     }
 

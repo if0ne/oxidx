@@ -2,8 +2,6 @@
 #![allow(dead_code)]
 #![allow(clippy::too_many_arguments)]
 
-#![warn(missing_docs)]
-
 pub mod dx;
 
 pub mod adapter;
@@ -16,6 +14,7 @@ pub mod debug;
 pub mod descriptor_heap;
 pub mod device;
 pub mod device_child;
+pub mod entry;
 pub mod error;
 pub mod factory;
 pub mod heap;
