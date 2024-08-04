@@ -12,24 +12,15 @@ use crate::{
 pub trait IDescriptorHeap: HasInterface<Raw: Interface> {
     /// Gets the CPU descriptor handle that represents the start of the heap.
     ///
-    /// # Returns
-    /// The CPU descriptor handle that represents the start of the heap.
-    ///
     /// For more information: [`ID3D12DescriptorHeap::GetCPUDescriptorHandleForHeapStart method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12descriptorheap-getcpudescriptorhandleforheapstart)
     fn get_cpu_descriptor_handle_for_heap_start(&self) -> CpuDescriptorHandle;
 
     /// Gets the descriptor heap description.
     ///
-    /// # Returns
-    /// The description of the descriptor heap, as a [`DescriptorHeapDesc`] structure.
-    ///
     /// For more information: [`ID3D12DescriptorHeap::GetDesc method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12descriptorheap-getdesc)
     fn get_desc(&self) -> DescriptorHeapDesc;
 
     /// Gets the GPU descriptor handle that represents the start of the heap.
-    ///
-    /// # Returns
-    /// Returns the GPU descriptor handle that represents the start of the heap. If the descriptor heap is not shader-visible, a null handle is returned.
     ///
     /// For more information: [`ID3D12DescriptorHeap::GetGPUDescriptorHandleForHeapStart method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12descriptorheap-getgpudescriptorhandleforheapstart)
     fn get_gpu_descriptor_handle_for_heap_start(&self) -> GpuDescriptorHandle;

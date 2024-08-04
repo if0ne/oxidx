@@ -24,20 +24,9 @@ use crate::{
 /// For more information: [`ID3D12CommandQueue interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12commandqueue)
 pub trait ICommandQueue: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<IUnknown>> {
     /// Marks the start of a user-defined region of work
-    ///
-    /// # Arguments
-    /// * `color` - label's color
-    /// * `label` - label's text
     fn begin_event(&self, color: impl Into<u64>, label: impl AsRef<CStr>);
 
     /// Copies mappings from a source reserved resource to a destination reserved resource.
-    ///
-    /// # Arguments
-    /// * `dst_resource` - A reference to the destination reserved resource.
-    /// * `dst_region_start_coordinate` - A reference to a [`TiledResourceCoordinate`] structure that describes the starting coordinates of the destination reserved resource.
-    /// * `src_resource` - A reference to the source reserved resource.
-    /// * `src_region_start_coordinate` - A reference to a [`TiledResourceCoordinate`] structure that describes the starting coordinates of the source reserved resource.
-    /// * `region_size` - A reference to a [`TileRegionSize`] structure that describes the size of the reserved region.
     ///
     /// For more information: [`ID3D12CommandQueue::CopyTileMappings method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-copytilemappings)
     fn copy_tile_mappings(
@@ -54,9 +43,6 @@ pub trait ICommandQueue: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<
 
     /// Submits an iterator of command lists for execution.
     ///
-    /// # Arguments
-    /// * `command_lists` - The iterator of [`ICommandList`] command lists to be executed.
-    ///
     /// For more information: [`ID3D12CommandQueue::ExecuteCommandLists method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-executecommandlists)
     fn execute_command_lists<'cl>(
         &self,
@@ -65,53 +51,27 @@ pub trait ICommandQueue: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<
 
     /// This method samples the CPU and GPU timestamp counters at the same moment in time.
     ///
-    /// # Returns
-    /// The first value in tuple is the GPU timestamp counter, the second value is the CPU timestamp counter.
-    ///
     /// For more information: [`ID3D12CommandQueue::GetClockCalibration method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-getclockcalibration)
     fn get_clock_calibration(&self) -> Result<(u64, u64), DxError>;
 
     /// Gets the description of the command queue.
     ///
-    /// # Returns
-    /// The description of the command queue.
-    ///
     /// For more information: [`ID3D12CommandQueue::GetDesc method `](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-getdesc)
     fn get_desc(&self) -> CommandQueueDesc;
 
     /// This method is used to determine the rate at which the GPU timestamp counter increments.
-    ///
-    /// # Returns
-    /// The GPU timestamp counter frequency (in ticks/second).
     fn get_timestamp_frequency(&self) -> Result<u64, DxError>;
 
     /// Inserts a user-defined marker into timeline
-    ///
-    /// # Arguments
-    /// * `color` - label's color
-    /// * `label` - label's text
     fn set_marker(&self, color: impl Into<u64>, label: impl AsRef<CStr>);
 
     /// Updates a fence to a specified value.
-    ///
-    /// # Arguments
-    /// * `fence` - A reference to the [`IFence`] object.
-    /// * `value` - The value to set the fence to.
     ///
     /// For more information: [`ID3D12CommandQueue::Signal method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-signal)
     fn signal(&self, fence: &impl IFence, value: u64) -> Result<(), DxError>;
 
     /// Updates mappings of tile locations in reserved resources to memory locations in a resource heap.
-    ///
-    /// # Arguments
-    /// * `resource` - A reference to the reserved resource.
-    /// * `resource_region_start_coordinates` - An array of [`TiledResourceCoordinate`] structures that describe the starting coordinates of the reserved resource regions.
-    /// * `resource_region_sizes` - An array of [`TileRegionSize`] structures that describe the sizes of the reserved resource regions.
-    /// * `heap` - A reference to the resource heap.
-    /// * `range_flags` - A pointer to an array of [`TileRangeFlags`] values that describes each tile range.
-    /// * `heap_range_start_offsets` - An array of offsets into the resource heap. These are 0-based tile offsets, counting in tiles (not bytes).
-    /// * `range_tile_counts` - An array of tiles. An array of values that specify the number of tiles in each tile range.
-    ///
+    /// 
     /// For more information: [`ID3D12CommandQueue::UpdateTileMappings method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-updatetilemappings)
     fn update_tile_mappings<const REGIONS: usize, const RANGES: usize>(
         &self,
@@ -125,10 +85,6 @@ pub trait ICommandQueue: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<
     );
 
     /// Queues a GPU-side wait, and returns immediately. A GPU-side wait is where the GPU waits until the specified fence reaches or exceeds the specified value.
-    ///
-    /// # Arguments
-    /// * `fence` - A reference to the [`IFence`] object.
-    /// * `value` - The value that the command queue is waiting for the fence to reach or exceed. So when [`IFence::get_completed_value`] is greater than or equal to Value, the wait is terminated.
     ///
     /// For more information: [`ID3D12CommandQueue::Wait method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-wait)
     fn wait(&self, fence: &impl IFence, value: u64) -> Result<(), DxError>;

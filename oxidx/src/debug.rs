@@ -18,16 +18,10 @@ pub trait IDebug: HasInterface<Raw: Interface> {
 pub trait IDebug1: IDebug {
     /// This method enables or disables GPU-Based Validation (GBV) before creating a device with the debug layer enabled.
     ///
-    /// # Arguments
-    /// * `enable` - TRUE to enable GPU-Based Validation, otherwise FALSE.
-    ///
     /// For more information: [`ID3D12Debug1::SetEnableGPUBasedValidation method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug1-setenablegpubasedvalidation)
     fn set_enable_gpu_based_validation(&self, enable: bool);
 
     /// Enables or disables dependent command queue synchronization when using a D3D12 device with the debug layer enabled.
-    ///
-    /// # Arguments
-    /// * `enable` - TRUE to enable Dependent Command Queue Synchronization, otherwise FALSE.
     ///
     /// For more information: [`ID3D12Debug1::SetEnableSynchronizedCommandQueueValidation method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug1-setenablesynchronizedcommandqueuevalidation)
     fn set_enable_synchronized_command_queue_validation(&self, enable: bool);
@@ -38,9 +32,6 @@ pub trait IDebug1: IDebug {
 /// For more information: [`ID3D12Debug2 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug2)
 pub trait IDebug2: IDebug1 {
     /// This method configures the level of GPU-based validation that the debug device is to perform at runtime.
-    ///
-    /// # Arguments
-    /// * `flags` - Specifies the level of GPU-based validation to perform at runtime.
     ///
     /// For more information: [`ID3D12Debug2::SetGPUBasedValidationFlags method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug2-setgpubasedvalidationflags)
     fn set_gpu_based_validation_flags(&self, flags: GpuBasedValidationFlags);
@@ -62,9 +53,6 @@ pub trait IDebug4: IDebug2 {
 pub trait IDebug5: IDebug4 {
     /// Configures the auto-naming of objects.
     ///
-    /// # Arguments
-    /// * `enable` - TRUE to enable Dependent Command Queue Synchronization, otherwise FALSE.
-    ///
     /// For more information: [`ID3D12Debug5::SetEnableAutoName method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug5-setenableautoname)
     fn set_enable_auto_name(&self, enable: bool);
 }
@@ -74,9 +62,6 @@ pub trait IDebug5: IDebug4 {
 /// For more information: [`ID3D12Debug5 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug5)
 pub trait IDebug6: IDebug5 {
     /// TBD
-    ///
-    /// # Arguments
-    /// * `enable` - TBD
     ///
     /// For more information: [`ID3D12Debug6::SetForceLegacyBarrierValidation method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug6-setforcelegacybarriervalidation)
     fn set_force_legacy_barrier_validation(&self, enable: bool);

@@ -15,25 +15,15 @@ use crate::{create_type, error::DxError, impl_trait, types::FenceFlags, HasInter
 pub trait IFence: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12Fence>> {
     /// Gets the current value of the fence.
     ///
-    /// # Returns
-    /// Returns the current value of the fence. If the device has been removed, the return value will be [`u64::MAX`].
-    ///
     /// For more information: [`ID3D12Fence::GetCompletedValue method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12fence-getcompletedvalue)
     fn get_completed_value(&self) -> u64;
 
     /// Specifies an event that's raised when the fence reaches a certain value.
     ///
-    /// # Arguments
-    /// * `value` - The fence value when the event is to be signaled.
-    /// * `event` - A handle to the event object.
-    ///
     /// For more information: [`ID3D12Fence::SetEventOnCompletion method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12fence-seteventoncompletion)
     fn set_event_on_completion(&self, value: u64, event: Event) -> Result<(), DxError>;
 
     /// Sets the fence to the specified value.
-    ///
-    /// # Arguments
-    /// * `value` - The value to set the fence to.
     ///
     /// For more information: [`ID3D12Fence::Signal method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12fence-signal)
     fn signal(&self, value: u64) -> Result<(), DxError>;
@@ -45,9 +35,6 @@ pub trait IFence: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12F
 /// For more information: [`ID3D12Fence1 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12fence1)
 pub trait IFence1: IFence {
     /// Gets the flags used to create the fence represented by the current instance.
-    ///
-    /// # Returns
-    /// The flags used to create the fence.
     ///
     /// For more information: [`ID3D12Fence1::GetCreationFlags method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12fence1-getcreationflags)
     fn get_creation_flags(&self) -> FenceFlags;
@@ -105,15 +92,6 @@ pub struct Event(pub(crate) HANDLE);
 impl Event {
     /// Creates or opens a named or unnamed event object.
     ///
-    /// # Arguments
-    /// * `manual_reset` - If this parameter is true, the function creates a manual-reset event object, which requires the use of the [`Event::reset`]
-    ///   function to set the event state to nonsignaled. If this parameter is FALSE, the function creates an auto-reset event object, and the
-    ///   system automatically resets the event state to nonsignaled after a single waiting thread has been released.
-    /// * `initial_state` - If this parameter is true, the initial state of the event object is signaled; otherwise, it is nonsignaled.
-    ///
-    /// # Returns
-    /// The return value is a handle to the event object.
-    ///
     /// For more information: [`CreateEventA`](https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createeventa)
     pub fn create(manual_reset: bool, initial_state: bool) -> Result<Self, DxError> {
         Ok(Event(unsafe {
@@ -129,11 +107,6 @@ impl Event {
     }
 
     /// Waits until the specified object is in the signaled state or the time-out interval elapses.
-    ///
-    /// # Arguments
-    /// * `timeout_ms` - The time-out interval, in milliseconds. If a nonzero value is specified, the function waits until the object is signaled
-    ///   or the interval elapses. If timeout_ms is zero, the function does not enter a wait state if the object is not signaled;
-    ///   it always returns immediately. If timeout_ms is [`u32::MAX`], the function will return only when the object is signaled.
     ///
     /// For more information: [`WaitForSingleObject`](https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject)
     pub fn wait(&self, timeout_ms: u32) -> u32 {
