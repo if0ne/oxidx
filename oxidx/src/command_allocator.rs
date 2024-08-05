@@ -30,9 +30,7 @@ impl_trait! {
 
     fn reset(&self) -> Result<(), DxError> {
         unsafe {
-            self.0.Reset().map_err(DxError::from)?;
+            self.0.Reset().map_err(DxError::from)
         }
-
-        Ok(())
     }
 }

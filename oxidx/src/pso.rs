@@ -3,7 +3,7 @@ use windows::{
     Win32::Graphics::Direct3D12::*,
 };
 
-use crate::{create_type, impl_trait, HasInterface};
+use crate::{create_type, error::DxError, blob::Blob, impl_trait, HasInterface};
 
 /// Represents the state of all currently set shaders as well as certain fixed function state objects.
 ///
@@ -11,6 +11,10 @@ use crate::{create_type, impl_trait, HasInterface};
 pub trait IPipelineState:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12PipelineState>>
 {
+    /// Gets the cached blob representing the pipeline state.
+    ///
+    /// For more information: [`ID3D12PipelineState::GetCachedBlob interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12pipelinestate-getcachedblob)
+    fn get_cached_blob(&self) -> Result<Blob, DxError>;
 }
 
 create_type! {
@@ -23,4 +27,12 @@ create_type! {
 impl_trait! {
     impl IPipelineState =>
     PipelineState;
+
+    fn get_cached_blob(&self) -> Result<Blob, DxError> {
+        unsafe {
+            self.0.GetCachedBlob()
+                .map(|b| Blob::new(b))
+                .map_err(DxError::from)
+        }
+    }
 }
