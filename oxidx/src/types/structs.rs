@@ -11,7 +11,7 @@ use super::*;
 /// Describes an adapter (or video card) using DXGI 1.1.
 ///
 /// For more information: [`DXGI_ADAPTER_DESC1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/ns-dxgi-dxgi_adapter_desc1)
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct AdapterDesc1 {
     /// A string that contains the adapter description.
     pub description: CompactString,
@@ -47,7 +47,7 @@ pub struct AdapterDesc1 {
 /// Describes the blend state.
 ///
 /// For more information: [`D3D12_BLEND_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_blend_desc)
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct BlendDesc {
     /// Specifies whether to use alpha-to-coverage as a multisampling technique when setting a pixel to a render target.
     pub alpha_to_coverage_enable: bool,
@@ -64,7 +64,7 @@ pub struct BlendDesc {
 /// Describes a 3D box.
 ///
 /// For more information: [`D3D12_BOX structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_box)
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Box {
     /// The x position of the left hand side of the box.
     pub left: u32,
@@ -88,7 +88,7 @@ pub struct Box {
 /// Describes a command queue.
 ///
 /// For more information: [`D3D12_COMMAND_QUEUE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_command_queue_desc)
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct CommandQueueDesc {
     /// Specifies one member of [`CommandListType`].
     pub r#type: CommandListType,
@@ -106,7 +106,7 @@ pub struct CommandQueueDesc {
 /// Describes the arguments (parameters) of a command signature.
 ///
 /// For more information: [`D3D12_COMMAND_SIGNATURE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_command_signature_desc)
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct CommandSignatureDesc<'a> {
     /// Specifies the size of each command in the drawing buffer, in bytes.
     pub byte_stride: u32,
@@ -123,7 +123,7 @@ pub struct CommandSignatureDesc<'a> {
 /// Describes a compute pipeline state object.
 ///
 /// For more information: [`D3D12_COMPUTE_PIPELINE_STATE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_compute_pipeline_state_desc)
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ComputePipelineStateDesc<'a> {
     /// A reference to the [`RootSignature`] object.
     pub root_signature: &'a RootSignature,
@@ -146,17 +146,17 @@ pub struct ComputePipelineStateDesc<'a> {
 /// Describes a constant buffer to view.
 ///
 /// For more information: [`D3D12_CONSTANT_BUFFER_VIEW_DESC structure `](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_constant_buffer_view_desc)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct ConstantBufferViewDesc {
     /// GPU virtual address
-    pub buffer_location: u64,
+    pub buffer_location: GpuVirtualAddress,
 
     /// The size in bytes of the constant buffer.
     pub size_in_bytes: u32,
 }
 
 /// Type that represent return values of [`IDevice::get_copyable_footprints`](crate::device::IDevice::get_copyable_footprints)
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct CopyableFootprints {
     /// An array (of length NumSubresources) of [`PlacedSubresourceFootprint`] structures, to be filled with the description and placement of each subresource.
     pub layouts: SmallVec<[PlacedSubresourceFootprint; 8]>,
@@ -174,7 +174,7 @@ pub struct CopyableFootprints {
 /// Describes a CPU descriptor handle.
 ///
 /// For more information: [`D3D12_CPU_DESCRIPTOR_HANDLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_cpu_descriptor_handle)
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct CpuDescriptorHandle(pub(crate) usize);
 
 impl CpuDescriptorHandle {
@@ -187,7 +187,7 @@ impl CpuDescriptorHandle {
 /// Describes a vertex element in a vertex buffer in an output slot.
 ///
 /// For more information: [`D3D12_SO_DECLARATION_ENTRY structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_so_declaration_entry)
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct DeclarationEntry {
     /// Zero-based, stream number.
     pub stream: u32,
@@ -214,7 +214,7 @@ pub struct DeclarationEntry {
 /// Describes depth-stencil state.
 ///
 /// For more information: [`D3D12_DEPTH_STENCIL_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_depth_stencil_desc)
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct DepthStencilDesc {
     /// Specifies whether to enable depth testing. Set this member to TRUE to enable depth testing.
     pub depth_enable: bool,
@@ -244,7 +244,7 @@ pub struct DepthStencilDesc {
 /// Describes stencil operations that can be performed based on the results of stencil test.
 ///
 /// For more information: [`D3D12_DEPTH_STENCILOP_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_depth_stencilop_desc)
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct DepthStencilOpDesc {
     /// A [`StencilOp`]-typed value that identifies the stencil operation to perform when stencil testing fails.
     pub stencil_fail_op: StencilOp,
@@ -262,7 +262,7 @@ pub struct DepthStencilOpDesc {
 /// Describes the subresources of a texture that are accessible from a depth-stencil view.
 ///
 /// For more information: [`D3D12_DEPTH_STENCIL_VIEW_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_depth_stencil_view_desc)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct DepthStencilViewDesc {
     /// A [`Format`]-typed value that specifies the viewing format.
     pub format: Format,
@@ -279,7 +279,7 @@ pub struct DepthStencilViewDesc {
 /// Describes the descriptor heap.
 ///
 /// For more information: [`D3D12_DESCRIPTOR_HEAP_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_descriptor_heap_desc)
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct DescriptorHeapDesc {
     /// A [`DescriptorHeapType`]-typed value that specifies the types of descriptors in the heap.
     pub r#type: DescriptorHeapType,
@@ -297,7 +297,7 @@ pub struct DescriptorHeapDesc {
 /// Describes a descriptor range.
 ///
 /// For more information: [`D3D12_DESCRIPTOR_RANGE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_descriptor_range)
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct DescriptorRange {
     /// A [`DescriptorRangeType`]-typed value that specifies the type of descriptor range.
     pub r#type: DescriptorRangeType,
@@ -318,7 +318,7 @@ pub struct DescriptorRange {
 /// Describes details for the discard-resource operation.
 ///
 /// For more information: [`D3D12_DISCARD_REGION structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_discard_region)
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct DiscardRegion<'a> {
     /// A reference of [`Rect`] structures for the rectangles in the resource to discard.
     pub rects: &'a [Rect],
@@ -333,7 +333,7 @@ pub struct DiscardRegion<'a> {
 /// Describes a GPU descriptor handle.
 ///
 /// For more information: [`D3D12_GPU_DESCRIPTOR_HANDLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_gpu_descriptor_handle)
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct GpuDescriptorHandle(pub(crate) usize);
 
 impl GpuDescriptorHandle {
@@ -346,7 +346,7 @@ impl GpuDescriptorHandle {
 /// Describes a graphics pipeline state object.
 ///
 /// For more information: [`D3D12_GRAPHICS_PIPELINE_STATE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_graphics_pipeline_state_desc)
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct GraphicsPipelineDesc<'a> {
     /// A reference to the [`RootSignature`] object.
     pub root_signature: &'a RootSignature,
@@ -417,7 +417,7 @@ pub struct GraphicsPipelineDesc<'a> {
 /// Describes a heap.
 ///
 /// For more information: [`D3D12_HEAP_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_heap_desc)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct HeapDesc {
     /// The size, in bytes, of the heap. To avoid wasting memory, applications should pass size values which are multiples of the effective Alignment;
     /// but non-aligned size is also supported, for convenience.
@@ -438,7 +438,7 @@ pub struct HeapDesc {
 /// Describes heap properties.
 ///
 /// For more information: [`D3D12_HEAP_PROPERTIES structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_heap_properties)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct HeapProperties {
     /// A [`HeapType`]-typed value that specifies the type of heap.
     pub r#type: HeapType,
@@ -467,10 +467,10 @@ pub struct HeapProperties {
 /// Describes the index buffer to view.
 ///
 /// For more information: [`D3D12_INDEX_BUFFER_VIEW structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_index_buffer_view)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct IndexBufferView {
     /// The GPU virtual address of the index buffer.
-    pub buffer_location: u64,
+    pub buffer_location: GpuVirtualAddress,
 
     /// The size in bytes of the index buffer.
     pub size_in_bytes: u32,
@@ -482,7 +482,7 @@ pub struct IndexBufferView {
 /// Describes a single element for the input-assembler stage of the graphics pipeline.
 ///
 /// For more information: [`D3D12_INPUT_ELEMENT_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_input_element_desc)
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct InputElementDesc {
     /// The HLSL semantic associated with this element in a shader input-signature.
     pub semantic_name: &'static CStr,
@@ -513,7 +513,7 @@ pub struct InputElementDesc {
 /// The LUID structure is an opaque structure that specifies an identifier that is guaranteed to be unique on the local machine.
 ///
 /// For more information: [`LUID structure`](https://learn.microsoft.com/en-us/windows/win32/api/ntdef/ns-ntdef-luid)
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Luid {
     /// TBD
     pub low_part: u32,
@@ -525,7 +525,7 @@ pub struct Luid {
 /// Describes the tile structure of a tiled resource with mipmaps.
 ///
 /// For more information: [`D3D12_PACKED_MIP_INFO structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_packed_mip_info)
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct PackedMipDesc {
     /// The number of standard mipmaps in the tiled resource.
     pub num_standard_mips: u8,
@@ -543,7 +543,7 @@ pub struct PackedMipDesc {
 /// Describes the footprint of a placed subresource, including the offset and the [`SubresourceFootprint`].
 ///
 /// For more information: [`D3D12_PLACED_SUBRESOURCE_FOOTPRINT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_placed_subresource_footprint)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct PlacedSubresourceFootprint {
     /// The offset of the subresource within the parent resource, in bytes. The offset between the start of the parent resource and this subresource.
     pub offset: u64,
@@ -555,7 +555,7 @@ pub struct PlacedSubresourceFootprint {
 /// Describes the purpose of a query heap. A query heap contains an array of individual queries.
 ///
 /// For more information: [`D3D12_QUERY_HEAP_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_query_heap_desc)
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct QueryHeapDesc {
     /// Specifies one member of [`QueryHeapType`].
     pub r#type: QueryHeapType,
@@ -572,7 +572,7 @@ pub struct QueryHeapDesc {
 /// Describes rasterizer state.
 ///
 /// For more information: [`D3D12_RASTERIZER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_rasterizer_desc)
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct RasterizerDesc {
     /// A [`FillMode`]-typed value that specifies the fill mode to use when rendering.
     pub fill_mode: FillMode,
@@ -614,7 +614,7 @@ pub struct RasterizerDesc {
 /// Represents a rational number.
 ///
 /// For more information: [`DXGI_RATIONAL structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgicommon/ns-dxgicommon-dxgi_rational)
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Rational {
     /// An unsigned integer value representing the top of the rational number.
     pub numerator: u32,
@@ -626,7 +626,7 @@ pub struct Rational {
 /// The RECT structure defines a rectangle by the coordinates of its upper-left and lower-right corners.
 ///
 /// For more information: [`RECT structure`](https://learn.microsoft.com/en-us/windows/win32/api/windef/ns-windef-rect)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Rect {
     /// Specifies the x-coordinate of the upper-left corner of the rectangle.
     pub left: i32,
@@ -659,7 +659,7 @@ impl Rect {
 /// Describes the subresources from a resource that are accessible by using a render-target view.
 ///
 /// For more information: [`D3D12_RENDER_TARGET_VIEW_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_render_target_view_desc)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct RenderTargetViewDesc {
     /// A [`Format`]-typed value that specifies the viewing format.
     pub format: Format,
@@ -671,7 +671,7 @@ pub struct RenderTargetViewDesc {
 /// Describes parameters needed to allocate resources.
 ///
 /// For more information: [`D3D12_RESOURCE_ALLOCATION_INFO structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_allocation_info)
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct ResourceAllocationInfo {
     /// The size, in bytes, of the resource.
     pub size_in_bytes: u64,
@@ -683,7 +683,7 @@ pub struct ResourceAllocationInfo {
 /// Describes a resource barrier (transition in resource use).
 ///
 /// For more information: [`D3D12_RESOURCE_BARRIER structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_barrier)
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ResourceBarrier<'a> {
     /// A [`BarrierType`]-typed value that specifies the type of resource barrier. This member determines which type to use in the union below.
     pub r#type: BarrierType<'a>,
@@ -695,7 +695,7 @@ pub struct ResourceBarrier<'a> {
 /// Describes a resource, such as a texture. This structure is used extensively.
 ///
 /// For more information: [`D3D12_RESOURCE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_desc)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct ResourceDesc {
     /// One member of [`ResourceDimension`], specifying the dimensions of the resource.
     pub dimension: ResourceDimension,
@@ -731,7 +731,7 @@ pub struct ResourceDesc {
 /// Describes the slot of a root signature version 1.0.
 ///
 /// For more information: [`D3D12_ROOT_PARAMETER structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_root_parameter)
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct RootParameter<'a> {
     /// A [`RootParameterType`]-typed value that specifies the type of root signature slot. This member determines which type to use in the union below.
     pub r#type: RootParameterType<'a>,
@@ -743,7 +743,7 @@ pub struct RootParameter<'a> {
 /// Describes the layout of a root signature version 1.0.
 ///
 /// For more information: [`D3D12_ROOT_SIGNATURE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_root_signature_desc)
-#[derive(Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct RootSignatureDesc<'a> {
     /// An array of [`RootParameter`] structures for the slots in the root signature.
     pub parameters: &'a [RootParameter<'a>],
@@ -758,7 +758,7 @@ pub struct RootSignatureDesc<'a> {
 /// Describes multi-sampling parameters for a resource.
 ///
 /// For more information: [`DXGI_SAMPLE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgicommon/ns-dxgicommon-dxgi_sample_desc)
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct SampleDesc {
     /// The number of multisamples per pixel.
     pub count: u32,
@@ -770,7 +770,7 @@ pub struct SampleDesc {
 /// Describes a sampler state.
 ///
 /// For more information: [`D3D12_SAMPLER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_sampler_desc)
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct SamplerDesc {
     /// A [`Filter`]-typed value that specifies the filtering method to use when sampling a texture.
     pub filter: Filter,
@@ -806,7 +806,7 @@ pub struct SamplerDesc {
 /// Describes a shader-resource view (SRV).
 ///
 /// For more information: [`D3D12_SHADER_RESOURCE_VIEW_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_shader_resource_view_desc)
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ShaderResourceViewDesc {
     /// A [`Format`]-typed value that specifies the viewing format.
     pub format: Format,
@@ -816,13 +816,13 @@ pub struct ShaderResourceViewDesc {
 }
 
 /// A handle to the object of event.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct SharedHandle(pub(crate) HANDLE);
 
 /// Describes a static sampler.
 ///
 /// For more information: [`D3D12_STATIC_SAMPLER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_static_sampler_desc)
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct StaticSamplerDesc {
     /// The filtering method to use when sampling a texture, as a [`Filter`] enumeration constant.
     pub filter: Filter,
@@ -867,10 +867,10 @@ pub struct StaticSamplerDesc {
 /// Describes a stream output buffer.
 ///
 /// For more information: [`D3D12_STREAM_OUTPUT_BUFFER_VIEW structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_stream_output_buffer_view)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct StreamOutputBufferView {
     /// A u64 that points to the stream output buffer. If `size_in_bytes` is 0, this member isn't used and can be any value.
-    pub buffer_location: u64,
+    pub buffer_location: GpuVirtualAddress,
 
     /// The size of the stream output buffer in bytes.
     pub size_in_bytes: u64,
@@ -883,7 +883,7 @@ pub struct StreamOutputBufferView {
 /// Describes a streaming output buffer.
 ///
 /// For more information: [`D3D12_STREAM_OUTPUT_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_stream_output_desc)
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct StreamOutputDesc<'a> {
     /// An array of [`DeclarationEntry`] structures
     pub entries: &'a [DeclarationEntry],
@@ -898,7 +898,7 @@ pub struct StreamOutputDesc<'a> {
 /// Describes the format, width, height, depth, and row-pitch of the subresource into the parent resource.
 ///
 /// For more information: [`D3D12_SUBRESOURCE_FOOTPRINT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_subresource_footprint)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct SubresourceFootprint {
     /// A [`Format`]-typed value that specifies the viewing format.
     pub format: Format,
@@ -920,7 +920,7 @@ pub struct SubresourceFootprint {
 /// Describes a tiled subresource volume.
 ///
 /// For more information: [`D3D12_SUBRESOURCE_TILING structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_subresource_tiling)
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct SubresourceTiling {
     /// The width in tiles of the subresource.
     pub width_in_tiles: u32,
@@ -938,7 +938,7 @@ pub struct SubresourceTiling {
 /// Describes a swap chain.
 ///
 /// For more information: [`DXGI_SWAP_CHAIN_DESC1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/ns-dxgi1_2-dxgi_swap_chain_desc1)
-#[derive(Debug, Default, Clone)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct SwapchainDesc1 {
     /// A value that describes the resolution width.
     pub width: u32,
@@ -977,7 +977,7 @@ pub struct SwapchainDesc1 {
 /// Describes a swap chain.
 ///
 /// For more information: [`DXGI_SWAP_CHAIN_FULLSCREEN_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/ns-dxgi1_2-dxgi_swap_chain_fullscreen_desc)
-#[derive(Debug, Clone)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct SwapchainFullscreenDesc {
     /// A [`Rational`] structure that describes the refresh rate in hertz.
     pub rational: Rational,
@@ -995,7 +995,7 @@ pub struct SwapchainFullscreenDesc {
 /// Describes a portion of a texture for the purpose of texture copies.
 ///
 /// For more information: [`D3D12_TEXTURE_COPY_LOCATION structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_texture_copy_location)
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct TextureCopyLocation<'a> {
     /// Specifies the resource which will be used for the copy operation.
     pub resource: &'a Resource,
@@ -1007,7 +1007,7 @@ pub struct TextureCopyLocation<'a> {
 /// Describes the size of a tiled region.
 ///
 /// For more information: [`D3D12_TILE_REGION_SIZE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_tile_region_size)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct TileRegionSize {
     /// The number of tiles in the tiled region.
     pub num_tiles: u32,
@@ -1030,7 +1030,7 @@ pub struct TileRegionSize {
 /// Describes the shape of a tile by specifying its dimensions.
 ///
 /// For more information: [`D3D12_TILE_SHAPE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_tile_shape)
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct TileShape {
     /// The width in texels of the tile.
     pub width_in_texels: u32,
@@ -1045,7 +1045,7 @@ pub struct TileShape {
 /// Describes the coordinates of a tiled resource.
 ///
 /// For more information: [`D3D12_TILED_RESOURCE_COORDINATE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_tiled_resource_coordinate)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct TiledResourceCoordinate {
     /// The x-coordinate of the tiled resource.
     pub x: u32,
@@ -1063,7 +1063,7 @@ pub struct TiledResourceCoordinate {
 /// Describes the subresources from a resource that are accessible by using an unordered-access view.
 ///
 /// For more information: [`D3D12_UNORDERED_ACCESS_VIEW_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_unordered_access_view_desc)
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct UnorderedAccessViewDesc {
     /// A [`Format`]-typed value that specifies the viewing format.
     pub format: Format,
@@ -1075,10 +1075,10 @@ pub struct UnorderedAccessViewDesc {
 /// Describes a vertex buffer view.
 ///
 /// For more information: [`D3D12_VERTEX_BUFFER_VIEW structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_vertex_buffer_view)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct VertexBufferView {
     /// Specifies a u64 that identifies the address of the buffer.
-    pub buffer_location: u64,
+    pub buffer_location: GpuVirtualAddress,
 
     /// Specifies the size in bytes of the buffer.
     pub stride_in_bytes: u32,
@@ -1090,7 +1090,7 @@ pub struct VertexBufferView {
 /// Describes the dimensions of a viewport.
 ///
 /// For more information: [`D3D12_VIEWPORT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_viewport)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Viewport {
     /// X position of the left hand side of the viewport.
     pub x: f32,

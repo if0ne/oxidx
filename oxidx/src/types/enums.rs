@@ -8,10 +8,11 @@ use crate::resources::Resource;
 /// Identifies a technique for resolving texture coordinates that are outside of the boundaries of a texture.
 ///
 /// For more information: [`D3D12_TEXTURE_ADDRESS_MODE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_texture_address_mode)
-#[derive(Clone, Copy, Debug, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum AddressMode {
     /// Tile the texture at every (u,v) integer junction.
+    #[default]
     Wrap = D3D12_TEXTURE_ADDRESS_MODE_WRAP.0,
 
     /// Flip the texture at every (u,v) integer junction.
@@ -30,7 +31,7 @@ pub enum AddressMode {
 /// Identifies the alpha value, transparency behavior, of a surface.
 ///
 /// For more information: [`DXGI_ALPHA_MODE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/ne-dxgi1_2-dxgi_alpha_mode)
-#[derive(Debug, Default, Clone, Copy, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum AlphaMode {
     /// Indicates that the transparency behavior is not specified.
@@ -54,7 +55,7 @@ pub enum AlphaMode {
 /// Specifies a type of resource barrier (transition in resource use) description.
 ///
 /// For more information: [`D3D12_RESOURCE_BARRIER_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_barrier_type)
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BarrierType<'a> {
     /// Describes the transition of subresources between different usages.
     Transition {
@@ -90,7 +91,7 @@ pub enum BarrierType<'a> {
 /// Specifies blend factors, which modulate values for the pixel shader and render target.
 ///
 /// For more information: [`D3D12_BLEND enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_blend)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum Blend {
     /// The blend factor is (0, 0, 0, 0). No pre-blend operation.
@@ -155,7 +156,7 @@ pub enum Blend {
 /// Specifies RGB or alpha blending operations.
 ///
 /// For more information: [`D3D12_BLEND_OP enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_blend_op)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum BlendOp {
     /// Add source 1 and source 2.
@@ -178,10 +179,11 @@ pub enum BlendOp {
 /// Specifies the border color for a static sampler.
 ///
 /// For more information: [`D3D12_STATIC_BORDER_COLOR structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_static_border_color)
-#[derive(Clone, Copy, Debug, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum BorderColor {
     /// Indicates black, with the alpha component as fully transparent.
+    #[default]
     TransparentBlack = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK.0,
 
     /// Indicates black, with the alpha component as fully opaque.
@@ -200,7 +202,7 @@ pub enum BorderColor {
 /// Describes a value used to optimize clear operations for a particular resource.
 ///
 /// For more information: [`D3D12_CLEAR_VALUE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_clear_value)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, FromRepr, PartialEq)]
 pub enum ClearValue {
     /// Specifies a color value.
     Color {
@@ -227,7 +229,7 @@ pub enum ClearValue {
 /// Specifies the type of a command list.
 ///
 /// For more information: [`D3D12_COMMAND_LIST_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_command_list_type)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum CommandListType {
     #[default]
@@ -257,11 +259,11 @@ pub enum CommandListType {
 /// Defines priority levels for a command queue.
 ///
 /// For more information: [`D3D12_COMMAND_QUEUE_PRIORITY enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_command_queue_priority)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum CommandQueuePriority {
-    #[default]
     /// Normal priority.
+    #[default]
     Normal = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL.0,
 
     /// High priority.
@@ -274,7 +276,7 @@ pub enum CommandQueuePriority {
 /// Specifies comparison options.
 ///
 /// For more information: [`D3D12_COMPARISON_FUNC enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_comparison_func)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ComparisonFunc {
     /// None
@@ -309,7 +311,7 @@ pub enum ComparisonFunc {
 /// Identifies whether conservative rasterization is on or off.
 ///
 /// For more information: [`D3D12_CONSERVATIVE_RASTERIZATION_MODE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_conservative_rasterization_mode)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ConservativeRaster {
     /// Conservative rasterization is off.
@@ -323,7 +325,7 @@ pub enum ConservativeRaster {
 /// Identifies the tier level of conservative rasterization.
 ///
 /// For more information: [`D3D12_CONSERVATIVE_RASTERIZATION_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_conservative_rasterization_tier)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ConservativeRasterizationTier {
     /// Conservative rasterization is not supported.
@@ -347,10 +349,11 @@ pub enum ConservativeRasterizationTier {
 /// Specifies the CPU-page properties for the heap.
 ///
 /// For more information: [`D3D12_CPU_PAGE_PROPERTY enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_cpu_page_property)
-#[derive(Clone, Copy, Debug, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum CpuPageProperty {
     /// The CPU-page property is unknown.
+    #[default]
     Unknown = D3D12_CPU_PAGE_PROPERTY_UNKNOWN.0,
 
     /// The CPU cannot access the heap, therefore no page properties are available.
@@ -366,7 +369,7 @@ pub enum CpuPageProperty {
 /// Specifies the level of sharing across nodes of an adapter, such as Tier 1 Emulated, Tier 1, or Tier 2.
 ///
 /// For more information: [`D3D12_CROSS_NODE_SHARING_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_cross_node_sharing_tier)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum CrossNodeSharingTier {
     /// If an adapter has only 1 node, then cross-node sharing doesn't apply.
@@ -397,7 +400,7 @@ pub enum CrossNodeSharingTier {
 /// Specifies triangles facing a particular direction are not drawn.
 ///
 /// For more information: [`D3D12_CULL_MODE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_cull_mode)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum CullMode {
     /// Always draw all triangles.
@@ -414,7 +417,7 @@ pub enum CullMode {
 /// Specifies a type of descriptor heap.
 ///
 /// For more information: [`D3D12_DESCRIPTOR_HEAP_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_descriptor_heap_type)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum DescriptorHeapType {
     /// The descriptor heap for the render-target view.
@@ -434,7 +437,7 @@ pub enum DescriptorHeapType {
 /// Specifies a range so that, for example, if part of a descriptor table has 100 shader-resource views (SRVs) that range can be declared in one entry rather than 100.
 ///
 /// For more information: [`D3D12_DESCRIPTOR_RANGE_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_descriptor_range_type)
-#[derive(Clone, Copy, Debug, FromRepr)]
+#[derive(Clone, Copy, Debug, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum DescriptorRangeType {
     /// Specifies a range of SRVs.
@@ -453,7 +456,7 @@ pub enum DescriptorRangeType {
 /// Specifies how to access a resource used in a depth-stencil view.
 ///
 /// For more information: [`D3D12_DSV_DIMENSION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_dsv_dimension)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum DsvDimension {
     /// The resource will be accessed as a 1D texture.
     Tex1D {
@@ -507,7 +510,7 @@ pub enum DsvDimension {
 /// Describes the set of features targeted by a Direct3D device.
 ///
 /// For more information: [`D3D_FEATURE_LEVEL enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_feature_level)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum FeatureLevel {
     /// Targets features supported by Direct3D 11.0, including shader model 5.
@@ -531,7 +534,7 @@ pub enum FeatureLevel {
 /// Defines constants that specify a Direct3D 12 feature or feature set to query about.
 ///
 /// For more information: [`D3D12_FEATURE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_feature)
-#[derive(Clone, Copy, Debug, FromRepr)]
+#[derive(Clone, Copy, Debug, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum FeatureType {
     /// Indicates a query for the level of support for basic Direct3D 12 feature options.
@@ -666,7 +669,7 @@ pub enum FeatureType {
 /// Specifies the fill mode to use when rendering triangles.
 ///
 /// For more information: [`D3D12_FILL_MODE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_fill_mode)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum FillMode {
     /// Draw lines connecting the vertices. Adjacent vertices are not drawn.
@@ -680,10 +683,11 @@ pub enum FillMode {
 /// Specifies filtering options during texture sampling.
 ///
 /// For more information: [`D3D12_FILTER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_filter)
-#[derive(Clone, Copy, Debug, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum Filter {
     /// Use point sampling for minification, magnification, and mip-level sampling.
+    #[default]
     Point = D3D12_FILTER_MIN_MAG_MIP_POINT.0,
 
     /// Use point sampling for minification and magnification; use linear interpolation for mip-level sampling.
@@ -807,7 +811,7 @@ pub enum Filter {
 /// Resource data formats, including fully-typed and typeless formats. A list of modifiers at the bottom of the page more fully describes each format type.
 ///
 /// For more information: [`DXGI_FORMAT enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum Format {
     /// The format is not known.
@@ -1169,7 +1173,7 @@ pub enum Format {
 }
 
 /// Heap alignment variants.
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(u64)]
 pub enum HeapAlignment {
     /// An alias for 64KB.
@@ -1186,7 +1190,7 @@ pub enum HeapAlignment {
 /// Defines constants that specify heap serialization support.
 ///
 /// For more information: [`D3D12_HEAP_SERIALIZATION_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_heap_serialization_tier)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum HeapSerializationTier {
     /// Indicates that heap serialization is not supported.
@@ -1201,7 +1205,7 @@ pub enum HeapSerializationTier {
 /// Specifies the type of heap. When resident, heaps reside in a particular physical memory pool with certain CPU cache properties.
 ///
 /// For more information: [`D3D12_HEAP_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_heap_type)
-#[derive(Clone, Copy, Debug, Default, FromRepr, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum HeapType {
     /// Specifies the default heap. This heap type experiences the most bandwidth for the GPU, but cannot provide CPU access.
@@ -1235,10 +1239,11 @@ pub enum HeapType {
 /// There is a special index value that represents the desire to have a discontinuity in the strip, the cut index value. This enum lists the supported cut values.
 ///
 /// For more information: [`D3D12_INDEX_BUFFER_STRIP_CUT_VALUE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_index_buffer_strip_cut_value)
-#[derive(Clone, Copy, Debug, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum IndexBufferStripCutValue {
     /// Indicates that there is no cut value.
+    #[default]
     Disabled = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED.0,
 
     /// Indicates that 0xFFFF should be used as the cut value.
@@ -1251,7 +1256,7 @@ pub enum IndexBufferStripCutValue {
 /// Specifies the type of the indirect parameter.
 ///
 /// For more information: [`D3D12_INDIRECT_ARGUMENT_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_indirect_argument_desc)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum IndirectArgumentDesc {
     /// Indicates the type is a Draw call.
     Draw,
@@ -1306,7 +1311,7 @@ pub enum IndirectArgumentDesc {
 /// Identifies the type of data contained in an input slot.
 ///
 /// For more information: [`D3D12_INPUT_CLASSIFICATION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_input_classification)
-#[derive(Clone, Copy, Debug, FromRepr)]
+#[derive(Clone, Copy, Debug, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum InputSlotClass {
     /// Input data is per-vertex data.
@@ -1319,7 +1324,7 @@ pub enum InputSlotClass {
 /// Defines constants that specify logical operations to configure for a render target.
 ///
 /// For more information: [`D3D12_LOGIC_OP enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_logic_op)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum LogicOp {
     /// Clears the render target (0).
@@ -1375,10 +1380,11 @@ pub enum LogicOp {
 /// Specifies the memory pool for the heap.
 ///
 /// For more information: [`D3D12_MEMORY_POOL enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_memory_pool)
-#[derive(Clone, Copy, Debug, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum MemoryPool {
     /// The memory pool is unknown.
+    #[default]
     Unknown = D3D12_MEMORY_POOL_UNKNOWN.0,
 
     /// The memory pool is L0.
@@ -1402,7 +1408,7 @@ pub enum MemoryPool {
 /// Defines constants that specify mesh and amplification shader support.
 ///
 /// For more information: [`D3D12_MESH_SHADER_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_mesh_shader_tier)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum MeshShaderTier {
     /// Specifies that mesh and amplification shaders are not supported.
@@ -1416,7 +1422,7 @@ pub enum MeshShaderTier {
 /// Describes minimum precision support options for shaders in the current graphics driver.
 ///
 /// For more information: [`D3D12_SHADER_MIN_PRECISION_SUPPORT enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_shader_min_precision_support)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum MinPrecisionSupport {
     /// The driver supports only full 32-bit precision for all shader stages.
@@ -1433,7 +1439,7 @@ pub enum MinPrecisionSupport {
 /// Specifies the level of support for programmable sample positions that's offered by the adapter.
 ///
 /// For more information: [`D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_programmable_sample_positions_tier)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum PipelinePrimitiveTopology {
     /// The shader has not been initialized with an input primitive type.
@@ -1456,7 +1462,7 @@ pub enum PipelinePrimitiveTopology {
 /// Specifies the predication operation to apply.
 ///
 /// For more information: [`D3D12_PREDICATION_OP enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_predication_op)
-#[derive(Clone, Copy, Debug, FromRepr)]
+#[derive(Clone, Copy, Debug, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum PredicationOp {
     /// Enables predication if all 64-bits are zero.
@@ -1469,7 +1475,7 @@ pub enum PredicationOp {
 /// Values that indicate how the pipeline interprets vertex data that is bound to the input-assembler stage. These primitive topology values determine how the vertex data is rendered on screen.
 ///
 /// For more information: [`D3D_PRIMITIVE_TOPOLOGY enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_primitive_topology)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum PrimitiveTopology {
     /// The IA stage has not been initialized with a primitive topology. The IA stage will not function properly unless a primitive topology is defined.
@@ -1489,7 +1495,7 @@ pub enum PrimitiveTopology {
 /// Specifies the level of support for programmable sample positions that's offered by the adapter.
 ///
 /// For more information: [`D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_programmable_sample_positions_tier)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ProgrammableSamplePositionsTier {
     /// Indicates that there's no support for programmable sample positions.
@@ -1509,7 +1515,7 @@ pub enum ProgrammableSamplePositionsTier {
 /// Specifies the type of query heap to create.
 ///
 /// For more information: [`D3D12_QUERY_HEAP_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_query_heap_type)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum QueryHeapType {
     /// This returns a binary 0/1 result:
@@ -1542,7 +1548,7 @@ pub enum QueryHeapType {
 /// Specifies the type of query.
 ///
 /// For more information: [`D3D12_QUERY_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_query_type)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum QueryType {
     /// Indicates the query is for depth/stencil occlusion counts.
@@ -1582,7 +1588,7 @@ pub enum QueryType {
 /// Specifies the level of ray tracing support on the graphics device.
 ///
 /// For more information: [`D3D12_RAYTRACING_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_raytracing_tier)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum RaytracingTier {
     /// No support for ray tracing on the device. Attempts to create any ray tracing-related object will fail, and using ray tracing-related APIs on command lists results in undefined behavior.
@@ -1599,7 +1605,7 @@ pub enum RaytracingTier {
 /// Specifies the level of support for render passes on a graphics device.
 ///
 /// For more information: [`D3D12_RENDER_PASS_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_render_pass_tier)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum RenderPassTier {
     /// The user-mode display driver hasn't implemented render passes, and so the feature is provided only via software emulation.
@@ -1620,7 +1626,7 @@ pub enum RenderPassTier {
 /// Describes the blend state for a render target.
 ///
 /// For more information: [`D3D12_RENDER_TARGET_BLEND_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_render_target_blend_desc)
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub enum RenderTargetBlendDesc {
     /// No blend or logic op.
     #[default]
@@ -1663,7 +1669,7 @@ pub enum RenderTargetBlendDesc {
 /// Identifies the tier of resource binding being used.
 ///
 /// For more information: [`D3D12_RESOURCE_BINDING_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_binding_tier)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ResourceBindingTier {
     /// Tier 1
@@ -1680,10 +1686,11 @@ pub enum ResourceBindingTier {
 /// Identifies the type of resource being used.
 ///
 /// For more information: [`D3D12_RESOURCE_DIMENSION enumeration `](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_dimension)
-#[derive(Clone, Copy, Debug, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ResourceDimension {
     /// Resource is of unknown type.
+    #[default]
     Unknown = D3D12_RESOURCE_DIMENSION_UNKNOWN.0,
 
     /// Resource is a buffer.
@@ -1702,7 +1709,7 @@ pub enum ResourceDimension {
 /// Specifies which resource heap tier the hardware and driver support.
 ///
 /// For more information: [`D3D12_RESOURCE_HEAP_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_heap_tier)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ResourceHeapTier {
     /// Indicates that heaps can only support resources from a single resource category.
@@ -1716,7 +1723,7 @@ pub enum ResourceHeapTier {
 /// Specifies the type of root signature slot.
 ///
 /// For more information: [`D3D12_ROOT_PARAMETER_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_root_parameter_type)
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum RootParameterType<'a> {
     /// The slot is for a descriptor table.
     DescriptorTable {
@@ -1767,7 +1774,7 @@ pub enum RootParameterType<'a> {
 /// Specifies the version of root signature layout.
 ///
 /// For more information: [`D3D_ROOT_SIGNATURE_VERSION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d_root_signature_version)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum RootSignatureVersion {
     /// Version one of root signature layout.
@@ -1784,7 +1791,7 @@ pub enum RootSignatureVersion {
 /// Identifies the type of resource to view as a render target.
 ///
 /// For more information: [`D3D12_RTV_DIMENSION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_rtv_dimension)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum RtvDimension {
     /// The resource will be accessed as a buffer.
     Buffer {
@@ -1865,7 +1872,7 @@ pub enum RtvDimension {
 /// Defines constants that specify sampler feedback support.
 ///
 /// For more information: [`D3D12_SAMPLER_FEEDBACK_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_sampler_feedback_tier)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum SamplerFeedbackTier {
     /// Specifies that sampler feedback is not supported. Attempts at calling sampler feedback APIs represent an error.
@@ -1884,7 +1891,7 @@ pub enum SamplerFeedbackTier {
 /// Identifies resize behavior when the back-buffer size does not match the size of the target output.
 ///
 /// For more information: [`DXGI_SCALING enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/ne-dxgi1_2-dxgi_scaling)
-#[derive(Debug, Default, Clone, Copy, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum Scaling {
     /// Directs DXGI to make the back-buffer contents scale to fit the presentation target size.
@@ -1902,7 +1909,7 @@ pub enum Scaling {
 /// Flags indicating how an image is stretched to fit a given monitor's resolution.
 ///
 /// For more information: [`DXGI_MODE_SCALING enumeration`](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/bb173066(v=vs.85))
-#[derive(Debug, Default, Clone, Copy, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ScalingMode {
     /// Unspecified scaling.
@@ -1919,7 +1926,7 @@ pub enum ScalingMode {
 /// Flags indicating the method the raster uses to create an image on a surface.
 ///
 /// For more information: [`DXGI_MODE_SCANLINE_ORDER enumeration`](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/bb173067(v=vs.85))
-#[derive(Debug, Default, Clone, Copy, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ScanlineOrdering {
     /// Scanline order is unspecified.
@@ -1939,7 +1946,7 @@ pub enum ScanlineOrdering {
 /// Specifies a shader model.
 ///
 /// For more information: [`D3D_SHADER_MODEL enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d_shader_model)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ShaderModel {
     /// TBD
@@ -1980,10 +1987,11 @@ pub enum ShaderModel {
 /// Specifies the shaders that can access the contents of a given root signature slot.
 ///
 /// For more information: [`D3D12_SHADER_VISIBILITY enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_shader_visibility)
-#[derive(Clone, Copy, Debug, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ShaderVisibility {
     /// Specifies that all shader stages can access whatever is bound at the root signature slot.
+    #[default]
     All = D3D12_SHADER_VISIBILITY_ALL.0,
 
     /// Specifies that the vertex shader stage can access whatever is bound at the root signature slot.
@@ -2011,7 +2019,7 @@ pub enum ShaderVisibility {
 /// Defines constants that specify a cross-API sharing support tier.
 ///
 /// For more information: [`D3D12_SHARED_RESOURCE_COMPATIBILITY_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_shared_resource_compatibility_tier)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum SharedResourceCompatibilityTier {
     /// Specifies that the most basic level of cross-API sharing is supported.
@@ -2028,7 +2036,7 @@ pub enum SharedResourceCompatibilityTier {
 /// Identifies the type of resource that will be viewed as a shader resource.
 ///
 /// For more information: [`D3D12_SRV_DIMENSION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_srv_dimension)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum SrvDimension {
     /// Describes the elements in a buffer resource to use in a shader-resource view.
     Buffer {
@@ -2176,7 +2184,7 @@ pub enum SrvDimension {
 /// Identifies the stencil operations that can be performed during depth-stencil testing.
 ///
 /// For more information: [`D3D12_STENCIL_OP enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_stencil_op)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum StencilOp {
     /// Keep the existing stencil data.
@@ -2208,7 +2216,7 @@ pub enum StencilOp {
 /// Options for handling pixels in a display surface.
 ///
 /// For more information: [`DXGI_SWAP_EFFECT enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/ne-dxgi-dxgi_swap_effect)
-#[derive(Debug, Default, Clone, Copy, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum SwapEffect {
     /// Use this flag to specify the bit-block transfer (bitblt) model and to specify that DXGI discard the contents of the back buffer.
@@ -2228,7 +2236,7 @@ pub enum SwapEffect {
 /// Specifies what type of texture copy is to take place.
 ///
 /// For more information: [`D3D12_TEXTURE_COPY_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_texture_copy_type)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum TextureCopyType {
     /// Indicates a subresource, identified by an index, is to be copied.
     SubresourceIndex(u32),
@@ -2240,7 +2248,7 @@ pub enum TextureCopyType {
 /// Specifies texture layout options.
 ///
 /// For more information: [`D3D12_TEXTURE_LAYOUT enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_texture_layout)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum TextureLayout {
     /// Indicates that the layout is unknown, and is likely adapter-dependent.
@@ -2264,7 +2272,7 @@ pub enum TextureLayout {
 /// Identifies the tier level at which tiled resources are supported.
 ///
 /// For more information: [`D3D12_TILED_RESOURCES_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_tiled_resources_tier)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum TiledResourcesTier {
     /// Indicates that textures cannot be created with the [`TextureLayout::UndefinedSwizzle64Kb`] layout.
@@ -2288,7 +2296,7 @@ pub enum TiledResourcesTier {
 /// Identifies unordered-access view options.
 ///
 /// For more information: [`D3D12_UAV_DIMENSION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_uav_dimension)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum UavDimension {
     /// Describes the elements in a buffer to use in a unordered-access view.
     Buffer {
@@ -2378,7 +2386,7 @@ pub enum UavDimension {
 /// Defines constants that specify a shading rate tier (for variable-rate shading, or VRS).
 ///
 /// For more information: [`D3D12_VARIABLE_SHADING_RATE_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_variable_shading_rate_tier)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum VariableShadingRateTier {
     ///Specifies that variable-rate shading is not supported.
@@ -2395,7 +2403,7 @@ pub enum VariableShadingRateTier {
 /// Indicates the tier level at which view instancing is supported.
 ///
 /// For more information: [`D3D12_VIEW_INSTANCING_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_view_instancing_tier)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ViewInstancingTier {
     /// View instancing is not supported.
@@ -2417,7 +2425,7 @@ pub enum ViewInstancingTier {
 /// Defines constants that specify a level of support for WaveMMA (wave_matrix) operations.
 ///
 /// For more information: [`D3D12_WAVE_MMA_TIER  enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_wave_mma_tier)
-#[derive(Clone, Copy, Debug, Default, FromRepr)]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(i32)]
 pub enum WaveMmaTier {
     /// Specifies that WaveMMA (wave_matrix) operations are not supported.

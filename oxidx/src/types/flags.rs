@@ -9,7 +9,7 @@ bitflags::bitflags! {
     /// Empty flag - Specifies no flags.
     ///
     /// For more information: [`DXGI_ADAPTER_FLAG enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/ne-dxgi-dxgi_adapter_flag)
-    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct AdapterFlags: i32 {
         /// Value always set to 0. This flag is reserved.
         const Remote = DXGI_ADAPTER_FLAG_REMOTE.0;
@@ -417,7 +417,7 @@ bitflags::bitflags! {
     /// Empty flag - No options are specified.
     ///
     /// For more information: [`D3D12_HEAP_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_heap_flags)
-    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct HeapFlags: i32 {
         /// No options are specified.
         const Shared = D3D12_HEAP_FLAG_SHARED.0;

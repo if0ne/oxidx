@@ -313,7 +313,7 @@ pub trait IGraphicsCommandList:
     fn set_compute_root_constant_buffer_view(
         &self,
         root_parameter_index: u32,
-        buffer_location: u64,
+        buffer_location: GpuVirtualAddress,
     );
 
     /// Sets a descriptor table into the compute root signature.
@@ -331,7 +331,7 @@ pub trait IGraphicsCommandList:
     fn set_compute_root_shader_resource_view(
         &self,
         root_parameter_index: u32,
-        buffer_location: u64,
+        buffer_location: GpuVirtualAddress,
     );
 
     /// Sets the layout of the compute root signature.
@@ -345,7 +345,7 @@ pub trait IGraphicsCommandList:
     fn set_compute_root_unordered_access_view(
         &self,
         root_parameter_index: u32,
-        buffer_location: u64,
+        buffer_location: GpuVirtualAddress,
     );
 
     /// Changes the currently bound descriptor heaps that are associated with a command list.
@@ -382,7 +382,7 @@ pub trait IGraphicsCommandList:
     fn set_graphics_root_constant_buffer_view(
         &self,
         root_parameter_index: u32,
-        buffer_location: u64,
+        buffer_location: GpuVirtualAddress,
     );
 
     /// Sets a descriptor table into the graphics root signature.
@@ -400,7 +400,7 @@ pub trait IGraphicsCommandList:
     fn set_graphics_root_shader_resource_view(
         &self,
         root_parameter_index: u32,
-        buffer_location: u64,
+        buffer_location: GpuVirtualAddress,
     );
 
     /// Sets the layout of the graphics root signature.
@@ -414,7 +414,7 @@ pub trait IGraphicsCommandList:
     fn set_graphics_root_unordered_access_view(
         &self,
         root_parameter_index: u32,
-        buffer_location: u64,
+        buffer_location: GpuVirtualAddress,
     );
 
     /// Inserts a user-defined marker into timeline.
@@ -997,7 +997,7 @@ impl_trait! {
     fn set_compute_root_constant_buffer_view(
         &self,
         root_parameter_index: u32,
-        buffer_location: u64,
+        buffer_location: GpuVirtualAddress,
     ) {
         unsafe {
             self.0.SetComputeRootConstantBufferView(
@@ -1023,7 +1023,7 @@ impl_trait! {
     fn set_compute_root_shader_resource_view(
         &self,
         root_parameter_index: u32,
-        buffer_location: u64,
+        buffer_location: GpuVirtualAddress,
     ) {
         unsafe {
             self.0.SetComputeRootShaderResourceView(
@@ -1046,7 +1046,7 @@ impl_trait! {
     fn set_compute_root_unordered_access_view(
         &self,
         root_parameter_index: u32,
-        buffer_location: u64,
+        buffer_location: GpuVirtualAddress,
     ) {
         unsafe {
             self.0.SetComputeRootUnorderedAccessView(
@@ -1106,7 +1106,7 @@ impl_trait! {
     fn set_graphics_root_constant_buffer_view(
         &self,
         root_parameter_index: u32,
-        buffer_location: u64,
+        buffer_location: GpuVirtualAddress,
     ) {
         unsafe {
             self.0.SetGraphicsRootConstantBufferView(
@@ -1132,7 +1132,7 @@ impl_trait! {
     fn set_graphics_root_shader_resource_view(
         &self,
         root_parameter_index: u32,
-        buffer_location: u64,
+        buffer_location: GpuVirtualAddress,
     ) {
         unsafe {
             self.0.SetGraphicsRootShaderResourceView(
@@ -1155,7 +1155,7 @@ impl_trait! {
     fn set_graphics_root_unordered_access_view(
         &self,
         root_parameter_index: u32,
-        buffer_location: u64,
+        buffer_location: GpuVirtualAddress,
     ) {
         unsafe {
             self.0.SetGraphicsRootUnorderedAccessView(
