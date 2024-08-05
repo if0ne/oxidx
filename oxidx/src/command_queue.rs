@@ -23,7 +23,7 @@ use crate::{
 ///
 /// For more information: [`ID3D12CommandQueue interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12commandqueue)
 pub trait ICommandQueue: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<IUnknown>> {
-    /// Marks the start of a user-defined region of work
+    /// Marks the start of a user-defined region of work.
     fn begin_event(&self, color: impl Into<u64>, label: impl AsRef<CStr>);
 
     /// Copies mappings from a source reserved resource to a destination reserved resource.
@@ -38,7 +38,7 @@ pub trait ICommandQueue: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<
         region_size: &TileRegionSize,
     );
 
-    /// Marks the end of a user-defined region of work
+    /// Marks the end of a user-defined region of work.
     fn end_event(&self);
 
     /// Submits an iterator of command lists for execution.
@@ -62,7 +62,7 @@ pub trait ICommandQueue: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<
     /// This method is used to determine the rate at which the GPU timestamp counter increments.
     fn get_timestamp_frequency(&self) -> Result<u64, DxError>;
 
-    /// Inserts a user-defined marker into timeline
+    /// Inserts a user-defined marker into timeline.
     fn set_marker(&self, color: impl Into<u64>, label: impl AsRef<CStr>);
 
     /// Updates a fence to a specified value.

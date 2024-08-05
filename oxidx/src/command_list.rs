@@ -26,13 +26,23 @@ pub trait ICommandList: HasInterface<Raw: Interface> {
     fn get_type(&self) -> CommandListType;
 }
 
+/// Encapsulates a list of graphics commands for rendering. Includes APIs for instrumenting the command list execution, and for setting and clearing the pipeline state.
+///
+/// For more information: [`ID3D12GraphicsCommandList interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12graphicscommandlist)
 pub trait IGraphicsCommandList:
     ICommandList + for<'a> HasInterface<RawRef<'a>: Param<ID3D12GraphicsCommandList>>
 {
+    /// Marks the start of a user-defined region of work.
     fn begin_event(&self, color: impl Into<u64>, label: impl AsRef<CStr>);
 
+    /// Starts a query running.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::BeginQuery method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-beginquery)
     fn begin_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: u32);
 
+    /// Clears the depth-stencil resource.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::ClearDepthStencilView method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-cleardepthstencilview)
     fn clear_depth_stencil_view(
         &self,
         depth_stencil_view: CpuDescriptorHandle,
@@ -42,6 +52,9 @@ pub trait IGraphicsCommandList:
         rects: impl IntoIterator<Item = Rect>,
     );
 
+    /// Sets all the elements in a render target to one value.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::ClearRenderTargetView method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-clearrendertargetview)
     fn clear_render_target_view(
         &self,
         rtv_handle: CpuDescriptorHandle,
@@ -49,9 +62,15 @@ pub trait IGraphicsCommandList:
         rects: impl IntoIterator<Item = Rect>,
     );
 
+    /// Resets the state of a direct command list back to the state it was in when the command list was created.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::ClearState method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-clearstate)
     fn clear_state(&self, pipeline_state: Option<&impl IPipelineState>);
 
-    fn clear_unordered_access_view_float(
+    /// Sets all of the elements in an unordered-access view (UAV) to the specified f32 values.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::ClearUnorderedAccessViewFloat method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-clearunorderedaccessviewfloat)
+    fn clear_unordered_access_view_f32(
         &self,
         view_gpu_handle_in_current_heap: GpuDescriptorHandle,
         view_cpu_handle: CpuDescriptorHandle,
@@ -60,6 +79,9 @@ pub trait IGraphicsCommandList:
         rects: impl IntoIterator<Item = Rect>,
     );
 
+    /// Sets all of the elements in an unordered-access view (UAV) to the specified u32 values.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::ClearUnorderedAccessViewUint method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-clearunorderedaccessviewuint)
     fn clear_unordered_access_view_u32(
         &self,
         view_gpu_handle_in_current_heap: GpuDescriptorHandle,
@@ -69,8 +91,14 @@ pub trait IGraphicsCommandList:
         rects: impl IntoIterator<Item = Rect>,
     );
 
+    /// Indicates that recording to the command list has finished.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::Close method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-close)
     fn close(&self) -> Result<(), DxError>;
 
+    /// Copies a region of a buffer from one resource to another.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::CopyBufferRegion method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-copybufferregion)
     fn copy_buffer_region(
         &self,
         dst_buffer: &impl IResource,
@@ -80,8 +108,14 @@ pub trait IGraphicsCommandList:
         num_bytes: u64,
     );
 
+    /// Copies the entire contents of the source resource to the destination resource.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::CopyResource method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-copyresource)
     fn copy_resource(&self, dst_resource: &impl IResource, src_resource: &impl IResource);
 
+    /// This method uses the GPU to copy texture data between two locations. Both the source and the destination may reference texture data located within either a buffer resource or a texture resource.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::CopyTextureRegion method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-copytextureregion)
     fn copy_texture_region(
         &self,
         dst: &TextureCopyLocation<'_>,
@@ -92,6 +126,9 @@ pub trait IGraphicsCommandList:
         src_box: Option<&Box>,
     );
 
+    /// Copies tiles from buffer to tiled resource or vice versa.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::CopyTiles method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-copytiles)
     fn copy_tiles(
         &self,
         tiled_resource: &impl IResource,
@@ -102,8 +139,14 @@ pub trait IGraphicsCommandList:
         flags: TileCopyFlags,
     );
 
+    /// Discards a resource.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::DiscardResource method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-discardresource)
     fn discard_resource(&self, resource: &impl IResource, region: Option<&DiscardRegion<'_>>);
 
+    /// Executes a compute shader on a thread group.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::Dispatch method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-dispatch)
     fn dispatch(
         &self,
         thread_group_count_x: u32,
@@ -111,6 +154,9 @@ pub trait IGraphicsCommandList:
         thread_group_count_z: u32,
     );
 
+    /// Draws indexed, instanced primitives.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::DrawIndexedInstanced method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-drawindexedinstanced)
     fn draw_indexed_instanced(
         &self,
         index_count_per_instance: u32,
@@ -120,6 +166,9 @@ pub trait IGraphicsCommandList:
         start_instance_location: u32,
     );
 
+    /// Draws non-indexed, instanced primitives.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::DrawInstanced method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-drawinstanced)
     fn draw_instanced(
         &self,
         vertex_count_per_instance: u32,
@@ -128,12 +177,22 @@ pub trait IGraphicsCommandList:
         start_instance_location: u32,
     );
 
+    /// Marks the end of a user-defined region of work.
     fn end_event(&self);
 
+    /// Ends a running query.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::EndQuery method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-endquery)
     fn end_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: u32);
 
+    /// Executes a bundle.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::ExecuteBundle method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-executebundle)
     fn execute_bundle(&self, command_list: &impl IGraphicsCommandList);
 
+    /// Apps perform indirect draws/dispatches using the ExecuteIndirect method.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::ExecuteIndirect method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-executeindirect)
     fn execute_indirect(
         &self,
         command_signature: &impl ICommandSignature,
@@ -144,14 +203,29 @@ pub trait IGraphicsCommandList:
         count_buffer_offset: u64,
     );
 
+    /// Sets the view for the index buffer.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::IASetIndexBuffer method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-iasetindexbuffer)
     fn ia_set_index_buffer(&self, view: Option<&IndexBufferView>);
 
+    /// Bind information about the primitive type, and data order that describes input data for the input assembler stage.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::IASetPrimitiveTopology method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-iasetprimitivetopology)
     fn ia_set_primitive_topology(&self, topology: PrimitiveTopology);
 
+    /// Sets a CPU descriptor handle for the vertex buffers.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::IASetVertexBuffers method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-iasetvertexbuffers)
     fn ia_set_vertex_buffers(&self, slot: u32, buffers: impl IntoIterator<Item = VertexBufferView>);
 
+    /// Sets the blend factor that modulate values for a pixel shader, render target, or both.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::OMSetBlendFactor method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-omsetblendfactor)
     fn om_set_blend_factor(&self, blend_factor: Option<[f32; 4]>);
 
+    /// Sets CPU descriptor handles for the render targets and depth stencil.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::OMSetRenderTargets method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-omsetrendertargets)
     fn om_set_render_targets(
         &self,
         render_targets: impl IntoIterator<Item = CpuDescriptorHandle>,
@@ -159,14 +233,23 @@ pub trait IGraphicsCommandList:
         depth_stencil: Option<CpuDescriptorHandle>,
     );
 
+    /// Sets the reference value for depth stencil tests.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::OMSetStencilRef method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-omsetstencilref)
     fn om_set_stencil_ref(&self, stencil_ref: u32);
 
+    /// Resets a command list back to its initial state as if a new command list was just created.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::Reset method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-reset)
     fn reset(
         &self,
         command_allocator: &impl ICommandAllocator,
         pso: Option<&impl IPipelineState>,
     ) -> Result<(), DxError>;
 
+    /// Extracts data from a query. ResolveQueryData works with all heap types (default, upload, and readback). ResolveQueryData works with all heap types (default, upload, and readback).
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::ResolveQueryData method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-resolvequerydata)
     fn resolve_query_data(
         &self,
         query_heap: &impl IQueryHeap,
@@ -177,6 +260,9 @@ pub trait IGraphicsCommandList:
         aligned_dst_buffer_offset: u64,
     );
 
+    /// Copy a multi-sampled resource into a non-multi-sampled resource.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::ResolveSubresource method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-resolvesubresource)
     fn resolve_subresource(
         &self,
         dst_resource: &impl IResource,
@@ -186,12 +272,24 @@ pub trait IGraphicsCommandList:
         format: Format,
     );
 
+    /// Notifies the driver that it needs to synchronize multiple accesses to resources.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::ResourceBarrier method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-resourcebarrier)
     fn resource_barrier<'a>(&self, barriers: impl IntoIterator<Item = ResourceBarrier<'a>>);
 
+    /// Binds an array of scissor rectangles to the rasterizer stage.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::RSSetScissorRects method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-rssetscissorrects)
     fn rs_set_scissor_rects(&self, rects: impl IntoIterator<Item = Rect>);
 
+    /// Bind an array of viewports to the rasterizer stage of the pipeline.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::RSSetViewports method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-rssetviewports)
     fn rs_set_viewports(&self, viewport: impl IntoIterator<Item = Viewport>);
 
+    /// Sets a constant in the compute root signature.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::SetComputeRoot32BitConstant method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-setcomputeroot32bitconstant)
     fn set_compute_root_32bit_constant(
         &self,
         root_parameter_index: u32,
@@ -199,6 +297,9 @@ pub trait IGraphicsCommandList:
         dest_offset_in_32bit_values: u32,
     );
 
+    /// Sets a group of constants in the compute root signature.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::SetComputeRoot32BitConstants method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-setcomputeroot32bitconstants)
     fn set_compute_root_32bit_constants<T: Copy>(
         &self,
         root_parameter_index: u32,
@@ -206,37 +307,58 @@ pub trait IGraphicsCommandList:
         dest_offset_in_32bit_values: u32,
     );
 
+    /// Sets a CPU descriptor handle for the constant buffer in the compute root signature.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::SetComputeRootConstantBufferView method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-setcomputerootconstantbufferview)
     fn set_compute_root_constant_buffer_view(
         &self,
         root_parameter_index: u32,
         buffer_location: u64,
     );
 
+    /// Sets a descriptor table into the compute root signature.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::SetComputeRootDescriptorTable method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12graphicscommandlist)
     fn set_compute_root_descriptor_table(
         &self,
         root_parameter_index: u32,
         base_descriptor: GpuDescriptorHandle,
     );
 
+    /// Sets a CPU descriptor handle for the shader resource in the compute root signature.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::SetComputeRootShaderResourceView method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-setcomputerootshaderresourceview)
     fn set_compute_root_shader_resource_view(
         &self,
         root_parameter_index: u32,
         buffer_location: u64,
     );
 
+    /// Sets the layout of the compute root signature.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::SetComputeRootSignature method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-setcomputerootsignature)
     fn set_compute_root_signature(&self, root_signature: Option<&impl IRootSignature>);
 
+    /// Sets a CPU descriptor handle for the unordered-access-view resource in the compute root signature.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::SetComputeRootUnorderedAccessView method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-setcomputerootunorderedaccessview)
     fn set_compute_root_unordered_access_view(
         &self,
         root_parameter_index: u32,
         buffer_location: u64,
     );
 
+    /// Changes the currently bound descriptor heaps that are associated with a command list.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::SetDescriptorHeaps method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-setdescriptorheaps)
     fn set_descriptor_heaps<'a>(
         &self,
         descriptor_heaps: impl IntoIterator<Item = &'a DescriptorHeap>,
     );
 
+    /// Sets a constant in the graphics root signature.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::SetGraphicsRoot32BitConstant method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-setgraphicsroot32bitconstant)
     fn set_graphics_root_32bit_constant(
         &self,
         root_parameter_index: u32,
@@ -244,6 +366,9 @@ pub trait IGraphicsCommandList:
         dest_offset_in_32bit_values: u32,
     );
 
+    /// Sets a group of constants in the graphics root signature.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::SetGraphicsRoot32BitConstants method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-setgraphicsroot32bitconstants)
     fn set_graphics_root_32bit_constants<T: Copy>(
         &self,
         root_parameter_index: u32,
@@ -251,36 +376,58 @@ pub trait IGraphicsCommandList:
         dest_offset_in_32bit_values: u32,
     );
 
+    /// Sets a CPU descriptor handle for the constant buffer in the graphics root signature.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::SetGraphicsRootConstantBufferView method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-setgraphicsrootconstantbufferview)
     fn set_graphics_root_constant_buffer_view(
         &self,
         root_parameter_index: u32,
         buffer_location: u64,
     );
 
+    /// Sets a descriptor table into the graphics root signature.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::SetGraphicsRootDescriptorTable method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-setgraphicsrootdescriptortable)
     fn set_graphics_root_descriptor_table(
         &self,
         root_parameter_index: u32,
         base_descriptor: GpuDescriptorHandle,
     );
 
+    /// Sets a CPU descriptor handle for the shader resource in the graphics root signature.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::SetGraphicsRootShaderResourceView method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-setgraphicsrootshaderresourceview)
     fn set_graphics_root_shader_resource_view(
         &self,
         root_parameter_index: u32,
         buffer_location: u64,
     );
 
+    /// Sets the layout of the graphics root signature.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::SetGraphicsRootSignature method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-setgraphicsrootsignature)
     fn set_graphics_root_signature(&self, root_signature: Option<&impl IRootSignature>);
 
+    /// Sets a CPU descriptor handle for the unordered-access-view resource in the graphics root signature.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::SetGraphicsRootUnorderedAccessView method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-setgraphicsrootunorderedaccessview)
     fn set_graphics_root_unordered_access_view(
         &self,
         root_parameter_index: u32,
         buffer_location: u64,
     );
 
+    /// Inserts a user-defined marker into timeline.
     fn set_marker(&self, color: impl Into<u64>, label: impl AsRef<CStr>);
 
+    /// Sets all shaders and programs most of the fixed-function state of the graphics processing unit (GPU) pipeline.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::SetPipelineState method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-setpipelinestate)
     fn set_pipeline_state(&self, pipeline_state: &impl IPipelineState);
 
+    /// Sets a rendering predicate.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::SetPredication method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-setpredication)
     fn set_predication(
         &self,
         buffer: Option<&impl IResource>,
@@ -288,6 +435,9 @@ pub trait IGraphicsCommandList:
         operation: PredicationOp,
     );
 
+    /// Sets the stream output buffer views.
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList::SOSetTargets method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-sosettargets)
     fn so_set_targets(
         &self,
         start_slot: u32,
@@ -389,7 +539,7 @@ impl_trait! {
         }
     }
 
-    fn clear_unordered_access_view_float(
+    fn clear_unordered_access_view_f32(
         &self,
         view_gpu_handle_in_current_heap: GpuDescriptorHandle,
         view_cpu_handle: CpuDescriptorHandle,
