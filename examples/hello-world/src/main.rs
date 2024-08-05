@@ -419,12 +419,24 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
     let asset_path = exe_path.parent().unwrap();
     let shaders_hlsl_path = asset_path.join("shaders.hlsl");
 
-    let vertex_shader =
-        Blob::compile_from_file(&shaders_hlsl_path, c"VSMain", c"vs_5_0", compile_flags, 0)
-            .unwrap();
-    let pixel_shader =
-        Blob::compile_from_file(&shaders_hlsl_path, c"PSMain", c"ps_5_0", compile_flags, 0)
-            .unwrap();
+    let vertex_shader = Blob::compile_from_file(
+        &shaders_hlsl_path,
+        [],
+        c"VSMain",
+        c"vs_5_0",
+        compile_flags,
+        0,
+    )
+    .unwrap();
+    let pixel_shader = Blob::compile_from_file(
+        &shaders_hlsl_path,
+        [],
+        c"PSMain",
+        c"ps_5_0",
+        compile_flags,
+        0,
+    )
+    .unwrap();
 
     let input_element_descs: [InputElementDesc; 2] = [
         InputElementDesc {
@@ -550,8 +562,8 @@ fn create_vertex_buffer(device: &Device, aspect_ratio: f32) -> (Resource, Vertex
         .unwrap();
 
     unsafe {
-        let data = vertex_buffer.map(0, None).unwrap();
-        std::ptr::copy_nonoverlapping(vertices.as_ptr(), data as *mut Vertex, vertices.len());
+        let data = vertex_buffer.map::<Vertex>(0, None).unwrap();
+        std::ptr::copy_nonoverlapping(vertices.as_ptr(), data.as_ptr(), vertices.len());
         vertex_buffer.unmap(0, None);
     }
 

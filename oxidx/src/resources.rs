@@ -5,7 +5,7 @@ use windows::{
     Win32::Graphics::Direct3D12::*,
 };
 
-use crate::{create_type, error::DxError, impl_trait, HasInterface};
+use crate::{create_type, dx::GpuVirtualAddress, error::DxError, impl_trait, HasInterface};
 
 /// Encapsulates a generalized ability of the CPU and GPU to read and write to physical memory, or heaps.
 /// It contains abstractions for organizing and manipulating simple arrays of data as well as multidimensional data optimized for shader sampling.
@@ -17,13 +17,17 @@ pub trait IResource:
     /// This method returns the GPU virtual address of a buffer resource.
     ///
     /// For more information: [`ID3D12Resource::GetGPUVirtualAddress method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-getgpuvirtualaddress)
-    fn get_gpu_virtual_address(&self) -> u64;
+    fn get_gpu_virtual_address(&self) -> GpuVirtualAddress;
 
     /// Gets a CPU pointer to the specified subresource in the resource, but may not disclose the pointer value to applications.
     /// Map also invalidates the CPU cache, when necessary, so that CPU reads to this address reflect any modifications made by the GPU.
     ///
     /// For more information: [`ID3D12Resource::Map method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-map)
-    fn map(&self, subresource: u32, read_range: Option<Range<usize>>) -> Result<std::ptr::NonNull<()>, DxError>;
+    fn map<T>(
+        &self,
+        subresource: u32,
+        read_range: Option<Range<usize>>,
+    ) -> Result<std::ptr::NonNull<T>, DxError>;
 
     /// Invalidates the CPU pointer to the specified subresource in the resource.
     ///
@@ -43,13 +47,13 @@ impl_trait! {
     impl IResource =>
     Resource;
 
-    fn get_gpu_virtual_address(&self) -> u64 {
+    fn get_gpu_virtual_address(&self) -> GpuVirtualAddress {
         unsafe {
             self.0.GetGPUVirtualAddress()
         }
     }
 
-    fn map(&self, subresource: u32, read_range: Option<Range<usize>>) -> Result<std::ptr::NonNull<()>, DxError> {
+    fn map<T>(&self, subresource: u32, read_range: Option<Range<usize>>) -> Result<std::ptr::NonNull<T>, DxError> {
         unsafe {
             let mut ptr = std::ptr::null_mut();
             let range = read_range.map(|r| D3D12_RANGE {
