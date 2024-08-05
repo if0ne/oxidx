@@ -29,7 +29,7 @@ pub trait IBlob: HasInterface<Raw: Interface> {
     /// Gets a pointer to the data.
     ///
     /// For more information: [`ID3D10Blob::GetBufferPointer method`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/nf-d3dcommon-id3d10blob-getbufferpointer)
-    fn get_buffer_ptr(&self) -> *mut ();
+    fn get_buffer_ptr(&self) -> std::ptr::NonNull<()>;
 
     /// Gets the size.
     ///
@@ -47,14 +47,14 @@ create_type! {
 impl Blob {
     pub(crate) fn as_shader_bytecode(&self) -> D3D12_SHADER_BYTECODE {
         D3D12_SHADER_BYTECODE {
-            pShaderBytecode: self.get_buffer_ptr() as *const _,
+            pShaderBytecode: self.get_buffer_ptr().as_ptr() as *const _,
             BytecodeLength: self.get_buffer_size(),
         }
     }
 
     pub(crate) fn as_cached_pipeline_state(&self) -> D3D12_CACHED_PIPELINE_STATE {
         D3D12_CACHED_PIPELINE_STATE {
-            pCachedBlob: self.get_buffer_ptr() as *const _,
+            pCachedBlob: self.get_buffer_ptr().as_ptr() as *const _,
             CachedBlobSizeInBytes: self.get_buffer_size(),
         }
     }
@@ -100,9 +100,9 @@ impl_trait! {
     }
 
 
-    fn get_buffer_ptr(&self) -> *mut () {
+    fn get_buffer_ptr(&self) -> std::ptr::NonNull<()> {
         unsafe {
-            self.0.GetBufferPointer() as *mut _
+            std::ptr::NonNull::new(self.0.GetBufferPointer() as *mut _).expect("Expected valid pointer")
         }
     }
 

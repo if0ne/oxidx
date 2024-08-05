@@ -23,7 +23,7 @@ pub trait IResource:
     /// Map also invalidates the CPU cache, when necessary, so that CPU reads to this address reflect any modifications made by the GPU.
     ///
     /// For more information: [`ID3D12Resource::Map method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-map)
-    fn map(&self, subresource: u32, read_range: Option<Range<usize>>) -> Result<*mut (), DxError>;
+    fn map(&self, subresource: u32, read_range: Option<Range<usize>>) -> Result<std::ptr::NonNull<()>, DxError>;
 
     /// Invalidates the CPU pointer to the specified subresource in the resource.
     ///
@@ -43,7 +43,13 @@ impl_trait! {
     impl IResource =>
     Resource;
 
-    fn map(&self, subresource: u32, read_range: Option<Range<usize>>) -> Result<*mut (), DxError> {
+    fn get_gpu_virtual_address(&self) -> u64 {
+        unsafe {
+            self.0.GetGPUVirtualAddress()
+        }
+    }
+
+    fn map(&self, subresource: u32, read_range: Option<Range<usize>>) -> Result<std::ptr::NonNull<()>, DxError> {
         unsafe {
             let mut ptr = std::ptr::null_mut();
             let range = read_range.map(|r| D3D12_RANGE {
@@ -59,7 +65,7 @@ impl_trait! {
                 )
                 .map_err(DxError::from)?;
 
-            Ok(ptr as *mut ())
+            Ok(std::ptr::NonNull::new(ptr as *mut _).expect("Expected valid pointer"))
         }
     }
 
@@ -72,12 +78,6 @@ impl_trait! {
 
             self.0
                 .Unmap(subresource, range.as_ref().map(|r| r as *const _));
-        }
-    }
-
-    fn get_gpu_virtual_address(&self) -> u64 {
-        unsafe {
-            self.0.GetGPUVirtualAddress()
         }
     }
 }
