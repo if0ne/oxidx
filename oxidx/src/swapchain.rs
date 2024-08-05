@@ -65,19 +65,17 @@ impl_trait! {
     Swapchain3;
 
     fn get_buffer<R: IResource>(&self, buffer: u32) -> Result<R, DxError> {
-        let buffer: R::Raw = unsafe {
-            self.0.GetBuffer(buffer).map_err(|_| DxError::Dummy)?
-        };
+        unsafe {
+            let buffer: R::Raw = self.0.GetBuffer(buffer).map_err(DxError::from)?;
 
-        Ok(R::new(buffer))
+            Ok(R::new(buffer))
+        }
     }
 
     fn present(&self, interval: u32, flags: PresentFlags) -> Result<(), DxError> {
-        let res = unsafe {
-            self.0.Present(interval, flags.bits())
-        };
-
-        res.ok().map_err(DxError::from)
+        unsafe {
+            self.0.Present(interval, flags.bits()).ok().map_err(DxError::from)
+        }
     }
 }
 
