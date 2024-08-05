@@ -15,6 +15,7 @@ use crate::{
     create_type,
     descriptor_heap::IDescriptorHeap,
     device_child::{DeviceChild, IDeviceChild},
+    dx::IRootSignatureExt,
     error::DxError,
     heap::IHeap,
     impl_trait,
@@ -221,7 +222,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     ) -> Result<RS, DxError>;
 
     /// Serializes and creates a root signature layout.
-    fn serialize_and_create_root_signature<RS: IRootSignature>(
+    fn serialize_and_create_root_signature<RS: IRootSignature + IRootSignatureExt>(
         &self,
         desc: &RootSignatureDesc<'_>,
         version: RootSignatureVersion,
@@ -776,7 +777,7 @@ impl_trait! {
         }
     }
 
-    fn serialize_and_create_root_signature<RS: IRootSignature>(
+    fn serialize_and_create_root_signature<RS: IRootSignature + IRootSignatureExt>(
         &self,
         desc: &RootSignatureDesc<'_>,
         version: RootSignatureVersion,

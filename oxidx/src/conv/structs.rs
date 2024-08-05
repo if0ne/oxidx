@@ -594,6 +594,24 @@ impl ResourceDesc {
     }
 }
 
+impl From<D3D12_RESOURCE_DESC> for ResourceDesc {
+    #[inline]
+    fn from(value: D3D12_RESOURCE_DESC) -> Self {
+        Self {
+            dimension: value.Dimension.into(),
+            alignment: value.Alignment,
+            width: value.Width,
+            height: value.Height,
+            depth_or_array_size: value.DepthOrArraySize,
+            mip_levels: value.MipLevels,
+            sample_desc: value.SampleDesc.into(),
+            format: value.Format.into(),
+            layout: value.Layout.into(),
+            flags: value.Flags.into(),
+        }
+    }
+}
+
 impl<'a> RootParameter<'a> {
     #[inline]
     pub(crate) fn as_raw<const N: usize>(
@@ -641,6 +659,15 @@ impl SampleDesc {
         DXGI_SAMPLE_DESC {
             Count: self.count,
             Quality: self.quality,
+        }
+    }
+}
+
+impl From<DXGI_SAMPLE_DESC> for SampleDesc {
+    fn from(value: DXGI_SAMPLE_DESC) -> Self {
+        SampleDesc {
+            count: value.Count,
+            quality: value.Quality,
         }
     }
 }
