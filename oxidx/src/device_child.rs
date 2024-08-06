@@ -32,9 +32,13 @@ create_type!(
 );
 
 impl_trait! {
-    impl IDeviceChild => DeviceChild;
+    impl IDeviceChild =>
+    DeviceChild,
+    Heap,
+    Resource,
+    Fence,
+    Fence1;
 }
-
 impl_up_down_cast!(Heap inherit DeviceChild);
 impl_up_down_cast!(Resource inherit DeviceChild);
 impl_up_down_cast!(Fence inherit DeviceChild);

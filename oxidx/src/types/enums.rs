@@ -1172,6 +1172,17 @@ pub enum Format {
     V408 = DXGI_FORMAT_V408.0,
 }
 
+/// The preference of GPU for the app to run on.
+///
+/// For more information: [`DXGI_GPU_PREFERENCE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_6/ne-dxgi1_6-dxgi_gpu_preference)
+#[derive(Clone, Copy, Debug, FromRepr, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum GpuPreference {
+    Unspecified = DXGI_GPU_PREFERENCE_UNSPECIFIED.0,
+    MinimumPower = DXGI_GPU_PREFERENCE_MINIMUM_POWER.0,
+    HighPerformance = DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE.0,
+}
+
 /// Heap alignment variants.
 #[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
 #[repr(u64)]
@@ -1311,14 +1322,22 @@ pub enum IndirectArgumentDesc {
 /// Identifies the type of data contained in an input slot.
 ///
 /// For more information: [`D3D12_INPUT_CLASSIFICATION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_input_classification)
-#[derive(Clone, Copy, Debug, FromRepr, Hash, PartialEq, Eq)]
-#[repr(i32)]
-pub enum InputSlotClass {
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+pub enum InputClass {
     /// Input data is per-vertex data.
-    PerVertex = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA.0,
+    PerVertex,
 
     /// Input data is per-instance data.
-    InstanceData = D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA.0,
+    InstanceData(u32),
+}
+
+impl InputClass {
+    pub(crate) fn step_rate(&self) -> u32 {
+        match self {
+            InputClass::PerVertex => 0,
+            InputClass::InstanceData(v) => *v,
+        }
+    }
 }
 
 /// Defines constants that specify logical operations to configure for a render target.

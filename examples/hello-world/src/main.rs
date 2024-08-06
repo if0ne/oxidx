@@ -208,9 +208,9 @@ impl DXSample for Sample {
             render_target
         });
 
-        let viewport = Viewport::from_size((width as f32, height as f32));
+        let viewport = Viewport::with_size((width as f32, height as f32));
 
-        let scissor_rect = Rect::from_size((width, height));
+        let scissor_rect = Rect::with_size((width, height));
 
         let command_allocator = self
             .device
@@ -445,8 +445,7 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
             format: Format::Rgb32Float,
             input_slot: 0,
             offset: 0,
-            slot_class: InputSlotClass::PerVertex,
-            instance_data_step_rate: 0,
+            slot_class: InputClass::PerVertex,
         },
         InputElementDesc {
             semantic_name: c"COLOR",
@@ -454,8 +453,7 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
             format: Format::Rgba32Float,
             input_slot: 0,
             offset: 12,
-            slot_class: InputSlotClass::PerVertex,
-            instance_data_step_rate: 0,
+            slot_class: InputClass::PerVertex,
         },
     ];
 
@@ -543,7 +541,7 @@ fn create_vertex_buffer(device: &Device, aspect_ratio: f32) -> (Resource, Vertex
             HeapFlags::empty(),
             &ResourceDesc {
                 dimension: ResourceDimension::Buffer,
-                alignment: 0,
+                alignment: HeapAlignment::Default,
                 width: std::mem::size_of_val(&vertices) as u64,
                 height: 1,
                 depth_or_array_size: 1,

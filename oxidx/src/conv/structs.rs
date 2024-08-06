@@ -440,7 +440,7 @@ impl InputElementDesc {
             InputSlot: self.input_slot,
             AlignedByteOffset: self.offset,
             InputSlotClass: self.slot_class.as_raw(),
-            InstanceDataStepRate: self.instance_data_step_rate,
+            InstanceDataStepRate: self.slot_class.step_rate(),
         }
     }
 }
@@ -581,7 +581,7 @@ impl ResourceDesc {
     pub(crate) fn as_raw(&self) -> D3D12_RESOURCE_DESC {
         D3D12_RESOURCE_DESC {
             Dimension: self.dimension.as_raw(),
-            Alignment: self.alignment,
+            Alignment: self.alignment.as_raw(),
             Width: self.width,
             Height: self.height,
             DepthOrArraySize: self.depth_or_array_size,
@@ -599,7 +599,7 @@ impl From<D3D12_RESOURCE_DESC> for ResourceDesc {
     fn from(value: D3D12_RESOURCE_DESC) -> Self {
         Self {
             dimension: value.Dimension.into(),
-            alignment: value.Alignment,
+            alignment: value.Alignment.into(),
             width: value.Width,
             height: value.Height,
             depth_or_array_size: value.DepthOrArraySize,

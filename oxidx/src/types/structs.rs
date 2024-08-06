@@ -2,9 +2,9 @@ use std::ffi::CStr;
 
 use compact_str::CompactString;
 use smallvec::SmallVec;
-use windows::Win32::Foundation::HANDLE;
+use windows::Win32::Foundation::{CloseHandle, HANDLE};
 
-use crate::{blob::Blob, resources::Resource, root_signature::RootSignature};
+use crate::{blob::Blob, error::DxError, resources::Resource, root_signature::RootSignature};
 
 use super::*;
 
@@ -504,10 +504,7 @@ pub struct InputElementDesc {
     pub offset: u32,
 
     /// A value that identifies the input data class for a single input slot.
-    pub slot_class: InputSlotClass,
-
-    /// The number of instances to draw using the same per-instance data before advancing in the buffer by one element.
-    pub instance_data_step_rate: u32,
+    pub slot_class: InputClass,
 }
 
 /// The LUID structure is an opaque structure that specifies an identifier that is guaranteed to be unique on the local machine.
@@ -644,7 +641,7 @@ pub struct Rect {
 impl Rect {
     /// Create rect with left and top equal to 0.
     #[inline]
-    pub fn from_size(size: impl Into<(i32, i32)>) -> Self {
+    pub fn with_size(size: impl Into<(i32, i32)>) -> Self {
         let (width, height) = size.into();
 
         Self {
@@ -701,7 +698,7 @@ pub struct ResourceDesc {
     pub dimension: ResourceDimension,
 
     /// Specifies the alignment.
-    pub alignment: u64,
+    pub alignment: HeapAlignment,
 
     /// Specifies the width of the resource.
     pub width: u64,
@@ -818,6 +815,12 @@ pub struct ShaderResourceViewDesc {
 /// A handle to the object of event.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct SharedHandle(pub(crate) HANDLE);
+
+impl SharedHandle {
+    pub fn close(self) -> Result<(), DxError> {
+        unsafe { CloseHandle(self.0).map_err(DxError::from) }
+    }
+}
 
 /// Describes a static sampler.
 ///
@@ -1114,7 +1117,7 @@ pub struct Viewport {
 impl Viewport {
     /// Creates a viewport with a minimum depth of 0 and a maximum depth of 1.
     #[inline]
-    pub fn from_position_and_size(
+    pub fn with_position_and_size(
         position: impl Into<(f32, f32)>,
         size: impl Into<(f32, f32)>,
     ) -> Self {
@@ -1133,7 +1136,7 @@ impl Viewport {
 
     /// Creates a viewport with a minimum depth of 0 and a maximum depth of 1 and with position in (0, 0).
     #[inline]
-    pub fn from_size(size: impl Into<(f32, f32)>) -> Self {
-        Self::from_position_and_size((0.0, 0.0), size)
+    pub fn with_size(size: impl Into<(f32, f32)>) -> Self {
+        Self::with_position_and_size((0.0, 0.0), size)
     }
 }

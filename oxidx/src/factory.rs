@@ -8,7 +8,7 @@ use windows::Win32::Graphics::Dxgi::{
 
 use crate::command_queue::ICommandQueue;
 use crate::swapchain::{IOutput, Swapchain1};
-use crate::types::{SwapchainDesc1, SwapchainFullscreenDesc, WindowAssociationFlags};
+use crate::types::*;
 use crate::{adapter::Adapter3, error::DxError};
 use crate::{create_type, impl_trait, HasInterface};
 
@@ -16,16 +16,6 @@ use crate::{create_type, impl_trait, HasInterface};
 ///
 /// For more information: [`IDXGIFactory4 interface`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_4/nn-dxgi1_4-idxgifactory4)
 pub trait IFactory4: HasInterface<Raw: Interface> {
-    /// Enumerates the adapters (video cards).
-    ///
-    /// For more information: [`IDXGIFactory::EnumAdapters method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgifactory-enumadapters)
-    fn enum_adapters(&self, index: usize) -> Result<Adapter3, DxError>;
-
-    /// Provides an adapter which can be provided to D3D12CreateDevice to use the WARP renderer.
-    ///
-    /// For more information: [`IDXGIFactory4::EnumWarpAdapter method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_4/nf-dxgi1_4-idxgifactory4-enumwarpadapter)
-    fn enum_warp_adapters(&self) -> Result<Adapter3, DxError>;
-
     /// Creates a swap chain that you can use to send Direct3D content into the DirectComposition API, to the Windows.UI.Xaml framework, or to Windows UI Library (WinUI) XAML, to compose in a window.
     ///
     /// For more information: [`IDXGIFactory2::CreateSwapChainForComposition method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgifactory2-createswapchainforcomposition)
@@ -52,6 +42,16 @@ pub trait IFactory4: HasInterface<Raw: Interface> {
     where
         CQ: ICommandQueue;
 
+    /// Enumerates the adapters (video cards).
+    ///
+    /// For more information: [`IDXGIFactory::EnumAdapters method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgifactory-enumadapters)
+    fn enum_adapters(&self, index: usize) -> Result<Adapter3, DxError>;
+
+    /// Provides an adapter which can be provided to D3D12CreateDevice to use the WARP renderer.
+    ///
+    /// For more information: [`IDXGIFactory4::EnumWarpAdapter method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_4/nf-dxgi1_4-idxgifactory4-enumwarpadapter)
+    fn enum_warp_adapters(&self) -> Result<Adapter3, DxError>;
+
     /// Allows DXGI to monitor an application's message queue for the alt-enter key sequence (which causes the application to switch from windowed to full screen or vice versa).
     ///
     /// For more information: [`IDXGIFactory::MakeWindowAssociation method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgifactory-makewindowassociation)
@@ -60,6 +60,17 @@ pub trait IFactory4: HasInterface<Raw: Interface> {
         hwnd: NonZeroIsize,
         flags: WindowAssociationFlags,
     ) -> Result<(), DxError>;
+}
+
+pub trait IFactory6 {
+    /// Enumerates graphics adapters based on a given GPU preference.
+    ///
+    /// For more information: [`IDXGIFactory::EnumAdapterByGpuPreference method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_6/nf-dxgi1_6-idxgifactory6-enumadapterbygpupreference)
+    fn enum_adapters_by_gpu_preference(
+        &self,
+        adapter: u32,
+        preference: GpuPreference,
+    ) -> Result<Adapter3, DxError>;
 }
 
 create_type! { Factory4 wrap IDXGIFactory4 }
@@ -71,34 +82,6 @@ impl_trait! {
     Factory4,
     Factory6,
     Factory7;
-
-    fn enum_adapters(&self, index: usize) -> Result<Adapter3, DxError> {
-        unsafe {
-            let adapter = self.0
-                .EnumAdapters1(index as u32)
-                .map_err(DxError::from)?;
-
-            let adapter = adapter
-                .cast::<IDXGIAdapter3>()
-                .map_err(|_| DxError::Cast("IUnknown", "IAdapter3"))?;
-
-            Ok(Adapter3::new(adapter))
-        }
-    }
-
-    fn enum_warp_adapters(&self) -> Result<Adapter3, DxError> {
-        unsafe {
-            let adapter = self.0
-                .EnumWarpAdapter::<IDXGIAdapter>()
-                .map_err(DxError::from)?;
-
-            let adapter = adapter
-                .cast::<IDXGIAdapter3>()
-                .map_err(|_| DxError::Cast("IUnknown", "IAdapter3"))?;
-
-            Ok(Adapter3::new(adapter))
-        }
-    }
 
     fn create_swapchain_for_hwnd<CQ>(
         &self,
@@ -130,6 +113,34 @@ impl_trait! {
             };
 
             Ok(Swapchain1::new(swapchain))
+        }
+    }
+
+    fn enum_adapters(&self, index: usize) -> Result<Adapter3, DxError> {
+        unsafe {
+            let adapter = self.0
+                .EnumAdapters1(index as u32)
+                .map_err(DxError::from)?;
+
+            let adapter = adapter
+                .cast::<IDXGIAdapter3>()
+                .map_err(|_| DxError::Cast("IUnknown", "IAdapter3"))?;
+
+            Ok(Adapter3::new(adapter))
+        }
+    }
+
+    fn enum_warp_adapters(&self) -> Result<Adapter3, DxError> {
+        unsafe {
+            let adapter = self.0
+                .EnumWarpAdapter::<IDXGIAdapter>()
+                .map_err(DxError::from)?;
+
+            let adapter = adapter
+                .cast::<IDXGIAdapter3>()
+                .map_err(|_| DxError::Cast("IUnknown", "IAdapter3"))?;
+
+            Ok(Adapter3::new(adapter))
         }
     }
 
@@ -167,6 +178,20 @@ impl_trait! {
             self.0.MakeWindowAssociation(HWND(hwnd.get()), flags.bits()).map_err(DxError::from)?;
 
             Ok(())
+        }
+    }
+}
+
+impl_trait! {
+    impl IFactory6 =>
+    Factory6,
+    Factory7;
+
+    fn enum_adapters_by_gpu_preference(&self, adapter: u32, preference: GpuPreference) -> Result<Adapter3, DxError> {
+        unsafe {
+            self.0.EnumAdapterByGpuPreference::<IDXGIAdapter3>(adapter, preference.as_raw())
+                .map(|a| Adapter3::new(a))
+                .map_err(DxError::from)
         }
     }
 }

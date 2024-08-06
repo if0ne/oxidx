@@ -3,7 +3,7 @@ use windows::{
     Win32::Graphics::Direct3D12::*,
 };
 
-use crate::{create_type, error::DxError, blob::Blob, impl_trait, HasInterface};
+use crate::{blob::Blob, create_type, error::DxError, impl_trait, HasInterface};
 
 /// Represents the state of all currently set shaders as well as certain fixed function state objects.
 ///

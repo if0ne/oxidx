@@ -26,10 +26,10 @@ conv_enum!(FeatureType to D3D12_FEATURE);
 conv_enum!(FillMode to D3D12_FILL_MODE);
 conv_enum!(Filter to D3D12_FILTER);
 conv_enum!(Format to DXGI_FORMAT);
+conv_enum!(GpuPreference to DXGI_GPU_PREFERENCE);
 conv_enum!(HeapSerializationTier to D3D12_HEAP_SERIALIZATION_TIER);
 conv_enum!(HeapType to D3D12_HEAP_TYPE);
 conv_enum!(IndexBufferStripCutValue to D3D12_INDEX_BUFFER_STRIP_CUT_VALUE);
-conv_enum!(InputSlotClass to D3D12_INPUT_CLASSIFICATION);
 conv_enum!(LogicOp to D3D12_LOGIC_OP);
 conv_enum!(MemoryPool to D3D12_MEMORY_POOL);
 conv_enum!(MeshShaderTier to D3D12_MESH_SHADER_TIER);
@@ -247,6 +247,16 @@ impl IndirectArgumentDesc {
             IndirectArgumentDesc::UnorderedAccessView { .. } => {
                 D3D12_INDIRECT_ARGUMENT_TYPE_UNORDERED_ACCESS_VIEW
             }
+        }
+    }
+}
+
+impl InputClass {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> D3D12_INPUT_CLASSIFICATION {
+        match self {
+            InputClass::PerVertex => D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+            InputClass::InstanceData(_) => D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA,
         }
     }
 }
