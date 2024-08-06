@@ -4,7 +4,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     use std::path::PathBuf;
 
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    let link_path = PathBuf::from("../external/pix/bin/win64");
+    let link_path = PathBuf::from("./external/pix/bin/win64");
 
     let dll_file = "WinPixEventRuntime.dll";
     let lib_file = "WinPixEventRuntime.lib";

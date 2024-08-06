@@ -8,6 +8,7 @@ license = "MIT"
 keywords = ["d3d", "d3d12", "directx12", "directx", "dx12"]
 categories = ["rendering::graphics-api", "graphics", "game-development", "api-bindings"]
 repository = "https://github.com/if0ne/oxidx"
+exclude = ["/extern"]
 
 [dependencies.bitflags]
 version = "2.5.0"
