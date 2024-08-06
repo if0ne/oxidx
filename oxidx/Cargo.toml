@@ -2,6 +2,12 @@
 name = "oxidx"
 version = "0.1.0"
 edition = "2021"
+authors = ["Pavel Agafonov <pavel.agafonov.al@gmail.com>"]
+description = """Mid-level D3D12 bindings/wrapper for Rust."""
+license = "MIT"
+keywords = ["d3d", "d3d12", "directx12", "directx", "dx12"]
+categories = ["rendering::graphics-api", "graphics", "game-development", "api-bindings"]
+repository = "https://github.com/if0ne/oxidx"
 
 [dependencies.bitflags]
 version = "2.5.0"
