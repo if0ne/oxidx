@@ -1,5 +1,3 @@
-use std::mem::ManuallyDrop;
-
 use smallvec::SmallVec;
 use windows::Win32::Graphics::Direct3D12::*;
 
@@ -60,45 +58,6 @@ conv_enum!(TiledResourcesTier to D3D12_TILED_RESOURCES_TIER);
 conv_enum!(VariableShadingRateTier to D3D12_VARIABLE_SHADING_RATE_TIER);
 conv_enum!(ViewInstancingTier to D3D12_VIEW_INSTANCING_TIER);
 conv_enum!(WaveMmaTier to D3D12_WAVE_MMA_TIER);
-
-impl<'a> BarrierType<'a> {
-    pub(crate) fn as_raw(&self) -> D3D12_RESOURCE_BARRIER_0 {
-        match self {
-            BarrierType::Transition {
-                resource,
-                subresource,
-                before,
-                after,
-            } => D3D12_RESOURCE_BARRIER_0 {
-                Transition: ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
-                    pResource: unsafe { std::mem::transmute_copy(resource.as_raw()) },
-                    Subresource: *subresource,
-                    StateBefore: before.as_raw(),
-                    StateAfter: after.as_raw(),
-                }),
-            },
-            BarrierType::Aliasing { before, after } => D3D12_RESOURCE_BARRIER_0 {
-                Aliasing: ManuallyDrop::new(D3D12_RESOURCE_ALIASING_BARRIER {
-                    pResourceBefore: unsafe { std::mem::transmute_copy(before.as_raw()) },
-                    pResourceAfter: unsafe { std::mem::transmute_copy(after.as_raw()) },
-                }),
-            },
-            BarrierType::Uav { resource } => D3D12_RESOURCE_BARRIER_0 {
-                UAV: ManuallyDrop::new(D3D12_RESOURCE_UAV_BARRIER {
-                    pResource: unsafe { std::mem::transmute_copy(resource.as_raw_ref()) },
-                }),
-            },
-        }
-    }
-
-    pub(crate) fn as_type_raw(&self) -> D3D12_RESOURCE_BARRIER_TYPE {
-        match self {
-            BarrierType::Transition { .. } => D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-            BarrierType::Aliasing { .. } => D3D12_RESOURCE_BARRIER_TYPE_ALIASING,
-            BarrierType::Uav { .. } => D3D12_RESOURCE_BARRIER_TYPE_UAV,
-        }
-    }
-}
 
 impl ClearValue {
     #[inline]
@@ -248,100 +207,6 @@ impl<'a> RootParameterType<'a> {
                     ShaderRegister: *shader_register,
                     RegisterSpace: *register_space,
                     Num32BitValues: *num_32bit_values,
-                },
-            },
-        }
-    }
-}
-
-impl RtvDimension {
-    #[inline]
-    pub(crate) fn as_type_raw(&self) -> D3D12_RTV_DIMENSION {
-        match self {
-            RtvDimension::Buffer { .. } => D3D12_RTV_DIMENSION_BUFFER,
-            RtvDimension::Tex1D { .. } => D3D12_RTV_DIMENSION_TEXTURE1D,
-            RtvDimension::Tex2D { .. } => D3D12_RTV_DIMENSION_TEXTURE2D,
-            RtvDimension::Tex3D { .. } => D3D12_RTV_DIMENSION_TEXTURE3D,
-            RtvDimension::ArrayTex1D { .. } => D3D12_RTV_DIMENSION_TEXTURE1DARRAY,
-            RtvDimension::ArrayTex2D { .. } => D3D12_RTV_DIMENSION_TEXTURE2DARRAY,
-            RtvDimension::Tex2DMs => D3D12_RTV_DIMENSION_TEXTURE2DMS,
-            RtvDimension::Array2DMs { .. } => D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY,
-        }
-    }
-
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_RENDER_TARGET_VIEW_DESC_0 {
-        match self {
-            RtvDimension::Buffer {
-                first_element,
-                num_elements,
-            } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
-                Buffer: D3D12_BUFFER_RTV {
-                    FirstElement: *first_element,
-                    NumElements: *num_elements,
-                },
-            },
-            RtvDimension::Tex1D { mip_slice } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
-                Texture1D: D3D12_TEX1D_RTV {
-                    MipSlice: *mip_slice,
-                },
-            },
-            RtvDimension::Tex2D {
-                mip_slice,
-                plane_slice,
-            } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
-                Texture2D: D3D12_TEX2D_RTV {
-                    MipSlice: *mip_slice,
-                    PlaneSlice: *plane_slice,
-                },
-            },
-            RtvDimension::Tex3D {
-                mip_slice,
-                first_w_slice,
-                w_size,
-            } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
-                Texture3D: D3D12_TEX3D_RTV {
-                    MipSlice: *mip_slice,
-                    FirstWSlice: *first_w_slice,
-                    WSize: *w_size,
-                },
-            },
-            RtvDimension::ArrayTex1D {
-                mip_slice,
-                first_array_slice,
-                array_size,
-            } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
-                Texture1DArray: D3D12_TEX1D_ARRAY_RTV {
-                    MipSlice: *mip_slice,
-                    FirstArraySlice: *first_array_slice,
-                    ArraySize: *array_size,
-                },
-            },
-            RtvDimension::ArrayTex2D {
-                mip_slice,
-                plane_slice,
-                first_array_slice,
-                array_size,
-            } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
-                Texture2DArray: D3D12_TEX2D_ARRAY_RTV {
-                    MipSlice: *mip_slice,
-                    PlaneSlice: *plane_slice,
-                    FirstArraySlice: *first_array_slice,
-                    ArraySize: *array_size,
-                },
-            },
-            RtvDimension::Tex2DMs => D3D12_RENDER_TARGET_VIEW_DESC_0 {
-                Texture2DMS: D3D12_TEX2DMS_RTV {
-                    UnusedField_NothingToDefine: 0,
-                },
-            },
-            RtvDimension::Array2DMs {
-                first_array_slice,
-                array_size,
-            } => D3D12_RENDER_TARGET_VIEW_DESC_0 {
-                Texture2DMSArray: D3D12_TEX2DMS_ARRAY_RTV {
-                    FirstArraySlice: *first_array_slice,
-                    ArraySize: *array_size,
                 },
             },
         }

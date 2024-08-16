@@ -52,42 +52,6 @@ pub enum AlphaMode {
     Ignore = DXGI_ALPHA_MODE_IGNORE.0,
 }
 
-/// Specifies a type of resource barrier (transition in resource use) description.
-///
-/// For more information: [`D3D12_RESOURCE_BARRIER_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_barrier_type)
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum BarrierType<'a> {
-    /// Describes the transition of subresources between different usages.
-    Transition {
-        /// A reference to the [`Resource`] object that represents the resource used in the transition.
-        resource: &'a Resource,
-
-        /// The index of the subresource for the transition. Use the 0xffffffff to transition all subresources in a resource at the same time.
-        subresource: u32,
-
-        /// The "before" usages of the subresources, as a bitwise-OR'd combination of [`ResourceStates`] enumeration constants.
-        before: ResourceStates,
-
-        /// The "after" usages of the subresources, as a bitwise-OR'd combination of [`ResourceStates`] enumeration constants.
-        after: ResourceStates,
-    },
-
-    /// Describes the transition between usages of two different resources that have mappings into the same heap.
-    Aliasing {
-        /// A reference to the [`Resource`] object that represents the before resource used in the transition.
-        before: &'a Resource,
-
-        /// A reference to the [`Resource`] object that represents the after resource used in the transition.
-        after: &'a Resource,
-    },
-
-    /// Represents a resource in which all UAV accesses must complete before any future UAV accesses can begin.
-    Uav {
-        /// The resource used in the transition, as a reference to [`Resource`].
-        resource: &'a Resource,
-    },
-}
-
 /// Specifies blend factors, which modulate values for the pixel shader and render target.
 ///
 /// For more information: [`D3D12_BLEND enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_blend)
@@ -1750,87 +1714,6 @@ pub enum RootSignatureVersion {
 
     /// TBD
     V1_2 = D3D_ROOT_SIGNATURE_VERSION_1_2.0,
-}
-
-/// Identifies the type of resource to view as a render target.
-///
-/// For more information: [`D3D12_RTV_DIMENSION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_rtv_dimension)
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub enum RtvDimension {
-    /// The resource will be accessed as a buffer.
-    Buffer {
-        /// Number of elements between the beginning of the buffer and the first element to access.
-        first_element: u64,
-
-        /// The total number of elements in the view.
-        num_elements: u32,
-    },
-
-    /// The resource will be accessed as a 1D texture.
-    Tex1D {
-        /// The index of the mipmap level to use mip slice.
-        mip_slice: u32,
-    },
-
-    /// The resource will be accessed as an array of 1D textures.
-    ArrayTex1D {
-        /// The index of the mipmap level to use mip slice.
-        mip_slice: u32,
-
-        /// The index of the first texture to use in an array of textures.
-        first_array_slice: u32,
-
-        /// Number of textures to use.
-        array_size: u32,
-    },
-
-    /// The resource will be accessed as a 2D texture.
-    Tex2D {
-        /// The index of the mipmap level to use.
-        mip_slice: u32,
-
-        /// The index (plane slice number) of the plane to use in the texture.
-        plane_slice: u32,
-    },
-
-    /// The resource will be accessed as an array of 2D textures.
-    ArrayTex2D {
-        /// The index of the mipmap level to use mip slice.
-        mip_slice: u32,
-
-        /// The index of the first texture to use in an array of textures.
-        plane_slice: u32,
-
-        /// Number of textures in the array to use in the render target view, starting from FirstArraySlice.
-        first_array_slice: u32,
-
-        /// The index (plane slice number) of the plane to use in an array of textures.
-        array_size: u32,
-    },
-
-    /// The resource will be accessed as a 2D texture with multisampling.
-    Tex2DMs,
-
-    /// The resource will be accessed as an array of 2D textures with multisampling.
-    Array2DMs {
-        /// The index of the first texture to use in an array of textures.
-        first_array_slice: u32,
-
-        /// The number of textures to use.
-        array_size: u32,
-    },
-
-    /// The resource will be accessed as a 3D texture.
-    Tex3D {
-        /// The index of the mipmap level to use mip slice.
-        mip_slice: u32,
-
-        /// First depth level to use.
-        first_w_slice: u32,
-
-        /// Number of depth levels to use in the render-target view, starting from FirstWSlice. A value of -1 indicates all of the slices along the w axis, starting from FirstWSlice.
-        w_size: u32,
-    },
 }
 
 /// Defines constants that specify sampler feedback support.

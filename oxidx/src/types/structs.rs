@@ -1,4 +1,4 @@
-use std::{ffi::CStr, marker::PhantomData};
+use std::{ffi::CStr, marker::PhantomData, mem::ManuallyDrop, ops::Range};
 
 use compact_str::CompactString;
 use smallvec::SmallVec;
@@ -7,7 +7,13 @@ use windows::{
     Win32::Foundation::{CloseHandle, HANDLE, LUID},
 };
 
-use crate::{blob::Blob, error::DxError, resources::Resource, root_signature::RootSignature};
+use crate::{
+    blob::Blob,
+    error::DxError,
+    resources::Resource,
+    root_signature::{self, RootSignature},
+    HasInterface,
+};
 
 use super::*;
 
@@ -244,23 +250,6 @@ impl CommandQueueDesc {
 /// Describes the arguments (parameters) of a command signature.
 ///
 /// For more information: [`D3D12_COMMAND_SIGNATURE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_command_signature_desc)
-/*#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct CommandSignatureDesc<'a> {
-    /// Specifies the size of each command in the drawing buffer, in bytes.
-    pub byte_stride: u32,
-
-    /// An array of [`IndirectArgumentDesc`] enumeration, containing details of the arguments, including whether the argument is a vertex buffer, constant, constant buffer view, shader resource view, or unordered access view.
-    pub argument_descs: &'a [IndirectArgumentDesc],
-
-    /// For single GPU operation, set this to zero.
-    /// If there are multiple GPU nodes, set bits to identify the nodes (the device's physical adapters) for which the command signature is to apply.
-    /// Each bit in the mask corresponds to a single node.
-    pub node_mask: u32,
-}*/
-
-/// Describes the arguments (parameters) of a command signature.
-///
-/// For more information: [`D3D12_COMMAND_SIGNATURE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_command_signature_desc)
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 #[repr(transparent)]
 pub struct CommandSignatureDesc<'a>(pub(crate) D3D12_COMMAND_SIGNATURE_DESC, PhantomData<&'a ()>);
@@ -292,36 +281,61 @@ impl<'a> CommandSignatureDesc<'a> {
 /// Describes a compute pipeline state object.
 ///
 /// For more information: [`D3D12_COMPUTE_PIPELINE_STATE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_compute_pipeline_state_desc)
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct ComputePipelineStateDesc<'a> {
-    /// A reference to the [`RootSignature`] object.
-    pub root_signature: &'a RootSignature,
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct ComputePipelineStateDesc<'a>(
+    pub(crate) D3D12_COMPUTE_PIPELINE_STATE_DESC,
+    PhantomData<&'a ()>,
+);
 
-    /// /// A reference to the [`Blob`] object that contains compute shader.
-    pub cs: &'a Blob,
+impl<'a> ComputePipelineStateDesc<'a> {
+    #[inline]
+    pub fn new(cs: &'a Blob) -> Self {
+        Self(
+            D3D12_COMPUTE_PIPELINE_STATE_DESC {
+                CS: cs.as_shader_bytecode(),
+                ..Default::default()
+            },
+            Default::default(),
+        )
+    }
 
-    /// For single GPU operation, set this to zero.
-    /// If there are multiple GPU nodes, set bits to identify the nodes (the device's physical adapters) for which the compute pipeline state is to apply.
-    /// Each bit in the mask corresponds to a single node.
-    pub node_mask: u32,
+    #[inline]
+    pub fn with_root_signature(mut self, root_signature: &'a RootSignature) -> Self {
+        unsafe {
+            self.0.pRootSignature = std::mem::transmute_copy(root_signature.as_raw());
+            self
+        }
+    }
 
-    /// A cached pipeline state object, as a [`Blob`] structure. `cached_blob` and `cached_blob_size_in_bytes` may be set to None and 0 respectively.
-    pub cached_pso: Option<&'a Blob>,
+    #[inline]
+    pub fn with_cache(mut self, cache: &'a Blob) -> Self {
+        self.0.CachedPSO = cache.as_cached_pipeline_state();
+        self
+    }
 
-    /// A [`PipelineStateFlags`] enumeration constant such as for "tool debug".
-    pub flags: PipelineStateFlags,
+    #[inline]
+    pub fn with_flags(mut self, flags: PipelineStateFlags) -> Self {
+        self.0.Flags = flags.as_raw();
+        self
+    }
 }
 
 /// Describes a constant buffer to view.
 ///
 /// For more information: [`D3D12_CONSTANT_BUFFER_VIEW_DESC structure `](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_constant_buffer_view_desc)
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct ConstantBufferViewDesc {
-    /// GPU virtual address
-    pub buffer_location: GpuVirtualAddress,
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct ConstantBufferViewDesc(pub(crate) D3D12_CONSTANT_BUFFER_VIEW_DESC);
 
-    /// The size in bytes of the constant buffer.
-    pub size_in_bytes: u32,
+impl ConstantBufferViewDesc {
+    #[inline]
+    pub fn new(buffer_location: u64, size: u32) -> Self {
+        Self(D3D12_CONSTANT_BUFFER_VIEW_DESC {
+            BufferLocation: buffer_location,
+            SizeInBytes: size,
+        })
+    }
 }
 
 /// Type that represent return values of [`IDevice::get_copyable_footprints`](crate::device::IDevice::get_copyable_footprints)
@@ -343,13 +357,16 @@ pub struct CopyableFootprints {
 /// Describes a CPU descriptor handle.
 ///
 /// For more information: [`D3D12_CPU_DESCRIPTOR_HANDLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_cpu_descriptor_handle)
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct CpuDescriptorHandle(pub(crate) usize);
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct CpuDescriptorHandle(pub(crate) D3D12_CPU_DESCRIPTOR_HANDLE);
 
 impl CpuDescriptorHandle {
     /// Returns a new handle with offset relative to the current handle.
     pub fn offset(&self, offset: usize) -> Self {
-        Self(self.0 + offset)
+        Self(D3D12_CPU_DESCRIPTOR_HANDLE {
+            ptr: self.0.ptr + offset,
+        })
     }
 }
 
@@ -1023,37 +1040,218 @@ impl RenderTargetBlendDesc {
 /// Describes the subresources from a resource that are accessible by using a render-target view.
 ///
 /// For more information: [`D3D12_RENDER_TARGET_VIEW_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_render_target_view_desc)
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct RenderTargetViewDesc {
-    /// A [`Format`]-typed value that specifies the viewing format.
-    pub format: Format,
+#[derive(Clone, Copy)]
+#[repr(transparent)]
+pub struct RenderTargetViewDesc(pub(crate) D3D12_RENDER_TARGET_VIEW_DESC);
 
-    /// A [`RtvDimension`]-typed value that specifies how the render-target resource will be accessed. This type specifies how the resource will be accessed.
-    pub dimension: RtvDimension,
+impl RenderTargetViewDesc {
+    #[inline]
+    pub fn buffer(format: Format, elements_range: Range<u64>) -> Self {
+        Self(D3D12_RENDER_TARGET_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_RTV_DIMENSION_BUFFER,
+            Anonymous: D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Buffer: D3D12_BUFFER_RTV {
+                    FirstElement: elements_range.start,
+                    NumElements: elements_range.count() as u32,
+                },
+            },
+        })
+    }
+
+    #[inline]
+    pub fn texture_1d(format: Format, mip_slice: u32) -> Self {
+        Self(D3D12_RENDER_TARGET_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_RTV_DIMENSION_TEXTURE1D,
+            Anonymous: D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture1D: D3D12_TEX1D_RTV {
+                    MipSlice: mip_slice,
+                },
+            },
+        })
+    }
+
+    #[inline]
+    pub fn texture_2d(format: Format, mip_slice: u32, plane_slice: u32) -> Self {
+        Self(D3D12_RENDER_TARGET_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_RTV_DIMENSION_TEXTURE2D,
+            Anonymous: D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture2D: D3D12_TEX2D_RTV {
+                    MipSlice: mip_slice,
+                    PlaneSlice: plane_slice,
+                },
+            },
+        })
+    }
+
+    #[inline]
+    pub fn texture_3d(format: Format, mip_slice: u32, w_slices: Range<u32>) -> Self {
+        Self(D3D12_RENDER_TARGET_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_RTV_DIMENSION_TEXTURE3D,
+            Anonymous: D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture3D: D3D12_TEX3D_RTV {
+                    MipSlice: mip_slice,
+                    FirstWSlice: w_slices.start,
+                    WSize: w_slices.count() as u32,
+                },
+            },
+        })
+    }
+
+    #[inline]
+    pub fn texture_1d_array(format: Format, mip_slice: u32, array: Range<u32>) -> Self {
+        Self(D3D12_RENDER_TARGET_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_RTV_DIMENSION_TEXTURE1DARRAY,
+            Anonymous: D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture1DArray: D3D12_TEX1D_ARRAY_RTV {
+                    MipSlice: mip_slice,
+                    FirstArraySlice: array.start,
+                    ArraySize: array.count() as u32,
+                },
+            },
+        })
+    }
+
+    #[inline]
+    pub fn texture_2d_array(
+        format: Format,
+        mip_slice: u32,
+        plane_slice: u32,
+        array: Range<u32>,
+    ) -> Self {
+        Self(D3D12_RENDER_TARGET_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_RTV_DIMENSION_TEXTURE2DARRAY,
+            Anonymous: D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture2DArray: D3D12_TEX2D_ARRAY_RTV {
+                    MipSlice: mip_slice,
+                    PlaneSlice: plane_slice,
+                    FirstArraySlice: array.start,
+                    ArraySize: array.count() as u32,
+                },
+            },
+        })
+    }
+
+    #[inline]
+    pub fn texture_2d_ms(format: Format) -> Self {
+        Self(D3D12_RENDER_TARGET_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_RTV_DIMENSION_TEXTURE2DMS,
+            Anonymous: D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture2DMS: Default::default(),
+            },
+        })
+    }
+
+    #[inline]
+    pub fn texture_2d_ms_array(format: Format, array: Range<u32>) -> Self {
+        Self(D3D12_RENDER_TARGET_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY,
+            Anonymous: D3D12_RENDER_TARGET_VIEW_DESC_0 {
+                Texture2DMSArray: D3D12_TEX2DMS_ARRAY_RTV {
+                    FirstArraySlice: array.start,
+                    ArraySize: array.count() as u32,
+                },
+            },
+        })
+    }
 }
 
 /// Describes parameters needed to allocate resources.
 ///
 /// For more information: [`D3D12_RESOURCE_ALLOCATION_INFO structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_allocation_info)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct ResourceAllocationInfo {
-    /// The size, in bytes, of the resource.
-    pub size_in_bytes: u64,
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct ResourceAllocationInfo(pub(crate) D3D12_RESOURCE_ALLOCATION_INFO);
 
-    /// The alignment value for the resource; one of 4KB (4096), 64KB (65536), or 4MB (4194304) alignment.
-    pub alignment: u64,
+impl ResourceAllocationInfo {
+    #[inline]
+    pub fn size(&self) -> u64 {
+        self.0.SizeInBytes
+    }
+
+    #[inline]
+    pub fn alignment(&self) -> u64 {
+        self.0.Alignment
+    }
 }
 
 /// Describes a resource barrier (transition in resource use).
 ///
 /// For more information: [`D3D12_RESOURCE_BARRIER structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_barrier)
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct ResourceBarrier<'a> {
-    /// A [`BarrierType`]-typed value that specifies the type of resource barrier. This member determines which type to use in the union below.
-    pub r#type: BarrierType<'a>,
+#[derive(Clone)]
+#[repr(transparent)]
+pub struct ResourceBarrier<'a>(pub(crate) D3D12_RESOURCE_BARRIER, PhantomData<&'a ()>);
 
-    /// Specifies a [`ResourceBarrierFlags`] enumeration constant such as for "begin only" or "end only".
-    pub flags: ResourceBarrierFlags,
+impl<'a> ResourceBarrier<'a> {
+    #[inline]
+    pub fn transition(
+        resource: &'a Resource,
+        subresource: u32,
+        before: ResourceStates,
+        after: ResourceStates,
+    ) -> Self {
+        Self(
+            D3D12_RESOURCE_BARRIER {
+                Type: D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+                Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
+                Anonymous: D3D12_RESOURCE_BARRIER_0 {
+                    Transition: ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
+                        pResource: unsafe { std::mem::transmute_copy(resource.as_raw()) },
+                        Subresource: subresource,
+                        StateBefore: before.as_raw(),
+                        StateAfter: after.as_raw(),
+                    }),
+                },
+            },
+            Default::default(),
+        )
+    }
+
+    #[inline]
+    pub fn aliasing(before: &'a Resource, after: &'a Resource) -> Self {
+        Self(
+            D3D12_RESOURCE_BARRIER {
+                Type: D3D12_RESOURCE_BARRIER_TYPE_ALIASING,
+                Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
+                Anonymous: D3D12_RESOURCE_BARRIER_0 {
+                    Aliasing: ManuallyDrop::new(D3D12_RESOURCE_ALIASING_BARRIER {
+                        pResourceBefore: unsafe { std::mem::transmute_copy(before.as_raw()) },
+                        pResourceAfter: unsafe { std::mem::transmute_copy(after.as_raw()) },
+                    }),
+                },
+            },
+            Default::default(),
+        )
+    }
+
+    #[inline]
+    pub fn uav(resource: &'a Resource) -> Self {
+        Self(
+            D3D12_RESOURCE_BARRIER {
+                Type: D3D12_RESOURCE_BARRIER_TYPE_UAV,
+                Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
+                Anonymous: D3D12_RESOURCE_BARRIER_0 {
+                    UAV: ManuallyDrop::new(D3D12_RESOURCE_UAV_BARRIER {
+                        pResource: unsafe { std::mem::transmute_copy(resource.as_raw_ref()) },
+                    }),
+                },
+            },
+            Default::default(),
+        )
+    }
+
+    #[inline]
+    pub fn with_flags(mut self, flags: ResourceBarrierFlags) -> Self {
+        self.0.Flags = flags.as_raw();
+        self
+    }
 }
 
 /// Describes a resource, such as a texture. This structure is used extensively.

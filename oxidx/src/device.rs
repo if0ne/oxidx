@@ -430,8 +430,8 @@ impl_trait! {
         unsafe {
             self.0.CopyDescriptorsSimple(
                 num_descriptors,
-                dest_descriptor_range_start.as_raw(),
-                src_descriptor_range_start.as_raw(),
+                dest_descriptor_range_start.0,
+                src_descriptor_range_start.0,
                 descriptor_heaps_type.as_raw()
             );
         }
@@ -549,9 +549,7 @@ impl_trait! {
         desc: &ComputePipelineStateDesc<'_>,
     ) -> Result<CPS, DxError> {
         unsafe {
-            let desc = desc.as_raw();
-
-            let res: CPS::Raw = self.0.CreateComputePipelineState(&desc).map_err(DxError::from)?;
+            let res: CPS::Raw = self.0.CreateComputePipelineState(&desc.0).map_err(DxError::from)?;
 
             Ok(CPS::new(res))
         }
@@ -563,10 +561,9 @@ impl_trait! {
         dest_descriptor: CpuDescriptorHandle,
     ) {
         unsafe {
-            let desc = desc.map(|desc| desc.as_raw());
-            let desc = desc.as_ref().map(|c| c as *const _);
+            let desc = desc.map(|c| &c.0 as *const _);
 
-            let dest_descriptor = dest_descriptor.as_raw();
+            let dest_descriptor = dest_descriptor.0;
 
             self.0.CreateConstantBufferView(desc, dest_descriptor);
         }
@@ -582,7 +579,7 @@ impl_trait! {
             let desc = desc.map(|desc| desc.as_raw());
             let desc = desc.as_ref().map(|c| c as *const _);
 
-            let dest_descriptor = dest_descriptor.as_raw();
+            let dest_descriptor = dest_descriptor.0;
 
             if let Some(resource) = resource {
                 self.0.CreateDepthStencilView(
@@ -708,20 +705,19 @@ impl_trait! {
         handle: CpuDescriptorHandle,
     ) {
         unsafe {
-            let desc = desc.map(|v| v.as_raw());
-            let desc = desc.as_ref().map(|f| f as *const _);
+            let desc = desc.map(|f| &f.0 as *const _);
 
             if let Some(resource) = resource {
                 self.0.CreateRenderTargetView(
                     resource.as_raw_ref(),
                     desc,
-                    handle.as_raw()
+                    handle.0
                 );
             } else {
                 self.0.CreateRenderTargetView(
                     None,
                     desc,
-                    handle.as_raw()
+                    handle.0
                 );
             }
         }
@@ -787,7 +783,7 @@ impl_trait! {
         unsafe {
             let desc = desc.as_raw();
 
-            self.0.CreateSampler(&desc, dest_descriptor.as_raw());
+            self.0.CreateSampler(&desc, dest_descriptor.0);
         }
     }
 
@@ -805,13 +801,13 @@ impl_trait! {
                 self.0.CreateShaderResourceView(
                     resource.as_raw_ref(),
                     desc,
-                    handle.as_raw()
+                    handle.0
                 );
             } else {
                 self.0.CreateShaderResourceView(
                     None,
                     desc,
-                    handle.as_raw()
+                    handle.0
                 );
             }
 
@@ -857,7 +853,7 @@ impl_trait! {
                         r.as_raw_ref(),
                         c.as_raw_ref(),
                         desc,
-                        handle.as_raw()
+                        handle.0
                     );
                 },
                 (Some(r), None) => {
@@ -865,7 +861,7 @@ impl_trait! {
                         r.as_raw_ref(),
                         None,
                         desc,
-                        handle.as_raw()
+                        handle.0
                     );
                 },
                 (None, Some(c)) => {
@@ -873,7 +869,7 @@ impl_trait! {
                         None,
                         c.as_raw_ref(),
                         desc,
-                        handle.as_raw()
+                        handle.0
                     );
                 },
                 (None, None) => {
@@ -881,7 +877,7 @@ impl_trait! {
                         None,
                         None,
                         desc,
-                        handle.as_raw()
+                        handle.0
                     );
                 }
             }
@@ -986,7 +982,7 @@ impl_trait! {
                 .map(|desc| desc.as_raw())
                 .collect::<SmallVec<[_; 4]>>();
 
-            self.0.GetResourceAllocationInfo(visible_mask, &resource_desc).into()
+            ResourceAllocationInfo(self.0.GetResourceAllocationInfo(visible_mask, &resource_desc))
         }
     }
 

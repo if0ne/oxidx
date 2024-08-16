@@ -275,7 +275,7 @@ pub trait IGraphicsCommandList:
     /// Notifies the driver that it needs to synchronize multiple accesses to resources.
     ///
     /// For more information: [`ID3D12GraphicsCommandList::ResourceBarrier method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-resourcebarrier)
-    fn resource_barrier<'a>(&self, barriers: impl IntoIterator<Item = ResourceBarrier<'a>>);
+    fn resource_barrier<'a>(&self, barriers: &[ResourceBarrier<'a>]);
 
     /// Binds an array of scissor rectangles to the rasterizer stage.
     ///
@@ -496,7 +496,7 @@ impl_trait! {
                 .collect::<SmallVec<[_; 8]>>();
 
             self.0.ClearDepthStencilView(
-                depth_stencil_view.as_raw(),
+                depth_stencil_view.0,
                 clear_flags.as_raw(),
                 depth,
                 stencil,
@@ -525,7 +525,7 @@ impl_trait! {
 
             let color = color.into();
 
-            self.0.ClearRenderTargetView(rtv_handle.as_raw(), &color, rects);
+            self.0.ClearRenderTargetView(rtv_handle.0, &color, rects);
         }
     }
 
@@ -555,7 +555,7 @@ impl_trait! {
 
             self.0.ClearUnorderedAccessViewFloat(
                 view_gpu_handle_in_current_heap.as_raw(),
-                view_cpu_handle.as_raw(),
+                view_cpu_handle.0,
                 resource.as_raw_ref(),
                 &values.into(),
                 &rects
@@ -579,7 +579,7 @@ impl_trait! {
 
             self.0.ClearUnorderedAccessViewUint(
                 view_gpu_handle_in_current_heap.as_raw(),
-                view_cpu_handle.as_raw(),
+                view_cpu_handle.0,
                 resource.as_raw_ref(),
                 &values.into(),
                 &rects
@@ -840,7 +840,7 @@ impl_trait! {
         unsafe {
             let render_targets = render_targets
                 .into_iter()
-                .map(|rt| rt.as_raw())
+                .map(|rt| rt.0)
                 .collect::<SmallVec<[_; 8]>>();
 
             let render_targets_raw = if !render_targets.is_empty() {
@@ -849,7 +849,7 @@ impl_trait! {
                 None
             };
 
-            let depth_stencil = depth_stencil.map(|ds| ds.as_raw());
+            let depth_stencil = depth_stencil.map(|ds| ds.0);
             let depth_stencil = depth_stencil.as_ref().map(|ds| ds as *const _);
 
             self.0.OMSetRenderTargets(
@@ -929,14 +929,13 @@ impl_trait! {
         }
     }
 
-    fn resource_barrier<'a>(&self, barriers: impl IntoIterator<Item = ResourceBarrier<'a>>) {
+    fn resource_barrier<'a>(&self, barriers: &[ResourceBarrier<'a>]) {
         unsafe {
-            let barriers = barriers
-                .into_iter()
-                .map(|r| r.as_raw())
-                .collect::<SmallVec<[_; 8]>>();
-
-            self.0.ResourceBarrier(barriers.as_slice());
+            let barriers = core::slice::from_raw_parts(
+                barriers.as_ptr() as *const D3D12_RESOURCE_BARRIER,
+                barriers.len()
+            );
+            self.0.ResourceBarrier(barriers);
         }
     }
 

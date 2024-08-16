@@ -39,7 +39,7 @@ impl_trait! {
 
     fn get_cpu_descriptor_handle_for_heap_start(&self) -> CpuDescriptorHandle {
         unsafe {
-            self.0.GetCPUDescriptorHandleForHeapStart().into()
+            CpuDescriptorHandle(self.0.GetCPUDescriptorHandleForHeapStart())
         }
     }
 

@@ -3,48 +3,6 @@ use windows::Win32::Graphics::Direct3D12::*;
 
 use super::*;
 
-impl<'a> ComputePipelineStateDesc<'a> {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_COMPUTE_PIPELINE_STATE_DESC {
-        unsafe {
-            D3D12_COMPUTE_PIPELINE_STATE_DESC {
-                pRootSignature: std::mem::transmute_copy(self.root_signature.as_raw()),
-                CS: self.cs.as_shader_bytecode(),
-                NodeMask: self.node_mask,
-                CachedPSO: self
-                    .cached_pso
-                    .map(|pso| pso.as_cached_pipeline_state())
-                    .unwrap_or_default(),
-                Flags: self.flags.as_raw(),
-            }
-        }
-    }
-}
-
-impl ConstantBufferViewDesc {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_CONSTANT_BUFFER_VIEW_DESC {
-        D3D12_CONSTANT_BUFFER_VIEW_DESC {
-            BufferLocation: self.buffer_location,
-            SizeInBytes: self.size_in_bytes,
-        }
-    }
-}
-
-impl CpuDescriptorHandle {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_CPU_DESCRIPTOR_HANDLE {
-        D3D12_CPU_DESCRIPTOR_HANDLE { ptr: self.0 }
-    }
-}
-
-impl From<D3D12_CPU_DESCRIPTOR_HANDLE> for CpuDescriptorHandle {
-    #[inline]
-    fn from(value: D3D12_CPU_DESCRIPTOR_HANDLE) -> Self {
-        Self(value.ptr)
-    }
-}
-
 impl DeclarationEntry {
     #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_SO_DECLARATION_ENTRY {
@@ -412,36 +370,6 @@ impl Rect {
             top: self.top,
             right: self.right,
             bottom: self.bottom,
-        }
-    }
-}
-
-impl RenderTargetViewDesc {
-    pub(crate) fn as_raw(&self) -> D3D12_RENDER_TARGET_VIEW_DESC {
-        D3D12_RENDER_TARGET_VIEW_DESC {
-            Format: self.format.as_raw(),
-            ViewDimension: self.dimension.as_type_raw(),
-            Anonymous: self.dimension.as_raw(),
-        }
-    }
-}
-
-impl From<D3D12_RESOURCE_ALLOCATION_INFO> for ResourceAllocationInfo {
-    #[inline]
-    fn from(value: D3D12_RESOURCE_ALLOCATION_INFO) -> Self {
-        Self {
-            size_in_bytes: value.SizeInBytes,
-            alignment: value.Alignment,
-        }
-    }
-}
-
-impl<'a> ResourceBarrier<'a> {
-    pub(crate) fn as_raw(&self) -> D3D12_RESOURCE_BARRIER {
-        D3D12_RESOURCE_BARRIER {
-            Type: self.r#type.as_type_raw(),
-            Flags: D3D12_RESOURCE_BARRIER_FLAGS(self.flags.bits()),
-            Anonymous: self.r#type.as_raw(),
         }
     }
 }
