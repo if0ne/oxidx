@@ -171,7 +171,7 @@ impl_trait! {
     }
 
     fn get_desc(&self) -> CommandQueueDesc {
-        unsafe { self.0.GetDesc().into() }
+        unsafe { CommandQueueDesc(self.0.GetDesc()) }
     }
 
     fn get_timestamp_frequency(&self) -> Result<u64, DxError> {

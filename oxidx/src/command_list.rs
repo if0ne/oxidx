@@ -631,8 +631,7 @@ impl_trait! {
         src_box: Option<&Box>,
     ) {
         unsafe {
-            let src_box = src_box.map(|b| b.as_raw());
-            let src_box = src_box.as_ref().map(|b| b as *const _);
+            let src_box = src_box.map(|s| &s.0 as *const _);
 
             self.0.CopyTextureRegion(
                 &dst.as_raw(),

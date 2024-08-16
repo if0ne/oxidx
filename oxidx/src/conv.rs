@@ -2,7 +2,6 @@ mod enums;
 mod flags;
 mod structs;
 
-use compact_str::CompactString;
 use windows::{
     core::PCSTR,
     Win32::{

@@ -1,8 +1,11 @@
-use std::ffi::CStr;
+use std::{ffi::CStr, marker::PhantomData};
 
 use compact_str::CompactString;
 use smallvec::SmallVec;
-use windows::Win32::Foundation::{CloseHandle, HANDLE};
+use windows::{
+    core::PCSTR,
+    Win32::Foundation::{CloseHandle, HANDLE, LUID},
+};
 
 use crate::{blob::Blob, error::DxError, resources::Resource, root_signature::RootSignature};
 
@@ -11,102 +14,237 @@ use super::*;
 /// Describes an adapter (or video card) using DXGI 1.1.
 ///
 /// For more information: [`DXGI_ADAPTER_DESC1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/ns-dxgi-dxgi_adapter_desc1)
-#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
-pub struct AdapterDesc1 {
-    /// A string that contains the adapter description.
-    pub description: CompactString,
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct AdapterDesc1(pub(crate) DXGI_ADAPTER_DESC1);
 
-    /// The PCI ID or ACPI ID of the adapter's hardware vendor.
-    pub vendor_id: u32,
+impl AdapterDesc1 {
+    #[inline]
+    pub fn description(&self) -> CompactString {
+        CompactString::from_utf16_lossy(self.0.Description)
+    }
 
-    /// The PCI ID or ACPI ID of the adapter's hardware device.
-    pub device_id: u32,
+    #[inline]
+    pub fn vendor_id(&self) -> u32 {
+        self.0.VendorId
+    }
 
-    /// The PCI ID or ACPI ID of the adapter's hardware subsystem.
-    pub sub_sys_id: u32,
+    #[inline]
+    pub fn sub_sys_id(&self) -> u32 {
+        self.0.SubSysId
+    }
 
-    /// The adapter's PCI or ACPI revision number.
-    pub revision: u32,
+    #[inline]
+    pub fn revision(&self) -> u32 {
+        self.0.Revision
+    }
 
-    /// The number of bytes of dedicated video memory that are not shared with the CPU.
-    pub dedicated_video_memory: usize,
+    #[inline]
+    pub fn dedicated_video_memory(&self) -> usize {
+        self.0.DedicatedVideoMemory
+    }
 
-    /// The number of bytes of dedicated system memory that are not shared with the CPU. This memory is allocated from available system memory at boot time.
-    pub dedicated_system_memory: usize,
+    #[inline]
+    pub fn dedicated_system_memory(&self) -> usize {
+        self.0.DedicatedSystemMemory
+    }
 
-    /// The number of bytes of shared system memory. This is the maximum value of system memory that may be consumed by the adapter during operation. Any incidental memory consumed by the driver as it manages and uses video memory is additional.
-    pub shared_system_memory: usize,
+    #[inline]
+    pub fn shared_system_memory(&self) -> usize {
+        self.0.DedicatedSystemMemory
+    }
 
-    /// A unique value that identifies the adapter.
-    pub adapter_luid: Luid,
+    #[inline]
+    pub fn adapter_luid(&self) -> Luid {
+        Luid(self.0.AdapterLuid)
+    }
 
-    /// A value of the [`AdapterFlags`] enumerated type that describes the adapter type.
-    pub flags: AdapterFlags,
+    #[inline]
+    pub fn flags(&self) -> AdapterFlags {
+        AdapterFlags::from_bits_retain(self.0.Flags as i32)
+    }
 }
 
 /// Describes the blend state.
 ///
 /// For more information: [`D3D12_BLEND_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_blend_desc)
-#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
-pub struct BlendDesc {
-    /// Specifies whether to use alpha-to-coverage as a multisampling technique when setting a pixel to a render target.
-    pub alpha_to_coverage_enable: bool,
+#[derive(Clone, Copy, Default, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct BlendDesc(pub(crate) D3D12_BLEND_DESC);
 
-    /// Specifies whether to enable independent blending in simultaneous render targets.
-    /// Set to TRUE to enable independent blending. If set to FALSE, only the RenderTarget\[0\] members are used; RenderTarget\[1..7\] are ignored.
-    pub independent_blend_enable: bool,
+impl BlendDesc {
+    #[inline]
+    pub fn with_render_targets(
+        mut self,
+        render_targets: impl IntoIterator<Item = RenderTargetBlendDesc>,
+    ) -> Self {
+        let mut rts = [D3D12_RENDER_TARGET_BLEND_DESC::default(); 8];
 
-    /// An array of [`RenderTargetBlendDesc`] structures that describe the blend states for render targets;
-    /// these correspond to the eight render targets that can be bound to the output-merger stage at one time.
-    pub render_targets: [RenderTargetBlendDesc; 8],
+        for (i, desc) in render_targets.into_iter().take(8).enumerate() {
+            rts[i] = desc.0;
+        }
+
+        self.0.RenderTarget = rts;
+        self
+    }
+
+    #[inline]
+    pub fn enable_alpha_to_coverage(mut self) -> Self {
+        self.0.AlphaToCoverageEnable = true.into();
+        self
+    }
+
+    #[inline]
+    pub fn enable_independent_blend(mut self) -> Self {
+        self.0.IndependentBlendEnable = true.into();
+        self
+    }
 }
 
 /// Describes a 3D box.
 ///
 /// For more information: [`D3D12_BOX structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_box)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct Box {
-    /// The x position of the left hand side of the box.
-    pub left: u32,
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct Box(pub(crate) D3D12_BOX);
 
-    /// The y position of the top of the box.
-    pub top: u32,
+impl Box {
+    #[inline]
+    pub fn with_left(mut self, val: u32) -> Self {
+        self.0.left = val;
+        self
+    }
 
-    /// The z position of the front of the box.
-    pub front: u32,
+    #[inline]
+    pub fn with_top(mut self, val: u32) -> Self {
+        self.0.top = val;
+        self
+    }
 
-    /// The x position of the right hand side of the box, plus 1. This means that `right - left` equals the width of the box.
-    pub right: u32,
+    #[inline]
+    pub fn with_front(mut self, val: u32) -> Self {
+        self.0.front = val;
+        self
+    }
 
-    /// The y position of the bottom of the box, plus 1. This means that `bottom - top` equals the height of the box.
-    pub bottom: u32,
+    #[inline]
+    pub fn with_right(mut self, val: u32) -> Self {
+        self.0.right = val;
+        self
+    }
 
-    /// The z position of the back of the box, plus 1. This means that `back - front` equals the depth of the box.
-    pub back: u32,
+    #[inline]
+    pub fn with_bottom(mut self, val: u32) -> Self {
+        self.0.bottom = val;
+        self
+    }
+
+    #[inline]
+    pub fn with_back(mut self, val: u32) -> Self {
+        self.0.back = val;
+        self
+    }
 }
 
 /// Describes a command queue.
 ///
 /// For more information: [`D3D12_COMMAND_QUEUE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_command_queue_desc)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct CommandQueueDesc {
-    /// Specifies one member of [`CommandListType`].
-    pub r#type: CommandListType,
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct CommandQueueDesc(pub(crate) D3D12_COMMAND_QUEUE_DESC);
 
-    /// The priority for the command queue, as a [`CommandQueuePriority`] enumeration constant to select normal or high priority.
-    pub priority: CommandQueuePriority,
+impl CommandQueueDesc {
+    #[inline]
+    pub fn direct() -> Self {
+        Self(D3D12_COMMAND_QUEUE_DESC {
+            Type: D3D12_COMMAND_LIST_TYPE_DIRECT,
+            ..Default::default()
+        })
+    }
 
-    /// Specifies any flags from the [`CommandQueueFlags`] enumeration.
-    pub flags: CommandQueueFlags,
+    #[inline]
+    pub fn compute() -> Self {
+        Self(D3D12_COMMAND_QUEUE_DESC {
+            Type: D3D12_COMMAND_LIST_TYPE_COMPUTE,
+            ..Default::default()
+        })
+    }
 
-    /// For single GPU operation, set this to zero. If there are multiple GPU nodes, set a bit to identify the node (the device's physical adapter) to which the command queue applies. Each bit in the mask corresponds to a single node. Only 1 bit must be set.
-    pub node_mask: u32,
+    #[inline]
+    pub fn copy() -> Self {
+        Self(D3D12_COMMAND_QUEUE_DESC {
+            Type: D3D12_COMMAND_LIST_TYPE_COPY,
+            ..Default::default()
+        })
+    }
+
+    #[inline]
+    pub fn video_decode() -> Self {
+        Self(D3D12_COMMAND_QUEUE_DESC {
+            Type: D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE,
+            ..Default::default()
+        })
+    }
+
+    #[inline]
+    pub fn video_process() -> Self {
+        Self(D3D12_COMMAND_QUEUE_DESC {
+            Type: D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS,
+            ..Default::default()
+        })
+    }
+
+    #[inline]
+    pub fn video_encode() -> Self {
+        Self(D3D12_COMMAND_QUEUE_DESC {
+            Type: D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE,
+            ..Default::default()
+        })
+    }
+
+    #[inline]
+    pub fn with_priority(mut self, priority: CommandQueuePriority) -> Self {
+        self.0.Priority = priority.as_raw();
+        self
+    }
+
+    #[inline]
+    pub fn with_flags(mut self, flags: CommandQueueFlags) -> Self {
+        self.0.Flags = flags.as_raw();
+        self
+    }
+
+    #[inline]
+    pub fn with_node_mask(mut self, node_mask: u32) -> Self {
+        self.0.NodeMask = node_mask;
+        self
+    }
+
+    #[inline]
+    pub fn r#type(&self) -> CommandListType {
+        self.0.Type.into()
+    }
+
+    #[inline]
+    pub fn priority(&self) -> CommandQueuePriority {
+        self.0.Priority.into()
+    }
+
+    #[inline]
+    pub fn flags(&self) -> CommandQueueFlags {
+        self.0.Flags.into()
+    }
+
+    #[inline]
+    pub fn node_mask(&self) -> u32 {
+        self.0.NodeMask
+    }
 }
 
 /// Describes the arguments (parameters) of a command signature.
 ///
 /// For more information: [`D3D12_COMMAND_SIGNATURE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_command_signature_desc)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
+/*#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct CommandSignatureDesc<'a> {
     /// Specifies the size of each command in the drawing buffer, in bytes.
     pub byte_stride: u32,
@@ -118,6 +256,37 @@ pub struct CommandSignatureDesc<'a> {
     /// If there are multiple GPU nodes, set bits to identify the nodes (the device's physical adapters) for which the command signature is to apply.
     /// Each bit in the mask corresponds to a single node.
     pub node_mask: u32,
+}*/
+
+/// Describes the arguments (parameters) of a command signature.
+///
+/// For more information: [`D3D12_COMMAND_SIGNATURE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_command_signature_desc)
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct CommandSignatureDesc<'a>(pub(crate) D3D12_COMMAND_SIGNATURE_DESC, PhantomData<&'a ()>);
+
+impl<'a> CommandSignatureDesc<'a> {
+    #[inline]
+    pub fn with_byte_stride(mut self, byte_stride: u32) -> Self {
+        self.0.ByteStride = byte_stride;
+        self
+    }
+
+    #[inline]
+    pub fn with_indirect_arguments(
+        mut self,
+        indirect_arguments: &'a [IndirectArgumentDesc],
+    ) -> Self {
+        self.0.NumArgumentDescs = indirect_arguments.len() as u32;
+        self.0.pArgumentDescs = indirect_arguments.as_ptr() as *const _;
+        self
+    }
+
+    #[inline]
+    pub fn with_node_mask(mut self, node_mask: u32) -> Self {
+        self.0.NodeMask = node_mask;
+        self
+    }
 }
 
 /// Describes a compute pipeline state object.
@@ -479,45 +648,166 @@ pub struct IndexBufferView {
     pub format: Format,
 }
 
+/// Specifies the type of the indirect parameter.
+///
+/// For more information: [`D3D12_INDIRECT_ARGUMENT_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_indirect_argument_desc)
+#[derive(Clone, Copy)]
+#[repr(transparent)]
+pub struct IndirectArgumentDesc(pub(crate) D3D12_INDIRECT_ARGUMENT_DESC);
+
+impl IndirectArgumentDesc {
+    #[inline]
+    pub fn draw() -> Self {
+        Self(D3D12_INDIRECT_ARGUMENT_DESC {
+            Type: D3D12_INDIRECT_ARGUMENT_TYPE_DRAW,
+            Anonymous: Default::default(),
+        })
+    }
+
+    #[inline]
+    pub fn draw_indexed() -> Self {
+        Self(D3D12_INDIRECT_ARGUMENT_DESC {
+            Type: D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED,
+            Anonymous: Default::default(),
+        })
+    }
+
+    #[inline]
+    pub fn dispatch() -> Self {
+        Self(D3D12_INDIRECT_ARGUMENT_DESC {
+            Type: D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH,
+            Anonymous: Default::default(),
+        })
+    }
+
+    #[inline]
+    pub fn vertex_buffer_view(slot: u32) -> Self {
+        Self(D3D12_INDIRECT_ARGUMENT_DESC {
+            Type: D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,
+            Anonymous: D3D12_INDIRECT_ARGUMENT_DESC_0 {
+                VertexBuffer: D3D12_INDIRECT_ARGUMENT_DESC_0_4 { Slot: slot },
+            },
+        })
+    }
+
+    #[inline]
+    pub fn index_buffer_view() -> Self {
+        Self(D3D12_INDIRECT_ARGUMENT_DESC {
+            Type: D3D12_INDIRECT_ARGUMENT_TYPE_INDEX_BUFFER_VIEW,
+            Anonymous: Default::default(),
+        })
+    }
+
+    #[inline]
+    pub fn constant(
+        root_parameter_index: u32,
+        dest_offset_in32_bit_values: u32,
+        num32_bit_values_to_set: u32,
+    ) -> Self {
+        Self(D3D12_INDIRECT_ARGUMENT_DESC {
+            Type: D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT,
+            Anonymous: D3D12_INDIRECT_ARGUMENT_DESC_0 {
+                Constant: D3D12_INDIRECT_ARGUMENT_DESC_0_1 {
+                    RootParameterIndex: root_parameter_index,
+                    DestOffsetIn32BitValues: dest_offset_in32_bit_values,
+                    Num32BitValuesToSet: num32_bit_values_to_set,
+                },
+            },
+        })
+    }
+
+    #[inline]
+    pub fn constant_buffer_view(root_parameter_index: u32) -> Self {
+        Self(D3D12_INDIRECT_ARGUMENT_DESC {
+            Type: D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW,
+            Anonymous: D3D12_INDIRECT_ARGUMENT_DESC_0 {
+                ConstantBufferView: D3D12_INDIRECT_ARGUMENT_DESC_0_0 {
+                    RootParameterIndex: root_parameter_index,
+                },
+            },
+        })
+    }
+
+    #[inline]
+    pub fn shader_resource_view(root_parameter_index: u32) -> Self {
+        Self(D3D12_INDIRECT_ARGUMENT_DESC {
+            Type: D3D12_INDIRECT_ARGUMENT_TYPE_SHADER_RESOURCE_VIEW,
+            Anonymous: D3D12_INDIRECT_ARGUMENT_DESC_0 {
+                ShaderResourceView: D3D12_INDIRECT_ARGUMENT_DESC_0_2 {
+                    RootParameterIndex: root_parameter_index,
+                },
+            },
+        })
+    }
+
+    #[inline]
+    pub fn unordered_access_view(root_parameter_index: u32) -> Self {
+        Self(D3D12_INDIRECT_ARGUMENT_DESC {
+            Type: D3D12_INDIRECT_ARGUMENT_TYPE_UNORDERED_ACCESS_VIEW,
+            Anonymous: D3D12_INDIRECT_ARGUMENT_DESC_0 {
+                UnorderedAccessView: D3D12_INDIRECT_ARGUMENT_DESC_0_3 {
+                    RootParameterIndex: root_parameter_index,
+                },
+            },
+        })
+    }
+}
+
 /// Describes a single element for the input-assembler stage of the graphics pipeline.
 ///
 /// For more information: [`D3D12_INPUT_ELEMENT_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_input_element_desc)
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct InputElementDesc {
-    /// The HLSL semantic associated with this element in a shader input-signature.
-    pub semantic_name: &'static CStr,
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct InputElementDesc(pub(crate) D3D12_INPUT_ELEMENT_DESC);
 
-    /// The semantic index for the element.
-    /// A semantic index modifies a semantic, with an integer index number.
-    ///  A semantic index is only needed in a case where there is more than one element with the same semantic.
-    /// For example, a 4x4 matrix would have four components each with the semantic name matrix, however each of the four component would have different semantic indices (0, 1, 2, and 3).
-    pub semantic_index: u32,
+impl InputElementDesc {
+    #[inline]
+    pub fn per_vertex(
+        (semantic_name, semantic_index): (&'static CStr, u32),
+        format: Format,
+        offset: u32,
+        input_slot: u32,
+    ) -> Self {
+        let semantic_name = PCSTR::from_raw(semantic_name.as_ref().as_ptr() as *const _);
 
-    /// A [`Format`]-typed value that specifies the format of the element data.
-    pub format: Format,
+        Self(D3D12_INPUT_ELEMENT_DESC {
+            SemanticName: semantic_name,
+            SemanticIndex: semantic_index,
+            Format: format.as_raw(),
+            InputSlot: input_slot,
+            AlignedByteOffset: offset,
+            InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+            InstanceDataStepRate: 0,
+        })
+    }
 
-    /// An integer value that identifies the input-assembler. Valid values are between 0 and 15.
-    pub input_slot: u32,
+    #[inline]
+    pub fn per_instance(
+        (semantic_name, semantic_index): (&'static CStr, u32),
+        format: Format,
+        offset: u32,
+        input_slot: u32,
+        instance_data_step_rate: u32,
+    ) -> Self {
+        let semantic_name = PCSTR::from_raw(semantic_name.as_ref().as_ptr() as *const _);
 
-    /// Optional. Offset, in bytes, to this element from the start of the vertex.
-    /// Use `0xffffffff` for convenience to define the current element directly after the previous one, including any packing if necessary.
-    pub offset: u32,
-
-    /// A value that identifies the input data class for a single input slot.
-    pub slot_class: InputClass,
+        Self(D3D12_INPUT_ELEMENT_DESC {
+            SemanticName: semantic_name,
+            SemanticIndex: semantic_index,
+            Format: format.as_raw(),
+            InputSlot: input_slot,
+            AlignedByteOffset: offset,
+            InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA,
+            InstanceDataStepRate: instance_data_step_rate,
+        })
+    }
 }
 
 /// The LUID structure is an opaque structure that specifies an identifier that is guaranteed to be unique on the local machine.
 ///
 /// For more information: [`LUID structure`](https://learn.microsoft.com/en-us/windows/win32/api/ntdef/ns-ntdef-luid)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct Luid {
-    /// TBD
-    pub low_part: u32,
-
-    /// TBD
-    pub high_part: i32,
-}
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Luid(pub(crate) LUID);
 
 /// Describes the tile structure of a tiled resource with mipmaps.
 ///
@@ -650,6 +940,83 @@ impl Rect {
             right: width,
             bottom: height,
         }
+    }
+}
+
+/// Describes the blend state for a render target.
+///
+/// For more information: [`D3D12_RENDER_TARGET_BLEND_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_render_target_blend_desc)
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct RenderTargetBlendDesc(pub(crate) D3D12_RENDER_TARGET_BLEND_DESC);
+
+impl RenderTargetBlendDesc {
+    /// Specifies blending.
+    /// * `src_blend` - A [`Blend`]-typed value that specifies the operation to perform on the RGB value that the pixel shader outputs. The BlendOp member defines how to combine the src_blend and dst_blend operations.
+    /// * `dst_blend` -  A [`Blend`]-typed value that specifies the operation to perform on the current RGB value in the render target. The BlendOp member defines how to combine the src_blend and dst_blend operations.
+    /// * `blend_op` - A [`BlendOp]-typed value that defines how to combine the src_blend and dst_blend operations.
+    /// * `mask` -  A combination of [`ColorWriteEnable`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies a write mask.
+    #[inline]
+    pub fn blend(
+        src_blend: Blend,
+        dst_blend: Blend,
+        blend_op: BlendOp,
+        mask: ColorWriteEnable,
+    ) -> Self {
+        Self(D3D12_RENDER_TARGET_BLEND_DESC {
+            BlendEnable: true.into(),
+            SrcBlend: src_blend.as_raw(),
+            DestBlend: dst_blend.as_raw(),
+            BlendOp: blend_op.as_raw(),
+            RenderTargetWriteMask: mask.bits() as u8,
+            ..Default::default()
+        })
+    }
+
+    /// Specifies blending with alpha.
+    /// * `src_blend` - A [`Blend`]-typed value that specifies the operation to perform on the RGB value that the pixel shader outputs. The BlendOp member defines how to combine the src_blend and dst_blend operations.
+    /// * `dst_blend` -  A [`Blend`]-typed value that specifies the operation to perform on the current RGB value in the render target. The BlendOp member defines how to combine the src_blend and dst_blend operations.
+    /// * `blend_op` - A [`BlendOp]-typed value that defines how to combine the src_blend and dst_blend operations.
+    /// * `src_blend_alpha` -A [`Blend`]-typed value that specifies the operation to perform on the alpha value that the pixel shader outputs.
+    ///   Blend options that end in _COLOR are not allowed. The BlendOpAlpha member defines how to combine the src_blend_alpha and dst_blend_alpha operations.
+    /// * `dst_blend_alpha` -  A [`Blend`]-typed value that specifies the operation to perform on the current alpha value in the render target.
+    ///   Blend options that end in _COLOR are not allowed. The BlendOpAlpha member defines how to combine the src_blend_alpha and dst_blend_alpha operations.
+    /// * `blend_op_alpha` - A [`BlendOp`]-typed value that defines how to combine the SrcBlendAlpha and DestBlendAlpha operations.
+    /// * `mask` -  A combination of [`ColorWriteEnable`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies a write mask.
+    #[inline]
+    pub fn blend_with_alpha(
+        src_blend: Blend,
+        dst_blend: Blend,
+        blend_op: BlendOp,
+        src_blend_alpha: Blend,
+        dst_blend_alpha: Blend,
+        blend_op_alpha: BlendOp,
+        mask: ColorWriteEnable,
+    ) -> Self {
+        Self(D3D12_RENDER_TARGET_BLEND_DESC {
+            BlendEnable: true.into(),
+            SrcBlend: src_blend.as_raw(),
+            DestBlend: dst_blend.as_raw(),
+            BlendOp: blend_op.as_raw(),
+            SrcBlendAlpha: src_blend_alpha.as_raw(),
+            DestBlendAlpha: dst_blend_alpha.as_raw(),
+            BlendOpAlpha: blend_op_alpha.as_raw(),
+            RenderTargetWriteMask: mask.bits() as u8,
+            ..Default::default()
+        })
+    }
+
+    /// Specifies logic operation.
+    /// * `logic_op` - A [`LogicOp`]-typed value that specifies the logical operation to configure for the render target.
+    /// * `mask` -  A combination of [`ColorWriteEnable`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies a write mask.
+    #[inline]
+    pub fn logic(logic_op: LogicOp, mask: ColorWriteEnable) -> Self {
+        Self(D3D12_RENDER_TARGET_BLEND_DESC {
+            LogicOpEnable: true.into(),
+            LogicOp: logic_op.as_raw(),
+            RenderTargetWriteMask: mask.bits() as u8,
+            ..Default::default()
+        })
     }
 }
 

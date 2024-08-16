@@ -139,8 +139,7 @@ impl_trait! {
         src_box: Option<&Box>,
     ) -> Result<(), DxError> {
         unsafe {
-            let src_box = src_box.map(|s| s.as_raw());
-            let src_box = src_box.as_ref().map(|s| s as *const _);
+            let src_box = src_box.map(|s| &s.0 as *const _);
 
             self.0.ReadFromSubresource(
                 dst_data.as_mut_ptr() as *mut _,
@@ -173,8 +172,7 @@ impl_trait! {
         src_depth_pitch: u32,
     ) -> Result<(), DxError> {
         unsafe {
-            let dst_box = dst_box.map(|s| s.as_raw());
-            let dst_box = dst_box.as_ref().map(|s| s as *const _);
+            let dst_box = dst_box.map(|s| &s.0 as *const _);
 
             self.0.WriteToSubresource(
                 dst_subresource,

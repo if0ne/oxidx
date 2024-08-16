@@ -98,7 +98,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// For more information: [`ID3D12Device::CreateCommandQueue method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommandqueue)
     fn create_command_queue<CQ: ICommandQueue>(
         &self,
-        desc: CommandQueueDesc,
+        desc: &CommandQueueDesc,
     ) -> Result<CQ, DxError>;
 
     /// Creates a command queue.
@@ -450,10 +450,10 @@ impl_trait! {
 
     fn create_command_queue<CQ: ICommandQueue>(
         &self,
-        desc: CommandQueueDesc,
+        desc: &CommandQueueDesc,
     ) -> Result<CQ, DxError> {
         unsafe {
-            let res: CQ::Raw = self.0.CreateCommandQueue(&desc.as_raw()).map_err(DxError::from)?;
+            let res: CQ::Raw = self.0.CreateCommandQueue(&desc.0).map_err(DxError::from)?;
 
             Ok(CQ::new(res))
         }
@@ -465,24 +465,17 @@ impl_trait! {
         root_signature: Option<&impl IRootSignature>,
     ) -> Result<CS, DxError> {
         unsafe {
-            let argument_descs = desc
-                .argument_descs
-                .iter()
-                .map(|a| a.as_raw())
-                .collect::<SmallVec<[_; 16]>>();
-
-            let desc = desc.as_raw(&argument_descs);
             let mut res: Option<CS::Raw> = None;
 
             if let Some(root_signature) = root_signature {
                 self.0.CreateCommandSignature(
-                    &desc,
+                    &desc.0,
                     root_signature.as_raw_ref(),
                     &mut res
                 ).map_err(DxError::from)?;
             } else {
                 self.0.CreateCommandSignature(
-                    &desc,
+                    &desc.0,
                     None,
                     &mut res
                 ).map_err(DxError::from)?;
@@ -637,12 +630,6 @@ impl_trait! {
         desc: &GraphicsPipelineDesc<'_>,
     ) -> Result<G, DxError> {
         unsafe {
-            let input_layouts = desc
-                .input_layout
-                .iter()
-                .map(|il| il.as_raw())
-                .collect::<SmallVec<[_; 16]>>();
-
             let entries = if let Some(so) = &desc.stream_output {
                 so.entries
                     .iter()
@@ -652,7 +639,7 @@ impl_trait! {
                 SmallVec::new()
             };
 
-            let desc = desc.as_raw(&input_layouts, &entries);
+            let desc = desc.as_raw(&entries);
 
             let res: G::Raw = self.0.CreateGraphicsPipelineState(&desc).map_err(DxError::from)?;
 
@@ -917,7 +904,7 @@ impl_trait! {
 
     fn get_adapter_luid(&self) -> Luid {
         unsafe {
-            self.0.GetAdapterLuid().into()
+            Luid(self.0.GetAdapterLuid())
         }
     }
 

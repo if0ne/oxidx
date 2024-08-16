@@ -178,122 +178,12 @@ impl From<u64> for HeapAlignment {
     }
 }
 
-impl IndirectArgumentDesc {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_INDIRECT_ARGUMENT_DESC {
-        D3D12_INDIRECT_ARGUMENT_DESC {
-            Type: self.as_raw_type(),
-            Anonymous: match *self {
-                IndirectArgumentDesc::Draw => Default::default(),
-                IndirectArgumentDesc::DrawIndexed => Default::default(),
-                IndirectArgumentDesc::Dispatch => Default::default(),
-                IndirectArgumentDesc::VertexBufferView { slot } => D3D12_INDIRECT_ARGUMENT_DESC_0 {
-                    VertexBuffer: D3D12_INDIRECT_ARGUMENT_DESC_0_4 { Slot: slot },
-                },
-                IndirectArgumentDesc::IndexBufferView => Default::default(),
-                IndirectArgumentDesc::Constant {
-                    root_parameter_index,
-                    dest_offset_in32_bit_values,
-                    num32_bit_values_to_set,
-                } => D3D12_INDIRECT_ARGUMENT_DESC_0 {
-                    Constant: D3D12_INDIRECT_ARGUMENT_DESC_0_1 {
-                        RootParameterIndex: root_parameter_index,
-                        DestOffsetIn32BitValues: dest_offset_in32_bit_values,
-                        Num32BitValuesToSet: num32_bit_values_to_set,
-                    },
-                },
-                IndirectArgumentDesc::ConstantBufferView {
-                    root_parameter_index,
-                } => D3D12_INDIRECT_ARGUMENT_DESC_0 {
-                    ConstantBufferView: D3D12_INDIRECT_ARGUMENT_DESC_0_0 {
-                        RootParameterIndex: root_parameter_index,
-                    },
-                },
-                IndirectArgumentDesc::ShaderResourceView {
-                    root_parameter_index,
-                } => D3D12_INDIRECT_ARGUMENT_DESC_0 {
-                    ShaderResourceView: D3D12_INDIRECT_ARGUMENT_DESC_0_2 {
-                        RootParameterIndex: root_parameter_index,
-                    },
-                },
-                IndirectArgumentDesc::UnorderedAccessView {
-                    root_parameter_index,
-                } => D3D12_INDIRECT_ARGUMENT_DESC_0 {
-                    UnorderedAccessView: D3D12_INDIRECT_ARGUMENT_DESC_0_3 {
-                        RootParameterIndex: root_parameter_index,
-                    },
-                },
-            },
-        }
-    }
-
-    #[inline]
-    fn as_raw_type(&self) -> D3D12_INDIRECT_ARGUMENT_TYPE {
-        match self {
-            IndirectArgumentDesc::Draw => D3D12_INDIRECT_ARGUMENT_TYPE_DRAW,
-            IndirectArgumentDesc::DrawIndexed => D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED,
-            IndirectArgumentDesc::Dispatch => D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH,
-            IndirectArgumentDesc::VertexBufferView { .. } => {
-                D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW
-            }
-            IndirectArgumentDesc::IndexBufferView => D3D12_INDIRECT_ARGUMENT_TYPE_INDEX_BUFFER_VIEW,
-            IndirectArgumentDesc::Constant { .. } => D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT,
-            IndirectArgumentDesc::ConstantBufferView { .. } => {
-                D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW
-            }
-            IndirectArgumentDesc::ShaderResourceView { .. } => {
-                D3D12_INDIRECT_ARGUMENT_TYPE_SHADER_RESOURCE_VIEW
-            }
-            IndirectArgumentDesc::UnorderedAccessView { .. } => {
-                D3D12_INDIRECT_ARGUMENT_TYPE_UNORDERED_ACCESS_VIEW
-            }
-        }
-    }
-}
-
 impl InputClass {
     #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_INPUT_CLASSIFICATION {
         match self {
             InputClass::PerVertex => D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
             InputClass::InstanceData(_) => D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA,
-        }
-    }
-}
-
-impl RenderTargetBlendDesc {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_RENDER_TARGET_BLEND_DESC {
-        match self {
-            RenderTargetBlendDesc::None => D3D12_RENDER_TARGET_BLEND_DESC {
-                RenderTargetWriteMask: ColorWriteEnable::all().as_raw().0 as u8,
-                ..Default::default()
-            },
-            RenderTargetBlendDesc::Blend {
-                src_blend,
-                dst_blend,
-                blend_op,
-                src_blend_alpha,
-                dst_blend_alpha,
-                blend_op_alpha,
-                mask,
-            } => D3D12_RENDER_TARGET_BLEND_DESC {
-                BlendEnable: true.into(),
-                SrcBlend: src_blend.as_raw(),
-                DestBlend: dst_blend.as_raw(),
-                BlendOp: blend_op.as_raw(),
-                SrcBlendAlpha: src_blend_alpha.as_raw(),
-                DestBlendAlpha: dst_blend_alpha.as_raw(),
-                BlendOpAlpha: blend_op_alpha.as_raw(),
-                RenderTargetWriteMask: mask.as_raw().0 as u8,
-                ..Default::default()
-            },
-            RenderTargetBlendDesc::Logic { logic_op, mask } => D3D12_RENDER_TARGET_BLEND_DESC {
-                LogicOpEnable: true.into(),
-                LogicOp: logic_op.as_raw(),
-                RenderTargetWriteMask: mask.as_raw().0 as u8,
-                ..Default::default()
-            },
         }
     }
 }

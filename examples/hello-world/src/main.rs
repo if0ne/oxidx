@@ -142,10 +142,7 @@ impl DXSample for Sample {
     fn bind_to_window(&mut self, hwnd: NonZeroIsize) {
         let command_queue: CommandQueue = self
             .device
-            .create_command_queue(CommandQueueDesc {
-                r#type: CommandListType::Direct,
-                ..Default::default()
-            })
+            .create_command_queue(&CommandQueueDesc::direct())
             .unwrap();
 
         let (width, height) = self.window_size();
@@ -382,7 +379,7 @@ fn get_hardware_adapter(factory: &Factory4) -> Adapter3 {
 
         let desc = adapter.get_desc1().unwrap();
 
-        if (desc.flags & AdapterFlags::Sofware) != AdapterFlags::empty() {
+        if (desc.flags() & AdapterFlags::Sofware) != AdapterFlags::empty() {
             continue;
         }
 
@@ -439,22 +436,8 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
     .unwrap();
 
     let input_element_descs: [InputElementDesc; 2] = [
-        InputElementDesc {
-            semantic_name: c"POSITION",
-            semantic_index: 0,
-            format: Format::Rgb32Float,
-            input_slot: 0,
-            offset: 0,
-            slot_class: InputClass::PerVertex,
-        },
-        InputElementDesc {
-            semantic_name: c"COLOR",
-            semantic_index: 0,
-            format: Format::Rgba32Float,
-            input_slot: 0,
-            offset: 12,
-            slot_class: InputClass::PerVertex,
-        },
+        InputElementDesc::per_vertex((c"POSITION", 0), Format::Rgb32Float, 0, 0),
+        InputElementDesc::per_vertex((c"COLOR", 0), Format::Rgba32Float, 0, 12),
     ];
 
     let desc = GraphicsPipelineDesc {
@@ -472,20 +455,7 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
             cull_mode: CullMode::None,
             ..Default::default()
         },
-        blend_state: BlendDesc {
-            alpha_to_coverage_enable: false,
-            independent_blend_enable: false,
-            render_targets: [
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-                RenderTargetBlendDesc::default(),
-            ],
-        },
+        blend_state: BlendDesc::default(),
         depth_stencil: None,
         primitive_topology: PipelinePrimitiveTopology::Triangle,
         sampler_desc: SampleDesc {

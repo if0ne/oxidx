@@ -32,7 +32,7 @@ impl_trait! {
 
             self.0.GetDesc1(&mut desc).map_err(DxError::from)?;
 
-            Ok(desc.into())
+            Ok(AdapterDesc1(desc))
         }
     }
 }

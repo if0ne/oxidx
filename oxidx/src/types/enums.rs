@@ -1264,61 +1264,6 @@ pub enum IndexBufferStripCutValue {
     _0xFFFFFFFF = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFFFFFF.0,
 }
 
-/// Specifies the type of the indirect parameter.
-///
-/// For more information: [`D3D12_INDIRECT_ARGUMENT_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_indirect_argument_desc)
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub enum IndirectArgumentDesc {
-    /// Indicates the type is a Draw call.
-    Draw,
-
-    /// Indicates the type is a DrawIndexed call.
-    DrawIndexed,
-
-    /// Indicates the type is a Dispatch call.
-    Dispatch,
-
-    /// Indicates the type is a vertex buffer view.
-    VertexBufferView {
-        /// Specifies the slot containing the vertex buffer address.
-        slot: u32,
-    },
-
-    /// Indicates the type is an index buffer view.
-    IndexBufferView,
-
-    /// Indicates the type is a constant.
-    Constant {
-        /// Specifies the root index of the constant.
-        root_parameter_index: u32,
-
-        /// The offset, in 32-bit values, to set the first constant of the group.
-        /// Supports multi-value constants at a given root index. Root constant entries must be sorted from smallest to largest DestOffsetIn32BitValues.
-        dest_offset_in32_bit_values: u32,
-
-        /// The number of 32-bit constants that are set at the given root index. Supports multi-value constants at a given root index.
-        num32_bit_values_to_set: u32,
-    },
-
-    /// Indicates the type is a constant buffer view (CBV).
-    ConstantBufferView {
-        /// Specifies the root index of the CBV.
-        root_parameter_index: u32,
-    },
-
-    /// Indicates the type is a shader resource view (SRV).
-    ShaderResourceView {
-        /// Specifies the root index of the SRV.
-        root_parameter_index: u32,
-    },
-
-    /// Indicates the type is an unordered access view (UAV).
-    UnorderedAccessView {
-        /// Specifies the root index of the UAV.
-        root_parameter_index: u32,
-    },
-}
-
 /// Identifies the type of data contained in an input slot.
 ///
 /// For more information: [`D3D12_INPUT_CLASSIFICATION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_input_classification)
@@ -1645,7 +1590,7 @@ pub enum RenderPassTier {
 /// Describes the blend state for a render target.
 ///
 /// For more information: [`D3D12_RENDER_TARGET_BLEND_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_render_target_blend_desc)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
+/*#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub enum RenderTargetBlendDesc {
     /// No blend or logic op.
     #[default]
@@ -1683,7 +1628,7 @@ pub enum RenderTargetBlendDesc {
         /// A combination of [`ColorWriteEnable`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies a write mask.
         mask: ColorWriteEnable,
     },
-}
+}*/
 
 /// Identifies the tier of resource binding being used.
 ///

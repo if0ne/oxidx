@@ -3,96 +3,6 @@ use windows::Win32::Graphics::Direct3D12::*;
 
 use super::*;
 
-impl From<DXGI_ADAPTER_DESC1> for AdapterDesc1 {
-    fn from(value: DXGI_ADAPTER_DESC1) -> Self {
-        AdapterDesc1 {
-            description: CompactString::from_utf16_lossy(value.Description),
-            vendor_id: value.VendorId,
-            device_id: value.DeviceId,
-            sub_sys_id: value.SubSysId,
-            revision: value.Revision,
-            dedicated_video_memory: value.DedicatedVideoMemory,
-            dedicated_system_memory: value.SharedSystemMemory,
-            shared_system_memory: value.SharedSystemMemory,
-            adapter_luid: Luid {
-                low_part: value.AdapterLuid.LowPart,
-                high_part: value.AdapterLuid.HighPart,
-            },
-            flags: AdapterFlags::from_bits(value.Flags as i32).unwrap(),
-        }
-    }
-}
-
-impl BlendDesc {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_BLEND_DESC {
-        let mut render_target = [D3D12_RENDER_TARGET_BLEND_DESC::default(); 8];
-
-        for (i, desc) in self.render_targets.iter().enumerate() {
-            render_target[i] = desc.as_raw();
-        }
-
-        D3D12_BLEND_DESC {
-            AlphaToCoverageEnable: self.alpha_to_coverage_enable.into(),
-            IndependentBlendEnable: self.independent_blend_enable.into(),
-            RenderTarget: render_target,
-        }
-    }
-}
-
-impl Box {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_BOX {
-        D3D12_BOX {
-            left: self.left,
-            top: self.top,
-            front: self.front,
-            right: self.right,
-            bottom: self.bottom,
-            back: self.back,
-        }
-    }
-}
-
-impl CommandQueueDesc {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_COMMAND_QUEUE_DESC {
-        D3D12_COMMAND_QUEUE_DESC {
-            Type: self.r#type.as_raw(),
-            Priority: self.priority.as_raw(),
-            Flags: self.flags.as_raw(),
-            NodeMask: self.node_mask,
-        }
-    }
-}
-
-impl From<D3D12_COMMAND_QUEUE_DESC> for CommandQueueDesc {
-    #[inline]
-    fn from(value: D3D12_COMMAND_QUEUE_DESC) -> Self {
-        Self {
-            r#type: value.Type.into(),
-            priority: value.Priority.into(),
-            flags: value.Flags.into(),
-            node_mask: value.NodeMask,
-        }
-    }
-}
-
-impl<'a> CommandSignatureDesc<'a> {
-    #[inline]
-    pub(crate) fn as_raw(
-        &self,
-        arguments: &[D3D12_INDIRECT_ARGUMENT_DESC],
-    ) -> D3D12_COMMAND_SIGNATURE_DESC {
-        D3D12_COMMAND_SIGNATURE_DESC {
-            ByteStride: self.byte_stride,
-            NumArgumentDescs: arguments.len() as u32,
-            pArgumentDescs: arguments.as_ptr(),
-            NodeMask: self.node_mask,
-        }
-    }
-}
-
 impl<'a> ComputePipelineStateDesc<'a> {
     #[inline]
     pub(crate) fn as_raw(&self) -> D3D12_COMPUTE_PIPELINE_STATE_DESC {
@@ -303,7 +213,6 @@ impl<'a> GraphicsPipelineDesc<'a> {
     #[inline]
     pub(crate) fn as_raw(
         &self,
-        input_layouts: &[D3D12_INPUT_ELEMENT_DESC],
         so_entries: &[D3D12_SO_DECLARATION_ENTRY],
     ) -> D3D12_GRAPHICS_PIPELINE_STATE_DESC {
         let mut rtv_formats = [DXGI_FORMAT::default(); 8];
@@ -336,7 +245,7 @@ impl<'a> GraphicsPipelineDesc<'a> {
                 .as_ref()
                 .map(|so| so.as_raw(&so_entries))
                 .unwrap_or_default(),
-            BlendState: self.blend_state.as_raw(),
+            BlendState: self.blend_state.0,
             SampleMask: self.sample_mask,
             RasterizerState: self.rasterizer_state.as_raw(),
             DepthStencilState: self
@@ -344,10 +253,7 @@ impl<'a> GraphicsPipelineDesc<'a> {
                 .as_ref()
                 .map(|ds| ds.as_raw())
                 .unwrap_or_default(),
-            InputLayout: D3D12_INPUT_LAYOUT_DESC {
-                pInputElementDescs: input_layouts.as_ptr() as *const _,
-                NumElements: input_layouts.len() as u32,
-            },
+            InputLayout: self.0.InputLayout,
             IBStripCutValue: self
                 .ib_strip_cut_value
                 .map(|ib| ib.as_raw())
@@ -424,42 +330,6 @@ impl IndexBufferView {
             BufferLocation: self.buffer_location,
             SizeInBytes: self.size_in_bytes,
             Format: self.format.as_raw(),
-        }
-    }
-}
-
-impl InputElementDesc {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_INPUT_ELEMENT_DESC {
-        let semantic_name = PCSTR::from_raw(self.semantic_name.as_ref().as_ptr() as *const _);
-
-        D3D12_INPUT_ELEMENT_DESC {
-            SemanticName: semantic_name,
-            SemanticIndex: self.semantic_index,
-            Format: self.format.as_raw(),
-            InputSlot: self.input_slot,
-            AlignedByteOffset: self.offset,
-            InputSlotClass: self.slot_class.as_raw(),
-            InstanceDataStepRate: self.slot_class.step_rate(),
-        }
-    }
-}
-
-impl Luid {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> LUID {
-        LUID {
-            LowPart: self.low_part,
-            HighPart: self.high_part,
-        }
-    }
-}
-
-impl From<LUID> for Luid {
-    fn from(value: LUID) -> Self {
-        Self {
-            low_part: value.LowPart,
-            high_part: value.HighPart,
         }
     }
 }
