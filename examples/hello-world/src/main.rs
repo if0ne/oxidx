@@ -182,11 +182,7 @@ impl DXSample for Sample {
 
         let rtv_heap: DescriptorHeap = self
             .device
-            .create_descriptor_heap(&DescriptorHeapDesc {
-                num: FRAME_COUNT,
-                r#type: DescriptorHeapType::Rtv,
-                ..Default::default()
-            })
+            .create_descriptor_heap(&DescriptorHeapDesc::rtv(FRAME_COUNT))
             .unwrap();
 
         let rtv_descriptor_size =
@@ -305,7 +301,7 @@ fn populate_command_list(resources: &Resources) {
         ResourceStates::Present,
         ResourceStates::RenderTarget,
     );
-    command_list.resource_barrier([barrier]);
+    command_list.resource_barrier(&[barrier]);
 
     let rtv_handle = resources
         .rtv_heap
@@ -324,7 +320,7 @@ fn populate_command_list(resources: &Resources) {
         ResourceStates::RenderTarget,
         ResourceStates::Present,
     );
-    command_list.resource_barrier([barrier]);
+    command_list.resource_barrier(&[barrier]);
 
     command_list.close().unwrap();
 }
@@ -334,15 +330,12 @@ fn transition_barrier(
     state_before: ResourceStates,
     state_after: ResourceStates,
 ) -> ResourceBarrier {
-    ResourceBarrier {
-        r#type: BarrierType::Transition {
-            resource,
-            subresource: BARRIER_ALL_SUBRESOURCES,
-            before: state_before,
-            after: state_after,
-        },
-        flags: ResourceBarrierFlags::empty(),
-    }
+    ResourceBarrier::transition(
+        resource,
+        BARRIER_ALL_SUBRESOURCES,
+        state_before,
+        state_after,
+    )
 }
 
 fn create_device(command_line: &SampleCommandLine) -> (Factory4, Device) {
@@ -440,7 +433,9 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
         InputElementDesc::per_vertex((c"COLOR", 0), Format::Rgba32Float, 0, 12),
     ];
 
-    let desc = GraphicsPipelineDesc {
+    let desc = GraphicsPipelineDesc::new(&vertex_shader);
+
+    /*let desc = GraphicsPipelineDesc {
         root_signature,
         input_layout: &input_element_descs,
         vs: &vertex_shader,
@@ -478,7 +473,7 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
         flags: PipelineStateFlags::empty(),
         num_render_targets: 1,
         cached_pso: None,
-    };
+    };*/
 
     device.create_graphics_pipeline(&desc).unwrap()
 }

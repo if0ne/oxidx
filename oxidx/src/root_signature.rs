@@ -54,7 +54,7 @@ impl_trait! {
                 if let RootParameterType::DescriptorTable { ranges } = param.r#type {
                     ranges
                         .iter()
-                        .map(|r| r.as_raw())
+                        .map(|r| r.0)
                         .collect::<SmallVec<[_; 8]>>()
                 } else {
                     SmallVec::new()

@@ -45,13 +45,13 @@ impl_trait! {
 
     fn get_desc(&self) -> DescriptorHeapDesc {
         unsafe {
-            self.0.GetDesc().into()
+            DescriptorHeapDesc(self.0.GetDesc())
         }
     }
 
     fn get_gpu_descriptor_handle_for_heap_start(&self) -> GpuDescriptorHandle {
         unsafe {
-            self.0.GetGPUDescriptorHandleForHeapStart().into()
+            GpuDescriptorHandle(self.0.GetGPUDescriptorHandleForHeapStart())
         }
     }
 }

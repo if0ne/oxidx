@@ -49,7 +49,7 @@ pub trait IGraphicsCommandList:
         clear_flags: ClearFlags,
         depth: f32,
         stencil: u8,
-        rects: impl IntoIterator<Item = Rect>,
+        rects: &[Rect],
     );
 
     /// Sets all the elements in a render target to one value.
@@ -487,20 +487,17 @@ impl_trait! {
         clear_flags: ClearFlags,
         depth: f32,
         stencil: u8,
-        rects: impl IntoIterator<Item = Rect>,
+        rects: &[Rect],
     ) {
         unsafe {
-            let rects = rects
-                .into_iter()
-                .map(|r| r.as_raw())
-                .collect::<SmallVec<[_; 8]>>();
+            let rects = std::slice::from_raw_parts(rects.as_ptr() as *const _, rects.len());
 
             self.0.ClearDepthStencilView(
                 depth_stencil_view.0,
                 clear_flags.as_raw(),
                 depth,
                 stencil,
-                &rects
+                rects
             );
         }
     }
@@ -554,7 +551,7 @@ impl_trait! {
                 .collect::<SmallVec<[_; 8]>>();
 
             self.0.ClearUnorderedAccessViewFloat(
-                view_gpu_handle_in_current_heap.as_raw(),
+                view_gpu_handle_in_current_heap.0,
                 view_cpu_handle.0,
                 resource.as_raw_ref(),
                 &values.into(),
@@ -578,7 +575,7 @@ impl_trait! {
                 .collect::<SmallVec<[_; 8]>>();
 
             self.0.ClearUnorderedAccessViewUint(
-                view_gpu_handle_in_current_heap.as_raw(),
+                view_gpu_handle_in_current_heap.0,
                 view_cpu_handle.0,
                 resource.as_raw_ref(),
                 &values.into(),
@@ -667,18 +664,7 @@ impl_trait! {
 
     fn discard_resource(&self, resource: &impl IResource, region: Option<&DiscardRegion<'_>>) {
         unsafe {
-            let rects = if let Some(region) = region {
-                region
-                    .rects
-                    .iter()
-                    .map(|r| r.as_raw())
-                    .collect::<SmallVec<[_; 16]>>()
-            } else {
-                SmallVec::new()
-            };
-
-            let region = region.map(|r| r.as_raw(&rects));
-            let region = region.as_ref().map(|r| r as *const _);
+            let region = region.map(|r| &r.0 as *const _);
 
             self.0.DiscardResource(resource.as_raw_ref(), region);
         }
@@ -1013,7 +999,7 @@ impl_trait! {
         unsafe {
             self.0.SetComputeRootDescriptorTable(
                 root_parameter_index,
-                base_descriptor.as_raw()
+                base_descriptor.0
             );
         }
     }
@@ -1122,7 +1108,7 @@ impl_trait! {
         unsafe {
             self.0.SetGraphicsRootDescriptorTable(
                 root_parameter_index,
-                base_descriptor.as_raw(),
+                base_descriptor.0,
             );
         }
     }

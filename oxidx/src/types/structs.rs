@@ -8,11 +8,7 @@ use windows::{
 };
 
 use crate::{
-    blob::Blob,
-    error::DxError,
-    resources::Resource,
-    root_signature::{self, RootSignature},
-    HasInterface,
+    blob::Blob, error::DxError, resources::Resource, root_signature::RootSignature, HasInterface,
 };
 
 use super::*;
@@ -363,6 +359,7 @@ pub struct CpuDescriptorHandle(pub(crate) D3D12_CPU_DESCRIPTOR_HANDLE);
 
 impl CpuDescriptorHandle {
     /// Returns a new handle with offset relative to the current handle.
+    #[inline]
     pub fn offset(&self, offset: usize) -> Self {
         Self(D3D12_CPU_DESCRIPTOR_HANDLE {
             ptr: self.0.ptr + offset,
@@ -373,159 +370,376 @@ impl CpuDescriptorHandle {
 /// Describes a vertex element in a vertex buffer in an output slot.
 ///
 /// For more information: [`D3D12_SO_DECLARATION_ENTRY structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_so_declaration_entry)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct DeclarationEntry {
-    /// Zero-based, stream number.
-    pub stream: u32,
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct DeclarationEntry(pub(crate) D3D12_SO_DECLARATION_ENTRY);
 
-    /// Type of output element; possible values include: "POSITION", "NORMAL", or "TEXCOORD0".
-    /// Note that if SemanticName is NULL then ComponentCount can be greater than 4 and the described entry will be a gap in the stream out where no data will be written.
-    pub semantic_name: &'static CStr,
+impl DeclarationEntry {
+    #[inline]
+    pub fn new(
+        (semantic_name, semantic_index): (&'static CStr, u32),
+        stream: u32,
+        components: Range<u8>,
+        output_slot: u8,
+    ) -> Self {
+        let semantic_name = PCSTR::from_raw(semantic_name.as_ref().as_ptr() as *const _);
 
-    /// Output element's zero-based index. Use, for example, if you have more than one texture coordinate stored in each vertex.
-    pub semantic_index: u32,
-
-    /// The component of the entry to begin writing out to. Valid values are 0 to 3. For example, if you only wish to output to the y and z components of a position, StartComponent is 1 and ComponentCount is 2.
-    pub start_component: u8,
-
-    /// The number of components of the entry to write out to. Valid values are 1 to 4.
-    /// For example, if you only wish to output to the y and z components of a position, StartComponent is 1 and ComponentCount is 2.
-    /// Note that if SemanticName is NULL then ComponentCount can be greater than 4 and the described entry will be a gap in the stream out where no data will be written.
-    pub component_count: u8,
-
-    /// The associated stream output buffer that is bound to the pipeline. The valid range for OutputSlot is 0 to 3.
-    pub output_slot: u8,
+        Self(D3D12_SO_DECLARATION_ENTRY {
+            Stream: stream,
+            SemanticName: semantic_name,
+            SemanticIndex: semantic_index,
+            StartComponent: components.start,
+            ComponentCount: components.count() as u8,
+            OutputSlot: output_slot,
+        })
+    }
 }
 
 /// Describes depth-stencil state.
 ///
 /// For more information: [`D3D12_DEPTH_STENCIL_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_depth_stencil_desc)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct DepthStencilDesc {
-    /// Specifies whether to enable depth testing. Set this member to TRUE to enable depth testing.
-    pub depth_enable: bool,
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct DepthStencilDesc(pub(crate) D3D12_DEPTH_STENCIL_DESC);
 
-    /// A [`DepthWriteMask`]-typed value that identifies a portion of the depth-stencil buffer that can be modified by depth data.
-    pub depth_write_mask: DepthWriteMask,
+impl DepthStencilDesc {
+    #[inline]
+    pub fn enable_depth(mut self, depth_func: ComparisonFunc) -> Self {
+        self.0.DepthEnable = true.into();
+        self.0.DepthFunc = depth_func.as_raw();
+        self
+    }
 
-    /// A [`ComparisonFunc`]-typed value that identifies a function that compares depth data against existing depth data.
-    pub depth_func: ComparisonFunc,
+    #[inline]
+    pub fn with_depth_write_mask(mut self, mask: DepthWriteMask) -> Self {
+        self.0.DepthWriteMask = mask.as_raw();
+        self
+    }
 
-    /// Specifies whether to enable stencil testing. Set this member to TRUE to enable stencil testing.
-    pub stencil_enable: bool,
+    #[inline]
+    pub fn enable_stencil(mut self, stencil_read_mask: u8, stencil_write_mask: u8) -> Self {
+        self.0.StencilEnable = true.into();
+        self.0.StencilReadMask = stencil_read_mask;
+        self.0.StencilWriteMask = stencil_write_mask;
+        self
+    }
 
-    /// Identify a portion of the depth-stencil buffer for reading stencil data.
-    pub stencil_read_mask: u8,
+    #[inline]
+    pub fn with_front_face(mut self, front_face: DepthStencilOpDesc) -> Self {
+        self.0.FrontFace = front_face.0;
+        self
+    }
 
-    /// Identify a portion of the depth-stencil buffer for writing stencil data.
-    pub stencil_write_mask: u8,
-
-    /// A [`DepthStencilOpDesc`] structure that describes how to use the results of the depth test and the stencil test for pixels whose surface normal is facing towards the camera.
-    pub front_face: DepthStencilOpDesc,
-
-    /// A [`DepthStencilOpDesc`] structure that describes how to use the results of the depth test and the stencil test for pixels whose surface normal is facing away from the camera.
-    pub back_face: DepthStencilOpDesc,
+    #[inline]
+    pub fn with_back_face(mut self, back_face: DepthStencilOpDesc) -> Self {
+        self.0.BackFace = back_face.0;
+        self
+    }
 }
 
 /// Describes stencil operations that can be performed based on the results of stencil test.
 ///
 /// For more information: [`D3D12_DEPTH_STENCILOP_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_depth_stencilop_desc)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct DepthStencilOpDesc {
-    /// A [`StencilOp`]-typed value that identifies the stencil operation to perform when stencil testing fails.
-    pub stencil_fail_op: StencilOp,
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct DepthStencilOpDesc(pub(crate) D3D12_DEPTH_STENCILOP_DESC);
 
-    /// A [`StencilOp`]-typed value that identifies the stencil operation to perform when stencil testing passes and depth testing fails.
-    pub stencil_depth_fail_op: StencilOp,
+impl DepthStencilOpDesc {
+    #[inline]
+    pub fn with_stencil_fail_op(mut self, stencil_fail_op: StencilOp) -> Self {
+        self.0.StencilFailOp = stencil_fail_op.as_raw();
+        self
+    }
 
-    /// A [`StencilOp`]-typed value that identifies the stencil operation to perform when stencil testing and depth testing both pass.
-    pub stencil_pass_op: StencilOp,
+    #[inline]
+    pub fn with_stencil_depth_fail_op(mut self, stencil_depth_fail_op: StencilOp) -> Self {
+        self.0.StencilDepthFailOp = stencil_depth_fail_op.as_raw();
+        self
+    }
 
-    /// A [`ComparisonFunc`]-typed value that identifies the function that compares stencil data against existing stencil data.
-    pub stencil_func: ComparisonFunc,
+    #[inline]
+    pub fn with_stencil_pass_op(mut self, stencil_pass_op: StencilOp) -> Self {
+        self.0.StencilDepthFailOp = stencil_pass_op.as_raw();
+        self
+    }
+
+    #[inline]
+    pub fn with_stencil_func(mut self, stencil_func: ComparisonFunc) -> Self {
+        self.0.StencilFunc = stencil_func.as_raw();
+        self
+    }
 }
 
 /// Describes the subresources of a texture that are accessible from a depth-stencil view.
 ///
 /// For more information: [`D3D12_DEPTH_STENCIL_VIEW_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_depth_stencil_view_desc)
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct DepthStencilViewDesc {
-    /// A [`Format`]-typed value that specifies the viewing format.
-    pub format: Format,
+#[derive(Clone, Copy)]
+#[repr(transparent)]
+pub struct DepthStencilViewDesc(pub(crate) D3D12_DEPTH_STENCIL_VIEW_DESC);
 
-    /// A [`DsvDimension`]-typed value that specifies how the depth-stencil resource will be accessed. This member also determines which _DSV to use in the following union.
-    pub view_dimension: DsvDimension,
+impl DepthStencilViewDesc {
+    #[inline]
+    pub fn texture_1d(format: Format, mip_slice: u32) -> Self {
+        Self(D3D12_DEPTH_STENCIL_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_DSV_DIMENSION_TEXTURE1D,
+            Anonymous: D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
+                Texture1D: D3D12_TEX1D_DSV {
+                    MipSlice: mip_slice,
+                },
+            },
+            Flags: D3D12_DSV_FLAG_NONE,
+        })
+    }
 
-    /// A combination of [`DsvFlags`] enumeration constants that are combined by using a bitwise OR operation. The resulting value specifies whether the texture is read only.
-    ///
-    /// Pass `empty` to specify that it isn't read only; otherwise, pass one or more of the members of the [`DsvFlags`] enumerated type.
-    pub flags: DsvFlags,
+    #[inline]
+    pub fn texture_1d_array(format: Format, mip_slice: u32, array: Range<u32>) -> Self {
+        Self(D3D12_DEPTH_STENCIL_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_DSV_DIMENSION_TEXTURE1DARRAY,
+            Anonymous: D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
+                Texture1DArray: D3D12_TEX1D_ARRAY_DSV {
+                    MipSlice: mip_slice,
+                    FirstArraySlice: array.start,
+                    ArraySize: array.count() as u32,
+                },
+            },
+            Flags: D3D12_DSV_FLAG_NONE,
+        })
+    }
+
+    #[inline]
+    pub fn texture_2d(format: Format, mip_slice: u32) -> Self {
+        Self(D3D12_DEPTH_STENCIL_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_DSV_DIMENSION_TEXTURE2D,
+            Anonymous: D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
+                Texture2D: D3D12_TEX2D_DSV {
+                    MipSlice: mip_slice,
+                },
+            },
+            Flags: D3D12_DSV_FLAG_NONE,
+        })
+    }
+
+    #[inline]
+    pub fn texture_2d_array(format: Format, mip_slice: u32, array: Range<u32>) -> Self {
+        Self(D3D12_DEPTH_STENCIL_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_DSV_DIMENSION_TEXTURE2DARRAY,
+            Anonymous: D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
+                Texture2DArray: D3D12_TEX2D_ARRAY_DSV {
+                    MipSlice: mip_slice,
+                    FirstArraySlice: array.start,
+                    ArraySize: array.count() as u32,
+                },
+            },
+            Flags: D3D12_DSV_FLAG_NONE,
+        })
+    }
+
+    #[inline]
+    pub fn texture_2d_ms(format: Format) -> Self {
+        Self(D3D12_DEPTH_STENCIL_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_DSV_DIMENSION_TEXTURE2DMS,
+            Anonymous: D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
+                Texture2DMS: D3D12_TEX2DMS_DSV::default(),
+            },
+            Flags: D3D12_DSV_FLAG_NONE,
+        })
+    }
+
+    #[inline]
+    pub fn texture_2d_ms_array(format: Format, array: Range<u32>) -> Self {
+        Self(D3D12_DEPTH_STENCIL_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY,
+            Anonymous: D3D12_DEPTH_STENCIL_VIEW_DESC_0 {
+                Texture2DMSArray: D3D12_TEX2DMS_ARRAY_DSV {
+                    FirstArraySlice: array.start,
+                    ArraySize: array.count() as u32,
+                },
+            },
+            Flags: D3D12_DSV_FLAG_NONE,
+        })
+    }
 }
 
 /// Describes the descriptor heap.
 ///
 /// For more information: [`D3D12_DESCRIPTOR_HEAP_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_descriptor_heap_desc)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct DescriptorHeapDesc {
-    /// A [`DescriptorHeapType`]-typed value that specifies the types of descriptors in the heap.
-    pub r#type: DescriptorHeapType,
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct DescriptorHeapDesc(pub(crate) D3D12_DESCRIPTOR_HEAP_DESC);
 
-    /// The number of descriptors in the heap.
-    pub num: u32,
+impl DescriptorHeapDesc {
+    #[inline]
+    pub fn rtv(num: u32) -> Self {
+        Self(D3D12_DESCRIPTOR_HEAP_DESC {
+            Type: D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+            NumDescriptors: num,
+            ..Default::default()
+        })
+    }
 
-    /// A combination of [`DescriptorHeapFlags]-typed values that are combined by using a bitwise OR operation. The resulting value specifies options for the heap.
-    pub flags: DescriptorHeapFlags,
+    #[inline]
+    pub fn dsv(num: u32) -> Self {
+        Self(D3D12_DESCRIPTOR_HEAP_DESC {
+            Type: D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
+            NumDescriptors: num,
+            ..Default::default()
+        })
+    }
 
-    /// For single-adapter operation, set this to zero. If there are multiple adapter nodes, set a bit to identify the node (one of the device's physical adapters) to which the descriptor heap applies. Each bit in the mask corresponds to a single node. Only one bit must be set.
-    pub node_mask: u32,
+    #[inline]
+    pub fn cbr_srv_uav(num: u32) -> Self {
+        Self(D3D12_DESCRIPTOR_HEAP_DESC {
+            Type: D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+            NumDescriptors: num,
+            ..Default::default()
+        })
+    }
+
+    #[inline]
+    pub fn sampler(num: u32) -> Self {
+        Self(D3D12_DESCRIPTOR_HEAP_DESC {
+            Type: D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER,
+            NumDescriptors: num,
+            ..Default::default()
+        })
+    }
+
+    #[inline]
+    pub fn with_flags(mut self, flags: DescriptorHeapFlags) -> Self {
+        self.0.Flags = flags.as_raw();
+        self
+    }
+
+    #[inline]
+    pub fn with_node_mask(mut self, node_mask: u32) -> Self {
+        self.0.NodeMask = node_mask;
+        self
+    }
+
+    #[inline]
+    pub fn r#type(&self) -> DescriptorHeapType {
+        self.0.Type.into()
+    }
+
+    #[inline]
+    pub fn num_descriptors(&self) -> u32 {
+        self.0.NumDescriptors
+    }
+
+    #[inline]
+    pub fn flags(&self) -> DescriptorHeapFlags {
+        self.0.Flags.into()
+    }
 }
 
 /// Describes a descriptor range.
 ///
 /// For more information: [`D3D12_DESCRIPTOR_RANGE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_descriptor_range)
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct DescriptorRange {
-    /// A [`DescriptorRangeType`]-typed value that specifies the type of descriptor range.
-    pub r#type: DescriptorRangeType,
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct DescriptorRange(pub(crate) D3D12_DESCRIPTOR_RANGE);
 
-    /// The number of descriptors in the range.
-    pub num: u32,
+impl DescriptorRange {
+    #[inline]
+    pub fn cbv(num: u32) -> Self {
+        Self(D3D12_DESCRIPTOR_RANGE {
+            RangeType: D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+            NumDescriptors: num,
+            ..Default::default()
+        })
+    }
 
-    /// The base shader register in the range.
-    pub base_shader_register: u32,
+    #[inline]
+    pub fn srv(num: u32) -> Self {
+        Self(D3D12_DESCRIPTOR_RANGE {
+            RangeType: D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+            NumDescriptors: num,
+            ..Default::default()
+        })
+    }
 
-    /// The register space. Can typically be 0, but allows multiple descriptor arrays of unknown size to not appear to overlap.
-    pub register_space: u32,
+    #[inline]
+    pub fn sampler(num: u32) -> Self {
+        Self(D3D12_DESCRIPTOR_RANGE {
+            RangeType: D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER,
+            NumDescriptors: num,
+            ..Default::default()
+        })
+    }
 
-    /// The offset in descriptors, from the start of the descriptor table which was set as the root argument value for this parameter slot.
-    pub offset_in_descriptors_from_table_start: u32,
+    #[inline]
+    pub fn uav(num: u32) -> Self {
+        Self(D3D12_DESCRIPTOR_RANGE {
+            RangeType: D3D12_DESCRIPTOR_RANGE_TYPE_UAV,
+            NumDescriptors: num,
+            ..Default::default()
+        })
+    }
+
+    #[inline]
+    pub fn with_base_shader_register(mut self, base_shader_register: u32) -> Self {
+        self.0.BaseShaderRegister = base_shader_register;
+        self
+    }
+
+    #[inline]
+    pub fn with_register_space(mut self, register_space: u32) -> Self {
+        self.0.RegisterSpace = register_space;
+        self
+    }
+
+    #[inline]
+    pub fn with_offset_in_descriptors_from_table_start(
+        mut self,
+        offset_in_descriptors_from_table_start: u32,
+    ) -> Self {
+        self.0.OffsetInDescriptorsFromTableStart = offset_in_descriptors_from_table_start;
+        self
+    }
 }
 
 /// Describes details for the discard-resource operation.
 ///
 /// For more information: [`D3D12_DISCARD_REGION structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_discard_region)
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct DiscardRegion<'a> {
-    /// A reference of [`Rect`] structures for the rectangles in the resource to discard.
-    pub rects: &'a [Rect],
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct DiscardRegion<'a>(pub(crate) D3D12_DISCARD_REGION, PhantomData<&'a ()>);
 
-    /// Index of the first subresource in the resource to discard.
-    pub first_subresource: u32,
-
-    /// The number of subresources in the resource to discard.
-    pub num_subresource: u32,
+impl<'a> DiscardRegion<'a> {
+    #[inline]
+    pub fn new(rects: &'a [Rect], subresource: Range<u32>) -> Self {
+        Self(
+            D3D12_DISCARD_REGION {
+                NumRects: rects.len() as u32,
+                pRects: rects.as_ptr() as *const _,
+                FirstSubresource: subresource.start,
+                NumSubresources: subresource.count() as u32,
+            },
+            Default::default(),
+        )
+    }
 }
 
 /// Describes a GPU descriptor handle.
 ///
 /// For more information: [`D3D12_GPU_DESCRIPTOR_HANDLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_gpu_descriptor_handle)
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct GpuDescriptorHandle(pub(crate) usize);
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct GpuDescriptorHandle(pub(crate) D3D12_GPU_DESCRIPTOR_HANDLE);
 
 impl GpuDescriptorHandle {
     /// Returns a new handle with offset relative to the current handle.
-    pub fn offset(&self, offset: usize) -> Self {
-        Self(self.0 + offset)
+    #[inline]
+    pub fn offset(&self, offset: u64) -> Self {
+        Self(D3D12_GPU_DESCRIPTOR_HANDLE {
+            ptr: self.0.ptr + offset,
+        })
     }
 }
 
@@ -533,71 +747,144 @@ impl GpuDescriptorHandle {
 ///
 /// For more information: [`D3D12_GRAPHICS_PIPELINE_STATE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_graphics_pipeline_state_desc)
 #[derive(Clone, Debug, PartialEq)]
-pub struct GraphicsPipelineDesc<'a> {
-    /// A reference to the [`RootSignature`] object.
-    pub root_signature: &'a RootSignature,
+#[repr(transparent)]
+pub struct GraphicsPipelineDesc<'a>(
+    pub(crate) D3D12_GRAPHICS_PIPELINE_STATE_DESC,
+    PhantomData<&'a ()>,
+);
 
-    /// A [`Blob`] that contains the vertex shader.
-    pub vs: &'a Blob,
+impl<'a> GraphicsPipelineDesc<'a> {
+    #[inline]
+    pub fn new(vs: &'a Blob) -> Self {
+        Self(
+            D3D12_GRAPHICS_PIPELINE_STATE_DESC {
+                VS: vs.as_shader_bytecode(),
+                ..Default::default()
+            },
+            Default::default(),
+        )
+    }
 
-    /// A [`Blob`] that contains the pixel shader.
-    pub ps: Option<&'a Blob>,
+    #[inline]
+    pub fn with_root_signature(mut self, root_signature: &'a RootSignature) -> Self {
+        unsafe {
+            self.0.pRootSignature = std::mem::transmute_copy(root_signature.as_raw());
+            self
+        }
+    }
 
-    /// A [`Blob`] that contains the domain shader.
-    pub ds: Option<&'a Blob>,
+    #[inline]
+    pub fn with_ps(mut self, ps: &'a Blob) -> Self {
+        self.0.PS = ps.as_shader_bytecode();
+        self
+    }
 
-    /// A [`Blob`] that contains the hull shader.
-    pub hs: Option<&'a Blob>,
+    #[inline]
+    pub fn with_ds(mut self, ds: &'a Blob) -> Self {
+        self.0.DS = ds.as_shader_bytecode();
+        self
+    }
 
-    /// A [`Blob`] that contains the geometry shader.
-    pub gs: Option<&'a Blob>,
+    #[inline]
+    pub fn with_hs(mut self, hs: &'a Blob) -> Self {
+        self.0.HS = hs.as_shader_bytecode();
+        self
+    }
 
-    /// A [`StreamOutputDesc`] structure that describes a streaming output buffer.
-    pub stream_output: Option<StreamOutputDesc<'a>>,
+    #[inline]
+    pub fn with_gs(mut self, gs: &'a Blob) -> Self {
+        self.0.GS = gs.as_shader_bytecode();
+        self
+    }
 
-    /// A [`BlendDesc`] structure that describes the blend state.
-    pub blend_state: BlendDesc,
+    #[inline]
+    pub fn with_stream_output(mut self, stream_output: StreamOutputDesc<'a>) -> Self {
+        self.0.StreamOutput = stream_output.0;
+        self
+    }
 
-    /// The sample mask for the blend state.
-    pub sample_mask: u32,
+    #[inline]
+    pub fn with_blend_desc(mut self, blend_desc: BlendDesc, sample_mask: u32) -> Self {
+        self.0.BlendState = blend_desc.0;
+        self.0.SampleMask = sample_mask;
+        self
+    }
 
-    /// A [`RasterizerDesc`] structure that describes the rasterizer state.
-    pub rasterizer_state: RasterizerDesc,
+    #[inline]
+    pub fn with_rasterizer_state(mut self, rasterizer_state: RasterizerDesc) -> Self {
+        self.0.RasterizerState = rasterizer_state.0;
+        self
+    }
 
-    /// A [`DepthStencilDesc`] structure that describes the depth-stencil state.
-    pub depth_stencil: Option<DepthStencilDesc>,
+    #[inline]
+    pub fn with_depth_stencil(mut self, depth_stencil: DepthStencilDesc, format: Format) -> Self {
+        self.0.DepthStencilState = depth_stencil.0;
+        self.0.DSVFormat = format.as_raw();
+        self
+    }
 
-    /// An array of [`InputElementDesc`] that describes the input-buffer data for the input-assembler stage.
-    pub input_layout: &'a [InputElementDesc],
+    #[inline]
+    pub fn with_input_layout(mut self, input_layout: &'a [InputElementDesc]) -> Self {
+        self.0.InputLayout = D3D12_INPUT_LAYOUT_DESC {
+            pInputElementDescs: input_layout.as_ptr() as *const _,
+            NumElements: input_layout.len() as u32,
+        };
+        self
+    }
 
-    /// Specifies the properties of the index buffer in a [`IndexBufferStripCutValue`] structure.
-    pub ib_strip_cut_value: Option<IndexBufferStripCutValue>,
+    #[inline]
+    pub fn with_ib_strip_cut_value(mut self, ib_strip_cut_value: IndexBufferStripCutValue) -> Self {
+        self.0.IBStripCutValue = ib_strip_cut_value.as_raw();
+        self
+    }
 
-    /// A [`PrimitiveTopology`]-typed value for the type of primitive, and ordering of the primitive data.
-    pub primitive_topology: PipelinePrimitiveTopology,
+    #[inline]
+    pub fn with_primitive_topology(
+        mut self,
+        primitive_topology: PipelinePrimitiveTopology,
+    ) -> Self {
+        self.0.PrimitiveTopologyType = primitive_topology.as_raw();
+        self
+    }
 
-    /// The number of render target formats in the rtv_formats member.
-    pub num_render_targets: u32,
+    #[inline]
+    pub fn with_render_targets(mut self, render_targets: impl IntoIterator<Item = Format>) -> Self {
+        let mut rts = [DXGI_FORMAT_UNKNOWN; 8];
+        let mut count = 0;
 
-    /// An array of [`Format`]-typed values for the render target formats.
-    pub rtv_formats: [Format; 8],
+        for (i, desc) in render_targets.into_iter().take(8).enumerate() {
+            rts[i] = desc.as_raw();
+            count += 1;
+        }
 
-    /// A [`Format`]-typed value for the depth-stencil format.
-    pub dsv_format: Option<Format>,
+        self.0.RTVFormats = rts;
+        self.0.NumRenderTargets = count;
+        self
+    }
 
-    /// A [`SampleDesc`] structure that specifies multisampling parameters.
-    pub sampler_desc: SampleDesc,
+    #[inline]
+    pub fn with_sampler_desc(mut self, sampler_desc: SamplerDesc) -> Self {
+        self.0.SampleDesc = sampler_desc.0;
+        self
+    }
 
-    /// For single GPU operation, set this to zero.
-    /// If there are multiple GPU nodes, set bits to identify the nodes (the device's physical adapters) for which the graphics pipeline state is to apply.
-    /// Each bit in the mask corresponds to a single node.
-    pub node_mask: u32,
+    #[inline]
+    pub fn with_node_mask(mut self, node_mask: u32) -> Self {
+        self.0.NodeMask = node_mask;
+        self
+    }
 
-    /// A cached pipeline state object, as a [`Blob`].
-    pub cached_pso: Option<&'a Blob>,
+    #[inline]
+    pub fn with_cache(mut self, cache: &'a Blob) -> Self {
+        self.0.CachedPSO = cache.as_cached_pipeline_state();
+        self
+    }
 
-    /// A [`PipelineStateFlags`] enumeration constant such as for "tool debug".
-    pub flags: PipelineStateFlags,
+    #[inline]
+    pub fn with_flags(mut self, flags: PipelineStateFlags) -> Self {
+        self.0.Flags = flags.as_raw();
+        self
+    }
 }
 
 /// Describes a heap.
@@ -1293,7 +1580,7 @@ pub struct ResourceDesc {
 /// Describes the slot of a root signature version 1.0.
 ///
 /// For more information: [`D3D12_ROOT_PARAMETER structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_root_parameter)
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RootParameter<'a> {
     /// A [`RootParameterType`]-typed value that specifies the type of root signature slot. This member determines which type to use in the union below.
     pub r#type: RootParameterType<'a>,
@@ -1451,16 +1738,35 @@ pub struct StreamOutputBufferView {
 /// Describes a streaming output buffer.
 ///
 /// For more information: [`D3D12_STREAM_OUTPUT_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_stream_output_desc)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct StreamOutputDesc<'a> {
-    /// An array of [`DeclarationEntry`] structures
-    pub entries: &'a [DeclarationEntry],
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct StreamOutputDesc<'a>(pub(crate) D3D12_STREAM_OUTPUT_DESC, PhantomData<&'a ()>);
 
-    /// An array of buffer strides; each stride is the size of an element for that buffer.
-    pub buffer_strides: &'a [u32],
+impl<'a> StreamOutputDesc<'a> {
+    #[inline]
+    pub fn new(entries: &'a [DeclarationEntry]) -> Self {
+        Self(
+            D3D12_STREAM_OUTPUT_DESC {
+                pSODeclaration: entries.as_ptr() as *const _,
+                NumEntries: entries.len() as u32,
+                ..Default::default()
+            },
+            Default::default(),
+        )
+    }
 
-    /// The index number of the stream to be sent to the rasterizer stage.
-    pub rasterized_stream: u32,
+    #[inline]
+    pub fn with_buffer_strides(mut self, buffer_strides: &'a [u32]) -> Self {
+        self.0.pBufferStrides = buffer_strides.as_ptr();
+        self.0.NumStrides = buffer_strides.len() as u32;
+        self
+    }
+
+    #[inline]
+    pub fn with_rasterized_stream(mut self, rasterized_stream: u32) -> Self {
+        self.0.RasterizedStream = rasterized_stream;
+        self
+    }
 }
 
 /// Describes the format, width, height, depth, and row-pitch of the subresource into the parent resource.

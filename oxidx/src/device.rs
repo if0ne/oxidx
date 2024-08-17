@@ -576,8 +576,7 @@ impl_trait! {
         dest_descriptor: CpuDescriptorHandle,
     ) {
         unsafe {
-            let desc = desc.map(|desc| desc.as_raw());
-            let desc = desc.as_ref().map(|c| c as *const _);
+            let desc = desc.map(|c| &c.0 as *const _);
 
             let dest_descriptor = dest_descriptor.0;
 
@@ -602,9 +601,7 @@ impl_trait! {
         desc: &DescriptorHeapDesc,
     ) -> Result<H, DxError> {
         unsafe {
-            let desc = desc.as_raw();
-
-            let res: H::Raw  = self.0.CreateDescriptorHeap(&desc).map_err(DxError::from)?;
+            let res: H::Raw  = self.0.CreateDescriptorHeap(&desc.0).map_err(DxError::from)?;
 
             Ok(H::new(res))
         }
@@ -627,18 +624,7 @@ impl_trait! {
         desc: &GraphicsPipelineDesc<'_>,
     ) -> Result<G, DxError> {
         unsafe {
-            let entries = if let Some(so) = &desc.stream_output {
-                so.entries
-                    .iter()
-                    .map(|e| e.as_raw())
-                    .collect::<SmallVec<[_; 16]>>()
-            } else {
-                SmallVec::new()
-            };
-
-            let desc = desc.as_raw(&entries);
-
-            let res: G::Raw = self.0.CreateGraphicsPipelineState(&desc).map_err(DxError::from)?;
+            let res: G::Raw = self.0.CreateGraphicsPipelineState(&desc.0).map_err(DxError::from)?;
 
             Ok(G::new(res))
         }

@@ -2,14 +2,11 @@ mod enums;
 mod flags;
 mod structs;
 
-use windows::{
-    core::PCSTR,
-    Win32::{
-        Foundation::*,
-        Graphics::{
-            Direct3D::*,
-            Dxgi::{Common::*, *},
-        },
+use windows::Win32::{
+    Foundation::*,
+    Graphics::{
+        Direct3D::*,
+        Dxgi::{Common::*, *},
     },
 };
 
