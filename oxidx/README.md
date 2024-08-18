@@ -1,9 +1,9 @@
 # oxidx
-This project provides mid-level bindings/wrapper for D3D12 API.
+This project provides low-level bindings/wrapper for D3D12 API.
 
 ## Features
 
-* Provides a mid-levelish API around DirectX 12. All methods correspond to DirectX 12 C++ methods, but they are done in a Rust way.
+* Provides a low-level API around DirectX 12. All methods correspond to DirectX 12 C++ methods, but they are done in a Rust way.
 * Based on official windows [crate](https://github.com/microsoft/windows-rs).
 * No library/runtime validation, only driver validation.
 * PIX methods.
