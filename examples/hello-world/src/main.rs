@@ -147,19 +147,11 @@ impl DXSample for Sample {
 
         let (width, height) = self.window_size();
 
-        let swap_chain_desc = SwapchainDesc1 {
-            buffer_count: FRAME_COUNT,
-            width: width as u32,
-            height: height as u32,
-            format: Format::Bgra8Unorm,
-            usage: FrameBufferUsage::RenderTargetOutput,
-            swap_effect: SwapEffect::FlipDiscard,
-            sample_desc: SampleDesc {
-                count: 1,
-                ..Default::default()
-            },
-            ..Default::default()
-        };
+        let swap_chain_desc = SwapchainDesc1::new(width as u32, height as u32)
+            .with_buffer_count(FRAME_COUNT)
+            .with_format(Format::Bgra8Unorm)
+            .with_usage(FrameBufferUsage::RenderTargetOutput)
+            .with_swap_effect(SwapEffect::FlipDiscard); 
 
         let swap_chain: Swapchain3 = self
             .dxgi_factory
@@ -203,7 +195,7 @@ impl DXSample for Sample {
 
         let viewport = Viewport::with_size((width as f32, height as f32));
 
-        let scissor_rect = Rect::with_size((width, height));
+        let scissor_rect = Rect::default().with_size((width, height));
 
         let command_allocator = self
             .device
@@ -294,7 +286,7 @@ fn populate_command_list(resources: &Resources) {
 
     command_list.set_graphics_root_signature(Some(&resources.root_signature));
     command_list.rs_set_viewports([resources.viewport]);
-    command_list.rs_set_scissor_rects([resources.scissor_rect]);
+    command_list.rs_set_scissor_rects(&[resources.scissor_rect]);
 
     let barrier = transition_barrier(
         &resources.render_targets[resources.frame_index as usize],
@@ -310,7 +302,7 @@ fn populate_command_list(resources: &Resources) {
 
     command_list.om_set_render_targets([rtv_handle], false, None);
 
-    command_list.clear_render_target_view(rtv_handle, [0.0_f32, 0.2_f32, 0.4_f32, 1.0_f32], []);
+    command_list.clear_render_target_view(rtv_handle, [0.0_f32, 0.2_f32, 0.4_f32, 1.0_f32], &[]);
     command_list.ia_set_primitive_topology(PrimitiveTopology::Triangle);
     command_list.ia_set_vertex_buffers(0, [resources.vbv]);
     command_list.draw_instanced(3, 1, 0, 0);
@@ -388,10 +380,8 @@ fn get_hardware_adapter(factory: &Factory4) -> Adapter3 {
 }
 
 fn create_root_signature(device: &Device) -> RootSignature {
-    let desc = RootSignatureDesc {
-        flags: RootSignatureFlags::AllowInputAssemblerInputLayout,
-        ..Default::default()
-    };
+    let desc = RootSignatureDesc::default()
+        .with_flags(RootSignatureFlags::AllowInputAssemblerInputLayout);
 
     device
         .serialize_and_create_root_signature(&desc, RootSignatureVersion::V1_0, 0)
@@ -466,13 +456,7 @@ fn create_vertex_buffer(device: &Device, aspect_ratio: f32) -> (Resource, Vertex
 
     let vertex_buffer: Resource = device
         .create_committed_resource(
-            &HeapProperties {
-                r#type: HeapType::Upload,
-                cpu_page_propery: CpuPageProperty::Unknown,
-                memory_pool_preference: MemoryPool::Unknown,
-                creation_node_mask: 0,
-                visible_node_mask: 0,
-            },
+            &HeapProperties::upload(),
             HeapFlags::empty(),
             &ResourceDesc::buffer(std::mem::size_of_val(&vertices) as u64),
             ResourceStates::GenericRead,

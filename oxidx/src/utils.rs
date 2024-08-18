@@ -5,8 +5,9 @@ macro_rules! create_type {
         create_type! { $(#[$attr])* $name wrap $raw_type; decorator for }
     };
     ($(#[$attr:meta])* $name:ident wrap $raw_type:ty; decorator for $( $base:ty ),*) => {
-        #[derive(Clone, Debug, PartialEq, Eq)]
         $(#[$attr])*
+        #[derive(Clone, Debug, PartialEq, Eq)]
+        #[repr(transparent)]
         pub struct $name(pub(crate) $raw_type);
 
         impl $crate::HasInterface for $name {

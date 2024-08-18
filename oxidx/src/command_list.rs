@@ -59,7 +59,7 @@ pub trait IGraphicsCommandList:
         &self,
         rtv_handle: CpuDescriptorHandle,
         color: impl Into<[f32; 4]>,
-        rects: impl IntoIterator<Item = Rect>,
+        rects: &[Rect],
     );
 
     /// Resets the state of a direct command list back to the state it was in when the command list was created.
@@ -76,7 +76,7 @@ pub trait IGraphicsCommandList:
         view_cpu_handle: CpuDescriptorHandle,
         resource: &impl IResource,
         values: impl Into<[f32; 4]>,
-        rects: impl IntoIterator<Item = Rect>,
+        rects: &[Rect],
     );
 
     /// Sets all of the elements in an unordered-access view (UAV) to the specified u32 values.
@@ -88,7 +88,7 @@ pub trait IGraphicsCommandList:
         view_cpu_handle: CpuDescriptorHandle,
         resource: &impl IResource,
         values: impl Into<[u32; 4]>,
-        rects: impl IntoIterator<Item = Rect>,
+        rects: &[Rect],
     );
 
     /// Indicates that recording to the command list has finished.
@@ -280,7 +280,7 @@ pub trait IGraphicsCommandList:
     /// Binds an array of scissor rectangles to the rasterizer stage.
     ///
     /// For more information: [`ID3D12GraphicsCommandList::RSSetScissorRects method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-rssetscissorrects)
-    fn rs_set_scissor_rects(&self, rects: impl IntoIterator<Item = Rect>);
+    fn rs_set_scissor_rects(&self, rects: &[Rect]);
 
     /// Bind an array of viewports to the rasterizer stage of the pipeline.
     ///
@@ -506,16 +506,13 @@ impl_trait! {
         &self,
         rtv_handle: CpuDescriptorHandle,
         color: impl Into<[f32; 4]>,
-        rects: impl IntoIterator<Item = Rect>,
+        rects: &[Rect],
     ) {
         unsafe {
-            let rects = rects
-                .into_iter()
-                .map(|r| r.as_raw())
-                .collect::<SmallVec<[_; 8]>>();
+            let rects = std::slice::from_raw_parts(rects.as_ptr() as *const _, rects.len());
 
             let rects = if !rects.is_empty() {
-                Some(rects.as_slice())
+                Some(rects)
             } else {
                 None
             };
@@ -542,13 +539,10 @@ impl_trait! {
         view_cpu_handle: CpuDescriptorHandle,
         resource: &impl IResource,
         values: impl Into<[f32; 4]>,
-        rects: impl IntoIterator<Item = Rect>,
+        rects: &[Rect],
     ) {
         unsafe {
-            let rects = rects
-                .into_iter()
-                .map(|r| r.as_raw())
-                .collect::<SmallVec<[_; 8]>>();
+            let rects = std::slice::from_raw_parts(rects.as_ptr() as *const _, rects.len());
 
             self.0.ClearUnorderedAccessViewFloat(
                 view_gpu_handle_in_current_heap.0,
@@ -566,13 +560,10 @@ impl_trait! {
         view_cpu_handle: CpuDescriptorHandle,
         resource: &impl IResource,
         values: impl Into<[u32; 4]>,
-        rects: impl IntoIterator<Item = Rect>,
+        rects: &[Rect],
     ) {
         unsafe {
-            let rects = rects
-                .into_iter()
-                .map(|r| r.as_raw())
-                .collect::<SmallVec<[_; 8]>>();
+            let rects = std::slice::from_raw_parts(rects.as_ptr() as *const _, rects.len());
 
             self.0.ClearUnorderedAccessViewUint(
                 view_gpu_handle_in_current_heap.0,
@@ -777,8 +768,7 @@ impl_trait! {
 
     fn ia_set_index_buffer(&self, view: Option<&IndexBufferView>) {
         unsafe {
-            let view = view.map(|view| view.as_raw());
-            let view = view.as_ref().map(|view| view as *const _);
+            let view = view.map(|view| &view.0 as *const _);
 
             self.0.IASetIndexBuffer(view);
         }
@@ -925,12 +915,9 @@ impl_trait! {
         }
     }
 
-    fn rs_set_scissor_rects(&self, rects: impl IntoIterator<Item = Rect>) {
+    fn rs_set_scissor_rects(&self, rects: &[Rect]) {
         unsafe {
-            let rects = rects
-                .into_iter()
-                .map(|v| v.as_raw())
-                .collect::<SmallVec<[_; 8]>>();
+            let rects = std::slice::from_raw_parts(rects.as_ptr() as *const _, rects.len());
 
             self.0.RSSetScissorRects(&rects);
         }

@@ -502,7 +502,7 @@ impl_trait! {
             let mut resource = None;
 
             self.0.CreateCommittedResource(
-                &heap_properties.as_raw(),
+                &heap_properties.0,
                 heap_flags.as_raw(),
                 &desc.0,
                 initial_state.as_raw(),
@@ -632,10 +632,8 @@ impl_trait! {
 
     fn create_heap<H: IHeap>(&self, desc: &HeapDesc) -> Result<H, DxError> {
         unsafe {
-            let desc = desc.as_raw();
-
             let mut res = None;
-            self.0.CreateHeap(&desc, &mut res).map_err(DxError::from)?;
+            self.0.CreateHeap(&desc.0, &mut res).map_err(DxError::from)?;
             let res = res.unwrap_unchecked();
 
             Ok(H::new(res))
@@ -676,9 +674,8 @@ impl_trait! {
         desc: &QueryHeapDesc,
     ) -> Result<Q, DxError> {
         unsafe {
-            let desc = desc.as_raw();
             let mut res = None;
-            self.0.CreateQueryHeap(&desc, &mut res).map_err(DxError::from)?;
+            self.0.CreateQueryHeap(&desc.0, &mut res).map_err(DxError::from)?;
             let res = res.unwrap_unchecked();
             Ok(Q::new(res))
         }
@@ -778,8 +775,7 @@ impl_trait! {
         handle: CpuDescriptorHandle,
     ) {
         unsafe {
-            let desc = desc.map(|v| v.as_raw());
-            let desc = desc.as_ref().map(|f| f as *const _);
+            let desc = desc.as_ref().map(|f| &f.0 as *const _);
 
             if let Some(resource) = resource {
                 self.0.CreateShaderResourceView(
@@ -913,7 +909,7 @@ impl_trait! {
             );
 
             CopyableFootprints {
-                layouts: layouts.into_iter().map(|l| l.into()).collect(),
+                layouts: layouts.into_iter().map(|l| PlacedSubresourceFootprint(l)).collect(),
                 num_rows,
                 row_sizes,
                 total_bytes
@@ -929,9 +925,7 @@ impl_trait! {
         assert_ne!(r#type, HeapType::Custom);
 
         unsafe {
-            let result = self.0.GetCustomHeapProperties(node_mask, r#type.as_raw());
-
-            result.into()
+            HeapProperties(self.0.GetCustomHeapProperties(node_mask, r#type.as_raw()))
         }
     }
 
@@ -998,7 +992,7 @@ impl_trait! {
             if let (Some(src), Some(dst)) = (packed_mip_desc.as_mut(), packed_mip_desc_raw.as_ref()) {
                 src.iter_mut().zip(dst.iter())
                     .for_each(|(src, &dst)| {
-                        *src = dst.into();
+                        *src = PackedMipDesc(dst);
                     });
             }
 

@@ -1,4 +1,3 @@
-use smallvec::SmallVec;
 use windows::{
     core::{Interface, Param},
     Win32::Graphics::Direct3D12::*,
@@ -48,33 +47,9 @@ impl_trait! {
     fn serialize(desc: &RootSignatureDesc<'_>, version: RootSignatureVersion) -> Result<Blob, DxError> {
         let mut signature = None;
 
-        let ranges = desc.parameters
-            .iter()
-            .map(|param| {
-                if let RootParameterType::DescriptorTable { ranges } = param.r#type {
-                    ranges
-                        .iter()
-                        .map(|r| r.0)
-                        .collect::<SmallVec<[_; 8]>>()
-                } else {
-                    SmallVec::new()
-                }
-            }).collect::<SmallVec<[_; 8]>>();
-
-        let parameters = desc.parameters.iter().map(|param| param.as_raw(&ranges)).collect::<SmallVec<[_; 16]>>();
-        let sampler = desc.samplers.iter().map(|sampler| sampler.as_raw()).collect::<SmallVec<[_; 16]>>();
-
-        let desc = D3D12_ROOT_SIGNATURE_DESC {
-            NumParameters: desc.parameters.len() as u32,
-            pParameters: parameters.as_ptr(),
-            NumStaticSamplers: desc.samplers.len() as u32,
-            pStaticSamplers: sampler.as_ptr(),
-            Flags: desc.flags.as_raw(),
-        };
-
         let signature = unsafe {
             D3D12SerializeRootSignature(
-                &desc,
+                &desc.0,
                 version.as_raw(),
                 &mut signature,
                 None,

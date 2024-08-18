@@ -100,7 +100,7 @@ impl_trait! {
 
             self.0.GetHeapProperties(Some(&mut properties), Some(&mut flags)).map_err(DxError::from)?;
 
-            Ok((properties.into(), flags.into()))
+            Ok((HeapProperties(properties), flags.into()))
         }
     }
 

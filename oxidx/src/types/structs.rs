@@ -4,7 +4,7 @@ use compact_str::CompactString;
 use smallvec::SmallVec;
 use windows::{
     core::PCSTR,
-    Win32::Foundation::{CloseHandle, HANDLE, LUID},
+    Win32::Foundation::{CloseHandle, HANDLE, LUID, RECT},
 };
 
 use crate::{
@@ -335,7 +335,7 @@ impl ConstantBufferViewDesc {
 }
 
 /// Type that represent return values of [`IDevice::get_copyable_footprints`](crate::device::IDevice::get_copyable_footprints)
-#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct CopyableFootprints {
     /// An array (of length NumSubresources) of [`PlacedSubresourceFootprint`] structures, to be filled with the description and placement of each subresource.
     pub layouts: SmallVec<[PlacedSubresourceFootprint; 8]>,
@@ -894,66 +894,181 @@ impl<'a> GraphicsPipelineDesc<'a> {
 /// Describes a heap.
 ///
 /// For more information: [`D3D12_HEAP_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_heap_desc)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct HeapDesc {
-    /// The size, in bytes, of the heap. To avoid wasting memory, applications should pass size values which are multiples of the effective Alignment;
-    /// but non-aligned size is also supported, for convenience.
-    /// To find out how large a heap must be to support textures with undefined layouts and adapter-specific sizes, call [`crate::device::IDevice::get_resource_allocation_info`](crate::device::IDevice::get_resource_allocation_info)
-    pub size: u64,
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct HeapDesc(pub(crate) D3D12_HEAP_DESC);
 
-    /// A [`HeapProperties`] structure that describes the heap properties.
-    pub props: HeapProperties,
+impl HeapDesc {
+    #[inline]
+    pub fn new(size: u64, props: HeapProperties) -> Self {
+        Self(D3D12_HEAP_DESC {
+            SizeInBytes: size,
+            Properties: props.0,
+            ..Default::default()
+        })
+    }
 
-    /// The alignment value for the heap.
-    pub alignment: HeapAlignment,
+    #[inline]
+    pub fn with_alignment(mut self, alignment: HeapAlignment) -> Self {
+        self.0.Alignment = alignment.as_raw();
+        self
+    }
 
-    /// A combination of [`HeapFlags`]-typed values that are combined by using a bitwise-OR operation.
-    /// The resulting value identifies heap options. When creating heaps to support adapters with resource heap tier 1, an application must choose some flags.
-    pub flags: HeapFlags,
+    #[inline]
+    pub fn with_flags(mut self, flags: HeapFlags) -> Self {
+        self.0.Flags = flags.as_raw();
+        self
+    }
+
+    #[inline]
+    pub fn size(&self) -> usize {
+        self.0.SizeInBytes as usize
+    }
+
+    #[inline]
+    pub fn properties(&self) -> HeapProperties {
+        HeapProperties(self.0.Properties)
+    }
+
+    #[inline]
+    pub fn alignement(&self) -> HeapAlignment {
+        self.0.Alignment.into()
+    }
+
+    #[inline]
+    pub fn flags(&self) -> HeapFlags {
+        self.0.Flags.into()
+    }
 }
 
 /// Describes heap properties.
 ///
 /// For more information: [`D3D12_HEAP_PROPERTIES structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_heap_properties)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct HeapProperties {
-    /// A [`HeapType`]-typed value that specifies the type of heap.
-    pub r#type: HeapType,
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct HeapProperties(pub(crate) D3D12_HEAP_PROPERTIES);
 
-    /// A [`CpuPageProperty`]-typed value that specifies the CPU-page properties for the heap.
-    pub cpu_page_propery: CpuPageProperty,
+impl HeapProperties {
+    #[inline]
+    pub fn new(r#type: HeapType, cpu_page_property: CpuPageProperty, memory_pool_preference: MemoryPool) -> Self {
+        Self(D3D12_HEAP_PROPERTIES {
+            Type: r#type.as_raw(),
+            CPUPageProperty: cpu_page_property.as_raw(),
+            MemoryPoolPreference: memory_pool_preference.as_raw(),
+            ..Default::default()
+        })
+    }
 
-    /// A [`MemoryPool`]-typed value that specifies the memory pool for the heap.
-    pub memory_pool_preference: MemoryPool,
+    #[inline]
+    pub fn upload() -> Self {
+        Self(D3D12_HEAP_PROPERTIES {
+            Type: D3D12_HEAP_TYPE_UPLOAD,
+            ..Default::default()
+        })
+    }
 
-    /// For multi-adapter operation, this indicates the node where the resource should be created.
-    ///
-    /// Exactly one bit of this UINT must be set.
-    ///
-    /// Passing zero is equivalent to passing one, in order to simplify the usage of single-GPU adapters.
-    pub creation_node_mask: u32,
+    #[inline]
+    pub fn readback() -> Self {
+        Self(D3D12_HEAP_PROPERTIES {
+            Type: D3D12_HEAP_TYPE_READBACK,
+            ..Default::default()
+        })
+    }
 
-    /// For multi-adapter operation, this indicates the set of nodes where the resource is visible.
-    ///
-    /// VisibleNodeMask must have the same bit set that is set in CreationNodeMask. VisibleNodeMask can also have additional bits set for cross-node resources, but doing so can potentially reduce performance for resource accesses, so you should do so only when needed.
-    ///
-    /// Passing zero is equivalent to passing one, in order to simplify the usage of single-GPU adapters.
-    pub visible_node_mask: u32,
+    #[inline]
+    pub fn custom() -> Self {
+        Self(D3D12_HEAP_PROPERTIES {
+            Type: D3D12_HEAP_TYPE_CUSTOM,
+            ..Default::default()
+        })
+    }
+
+    #[inline]
+    pub fn gpu_upload() -> Self {
+        Self(D3D12_HEAP_PROPERTIES {
+            Type: D3D12_HEAP_TYPE_GPU_UPLOAD,
+            ..Default::default()
+        })
+    }
+
+    #[inline]
+    pub fn with_cpu_page_property(mut self, cpu_page_property: CpuPageProperty) -> Self {
+        self.0.CPUPageProperty = cpu_page_property.as_raw();
+        self
+    }
+
+    #[inline]
+    pub fn with_memory_pool_preference(mut self, memory_pool_preference: MemoryPool) -> Self {
+        self.0.MemoryPoolPreference = memory_pool_preference.as_raw();
+        self
+    }
+
+    #[inline]
+    pub fn with_creation_node_mask(mut self, mask: u32) -> Self {
+        self.0.CreationNodeMask = mask;
+        self
+    }
+
+    #[inline]
+    pub fn with_visible_node_mask(mut self, mask: u32) -> Self {
+        self.0.VisibleNodeMask = mask;
+        self
+    }
+
+    #[inline]
+    pub fn r#type(&self) -> HeapType {
+        self.0.Type.into()
+    }
+
+    #[inline]
+    pub fn cpu_page_property(&self) -> CpuPageProperty {
+        self.0.CPUPageProperty.into()
+    }
+
+    #[inline]
+    pub fn memory_pool_preference(&self) -> MemoryPool {
+        self.0.MemoryPoolPreference.into()
+    }
+
+    #[inline]
+    pub fn visible_node_mask(&self) -> u32 {
+        self.0.VisibleNodeMask.into()
+    }
+
+    #[inline]
+    pub fn creation_node_mask(&self) -> u32 {
+        self.0.CreationNodeMask.into()
+    }
+}
+
+impl Default for HeapProperties {
+    fn default() -> Self {
+        Self(D3D12_HEAP_PROPERTIES {
+            Type: D3D12_HEAP_TYPE_DEFAULT,
+            CPUPageProperty: D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+            MemoryPoolPreference: D3D12_MEMORY_POOL_UNKNOWN,
+            CreationNodeMask: 0,
+            VisibleNodeMask: 0,
+        })
+    }
 }
 
 /// Describes the index buffer to view.
 ///
 /// For more information: [`D3D12_INDEX_BUFFER_VIEW structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_index_buffer_view)
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct IndexBufferView {
-    /// The GPU virtual address of the index buffer.
-    pub buffer_location: GpuVirtualAddress,
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct IndexBufferView(pub(crate) D3D12_INDEX_BUFFER_VIEW);
 
-    /// The size in bytes of the index buffer.
-    pub size_in_bytes: u32,
-
-    /// A [`Format`]-typed value for the index-buffer format.
-    pub format: Format,
+impl IndexBufferView {
+    #[inline]
+    pub fn new(buffer_location: GpuVirtualAddress, size: u32, format: Format) -> Self {
+        Self(D3D12_INDEX_BUFFER_VIEW {
+            BufferLocation: buffer_location,
+            SizeInBytes: size,
+            Format: format.as_raw(),
+        })
+    }
 }
 
 /// Specifies the type of the indirect parameter.
@@ -1115,53 +1230,153 @@ impl InputElementDesc {
 ///
 /// For more information: [`LUID structure`](https://learn.microsoft.com/en-us/windows/win32/api/ntdef/ns-ntdef-luid)
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[repr(transparent)]
 pub struct Luid(pub(crate) LUID);
+
+impl Luid {
+    #[inline]
+    pub fn high_part(&self) -> i32 {
+        self.0.HighPart
+    }
+
+    #[inline]
+    pub fn low_part(&self) -> u32 {
+        self.0.LowPart
+    }
+}
 
 /// Describes the tile structure of a tiled resource with mipmaps.
 ///
 /// For more information: [`D3D12_PACKED_MIP_INFO structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_packed_mip_info)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct PackedMipDesc {
-    /// The number of standard mipmaps in the tiled resource.
-    pub num_standard_mips: u8,
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct PackedMipDesc(pub(crate) D3D12_PACKED_MIP_INFO);
 
-    /// The number of packed mipmaps in the tiled resource.
-    pub num_packed_mips: u8,
+impl PackedMipDesc {
+    #[inline]
+    pub fn num_standard_mips(&self) -> u8 {
+        self.0.NumStandardMips
+    }
 
-    /// The number of tiles for the packed mipmaps in the tiled resource.
-    pub num_tiles_for_packed_mips: u32,
+    #[inline]
+    pub fn num_packed_mips(&self) -> u8 {
+        self.0.NumPackedMips
+    }
 
-    /// The offset of the first packed tile for the resource in the overall range of tiles.
-    pub start_tile_index_in_overall_resource: u32,
+    #[inline]
+    pub fn num_tiles_for_packed_mips(&self) -> u32 {
+        self.0.NumTilesForPackedMips
+    }
+
+    #[inline]
+    pub fn start_tile_index_in_overall_resource(&self) -> u32 {
+        self.0.StartTileIndexInOverallResource
+    }
 }
 
 /// Describes the footprint of a placed subresource, including the offset and the [`SubresourceFootprint`].
 ///
 /// For more information: [`D3D12_PLACED_SUBRESOURCE_FOOTPRINT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_placed_subresource_footprint)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct PlacedSubresourceFootprint {
-    /// The offset of the subresource within the parent resource, in bytes. The offset between the start of the parent resource and this subresource.
-    pub offset: u64,
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct PlacedSubresourceFootprint(pub(crate) D3D12_PLACED_SUBRESOURCE_FOOTPRINT);
 
-    /// The format, width, height, depth, and row-pitch of the subresource, as a [`SubresourceFootprint`] structure.
-    pub footprint: SubresourceFootprint,
+impl PlacedSubresourceFootprint {
+    #[inline]
+    pub fn new(offset: u64, footprint: SubresourceFootprint) -> Self {
+        Self(D3D12_PLACED_SUBRESOURCE_FOOTPRINT {
+            Offset: offset,
+            Footprint: footprint.0,
+        })
+    }
+
+    #[inline]
+    pub fn offset(&self) -> u64 {
+        self.0.Offset
+    }
+
+    #[inline]
+    pub fn footprint(&self) -> SubresourceFootprint {
+        SubresourceFootprint(self.0.Footprint)
+    }
 }
 
 /// Describes the purpose of a query heap. A query heap contains an array of individual queries.
 ///
 /// For more information: [`D3D12_QUERY_HEAP_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_query_heap_desc)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct QueryHeapDesc {
-    /// Specifies one member of [`QueryHeapType`].
-    pub r#type: QueryHeapType,
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct QueryHeapDesc(pub(crate) D3D12_QUERY_HEAP_DESC);
 
-    /// Specifies the number of queries the heap should contain.
-    pub count: u32,
+impl QueryHeapDesc {
+    #[inline]
+    pub fn occlusion(count: u32) -> Self {
+        Self(D3D12_QUERY_HEAP_DESC {
+            Type: D3D12_QUERY_HEAP_TYPE_OCCLUSION,
+            Count: count,
+            NodeMask: 0,
+        })
+    }
 
-    /// For single GPU operation, set this to zero.
-    /// If there are multiple GPU nodes, set a bit to identify the node (the device's physical adapter) to which the query heap applies.
-    /// Each bit in the mask corresponds to a single node. Only 1 bit must be set.
-    pub node_mask: u32,
+    #[inline]
+    pub fn timestamp(count: u32) -> Self {
+        Self(D3D12_QUERY_HEAP_DESC {
+            Type: D3D12_QUERY_HEAP_TYPE_TIMESTAMP,
+            Count: count,
+            NodeMask: 0,
+        })
+    }
+
+    #[inline]
+    pub fn pipeline_statistics(count: u32) -> Self {
+        Self(D3D12_QUERY_HEAP_DESC {
+            Type: D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS,
+            Count: count,
+            NodeMask: 0,
+        })
+    }
+
+    #[inline]
+    pub fn so_statistics(count: u32) -> Self {
+        Self(D3D12_QUERY_HEAP_DESC {
+            Type: D3D12_QUERY_HEAP_TYPE_SO_STATISTICS,
+            Count: count,
+            NodeMask: 0,
+        })
+    }
+
+    #[inline]
+    pub fn video_decode_statistics(count: u32) -> Self {
+        Self(D3D12_QUERY_HEAP_DESC {
+            Type: D3D12_QUERY_HEAP_TYPE_VIDEO_DECODE_STATISTICS,
+            Count: count,
+            NodeMask: 0,
+        })
+    }
+
+    #[inline]
+    pub fn copy_queue_timestamp(count: u32) -> Self {
+        Self(D3D12_QUERY_HEAP_DESC {
+            Type: D3D12_QUERY_HEAP_TYPE_COPY_QUEUE_TIMESTAMP,
+            Count: count,
+            NodeMask: 0,
+        })
+    }
+
+    #[inline]
+    pub fn pipeline_statistics1(count: u32) -> Self {
+        Self(D3D12_QUERY_HEAP_DESC {
+            Type: D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1,
+            Count: count,
+            NodeMask: 0,
+        })
+    }
+
+    #[inline]
+    pub fn with_node_mask(mut self, node_mask: u32) -> Self {
+        self.0.NodeMask = node_mask;
+        self
+    }
 }
 
 /// Describes rasterizer state.
@@ -1236,45 +1451,45 @@ impl RasterizerDesc {
 /// Represents a rational number.
 ///
 /// For more information: [`DXGI_RATIONAL structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgicommon/ns-dxgicommon-dxgi_rational)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct Rational {
-    /// An unsigned integer value representing the top of the rational number.
-    pub numerator: u32,
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct Rational(pub(crate) DXGI_RATIONAL);
 
-    /// An unsigned integer value representing the bottom of the rational number.
-    pub denominator: u32,
+impl Rational {
+    #[inline]
+    pub fn new(numerator: u32, denominator: u32) -> Self {
+        Self(DXGI_RATIONAL {
+            Numerator: numerator,
+            Denominator: denominator,
+        })
+    }
 }
 
 /// The RECT structure defines a rectangle by the coordinates of its upper-left and lower-right corners.
 ///
 /// For more information: [`RECT structure`](https://learn.microsoft.com/en-us/windows/win32/api/windef/ns-windef-rect)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct Rect {
-    /// Specifies the x-coordinate of the upper-left corner of the rectangle.
-    pub left: i32,
-
-    /// Specifies the y-coordinate of the upper-left corner of the rectangle.
-    pub top: i32,
-
-    /// Specifies the x-coordinate of the lower-right corner of the rectangle.
-    pub right: i32,
-
-    /// Specifies the y-coordinate of the lower-right corner of the rectangle.
-    pub bottom: i32,
-}
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct Rect(pub(crate) RECT);
 
 impl Rect {
     /// Create rect with left and top equal to 0.
     #[inline]
-    pub fn with_size(size: impl Into<(i32, i32)>) -> Self {
-        let (width, height) = size.into();
+    pub fn with_size(mut self, (width, height): (i32, i32)) -> Self {
+        self.0.bottom = height;
+        self.0.right = width;
+        self
+    }
 
-        Self {
-            left: 0,
-            top: 0,
-            right: width,
-            bottom: height,
-        }
+    #[inline]
+    pub fn with_left(mut self, left: i32) -> Self {
+        self.0.left = left;
+        self
+    }
+
+    #[inline]
+    pub fn with_top(mut self, top: i32) -> Self {
+        self.0.top = top;
+        self
     }
 }
 
@@ -1722,28 +1937,122 @@ impl ResourceDesc {
 /// Describes the slot of a root signature version 1.0.
 ///
 /// For more information: [`D3D12_ROOT_PARAMETER structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_root_parameter)
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct RootParameter<'a> {
-    /// A [`RootParameterType`]-typed value that specifies the type of root signature slot. This member determines which type to use in the union below.
-    pub r#type: RootParameterType<'a>,
+#[derive(Clone, Copy)]
+#[repr(transparent)]
+pub struct RootParameter<'a>(pub(crate) D3D12_ROOT_PARAMETER, PhantomData<&'a ()>);
 
-    /// A [`ShaderVisibility`]-typed value that specifies the shaders that can access the contents of the root signature slot.
-    pub visibility: ShaderVisibility,
+impl<'a> RootParameter<'a> {
+    #[inline]
+    pub fn descriptor_table(ranges: &'a [DescriptorRange]) -> Self {
+        Self(D3D12_ROOT_PARAMETER {
+            ParameterType: D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+            Anonymous: D3D12_ROOT_PARAMETER_0 {
+                DescriptorTable: D3D12_ROOT_DESCRIPTOR_TABLE {
+                    NumDescriptorRanges: ranges.len() as u32,
+                    pDescriptorRanges: ranges.as_ptr() as *const _,
+                },
+            },
+            ..Default::default()
+        }, Default::default())
+    }
+
+    #[inline]
+    pub fn constant_32bit(shader_register: u32, register_space: u32, num_32bit_values: u32) -> Self {
+        Self(D3D12_ROOT_PARAMETER {
+            ParameterType: D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
+            Anonymous: D3D12_ROOT_PARAMETER_0 {
+                Constants: D3D12_ROOT_CONSTANTS {
+                    ShaderRegister: shader_register,
+                    RegisterSpace: register_space,
+                    Num32BitValues: num_32bit_values,
+                },
+            },
+            ..Default::default()
+        }, Default::default())
+    }
+
+    #[inline]
+    pub fn cbv(shader_register: u32, register_space: u32) -> Self {
+        Self(D3D12_ROOT_PARAMETER {
+            ParameterType: D3D12_ROOT_PARAMETER_TYPE_CBV,
+            Anonymous: D3D12_ROOT_PARAMETER_0 {
+                Descriptor: D3D12_ROOT_DESCRIPTOR {
+                    ShaderRegister: shader_register,
+                    RegisterSpace: register_space,
+                },
+            },
+            ..Default::default()
+        }, Default::default())
+    }
+
+    #[inline]
+    pub fn srv(shader_register: u32, register_space: u32) -> Self {
+        Self(D3D12_ROOT_PARAMETER {
+            ParameterType: D3D12_ROOT_PARAMETER_TYPE_SRV,
+            Anonymous: D3D12_ROOT_PARAMETER_0 {
+                Descriptor: D3D12_ROOT_DESCRIPTOR {
+                    ShaderRegister: shader_register,
+                    RegisterSpace: register_space,
+                },
+            },
+            ..Default::default()
+        }, Default::default())
+    }
+
+    #[inline]
+    pub fn uav(shader_register: u32, register_space: u32) -> Self {
+        Self(D3D12_ROOT_PARAMETER {
+            ParameterType: D3D12_ROOT_PARAMETER_TYPE_UAV,
+            Anonymous: D3D12_ROOT_PARAMETER_0 {
+                Descriptor: D3D12_ROOT_DESCRIPTOR {
+                    ShaderRegister: shader_register,
+                    RegisterSpace: register_space,
+                },
+            },
+            ..Default::default()
+        }, Default::default())
+    }
+
+    #[inline]
+    pub fn with_visibility(mut self, visibility: ShaderVisibility) -> Self {
+        self.0.ShaderVisibility = visibility.as_raw();
+        self
+    }
 }
 
 /// Describes the layout of a root signature version 1.0.
 ///
 /// For more information: [`D3D12_ROOT_SIGNATURE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_root_signature_desc)
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub struct RootSignatureDesc<'a> {
-    /// An array of [`RootParameter`] structures for the slots in the root signature.
-    pub parameters: &'a [RootParameter<'a>],
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct RootSignatureDesc<'a>(pub(crate) D3D12_ROOT_SIGNATURE_DESC, PhantomData<&'a ()>);
 
-    /// Pointer to one or more [`StaticSamplerDesc`] structures.
-    pub samplers: &'a [StaticSamplerDesc],
+impl<'a> RootSignatureDesc<'a> {
+    #[inline]
+    pub fn with_parameters<'b>(mut self, parameters: &'a [RootParameter<'b>]) -> Self 
+    where 
+        'a: 'b
+    {
+        self.0.NumParameters = parameters.len() as u32;
+        self.0.pParameters = parameters.as_ptr() as *const _;
+        self
+    }
 
-    /// A combination of [`RootSignatureFlags`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies options for the root signature layout.
-    pub flags: RootSignatureFlags,
+    #[inline]
+    pub fn with_sampler<'b>(mut self, samplers: &'a [StaticSamplerDesc]) -> Self 
+    where 
+        'a: 'b
+    {
+        self.0.NumStaticSamplers = samplers.len() as u32;
+        self.0.pStaticSamplers = samplers.as_ptr() as *const _;
+        self
+    }
+
+    #[inline]
+    pub fn with_flags(mut self, flags: RootSignatureFlags) -> Self {
+        self.0.Flags = flags.as_raw();
+        self
+    }
 }
 
 /// Describes multi-sampling parameters for a resource.
@@ -1854,13 +2163,197 @@ impl SamplerDesc {
 /// Describes a shader-resource view (SRV).
 ///
 /// For more information: [`D3D12_SHADER_RESOURCE_VIEW_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_shader_resource_view_desc)
-#[derive(Clone, Copy, Debug, PartialEq)]
+/*#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ShaderResourceViewDesc {
     /// A [`Format`]-typed value that specifies the viewing format.
     pub format: Format,
 
     /// A [`SrvDimension`]-typed value that specifies the resource type of the view. This type is the same as the resource type of the underlying resource.
     pub dimension: SrvDimension,
+}*/
+
+#[derive(Clone, Copy)]
+#[repr(transparent)]
+pub struct ShaderResourceViewDesc(pub(crate) D3D12_SHADER_RESOURCE_VIEW_DESC);
+
+impl ShaderResourceViewDesc {
+    #[inline]
+    pub fn buffer(format: Format, elements: Range<u64>, structure_byte_stride: u32, flags: BufferSrvFlags) -> Self {
+        Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_SRV_DIMENSION_BUFFER,
+            Anonymous: D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                Buffer: D3D12_BUFFER_SRV {
+                    FirstElement: elements.start,
+                    NumElements: elements.count() as u32,
+                    StructureByteStride: structure_byte_stride,
+                    Flags: flags.as_raw(),
+                },
+            },
+            Shader4ComponentMapping: 0x7,
+        })
+    }
+
+    #[inline]
+    pub fn texture_1d(format: Format, most_detailed_mip: u32, mip_levels: u32, resource_min_lod_clamp: f32) -> Self {
+        Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_SRV_DIMENSION_TEXTURE1D,
+            Anonymous: D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                Texture1D: D3D12_TEX1D_SRV {
+                    MostDetailedMip: most_detailed_mip,
+                    MipLevels: mip_levels,
+                    ResourceMinLODClamp: resource_min_lod_clamp,
+                },
+            },
+            Shader4ComponentMapping: 0x7,
+        })
+    }
+
+    #[inline]
+    pub fn texture_2d(format: Format, most_detailed_mip: u32, mip_levels: u32, resource_min_lod_clamp: f32, plane_slice: u32) -> Self {
+        Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_SRV_DIMENSION_TEXTURE2D,
+            Anonymous: D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                Texture2D: D3D12_TEX2D_SRV {
+                    MostDetailedMip: most_detailed_mip,
+                    MipLevels: mip_levels,
+                    ResourceMinLODClamp: resource_min_lod_clamp,
+                    PlaneSlice: plane_slice,
+                },
+            },
+            Shader4ComponentMapping: 0x7,
+        })
+    }
+
+    #[inline]
+    pub fn texture_3d(format: Format, most_detailed_mip: u32, mip_levels: u32, resource_min_lod_clamp: f32) -> Self {
+        Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_SRV_DIMENSION_TEXTURE3D,
+            Anonymous: D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                Texture3D: D3D12_TEX3D_SRV {
+                    MostDetailedMip: most_detailed_mip,
+                    MipLevels: mip_levels,
+                    ResourceMinLODClamp: resource_min_lod_clamp,
+                },
+            },
+            Shader4ComponentMapping: 0x7,
+        })
+    }
+
+    #[inline]
+    pub fn texture_1d_array(format: Format, most_detailed_mip: u32, mip_levels: u32, resource_min_lod_clamp: f32, array: Range<u32>) -> Self {
+        Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_SRV_DIMENSION_TEXTURE1DARRAY,
+            Anonymous: D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                Texture1DArray: D3D12_TEX1D_ARRAY_SRV {
+                    MostDetailedMip: most_detailed_mip,
+                    MipLevels: mip_levels,
+                    ResourceMinLODClamp: resource_min_lod_clamp,
+                    FirstArraySlice: array.start,
+                    ArraySize: array.count() as u32,
+                },
+            },
+            Shader4ComponentMapping: 0x7,
+        })
+    }
+
+    #[inline]
+    pub fn texture_2d_array(format: Format, most_detailed_mip: u32, mip_levels: u32, resource_min_lod_clamp: f32, plane_slice: u32, array: Range<u32>) -> Self {
+        Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_SRV_DIMENSION_TEXTURE2DARRAY,
+            Anonymous: D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                Texture2DArray: D3D12_TEX2D_ARRAY_SRV {
+                    MostDetailedMip: most_detailed_mip,
+                    MipLevels: mip_levels,
+                    ResourceMinLODClamp: resource_min_lod_clamp,
+                    PlaneSlice: plane_slice,
+                    FirstArraySlice: array.start,
+                    ArraySize: array.count() as u32,
+                },
+            },
+            Shader4ComponentMapping: 0x7,
+        })
+    }
+
+    #[inline]
+    pub fn texture_2d_ms(format: Format) -> Self {
+        Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_SRV_DIMENSION_TEXTURE2DMS,
+            Anonymous: D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                Texture2DMS: D3D12_TEX2DMS_SRV::default(),
+            },
+            Shader4ComponentMapping: 0x7,
+        })
+    }
+
+    #[inline]
+    pub fn texture_2d_ms_array(format: Format, array: Range<u32>) -> Self {
+        Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY,
+            Anonymous: D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                Texture2DMSArray: D3D12_TEX2DMS_ARRAY_SRV {
+                    FirstArraySlice: array.start,
+                    ArraySize: array.count() as u32,
+                }
+            },
+            Shader4ComponentMapping: 0x7,
+        })
+    }
+
+    #[inline]
+    pub fn texture_cube(format: Format, most_detailed_mip: u32, mip_levels: u32, resource_min_lod_clamp: f32) -> Self {
+        Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_SRV_DIMENSION_TEXTURECUBE,
+            Anonymous: D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                TextureCube: D3D12_TEXCUBE_SRV {
+                    MostDetailedMip: most_detailed_mip,
+                    MipLevels: mip_levels,
+                    ResourceMinLODClamp: resource_min_lod_clamp,
+                }
+            },
+            Shader4ComponentMapping: 0x7,
+        })
+    }
+
+    #[inline]
+    pub fn texture_cube_array(format: Format, most_detailed_mip: u32, mip_levels: u32, resource_min_lod_clamp: f32, array: Range<u32>) -> Self {
+        Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_SRV_DIMENSION_TEXTURECUBEARRAY,
+            Anonymous: D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                TextureCubeArray: D3D12_TEXCUBE_ARRAY_SRV {
+                    MostDetailedMip: most_detailed_mip,
+                    MipLevels: mip_levels,
+                    ResourceMinLODClamp: resource_min_lod_clamp,
+                    First2DArrayFace: array.start,
+                    NumCubes: array.count() as u32,
+                }
+            },
+            Shader4ComponentMapping: 0x7,
+        })
+    }
+
+    #[inline]
+    pub fn raytracing_acceleration_structure(format: Format, location: GpuVirtualAddress) -> Self {
+        Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE,
+            Anonymous: D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
+                RaytracingAccelerationStructure: D3D12_RAYTRACING_ACCELERATION_STRUCTURE_SRV {
+                    Location: location,
+                }
+            },
+            Shader4ComponentMapping: 0x7,
+        })
+    }
 }
 
 /// A handle to the object of event.
@@ -1971,23 +2464,65 @@ impl<'a> StreamOutputDesc<'a> {
 /// Describes the format, width, height, depth, and row-pitch of the subresource into the parent resource.
 ///
 /// For more information: [`D3D12_SUBRESOURCE_FOOTPRINT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_subresource_footprint)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct SubresourceFootprint {
-    /// A [`Format`]-typed value that specifies the viewing format.
-    pub format: Format,
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct SubresourceFootprint(pub(crate) D3D12_SUBRESOURCE_FOOTPRINT);
 
-    /// The width of the subresource.
-    pub width: u32,
+impl SubresourceFootprint {
+    #[inline]
+    pub fn with_format(mut self, format: Format) -> Self {
+        self.0.Format = format.as_raw();
+        self
+    }
 
-    /// The height of the subresource.
-    pub height: u32,
+    #[inline]
+    pub fn with_width(mut self, width: u32) -> Self {
+        self.0.Width = width;
+        self
+    }
 
-    /// The depth of the subresource.
-    pub depth: u32,
+    #[inline]
+    pub fn with_height(mut self, height: u32) -> Self {
+        self.0.Height = height;
+        self
+    }
 
-    /// The row pitch, or width, or physical size, in bytes, of the subresource data.
-    /// This must be a multiple of [`TEXTURE_DATA_PITCH_ALIGNMENT`], and must be greater than or equal to the size of the data within a row.
-    pub row_pitch: u32,
+    #[inline]
+    pub fn with_depth(mut self, depth: u32) -> Self {
+        self.0.Depth = depth;
+        self
+    }
+
+    #[inline]
+    pub fn with_row_pitch(mut self, row_pitch: u32) -> Self {
+        self.0.RowPitch = row_pitch;
+        self
+    }
+
+    #[inline]
+    pub fn format(&self) -> Format {
+        self.0.Format.into()
+    }
+
+    #[inline]
+    pub fn width(&self) -> u32 {
+        self.0.Width
+    }
+
+    #[inline]
+    pub fn height(&self) -> u32 {
+        self.0.Height
+    }
+
+    #[inline]
+    pub fn depth(&self) -> u32 {
+        self.0.Depth
+    }
+
+    #[inline]
+    pub fn row_pitch(&self) -> u32 {
+        self.0.RowPitch
+    }
 }
 
 /// Describes a tiled subresource volume.
@@ -2011,61 +2546,113 @@ pub struct SubresourceTiling {
 /// Describes a swap chain.
 ///
 /// For more information: [`DXGI_SWAP_CHAIN_DESC1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/ns-dxgi1_2-dxgi_swap_chain_desc1)
-/*#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct SwapchainDesc1 {
-    /// A value that describes the resolution width.
-    pub width: u32,
-
-    /// A value that describes the resolution height.
-    pub height: u32,
-
-    /// A [`Format`] structure that describes the display format.
-    pub format: Format,
-
-    /// Specifies whether the full-screen display mode or the swap-chain back buffer is stereo.
-    pub stereo: bool,
-
-    /// A [`SampleDesc`] structure that describes multi-sampling parameters. This member is valid only with bit-block transfer (bitblt) model swap chains.
-    pub sample_desc: SampleDesc,
-
-    /// A [`FrameBufferUsage`]-typed value that describes the surface usage and CPU access options for the back buffer. The back buffer can be used for shader input or render-target output.
-    pub usage: FrameBufferUsage,
-
-    /// A value that describes the number of buffers in the swap chain. When you create a full-screen swap chain, you typically include the front buffer in this value.
-    pub buffer_count: u32,
-
-    /// A [`Scaling`]-typed value that identifies resize behavior if the size of the back buffer is not equal to the target output.
-    pub scaling: Scaling,
-
-    /// A [`SwapEffect`]-typed value that describes the presentation model that is used by the swap chain and options for handling the contents of the presentation buffer after presenting a surface.
-    pub swap_effect: SwapEffect,
-
-    /// A [`AlphaMode`]-typed value that identifies the transparency behavior of the swap-chain back buffer.
-    pub alpha_mode: AlphaMode,
-
-    /// A combination of [`SwapchainFlags`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies options for swap-chain behavior.
-    pub flags: SwapchainFlags,
-}*/
-
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(transparent)]
 pub struct SwapchainDesc1(pub(crate) DXGI_SWAP_CHAIN_DESC1);
+
+impl SwapchainDesc1 {
+    #[inline]
+    pub fn new(width: u32, height: u32) -> Self {
+        Self(DXGI_SWAP_CHAIN_DESC1 {
+            Width: width,
+            Height: height,
+            SampleDesc: DXGI_SAMPLE_DESC {
+                Count: 1,
+                Quality: 0,
+            },
+            BufferUsage: DXGI_USAGE_RENDER_TARGET_OUTPUT,
+            BufferCount: 1,
+            AlphaMode: DXGI_ALPHA_MODE_UNSPECIFIED,
+            ..Default::default()
+        })
+    }
+
+    #[inline]
+    pub fn with_format(mut self, format: Format) -> Self {
+        self.0.Format = format.as_raw();
+        self
+    }
+
+    #[inline]
+    pub fn enable_stereo(mut self) -> Self {
+        self.0.Stereo = true.into();
+        self
+    }
+
+    #[inline]
+    pub fn with_sample_desc(mut self, sample_desc: SampleDesc) -> Self {
+        self.0.SampleDesc = sample_desc.0;
+        self
+    }
+
+    #[inline]
+    pub fn with_usage(mut self, usage: FrameBufferUsage) -> Self {
+        self.0.BufferUsage = usage.as_raw();
+        self
+    }
+
+    #[inline]
+    pub fn with_buffer_count(mut self, buffer_count: u32) -> Self {
+        self.0.BufferCount = buffer_count;
+        self
+    }
+
+    #[inline]
+    pub fn with_scaling(mut self, scaling: Scaling) -> Self {
+        self.0.Scaling = scaling.as_raw();
+        self
+    }
+
+    #[inline]
+    pub fn with_swap_effect(mut self, swap_effect: SwapEffect) -> Self {
+        self.0.SwapEffect = swap_effect.as_raw();
+        self
+    }
+
+    #[inline]
+    pub fn with_alpha_mode(mut self, alpha_mode: AlphaMode) -> Self {
+        self.0.AlphaMode = alpha_mode.as_raw();
+        self
+    }
+
+    #[inline]
+    pub fn with_flags(mut self, flags: SwapchainFlags) -> Self {
+        self.0.Flags = flags.bits() as u32;
+        self
+    }
+}
+
 /// Describes a swap chain.
 ///
 /// For more information: [`DXGI_SWAP_CHAIN_FULLSCREEN_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/ns-dxgi1_2-dxgi_swap_chain_fullscreen_desc)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct SwapchainFullscreenDesc {
-    /// A [`Rational`] structure that describes the refresh rate in hertz.
-    pub rational: Rational,
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct SwapchainFullscreenDesc(pub(crate) DXGI_SWAP_CHAIN_FULLSCREEN_DESC);
 
-    /// A member of the [`ScanlineOrdering`] enumerated type that describes the scan-line drawing mode.
-    pub scanline_ordering: ScanlineOrdering,
+impl SwapchainFullscreenDesc {
+    #[inline]
+    pub fn with_refresh_rate(mut self, refresh_rate: Rational) -> Self {
+        self.0.RefreshRate = refresh_rate.0;
+        self
+    }
 
-    /// A member of the [`ScalingMode`] enumerated type that describes the scaling mode.
-    pub scaling: ScalingMode,
+    #[inline]
+    pub fn with_scanline_ordering(mut self, scanline_ordering: ScanlineOrdering) -> Self {
+        self.0.ScanlineOrdering = scanline_ordering.as_raw();
+        self
+    }
 
-    /// A Boolean value that specifies whether the swap chain is in windowed mode.
-    pub windowed: bool,
+    #[inline]
+    pub fn with_scanline(mut self, scaling: ScalingMode) -> Self {
+        self.0.Scaling = scaling.as_raw();
+        self
+    }
+
+    #[inline]
+    pub fn windowed(mut self) -> Self {
+        self.0.Windowed = true.into();
+        self
+    }
 }
 
 /// Describes a portion of a texture for the purpose of texture copies.

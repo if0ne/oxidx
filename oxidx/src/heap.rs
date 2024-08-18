@@ -30,7 +30,7 @@ impl_trait! {
 
     fn get_desc(&self) -> HeapDesc {
         unsafe {
-            self.0.GetDesc().into()
+            HeapDesc(self.0.GetDesc())
         }
     }
 }
