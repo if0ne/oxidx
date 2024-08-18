@@ -433,47 +433,17 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
         InputElementDesc::per_vertex((c"COLOR", 0), Format::Rgba32Float, 0, 12),
     ];
 
-    let desc = GraphicsPipelineDesc::new(&vertex_shader);
-
-    /*let desc = GraphicsPipelineDesc {
-        root_signature,
-        input_layout: &input_element_descs,
-        vs: &vertex_shader,
-        ps: Some(&pixel_shader),
-        ds: None,
-        hs: None,
-        gs: None,
-        stream_output: None,
-        sample_mask: u32::MAX,
-        rasterizer_state: RasterizerDesc {
-            fill_mode: FillMode::Solid,
-            cull_mode: CullMode::None,
-            ..Default::default()
-        },
-        blend_state: BlendDesc::default(),
-        depth_stencil: None,
-        primitive_topology: PipelinePrimitiveTopology::Triangle,
-        sampler_desc: SampleDesc {
-            count: 1,
-            ..Default::default()
-        },
-        ib_strip_cut_value: None,
-        rtv_formats: [
-            Format::Bgra8Unorm,
-            Default::default(),
-            Default::default(),
-            Default::default(),
-            Default::default(),
-            Default::default(),
-            Default::default(),
-            Default::default(),
-        ],
-        dsv_format: None,
-        node_mask: 0,
-        flags: PipelineStateFlags::empty(),
-        num_render_targets: 1,
-        cached_pso: None,
-    };*/
+    let desc = GraphicsPipelineDesc::new(&vertex_shader)
+        .with_root_signature(&root_signature)
+        .with_input_layout(&input_element_descs)
+        .with_ps(&pixel_shader)
+        .with_rasterizer_state(
+            RasterizerDesc::default()
+                .with_cull_mode(CullMode::None)
+                .with_fill_mode(FillMode::Solid)
+        )
+        .with_primitive_topology(PipelinePrimitiveTopology::Triangle)
+        .with_render_targets([Format::Bgra8Unorm]);
 
     device.create_graphics_pipeline(&desc).unwrap()
 }
@@ -504,21 +474,7 @@ fn create_vertex_buffer(device: &Device, aspect_ratio: f32) -> (Resource, Vertex
                 visible_node_mask: 0,
             },
             HeapFlags::empty(),
-            &ResourceDesc {
-                dimension: ResourceDimension::Buffer,
-                alignment: HeapAlignment::Default,
-                width: std::mem::size_of_val(&vertices) as u64,
-                height: 1,
-                depth_or_array_size: 1,
-                mip_levels: 1,
-                sample_desc: SampleDesc {
-                    count: 1,
-                    quality: 0,
-                },
-                format: Format::Unknown,
-                layout: TextureLayout::RowMajor,
-                flags: ResourceFlags::empty(),
-            },
+            &ResourceDesc::buffer(std::mem::size_of_val(&vertices) as u64),
             ResourceStates::GenericRead,
             None,
         )

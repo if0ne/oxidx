@@ -759,6 +759,10 @@ impl<'a> GraphicsPipelineDesc<'a> {
         Self(
             D3D12_GRAPHICS_PIPELINE_STATE_DESC {
                 VS: vs.as_shader_bytecode(),
+                SampleDesc: DXGI_SAMPLE_DESC {
+                    Count: 1,
+                    Quality: 0,
+                },
                 ..Default::default()
             },
             Default::default(),
@@ -863,8 +867,8 @@ impl<'a> GraphicsPipelineDesc<'a> {
     }
 
     #[inline]
-    pub fn with_sampler_desc(mut self, sampler_desc: SamplerDesc) -> Self {
-        self.0.SampleDesc = sampler_desc.0;
+    pub fn with_sample_desc(mut self, sample_desc: SampleDesc) -> Self {
+        self.0.SampleDesc = sample_desc.0;
         self
     }
 
@@ -1164,42 +1168,69 @@ pub struct QueryHeapDesc {
 ///
 /// For more information: [`D3D12_RASTERIZER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_rasterizer_desc)
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub struct RasterizerDesc {
-    /// A [`FillMode`]-typed value that specifies the fill mode to use when rendering.
-    pub fill_mode: FillMode,
+#[repr(transparent)]
+pub struct RasterizerDesc(pub(crate) D3D12_RASTERIZER_DESC); 
 
-    /// A [`CullMode`]-typed value that specifies that triangles facing the specified direction are not drawn.
-    pub cull_mode: CullMode,
+impl RasterizerDesc {
+    #[inline]
+    pub fn with_fill_mode(mut self, fill_mode: FillMode) -> Self {
+        self.0.FillMode = fill_mode.as_raw();
+        self
+    }
 
-    /// Determines if a triangle is front- or back-facing.
-    /// If this member is TRUE, a triangle will be considered front-facing if its vertices are counter-clockwise on the render target and considered back-facing
-    /// if they are clockwise. If this parameter is FALSE, the opposite is true.
-    pub front_counter_clockwise: bool,
+    #[inline]
+    pub fn with_cull_mode(mut self, cull_mode: CullMode) -> Self {
+        self.0.CullMode = cull_mode.as_raw();
+        self
+    }
 
-    /// Depth value added to a given pixel. For info about depth bias.
-    pub depth_bias: i32,
+    #[inline]
+    pub fn enable_front_facing(mut self) -> Self {
+        self.0.FrontCounterClockwise = true.into();
+        self
+    }
 
-    /// Maximum depth bias of a pixel. For info about depth bias.
-    pub depth_bias_clamp: f32,
+    #[inline]
+    pub fn with_depth_bias(mut self, depth_bias: i32) -> Self {
+        self.0.DepthBias = depth_bias;
+        self
+    }
 
-    /// Scalar on a given pixel's slope.
-    pub slope_scaled_depth_bias: f32,
+    #[inline]
+    pub fn with_depth_bias_clamp(mut self, depth_bias_clamp: f32) -> Self {
+        self.0.DepthBiasClamp = depth_bias_clamp;
+        self
+    }
 
-    /// Specifies whether to enable clipping based on distance.
-    pub depth_clip_enable: bool,
+    #[inline]
+    pub fn with_slope_scaled_depth_bias(mut self, slope_scaled_depth_bias: f32) -> Self {
+        self.0.SlopeScaledDepthBias = slope_scaled_depth_bias;
+        self
+    }
 
-    /// Specifies whether to use the quadrilateral or alpha line anti-aliasing algorithm on multisample antialiasing (MSAA) render targets.
-    /// Set to TRUE to use the quadrilateral line anti-aliasing algorithm and to FALSE to use the alpha line anti-aliasing algorithm.
-    pub multisample_enable: bool,
+    #[inline]
+    pub fn enable_multisample(mut self) -> Self {
+        self.0.MultisampleEnable = true.into();
+        self
+    }
 
-    /// Specifies whether to enable line antialiasing; only applies if doing line drawing and MultisampleEnable is FALSE.
-    pub antialiased_line_enable: bool,
+    #[inline]
+    pub fn enable_antialiased_line(mut self) -> Self {
+        self.0.AntialiasedLineEnable = true.into();
+        self
+    }
 
-    /// The sample count that is forced while UAV rendering or rasterizing. Valid values are 0, 1, 4, 8, and optionally 16. 0 indicates that the sample count is not forced.
-    pub forced_sample_count: u32,
+    #[inline]
+    pub fn with_forced_sample_count(mut self, forced_sample_count: u32) -> Self {
+        self.0.ForcedSampleCount = forced_sample_count;
+        self
+    }
 
-    /// A [`ConservativeRaster``]-typed value that identifies whether conservative rasterization is on or off.
-    pub conservative_raster: ConservativeRaster,
+    #[inline]
+    pub fn with_conservative_raster(mut self, conservative_raster: ConservativeRaster) -> Self {
+        self.0.ConservativeRaster = conservative_raster.as_raw();
+        self
+    }
 }
 
 /// Represents a rational number.
@@ -1255,11 +1286,6 @@ impl Rect {
 pub struct RenderTargetBlendDesc(pub(crate) D3D12_RENDER_TARGET_BLEND_DESC);
 
 impl RenderTargetBlendDesc {
-    /// Specifies blending.
-    /// * `src_blend` - A [`Blend`]-typed value that specifies the operation to perform on the RGB value that the pixel shader outputs. The BlendOp member defines how to combine the src_blend and dst_blend operations.
-    /// * `dst_blend` -  A [`Blend`]-typed value that specifies the operation to perform on the current RGB value in the render target. The BlendOp member defines how to combine the src_blend and dst_blend operations.
-    /// * `blend_op` - A [`BlendOp]-typed value that defines how to combine the src_blend and dst_blend operations.
-    /// * `mask` -  A combination of [`ColorWriteEnable`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies a write mask.
     #[inline]
     pub fn blend(
         src_blend: Blend,
@@ -1277,16 +1303,6 @@ impl RenderTargetBlendDesc {
         })
     }
 
-    /// Specifies blending with alpha.
-    /// * `src_blend` - A [`Blend`]-typed value that specifies the operation to perform on the RGB value that the pixel shader outputs. The BlendOp member defines how to combine the src_blend and dst_blend operations.
-    /// * `dst_blend` -  A [`Blend`]-typed value that specifies the operation to perform on the current RGB value in the render target. The BlendOp member defines how to combine the src_blend and dst_blend operations.
-    /// * `blend_op` - A [`BlendOp]-typed value that defines how to combine the src_blend and dst_blend operations.
-    /// * `src_blend_alpha` -A [`Blend`]-typed value that specifies the operation to perform on the alpha value that the pixel shader outputs.
-    ///   Blend options that end in _COLOR are not allowed. The BlendOpAlpha member defines how to combine the src_blend_alpha and dst_blend_alpha operations.
-    /// * `dst_blend_alpha` -  A [`Blend`]-typed value that specifies the operation to perform on the current alpha value in the render target.
-    ///   Blend options that end in _COLOR are not allowed. The BlendOpAlpha member defines how to combine the src_blend_alpha and dst_blend_alpha operations.
-    /// * `blend_op_alpha` - A [`BlendOp`]-typed value that defines how to combine the SrcBlendAlpha and DestBlendAlpha operations.
-    /// * `mask` -  A combination of [`ColorWriteEnable`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies a write mask.
     #[inline]
     pub fn blend_with_alpha(
         src_blend: Blend,
@@ -1310,9 +1326,6 @@ impl RenderTargetBlendDesc {
         })
     }
 
-    /// Specifies logic operation.
-    /// * `logic_op` - A [`LogicOp`]-typed value that specifies the logical operation to configure for the render target.
-    /// * `mask` -  A combination of [`ColorWriteEnable`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies a write mask.
     #[inline]
     pub fn logic(logic_op: LogicOp, mask: ColorWriteEnable) -> Self {
         Self(D3D12_RENDER_TARGET_BLEND_DESC {
@@ -1544,37 +1557,166 @@ impl<'a> ResourceBarrier<'a> {
 /// Describes a resource, such as a texture. This structure is used extensively.
 ///
 /// For more information: [`D3D12_RESOURCE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_desc)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct ResourceDesc {
-    /// One member of [`ResourceDimension`], specifying the dimensions of the resource.
-    pub dimension: ResourceDimension,
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct ResourceDesc(pub(crate) D3D12_RESOURCE_DESC);
 
-    /// Specifies the alignment.
-    pub alignment: HeapAlignment,
+impl ResourceDesc {
+    #[inline]
+    pub fn buffer(size: u64) -> Self {
+        Self(D3D12_RESOURCE_DESC {
+            Dimension: D3D12_RESOURCE_DIMENSION_BUFFER,
+            Width: size,
+            Height: 1,
+            DepthOrArraySize: 1,
+            MipLevels: 1,
+            Alignment: HeapAlignment::Default.as_raw(),
+            Format: DXGI_FORMAT_UNKNOWN,
+            SampleDesc: DXGI_SAMPLE_DESC {
+                Count: 1,
+                Quality: 0,
+            },
+            Layout: D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
+            ..Default::default()
+        })
+    }
 
-    /// Specifies the width of the resource.
-    pub width: u64,
+    #[inline]
+    pub fn texture_1d(width: u64) -> Self {
+        Self(D3D12_RESOURCE_DESC {
+            Dimension: D3D12_RESOURCE_DIMENSION_TEXTURE1D,
+            Width: width,
+            Height: 1,
+            DepthOrArraySize: 1,
+            SampleDesc: DXGI_SAMPLE_DESC {
+                Count: 1,
+                Quality: 0,
+            },
+            ..Default::default()
+        })
+    }
 
-    /// Specifies the height of the resource.
-    pub height: u32,
+    #[inline]
+    pub fn texture_2d(width: u64, height: u32) -> Self {
+        Self(D3D12_RESOURCE_DESC {
+            Dimension: D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+            Width: width,
+            Height: height,
+            DepthOrArraySize: 1,
+            SampleDesc: DXGI_SAMPLE_DESC {
+                Count: 1,
+                Quality: 0,
+            },
+            ..Default::default()
+        })
+    }
 
-    /// Specifies the depth of the resource, if it is 3D, or the array size if it is an array of 1D or 2D resources.
-    pub depth_or_array_size: u16,
+    #[inline]
+    pub fn texture_3d(width: u64, height: u32, depth: u16) -> Self {
+        Self(D3D12_RESOURCE_DESC {
+            Dimension: D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+            Width: width,
+            Height: height,
+            DepthOrArraySize: depth,
+            SampleDesc: DXGI_SAMPLE_DESC {
+                Count: 1,
+                Quality: 0,
+            },
+            ..Default::default()
+        })
+    }
 
-    /// Specifies the number of MIP levels.
-    pub mip_levels: u16,
+    #[inline]
+    pub fn with_alignment(mut self, alignment: HeapAlignment) -> Self {
+        self.0.Alignment = alignment.as_raw();
+        self
+    }
 
-    /// Specifies a [`SampleDesc`] structure.
-    pub sample_desc: SampleDesc,
+    #[inline]
+    pub fn with_array_size(mut self, size: u16) -> Self {
+        self.0.DepthOrArraySize = size;
+        self
+    }
 
-    /// Specifies one member of [`Format`].
-    pub format: Format,
+    #[inline]
+    pub fn with_format(mut self, format: Format) -> Self {
+        self.0.Format = format.as_raw();
+        self
+    }
 
-    /// Specifies one member of [`TextureLayout`].
-    pub layout: TextureLayout,
+    #[inline]
+    pub fn with_mip_levels(mut self, mip_levels: u16) -> Self {
+        self.0.MipLevels = mip_levels;
+        self
+    }
 
-    /// Bitwise-OR'd flags, as [`ResourceFlags`] enumeration constants.
-    pub flags: ResourceFlags,
+    #[inline]
+    pub fn with_sample_desc(mut self, sample_desc: SampleDesc) -> Self {
+        self.0.SampleDesc = sample_desc.0;
+        self
+    }
+
+    #[inline]
+    pub fn with_layout(mut self, layout: TextureLayout) -> Self {
+        self.0.Layout = layout.as_raw();
+        self
+    }
+
+    #[inline]
+    pub fn with_flags(mut self, flags: ResourceFlags) -> Self {
+        self.0.Flags = flags.as_raw();
+        self
+    }
+
+    #[inline]
+    pub fn dimension(&self) -> ResourceDimension {
+        self.0.Dimension.into()
+    }
+
+    #[inline]
+    pub fn width(&self) -> u64 {
+        self.0.Width
+    }
+
+    #[inline]
+    pub fn height(&self) -> u32 {
+        self.0.Height
+    }
+
+    #[inline]
+    pub fn depth_or_array_size(&self) -> u16 {
+        self.0.DepthOrArraySize
+    }
+
+    #[inline]
+    pub fn alignment(&self) -> HeapAlignment {
+        self.0.Alignment.into()
+    }
+
+    #[inline]
+    pub fn format(&self) -> Format {
+        self.0.Format.into()
+    }
+
+    #[inline]
+    pub fn mip_levels(&self) -> u16 {
+        self.0.MipLevels
+    }
+
+    #[inline]
+    pub fn sample_desc(&self) -> SampleDesc {
+        SampleDesc(self.0.SampleDesc)
+    }
+
+    #[inline]
+    pub fn layout(&self) -> TextureLayout {
+        self.0.Layout.into()
+    }
+
+    #[inline]
+    pub fn flags(&self) -> ResourceFlags {
+        self.0.Flags.into()
+    }
 }
 
 /// Describes the slot of a root signature version 1.0.
@@ -1607,49 +1749,106 @@ pub struct RootSignatureDesc<'a> {
 /// Describes multi-sampling parameters for a resource.
 ///
 /// For more information: [`DXGI_SAMPLE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgicommon/ns-dxgicommon-dxgi_sample_desc)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct SampleDesc {
-    /// The number of multisamples per pixel.
-    pub count: u32,
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct SampleDesc(pub(crate) DXGI_SAMPLE_DESC);
 
-    /// The image quality level. The higher the quality, the lower the performance.
-    pub quality: u32,
+impl SampleDesc {
+    #[inline]
+    pub fn new(count: u32, quality: u32) -> Self {
+        Self(DXGI_SAMPLE_DESC {
+            Count: count,
+            Quality: quality,
+        })
+    }
+}
+
+impl Default for SampleDesc {
+    fn default() -> Self {
+        Self::new(1, 0)
+    }
 }
 
 /// Describes a sampler state.
 ///
 /// For more information: [`D3D12_SAMPLER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_sampler_desc)
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub struct SamplerDesc {
-    /// A [`Filter`]-typed value that specifies the filtering method to use when sampling a texture.
-    pub filter: Filter,
+#[repr(transparent)]
+pub struct SamplerDesc(pub(crate) D3D12_SAMPLER_DESC);
 
-    /// Specifies the [`AddressMode`] mode to use for resolving a `u` texture coordinate that is outside the 0 to 1 range.
-    pub address_u: AddressMode,
+impl SamplerDesc {
+    #[inline]
+    pub fn point() -> Self {
+        Self::default()
+            .with_filter(Filter::Point)
+    }
 
-    /// Specifies the [`AddressMode`] mode to use for resolving a `v` texture coordinate that is outside the 0 to 1 range.
-    pub address_v: AddressMode,
+    #[inline]
+    pub fn linear() -> Self {
+        Self::default()
+            .with_filter(Filter::Linear)
+    }
 
-    /// Specifies the [`AddressMode`] mode to use for resolving a `w` texture coordinate that is outside the 0 to 1 range.
-    pub address_w: AddressMode,
+    #[inline]
+    pub fn anisotropic() -> Self {
+        Self::default()
+            .with_filter(Filter::Anisotropic)
+    }
 
-    /// Offset from the calculated mipmap level. For example, if Direct3D calculates that a texture should be sampled at mipmap level 3 and MipLODBias is 2, then the texture will be sampled at mipmap level 5.
-    pub mip_lod_bias: f32,
+    #[inline]
+    pub fn with_filter(mut self, filter: Filter) -> Self {
+        self.0.Filter = filter.as_raw();
+        self
+    }
 
-    /// Clamping value used if [`Filter::Anisotropic`] or [`Filter::ComparisonAnisotropic`] is specified as the filter. Valid values are between 1 and 16.
-    pub max_anisotropy: u32,
+    #[inline]
+    pub fn with_address_u(mut self, address: AddressMode) -> Self {
+        self.0.AddressU = address.as_raw();
+        self
+    }
 
-    /// A function that compares sampled data against existing sampled data. The function options are listed in [`ComparisonFunc`].
-    pub comparison_func: ComparisonFunc,
+    #[inline]
+    pub fn with_address_v(mut self, address: AddressMode) -> Self {
+        self.0.AddressV = address.as_raw();
+        self
+    }
 
-    /// RGBA border color to use if [`AddressMode::Border`] is specified for AddressU, AddressV, or AddressW. Range must be between 0.0 and 1.0 inclusive.
-    pub border_color: [f32; 4],
+    #[inline]
+    pub fn with_address_w(mut self, address: AddressMode) -> Self {
+        self.0.AddressW = address.as_raw();
+        self
+    }
 
-    /// Lower end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level and any level higher than that is less detailed.
-    pub min_lod: f32,
+    #[inline]
+    pub fn with_mip_lod_bias(mut self, mip_lod_bias: f32) -> Self {
+        self.0.MipLODBias = mip_lod_bias;
+        self
+    }
 
-    /// Upper end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level and any level higher than that is less detailed. This value must be greater than or equal to MinLOD. To have no upper limit on LOD set this to a large value such as D3D12_FLOAT32_MAX.
-    pub max_lod: f32,
+    #[inline]
+    pub fn with_max_anisotropy(mut self, max_anisotropy: u32) -> Self {
+        self.0.MaxAnisotropy = max_anisotropy;
+        self
+    }
+
+    #[inline]
+    pub fn with_comparison_func(mut self, comparison_func: ComparisonFunc) -> Self {
+        self.0.ComparisonFunc = comparison_func.as_raw();
+        self
+    }
+
+    #[inline]
+    pub fn with_border_color(mut self, border_color: impl Into<[f32; 4]>) -> Self {
+        self.0.BorderColor = border_color.into();
+        self
+    }
+
+    #[inline]
+    pub fn with_lod(mut self, lod: Range<f32>) -> Self {
+        self.0.MinLOD = lod.start;
+        self.0.MaxLOD = lod.end;
+        self
+    }
 }
 
 /// Describes a shader-resource view (SRV).
@@ -1812,7 +2011,7 @@ pub struct SubresourceTiling {
 /// Describes a swap chain.
 ///
 /// For more information: [`DXGI_SWAP_CHAIN_DESC1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/ns-dxgi1_2-dxgi_swap_chain_desc1)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
+/*#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct SwapchainDesc1 {
     /// A value that describes the resolution width.
     pub width: u32,
@@ -1846,8 +2045,11 @@ pub struct SwapchainDesc1 {
 
     /// A combination of [`SwapchainFlags`]-typed values that are combined by using a bitwise OR operation. The resulting value specifies options for swap-chain behavior.
     pub flags: SwapchainFlags,
-}
+}*/
 
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct SwapchainDesc1(pub(crate) DXGI_SWAP_CHAIN_DESC1);
 /// Describes a swap chain.
 ///
 /// For more information: [`DXGI_SWAP_CHAIN_FULLSCREEN_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/ns-dxgi1_2-dxgi_swap_chain_fullscreen_desc)

@@ -89,7 +89,7 @@ impl_trait! {
 
     fn get_desc(&self) -> ResourceDesc {
         unsafe {
-            self.0.GetDesc().into()
+            ResourceDesc(self.0.GetDesc())
         }
     }
 

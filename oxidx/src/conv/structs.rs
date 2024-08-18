@@ -107,25 +107,6 @@ impl QueryHeapDesc {
     }
 }
 
-impl RasterizerDesc {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_RASTERIZER_DESC {
-        D3D12_RASTERIZER_DESC {
-            FillMode: self.fill_mode.as_raw(),
-            CullMode: self.cull_mode.as_raw(),
-            FrontCounterClockwise: self.front_counter_clockwise.into(),
-            DepthBias: self.depth_bias,
-            DepthBiasClamp: self.depth_bias_clamp,
-            SlopeScaledDepthBias: self.slope_scaled_depth_bias,
-            DepthClipEnable: self.depth_clip_enable.into(),
-            MultisampleEnable: self.multisample_enable.into(),
-            AntialiasedLineEnable: self.antialiased_line_enable.into(),
-            ForcedSampleCount: self.forced_sample_count,
-            ConservativeRaster: self.conservative_raster.as_raw(),
-        }
-    }
-}
-
 impl Rational {
     pub(crate) fn as_raw(&self) -> DXGI_RATIONAL {
         DXGI_RATIONAL {
@@ -142,42 +123,6 @@ impl Rect {
             top: self.top,
             right: self.right,
             bottom: self.bottom,
-        }
-    }
-}
-
-impl ResourceDesc {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_RESOURCE_DESC {
-        D3D12_RESOURCE_DESC {
-            Dimension: self.dimension.as_raw(),
-            Alignment: self.alignment.as_raw(),
-            Width: self.width,
-            Height: self.height,
-            DepthOrArraySize: self.depth_or_array_size,
-            MipLevels: self.mip_levels,
-            Format: self.format.as_raw(),
-            SampleDesc: self.sample_desc.as_raw(),
-            Layout: self.layout.as_raw(),
-            Flags: self.flags.as_raw(),
-        }
-    }
-}
-
-impl From<D3D12_RESOURCE_DESC> for ResourceDesc {
-    #[inline]
-    fn from(value: D3D12_RESOURCE_DESC) -> Self {
-        Self {
-            dimension: value.Dimension.into(),
-            alignment: value.Alignment.into(),
-            width: value.Width,
-            height: value.Height,
-            depth_or_array_size: value.DepthOrArraySize,
-            mip_levels: value.MipLevels,
-            sample_desc: value.SampleDesc.into(),
-            format: value.Format.into(),
-            layout: value.Layout.into(),
-            flags: value.Flags.into(),
         }
     }
 }
@@ -219,43 +164,6 @@ impl<'a> RootSignatureDesc<'a> {
             NumStaticSamplers: self.samplers.len() as u32,
             pStaticSamplers: sampler.as_ptr(),
             Flags: self.flags.as_raw(),
-        }
-    }
-}
-
-impl SampleDesc {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> DXGI_SAMPLE_DESC {
-        DXGI_SAMPLE_DESC {
-            Count: self.count,
-            Quality: self.quality,
-        }
-    }
-}
-
-impl From<DXGI_SAMPLE_DESC> for SampleDesc {
-    fn from(value: DXGI_SAMPLE_DESC) -> Self {
-        SampleDesc {
-            count: value.Count,
-            quality: value.Quality,
-        }
-    }
-}
-
-impl SamplerDesc {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> D3D12_SAMPLER_DESC {
-        D3D12_SAMPLER_DESC {
-            Filter: self.filter.as_raw(),
-            AddressU: self.address_u.as_raw(),
-            AddressV: self.address_v.as_raw(),
-            AddressW: self.address_w.as_raw(),
-            MipLODBias: self.mip_lod_bias,
-            MaxAnisotropy: self.max_anisotropy,
-            ComparisonFunc: self.comparison_func.as_raw(),
-            BorderColor: self.border_color,
-            MinLOD: self.min_lod,
-            MaxLOD: self.max_lod,
         }
     }
 }
@@ -338,25 +246,6 @@ impl From<D3D12_SUBRESOURCE_TILING> for SubresourceTiling {
             height_in_tiles: value.HeightInTiles,
             depth_in_tiles: value.DepthInTiles,
             start_tile_index_in_overall_resource: value.StartTileIndexInOverallResource,
-        }
-    }
-}
-
-impl SwapchainDesc1 {
-    #[inline]
-    pub(crate) fn as_raw(&self) -> DXGI_SWAP_CHAIN_DESC1 {
-        DXGI_SWAP_CHAIN_DESC1 {
-            Width: self.width,
-            Height: self.height,
-            Format: self.format.as_raw(),
-            Stereo: self.stereo.into(),
-            SampleDesc: self.sample_desc.as_raw(),
-            BufferUsage: self.usage.as_raw(),
-            BufferCount: self.buffer_count,
-            Scaling: self.scaling.as_raw(),
-            SwapEffect: self.swap_effect.as_raw(),
-            AlphaMode: self.alpha_mode.as_raw(),
-            Flags: self.flags.bits() as u32,
         }
     }
 }

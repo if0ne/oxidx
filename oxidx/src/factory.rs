@@ -98,7 +98,7 @@ impl_trait! {
             let cq = command_queue.as_raw_ref();
             let o = restrict_to_output.as_ref().map(|o| o.as_raw_ref());
 
-            let desc = desc.as_raw();
+            let desc = desc.0;
             let fullscreen_desc = fullscreen_desc.map(|f| f.as_raw());
             let fullscreen_desc = fullscreen_desc.as_ref().map(|f| f as *const _);
 
@@ -157,7 +157,7 @@ impl_trait! {
             let cq = command_queue.as_raw_ref();
             let o = restrict_to_output.as_ref().map(|o| o.as_raw_ref());
 
-            let desc = desc.as_raw();
+            let desc = desc.0;
 
             let swapchain = if let Some(o) = o {
                 self.0

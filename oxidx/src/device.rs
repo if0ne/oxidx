@@ -313,7 +313,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     fn get_resource_allocation_info(
         &self,
         visible_mask: u32,
-        resource_desc: impl IntoIterator<Item = ResourceDesc>,
+        resource_desc: &[ResourceDesc],
     ) -> ResourceAllocationInfo;
 
     /// Gets info about how a tiled resource is broken into tiles.
@@ -504,7 +504,7 @@ impl_trait! {
             self.0.CreateCommittedResource(
                 &heap_properties.as_raw(),
                 heap_flags.as_raw(),
-                &desc.as_raw(),
+                &desc.0,
                 initial_state.as_raw(),
                 clear_value,
                 &mut resource,
@@ -659,7 +659,7 @@ impl_trait! {
             self.0.CreatePlacedResource(
                 heap.as_raw_ref(),
                 heap_offset,
-                &desc.as_raw(),
+                &desc.0,
                 initial_state.as_raw(),
                 clear_value,
                 &mut resource,
@@ -722,7 +722,7 @@ impl_trait! {
             let mut resource = None;
 
             self.0.CreateReservedResource(
-                &desc.as_raw(),
+                &desc.0,
                 initial_state.as_raw(),
                 clear_value,
                 &mut resource,
@@ -767,9 +767,7 @@ impl_trait! {
 
     fn create_sampler(&self, desc: &SamplerDesc, dest_descriptor: CpuDescriptorHandle) {
         unsafe {
-            let desc = desc.as_raw();
-
-            self.0.CreateSampler(&desc, dest_descriptor.0);
+            self.0.CreateSampler(&desc.0, dest_descriptor.0);
         }
     }
 
@@ -898,15 +896,13 @@ impl_trait! {
         base_offset: u64,
     ) -> CopyableFootprints {
         unsafe {
-            let desc = resource_desc.as_raw();
-
             let mut layouts: SmallVec<[_; 8]> = SmallVec::with_capacity(num_subresources as usize);
             let mut num_rows: SmallVec<[_; 8]> = SmallVec::with_capacity(num_subresources as usize);
             let mut row_sizes: SmallVec<[_; 8]> = SmallVec::with_capacity(num_subresources as usize);
             let mut total_bytes = 0;
 
             self.0.GetCopyableFootprints(
-                &desc,
+                &resource_desc.0,
                 first_subresource,
                 num_subresources,
                 base_offset,
@@ -960,13 +956,10 @@ impl_trait! {
     fn get_resource_allocation_info(
         &self,
         visible_mask: u32,
-        resource_desc: impl IntoIterator<Item = ResourceDesc>,
+        resource_desc: &[ResourceDesc],
     ) -> ResourceAllocationInfo {
         unsafe {
-            let resource_desc = resource_desc
-                .into_iter()
-                .map(|desc| desc.as_raw())
-                .collect::<SmallVec<[_; 4]>>();
+            let resource_desc = std::slice::from_raw_parts(resource_desc.as_ptr() as *const _, resource_desc.len());
 
             ResourceAllocationInfo(self.0.GetResourceAllocationInfo(visible_mask, &resource_desc))
         }
