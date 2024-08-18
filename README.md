@@ -1,4 +1,5 @@
 # oxidx
+
 This project provides low-level bindings/wrapper for D3D12 API.
 
 ## Features
@@ -12,6 +13,7 @@ This project provides low-level bindings/wrapper for D3D12 API.
 ## Examples
 
 ### Device creation
+
 ```rust
 let entry = Entry;
 
@@ -25,6 +27,7 @@ let device: Device = entry
 ```
 
 ### Feature fetching
+
 ```rust
 let feature = device.check_feature_support::<Options>(())?;
 ```
