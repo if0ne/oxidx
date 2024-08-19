@@ -160,7 +160,9 @@ impl ClearValue {
     pub fn color(format: Format, value: impl Into<[f32; 4]>) -> Self {
         Self(D3D12_CLEAR_VALUE {
             Format: format.as_raw(),
-            Anonymous: D3D12_CLEAR_VALUE_0 { Color: value.into() },
+            Anonymous: D3D12_CLEAR_VALUE_0 {
+                Color: value.into(),
+            },
         })
     }
 
@@ -168,10 +170,12 @@ impl ClearValue {
     pub fn depth(format: Format, depth: f32, stencil: u8) -> Self {
         Self(D3D12_CLEAR_VALUE {
             Format: format.as_raw(),
-            Anonymous: D3D12_CLEAR_VALUE_0 { DepthStencil: D3D12_DEPTH_STENCIL_VALUE {
-                Depth: depth,
-                Stencil: stencil,
-            } },
+            Anonymous: D3D12_CLEAR_VALUE_0 {
+                DepthStencil: D3D12_DEPTH_STENCIL_VALUE {
+                    Depth: depth,
+                    Stencil: stencil,
+                },
+            },
         })
     }
 }
