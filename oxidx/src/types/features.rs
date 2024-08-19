@@ -751,7 +751,7 @@ impl Options6Feature {
 
     #[inline]
     pub fn shading_rate_image_tile_size(&self) -> u32 {
-        self.0.ShadingRateImageTileSize.into()
+        self.0.ShadingRateImageTileSize
     }
 
     #[inline]
