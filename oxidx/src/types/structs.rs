@@ -958,8 +958,10 @@ impl HeapDesc {
     }
 
     #[inline]
-    pub fn properties(&self) -> HeapProperties {
-        HeapProperties(self.0.Properties)
+    pub fn properties(&self) -> &HeapProperties {
+        unsafe {
+            std::mem::transmute(&self.0.Properties)
+        }
     }
 
     #[inline]
@@ -1332,8 +1334,10 @@ impl PlacedSubresourceFootprint {
     }
 
     #[inline]
-    pub fn footprint(&self) -> SubresourceFootprint {
-        SubresourceFootprint(self.0.Footprint)
+    pub fn footprint(&self) -> &SubresourceFootprint {
+        unsafe {
+            std::mem::transmute(&self.0.Footprint)
+        }
     }
 }
 
