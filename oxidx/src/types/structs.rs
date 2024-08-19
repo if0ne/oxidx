@@ -148,6 +148,34 @@ impl Box {
     }
 }
 
+/// Describes a value used to optimize clear operations for a particular resource.
+///
+/// For more information: [`D3D12_CLEAR_VALUE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_clear_value)
+#[derive(Clone, Copy)]
+#[repr(transparent)]
+pub struct ClearValue(pub(crate) D3D12_CLEAR_VALUE);
+
+impl ClearValue {
+    #[inline]
+    pub fn color(format: Format, value: impl Into<[f32; 4]>) -> Self {
+        Self(D3D12_CLEAR_VALUE {
+            Format: format.as_raw(),
+            Anonymous: D3D12_CLEAR_VALUE_0 { Color: value.into() },
+        })
+    }
+
+    #[inline]
+    pub fn depth(format: Format, depth: f32, stencil: u8) -> Self {
+        Self(D3D12_CLEAR_VALUE {
+            Format: format.as_raw(),
+            Anonymous: D3D12_CLEAR_VALUE_0 { DepthStencil: D3D12_DEPTH_STENCIL_VALUE {
+                Depth: depth,
+                Stencil: stencil,
+            } },
+        })
+    }
+}
+
 /// Describes a command queue.
 ///
 /// For more information: [`D3D12_COMMAND_QUEUE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_command_queue_desc)
@@ -950,7 +978,11 @@ pub struct HeapProperties(pub(crate) D3D12_HEAP_PROPERTIES);
 
 impl HeapProperties {
     #[inline]
-    pub fn new(r#type: HeapType, cpu_page_property: CpuPageProperty, memory_pool_preference: MemoryPool) -> Self {
+    pub fn new(
+        r#type: HeapType,
+        cpu_page_property: CpuPageProperty,
+        memory_pool_preference: MemoryPool,
+    ) -> Self {
         Self(D3D12_HEAP_PROPERTIES {
             Type: r#type.as_raw(),
             CPUPageProperty: cpu_page_property.as_raw(),
@@ -1384,7 +1416,7 @@ impl QueryHeapDesc {
 /// For more information: [`D3D12_RASTERIZER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_rasterizer_desc)
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
-pub struct RasterizerDesc(pub(crate) D3D12_RASTERIZER_DESC); 
+pub struct RasterizerDesc(pub(crate) D3D12_RASTERIZER_DESC);
 
 impl RasterizerDesc {
     #[inline]
@@ -1944,73 +1976,92 @@ pub struct RootParameter<'a>(pub(crate) D3D12_ROOT_PARAMETER, PhantomData<&'a ()
 impl<'a> RootParameter<'a> {
     #[inline]
     pub fn descriptor_table(ranges: &'a [DescriptorRange]) -> Self {
-        Self(D3D12_ROOT_PARAMETER {
-            ParameterType: D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
-            Anonymous: D3D12_ROOT_PARAMETER_0 {
-                DescriptorTable: D3D12_ROOT_DESCRIPTOR_TABLE {
-                    NumDescriptorRanges: ranges.len() as u32,
-                    pDescriptorRanges: ranges.as_ptr() as *const _,
+        Self(
+            D3D12_ROOT_PARAMETER {
+                ParameterType: D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+                Anonymous: D3D12_ROOT_PARAMETER_0 {
+                    DescriptorTable: D3D12_ROOT_DESCRIPTOR_TABLE {
+                        NumDescriptorRanges: ranges.len() as u32,
+                        pDescriptorRanges: ranges.as_ptr() as *const _,
+                    },
                 },
+                ..Default::default()
             },
-            ..Default::default()
-        }, Default::default())
+            Default::default(),
+        )
     }
 
     #[inline]
-    pub fn constant_32bit(shader_register: u32, register_space: u32, num_32bit_values: u32) -> Self {
-        Self(D3D12_ROOT_PARAMETER {
-            ParameterType: D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
-            Anonymous: D3D12_ROOT_PARAMETER_0 {
-                Constants: D3D12_ROOT_CONSTANTS {
-                    ShaderRegister: shader_register,
-                    RegisterSpace: register_space,
-                    Num32BitValues: num_32bit_values,
+    pub fn constant_32bit(
+        shader_register: u32,
+        register_space: u32,
+        num_32bit_values: u32,
+    ) -> Self {
+        Self(
+            D3D12_ROOT_PARAMETER {
+                ParameterType: D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
+                Anonymous: D3D12_ROOT_PARAMETER_0 {
+                    Constants: D3D12_ROOT_CONSTANTS {
+                        ShaderRegister: shader_register,
+                        RegisterSpace: register_space,
+                        Num32BitValues: num_32bit_values,
+                    },
                 },
+                ..Default::default()
             },
-            ..Default::default()
-        }, Default::default())
+            Default::default(),
+        )
     }
 
     #[inline]
     pub fn cbv(shader_register: u32, register_space: u32) -> Self {
-        Self(D3D12_ROOT_PARAMETER {
-            ParameterType: D3D12_ROOT_PARAMETER_TYPE_CBV,
-            Anonymous: D3D12_ROOT_PARAMETER_0 {
-                Descriptor: D3D12_ROOT_DESCRIPTOR {
-                    ShaderRegister: shader_register,
-                    RegisterSpace: register_space,
+        Self(
+            D3D12_ROOT_PARAMETER {
+                ParameterType: D3D12_ROOT_PARAMETER_TYPE_CBV,
+                Anonymous: D3D12_ROOT_PARAMETER_0 {
+                    Descriptor: D3D12_ROOT_DESCRIPTOR {
+                        ShaderRegister: shader_register,
+                        RegisterSpace: register_space,
+                    },
                 },
+                ..Default::default()
             },
-            ..Default::default()
-        }, Default::default())
+            Default::default(),
+        )
     }
 
     #[inline]
     pub fn srv(shader_register: u32, register_space: u32) -> Self {
-        Self(D3D12_ROOT_PARAMETER {
-            ParameterType: D3D12_ROOT_PARAMETER_TYPE_SRV,
-            Anonymous: D3D12_ROOT_PARAMETER_0 {
-                Descriptor: D3D12_ROOT_DESCRIPTOR {
-                    ShaderRegister: shader_register,
-                    RegisterSpace: register_space,
+        Self(
+            D3D12_ROOT_PARAMETER {
+                ParameterType: D3D12_ROOT_PARAMETER_TYPE_SRV,
+                Anonymous: D3D12_ROOT_PARAMETER_0 {
+                    Descriptor: D3D12_ROOT_DESCRIPTOR {
+                        ShaderRegister: shader_register,
+                        RegisterSpace: register_space,
+                    },
                 },
+                ..Default::default()
             },
-            ..Default::default()
-        }, Default::default())
+            Default::default(),
+        )
     }
 
     #[inline]
     pub fn uav(shader_register: u32, register_space: u32) -> Self {
-        Self(D3D12_ROOT_PARAMETER {
-            ParameterType: D3D12_ROOT_PARAMETER_TYPE_UAV,
-            Anonymous: D3D12_ROOT_PARAMETER_0 {
-                Descriptor: D3D12_ROOT_DESCRIPTOR {
-                    ShaderRegister: shader_register,
-                    RegisterSpace: register_space,
+        Self(
+            D3D12_ROOT_PARAMETER {
+                ParameterType: D3D12_ROOT_PARAMETER_TYPE_UAV,
+                Anonymous: D3D12_ROOT_PARAMETER_0 {
+                    Descriptor: D3D12_ROOT_DESCRIPTOR {
+                        ShaderRegister: shader_register,
+                        RegisterSpace: register_space,
+                    },
                 },
+                ..Default::default()
             },
-            ..Default::default()
-        }, Default::default())
+            Default::default(),
+        )
     }
 
     #[inline]
@@ -2029,9 +2080,9 @@ pub struct RootSignatureDesc<'a>(pub(crate) D3D12_ROOT_SIGNATURE_DESC, PhantomDa
 
 impl<'a> RootSignatureDesc<'a> {
     #[inline]
-    pub fn with_parameters<'b>(mut self, parameters: &'a [RootParameter<'b>]) -> Self 
-    where 
-        'a: 'b
+    pub fn with_parameters<'b>(mut self, parameters: &'a [RootParameter<'b>]) -> Self
+    where
+        'a: 'b,
     {
         self.0.NumParameters = parameters.len() as u32;
         self.0.pParameters = parameters.as_ptr() as *const _;
@@ -2039,9 +2090,9 @@ impl<'a> RootSignatureDesc<'a> {
     }
 
     #[inline]
-    pub fn with_sampler<'b>(mut self, samplers: &'a [StaticSamplerDesc]) -> Self 
-    where 
-        'a: 'b
+    pub fn with_sampler<'b>(mut self, samplers: &'a [StaticSamplerDesc]) -> Self
+    where
+        'a: 'b,
     {
         self.0.NumStaticSamplers = samplers.len() as u32;
         self.0.pStaticSamplers = samplers.as_ptr() as *const _;
@@ -2088,20 +2139,17 @@ pub struct SamplerDesc(pub(crate) D3D12_SAMPLER_DESC);
 impl SamplerDesc {
     #[inline]
     pub fn point() -> Self {
-        Self::default()
-            .with_filter(Filter::Point)
+        Self::default().with_filter(Filter::Point)
     }
 
     #[inline]
     pub fn linear() -> Self {
-        Self::default()
-            .with_filter(Filter::Linear)
+        Self::default().with_filter(Filter::Linear)
     }
 
     #[inline]
     pub fn anisotropic() -> Self {
-        Self::default()
-            .with_filter(Filter::Anisotropic)
+        Self::default().with_filter(Filter::Anisotropic)
     }
 
     #[inline]
@@ -2163,22 +2211,18 @@ impl SamplerDesc {
 /// Describes a shader-resource view (SRV).
 ///
 /// For more information: [`D3D12_SHADER_RESOURCE_VIEW_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_shader_resource_view_desc)
-/*#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct ShaderResourceViewDesc {
-    /// A [`Format`]-typed value that specifies the viewing format.
-    pub format: Format,
-
-    /// A [`SrvDimension`]-typed value that specifies the resource type of the view. This type is the same as the resource type of the underlying resource.
-    pub dimension: SrvDimension,
-}*/
-
 #[derive(Clone, Copy)]
 #[repr(transparent)]
 pub struct ShaderResourceViewDesc(pub(crate) D3D12_SHADER_RESOURCE_VIEW_DESC);
 
 impl ShaderResourceViewDesc {
     #[inline]
-    pub fn buffer(format: Format, elements: Range<u64>, structure_byte_stride: u32, flags: BufferSrvFlags) -> Self {
+    pub fn buffer(
+        format: Format,
+        elements: Range<u64>,
+        structure_byte_stride: u32,
+        flags: BufferSrvFlags,
+    ) -> Self {
         Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
             Format: format.as_raw(),
             ViewDimension: D3D12_SRV_DIMENSION_BUFFER,
@@ -2195,7 +2239,12 @@ impl ShaderResourceViewDesc {
     }
 
     #[inline]
-    pub fn texture_1d(format: Format, most_detailed_mip: u32, mip_levels: u32, resource_min_lod_clamp: f32) -> Self {
+    pub fn texture_1d(
+        format: Format,
+        most_detailed_mip: u32,
+        mip_levels: u32,
+        resource_min_lod_clamp: f32,
+    ) -> Self {
         Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
             Format: format.as_raw(),
             ViewDimension: D3D12_SRV_DIMENSION_TEXTURE1D,
@@ -2211,7 +2260,13 @@ impl ShaderResourceViewDesc {
     }
 
     #[inline]
-    pub fn texture_2d(format: Format, most_detailed_mip: u32, mip_levels: u32, resource_min_lod_clamp: f32, plane_slice: u32) -> Self {
+    pub fn texture_2d(
+        format: Format,
+        most_detailed_mip: u32,
+        mip_levels: u32,
+        resource_min_lod_clamp: f32,
+        plane_slice: u32,
+    ) -> Self {
         Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
             Format: format.as_raw(),
             ViewDimension: D3D12_SRV_DIMENSION_TEXTURE2D,
@@ -2228,7 +2283,12 @@ impl ShaderResourceViewDesc {
     }
 
     #[inline]
-    pub fn texture_3d(format: Format, most_detailed_mip: u32, mip_levels: u32, resource_min_lod_clamp: f32) -> Self {
+    pub fn texture_3d(
+        format: Format,
+        most_detailed_mip: u32,
+        mip_levels: u32,
+        resource_min_lod_clamp: f32,
+    ) -> Self {
         Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
             Format: format.as_raw(),
             ViewDimension: D3D12_SRV_DIMENSION_TEXTURE3D,
@@ -2244,7 +2304,13 @@ impl ShaderResourceViewDesc {
     }
 
     #[inline]
-    pub fn texture_1d_array(format: Format, most_detailed_mip: u32, mip_levels: u32, resource_min_lod_clamp: f32, array: Range<u32>) -> Self {
+    pub fn texture_1d_array(
+        format: Format,
+        most_detailed_mip: u32,
+        mip_levels: u32,
+        resource_min_lod_clamp: f32,
+        array: Range<u32>,
+    ) -> Self {
         Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
             Format: format.as_raw(),
             ViewDimension: D3D12_SRV_DIMENSION_TEXTURE1DARRAY,
@@ -2262,7 +2328,14 @@ impl ShaderResourceViewDesc {
     }
 
     #[inline]
-    pub fn texture_2d_array(format: Format, most_detailed_mip: u32, mip_levels: u32, resource_min_lod_clamp: f32, plane_slice: u32, array: Range<u32>) -> Self {
+    pub fn texture_2d_array(
+        format: Format,
+        most_detailed_mip: u32,
+        mip_levels: u32,
+        resource_min_lod_clamp: f32,
+        plane_slice: u32,
+        array: Range<u32>,
+    ) -> Self {
         Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
             Format: format.as_raw(),
             ViewDimension: D3D12_SRV_DIMENSION_TEXTURE2DARRAY,
@@ -2301,14 +2374,19 @@ impl ShaderResourceViewDesc {
                 Texture2DMSArray: D3D12_TEX2DMS_ARRAY_SRV {
                     FirstArraySlice: array.start,
                     ArraySize: array.count() as u32,
-                }
+                },
             },
             Shader4ComponentMapping: 0x7,
         })
     }
 
     #[inline]
-    pub fn texture_cube(format: Format, most_detailed_mip: u32, mip_levels: u32, resource_min_lod_clamp: f32) -> Self {
+    pub fn texture_cube(
+        format: Format,
+        most_detailed_mip: u32,
+        mip_levels: u32,
+        resource_min_lod_clamp: f32,
+    ) -> Self {
         Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
             Format: format.as_raw(),
             ViewDimension: D3D12_SRV_DIMENSION_TEXTURECUBE,
@@ -2317,14 +2395,20 @@ impl ShaderResourceViewDesc {
                     MostDetailedMip: most_detailed_mip,
                     MipLevels: mip_levels,
                     ResourceMinLODClamp: resource_min_lod_clamp,
-                }
+                },
             },
             Shader4ComponentMapping: 0x7,
         })
     }
 
     #[inline]
-    pub fn texture_cube_array(format: Format, most_detailed_mip: u32, mip_levels: u32, resource_min_lod_clamp: f32, array: Range<u32>) -> Self {
+    pub fn texture_cube_array(
+        format: Format,
+        most_detailed_mip: u32,
+        mip_levels: u32,
+        resource_min_lod_clamp: f32,
+        array: Range<u32>,
+    ) -> Self {
         Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
             Format: format.as_raw(),
             ViewDimension: D3D12_SRV_DIMENSION_TEXTURECUBEARRAY,
@@ -2335,7 +2419,7 @@ impl ShaderResourceViewDesc {
                     ResourceMinLODClamp: resource_min_lod_clamp,
                     First2DArrayFace: array.start,
                     NumCubes: array.count() as u32,
-                }
+                },
             },
             Shader4ComponentMapping: 0x7,
         })
@@ -2349,7 +2433,7 @@ impl ShaderResourceViewDesc {
             Anonymous: D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
                 RaytracingAccelerationStructure: D3D12_RAYTRACING_ACCELERATION_STRUCTURE_SRV {
                     Location: location,
-                }
+                },
             },
             Shader4ComponentMapping: 0x7,
         })
@@ -2358,6 +2442,7 @@ impl ShaderResourceViewDesc {
 
 /// A handle to the object of event.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(transparent)]
 pub struct SharedHandle(pub(crate) HANDLE);
 
 impl SharedHandle {
@@ -2370,61 +2455,119 @@ impl SharedHandle {
 ///
 /// For more information: [`D3D12_STATIC_SAMPLER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_static_sampler_desc)
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub struct StaticSamplerDesc {
-    /// The filtering method to use when sampling a texture, as a [`Filter`] enumeration constant.
-    pub filter: Filter,
+#[repr(transparent)]
+pub struct StaticSamplerDesc(pub(crate) D3D12_STATIC_SAMPLER_DESC);
 
-    /// Specifies the [`AddressMode`] mode to use for resolving a `u` texture coordinate that is outside the 0 to 1 range.
-    pub address_u: AddressMode,
+impl StaticSamplerDesc {
+    #[inline]
+    pub fn point() -> Self {
+        Self::default().with_filter(Filter::Point)
+    }
 
-    /// Specifies the [`AddressMode`] mode to use for resolving a `v` texture coordinate that is outside the 0 to 1 range.
-    pub address_v: AddressMode,
+    #[inline]
+    pub fn linear() -> Self {
+        Self::default().with_filter(Filter::Linear)
+    }
 
-    /// Specifies the [`AddressMode`] mode to use for resolving a `w` texture coordinate that is outside the 0 to 1 range.
-    pub address_w: AddressMode,
+    #[inline]
+    pub fn anisotropic() -> Self {
+        Self::default().with_filter(Filter::Anisotropic)
+    }
 
-    /// Offset from the calculated mipmap level. For example, if Direct3D calculates that a texture should be sampled at mipmap level 3 and MipLODBias is 2, then the texture will be sampled at mipmap level 5.
-    pub mip_lod_bias: f32,
+    #[inline]
+    pub fn with_filter(mut self, filter: Filter) -> Self {
+        self.0.Filter = filter.as_raw();
+        self
+    }
 
-    /// Clamping value used if [`Filter::Anisotropic`] or [`Filter::ComparisonAnisotropic`] is specified as the filter. Valid values are between 1 and 16.
-    pub max_anisotropy: u32,
+    #[inline]
+    pub fn with_address_u(mut self, address: AddressMode) -> Self {
+        self.0.AddressU = address.as_raw();
+        self
+    }
 
-    /// A function that compares sampled data against existing sampled data. The function options are listed in [`ComparisonFunc`].
-    pub comparison_func: ComparisonFunc,
+    #[inline]
+    pub fn with_address_v(mut self, address: AddressMode) -> Self {
+        self.0.AddressV = address.as_raw();
+        self
+    }
 
-    /// One member of [`BorderColor`], the border color to use if [`AddressMode::Border`] is specified for AddressU, AddressV, or AddressW. Range must be between 0.0 and 1.0 inclusive.
-    pub border_color: BorderColor,
+    #[inline]
+    pub fn with_address_w(mut self, address: AddressMode) -> Self {
+        self.0.AddressW = address.as_raw();
+        self
+    }
 
-    /// Lower end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level and any level higher than that is less detailed.
-    pub min_lod: f32,
+    #[inline]
+    pub fn with_mip_lod_bias(mut self, mip_lod_bias: f32) -> Self {
+        self.0.MipLODBias = mip_lod_bias;
+        self
+    }
 
-    /// Upper end of the mipmap range to clamp access to, where 0 is the largest and most detailed mipmap level and any level higher than that is less detailed. This value must be greater than or equal to MinLOD. To have no upper limit on LOD set this to a large value such as D3D12_FLOAT32_MAX.
-    pub max_lod: f32,
+    #[inline]
+    pub fn with_max_anisotropy(mut self, max_anisotropy: u32) -> Self {
+        self.0.MaxAnisotropy = max_anisotropy;
+        self
+    }
 
-    /// The ShaderRegister and RegisterSpace parameters correspond to the binding syntax of HLSL.
-    pub shader_register: u32,
+    #[inline]
+    pub fn with_comparison_func(mut self, comparison_func: ComparisonFunc) -> Self {
+        self.0.ComparisonFunc = comparison_func.as_raw();
+        self
+    }
 
-    /// See the description for ShaderRegister. Register space is optional; the default register space is 0.
-    pub register_space: u32,
+    #[inline]
+    pub fn with_border_color(mut self, border_color: BorderColor) -> Self {
+        self.0.BorderColor = border_color.as_raw();
+        self
+    }
 
-    /// Specifies the visibility of the sampler to the pipeline shaders, one member of [`ShaderVisibility`].
-    pub visibility: ShaderVisibility,
+    #[inline]
+    pub fn with_lod(mut self, lod: Range<f32>) -> Self {
+        self.0.MinLOD = lod.start;
+        self.0.MaxLOD = lod.end;
+        self
+    }
+
+    #[inline]
+    pub fn with_shader_register(mut self, shader_register: u32) -> Self {
+        self.0.ShaderRegister = shader_register;
+        self
+    }
+
+    #[inline]
+    pub fn with_register_space(mut self, register_space: u32) -> Self {
+        self.0.RegisterSpace = register_space;
+        self
+    }
+
+    #[inline]
+    pub fn with_visibility(mut self, visibility: ShaderVisibility) -> Self {
+        self.0.ShaderVisibility = visibility.as_raw();
+        self
+    }
 }
 
 /// Describes a stream output buffer.
 ///
 /// For more information: [`D3D12_STREAM_OUTPUT_BUFFER_VIEW structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_stream_output_buffer_view)
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct StreamOutputBufferView {
-    /// A u64 that points to the stream output buffer. If `size_in_bytes` is 0, this member isn't used and can be any value.
-    pub buffer_location: GpuVirtualAddress,
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct StreamOutputBufferView(pub(crate) D3D12_STREAM_OUTPUT_BUFFER_VIEW);
 
-    /// The size of the stream output buffer in bytes.
-    pub size_in_bytes: u64,
-
-    /// The location of the value of how much data has been filled into the buffer, as a u64.
-    /// This member can't be NULL; a filled size location must be supplied (which the hardware will increment as data is output). If `size_in_bytes` is 0, this member isn't used and can be any value.
-    pub buffer_filled_size_location: u64,
+impl StreamOutputBufferView {
+    #[inline]
+    pub fn new(
+        buffer_location: GpuVirtualAddress,
+        size: usize,
+        buffer_filled_size_location: u64,
+    ) -> Self {
+        Self(D3D12_STREAM_OUTPUT_BUFFER_VIEW {
+            BufferLocation: buffer_location,
+            SizeInBytes: size as u64,
+            BufferFilledSizeLocation: buffer_filled_size_location,
+        })
+    }
 }
 
 /// Describes a streaming output buffer.
@@ -2528,19 +2671,30 @@ impl SubresourceFootprint {
 /// Describes a tiled subresource volume.
 ///
 /// For more information: [`D3D12_SUBRESOURCE_TILING structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_subresource_tiling)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct SubresourceTiling {
-    /// The width in tiles of the subresource.
-    pub width_in_tiles: u32,
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct SubresourceTiling(pub(crate) D3D12_SUBRESOURCE_TILING);
 
-    /// The height in tiles of the subresource.
-    pub height_in_tiles: u16,
+impl SubresourceTiling {
+    #[inline]
+    pub fn width(&self) -> u32 {
+        self.0.WidthInTiles
+    }
 
-    /// The depth in tiles of the subresource.
-    pub depth_in_tiles: u16,
+    #[inline]
+    pub fn height(&self) -> u16 {
+        self.0.HeightInTiles
+    }
 
-    /// The index of the tile in the overall tiled subresource to start with.
-    pub start_tile_index_in_overall_resource: u32,
+    #[inline]
+    pub fn depth(&self) -> u16 {
+        self.0.DepthInTiles
+    }
+
+    #[inline]
+    pub fn start_tile_index_in_overall_resource(&self) -> u32 {
+        self.0.StartTileIndexInOverallResource
+    }
 }
 
 /// Describes a swap chain.
@@ -2658,145 +2812,303 @@ impl SwapchainFullscreenDesc {
 /// Describes a portion of a texture for the purpose of texture copies.
 ///
 /// For more information: [`D3D12_TEXTURE_COPY_LOCATION structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_texture_copy_location)
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct TextureCopyLocation<'a> {
-    /// Specifies the resource which will be used for the copy operation.
-    pub resource: &'a Resource,
+#[derive(Clone)]
+#[repr(transparent)]
+pub struct TextureCopyLocation<'a>(pub(crate) D3D12_TEXTURE_COPY_LOCATION, PhantomData<&'a ()>);
 
-    /// Specifies which type of resource location this is: a subresource of a texture, or a description of a texture layout which can be applied to a buffer.
-    pub r#type: TextureCopyType,
+impl<'a> TextureCopyLocation<'a> {
+    #[inline]
+    pub fn subresource(resource: &'a Resource, index: u32) -> Self {
+        Self(
+            D3D12_TEXTURE_COPY_LOCATION {
+                pResource: unsafe { std::mem::transmute_copy(resource.as_raw()) },
+                Type: D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+                Anonymous: D3D12_TEXTURE_COPY_LOCATION_0 {
+                    SubresourceIndex: index,
+                },
+            },
+            Default::default(),
+        )
+    }
+
+    #[inline]
+    pub fn placed_footprint(resource: &'a Resource, footprint: PlacedSubresourceFootprint) -> Self {
+        Self(
+            D3D12_TEXTURE_COPY_LOCATION {
+                pResource: unsafe { std::mem::transmute_copy(resource.as_raw()) },
+                Type: D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+                Anonymous: D3D12_TEXTURE_COPY_LOCATION_0 {
+                    PlacedFootprint: footprint.0,
+                },
+            },
+            Default::default(),
+        )
+    }
 }
 
 /// Describes the size of a tiled region.
 ///
 /// For more information: [`D3D12_TILE_REGION_SIZE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_tile_region_size)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct TileRegionSize {
-    /// The number of tiles in the tiled region.
-    pub num_tiles: u32,
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct TileRegionSize(pub(crate) D3D12_TILE_REGION_SIZE);
 
-    /// Specifies whether the runtime uses the **width**, **height**, and **depth** members to define the region.
-    pub use_box: bool,
+impl TileRegionSize {
+    #[inline]
+    pub fn with_tiles(mut self, num_tiles: u32) -> Self {
+        self.0.NumTiles = num_tiles;
+        self
+    }
 
-    /// The width of the tiled region, in tiles. Used for buffer and 1D, 2D, and 3D textures.
-    pub width: u32,
+    #[inline]
+    pub fn with_width(mut self, width: u32) -> Self {
+        self.0.Width = width;
+        self
+    }
 
-    /// The height of the tiled region, in tiles. Used for 2D and 3D textures.
-    pub height: u16,
+    #[inline]
+    pub fn with_height(mut self, height: u16) -> Self {
+        self.0.Height = height;
+        self
+    }
 
-    /// The depth of the tiled region, in tiles. Used for 3D textures or arrays.
-    /// For arrays, used for advancing in depth jumps to next slice of same mipmap size, which isn't contiguous in the subresource counting space
-    /// if there are multiple mipmaps.
-    pub depth: u16,
+    #[inline]
+    pub fn with_depth(mut self, depth: u16) -> Self {
+        self.0.Depth = depth;
+        self
+    }
+
+    #[inline]
+    pub fn use_box(mut self) -> Self {
+        self.0.UseBox = true.into();
+        self
+    }
 }
 
 /// Describes the shape of a tile by specifying its dimensions.
 ///
 /// For more information: [`D3D12_TILE_SHAPE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_tile_shape)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct TileShape {
-    /// The width in texels of the tile.
-    pub width_in_texels: u32,
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct TileShape(pub(crate) D3D12_TILE_SHAPE);
 
-    /// The height in texels of the tile.
-    pub height_in_texels: u32,
+impl TileShape {
+    #[inline]
+    pub fn width(&self) -> u32 {
+        self.0.WidthInTexels
+    }
 
-    /// The depth in texels of the tile.
-    pub depth_in_texels: u32,
+    #[inline]
+    pub fn height(&self) -> u32 {
+        self.0.HeightInTexels
+    }
+
+    #[inline]
+    pub fn depth(&self) -> u32 {
+        self.0.DepthInTexels
+    }
 }
 
 /// Describes the coordinates of a tiled resource.
 ///
 /// For more information: [`D3D12_TILED_RESOURCE_COORDINATE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_tiled_resource_coordinate)
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct TiledResourceCoordinate {
-    /// The x-coordinate of the tiled resource.
-    pub x: u32,
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct TiledResourceCoordinate(pub(crate) D3D12_TILED_RESOURCE_COORDINATE);
 
-    /// The y-coordinate of the tiled resource.
-    pub y: u32,
-
-    /// The z-coordinate of the tiled resource.
-    pub z: u32,
-
-    /// The index of the subresource for the tiled resource.
-    pub subresource: u32,
+impl TiledResourceCoordinate {
+    #[inline]
+    pub fn new(x: u32, y: u32, z: u32, subresource: u32) -> Self {
+        Self(D3D12_TILED_RESOURCE_COORDINATE {
+            X: x,
+            Y: y,
+            Z: z,
+            Subresource: subresource,
+        })
+    }
 }
 
 /// Describes the subresources from a resource that are accessible by using an unordered-access view.
 ///
 /// For more information: [`D3D12_UNORDERED_ACCESS_VIEW_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_unordered_access_view_desc)
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct UnorderedAccessViewDesc {
-    /// A [`Format`]-typed value that specifies the viewing format.
-    pub format: Format,
+#[derive(Clone, Copy)]
+#[repr(transparent)]
+pub struct UnorderedAccessViewDesc(pub(crate) D3D12_UNORDERED_ACCESS_VIEW_DESC);
+impl UnorderedAccessViewDesc {
+    #[inline]
+    pub fn buffer(
+        format: Format,
+        elements: Range<u64>,
+        structure_byte_stride: u32,
+        counter_offset: u64,
+        flags: BufferUavFlags,
+    ) -> Self {
+        Self(D3D12_UNORDERED_ACCESS_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_UAV_DIMENSION_BUFFER,
+            Anonymous: D3D12_UNORDERED_ACCESS_VIEW_DESC_0 {
+                Buffer: D3D12_BUFFER_UAV {
+                    FirstElement: elements.start,
+                    NumElements: elements.count() as u32,
+                    StructureByteStride: structure_byte_stride,
+                    CounterOffsetInBytes: counter_offset,
+                    Flags: flags.as_raw(),
+                },
+            },
+        })
+    }
 
-    /// A [`UavDimension`]-typed value that specifies the resource type of the view. This type specifies how the resource will be accessed.
-    pub dimension: UavDimension,
+    #[inline]
+    pub fn texture_1d(format: Format, mip_slice: u32) -> Self {
+        Self(D3D12_UNORDERED_ACCESS_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_UAV_DIMENSION_TEXTURE1D,
+            Anonymous: D3D12_UNORDERED_ACCESS_VIEW_DESC_0 {
+                Texture1D: D3D12_TEX1D_UAV {
+                    MipSlice: mip_slice,
+                },
+            },
+        })
+    }
+
+    #[inline]
+    pub fn texture_2d(format: Format, mip_slice: u32, plane_slice: u32) -> Self {
+        Self(D3D12_UNORDERED_ACCESS_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_UAV_DIMENSION_TEXTURE2D,
+            Anonymous: D3D12_UNORDERED_ACCESS_VIEW_DESC_0 {
+                Texture2D: D3D12_TEX2D_UAV {
+                    MipSlice: mip_slice,
+                    PlaneSlice: plane_slice,
+                },
+            },
+        })
+    }
+
+    #[inline]
+    pub fn texture_3d(format: Format, mip_slice: u32, slices: Range<u32>) -> Self {
+        Self(D3D12_UNORDERED_ACCESS_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_UAV_DIMENSION_TEXTURE3D,
+            Anonymous: D3D12_UNORDERED_ACCESS_VIEW_DESC_0 {
+                Texture3D: D3D12_TEX3D_UAV {
+                    MipSlice: mip_slice,
+                    FirstWSlice: slices.start,
+                    WSize: slices.count() as u32,
+                },
+            },
+        })
+    }
+
+    #[inline]
+    pub fn texture_1d_array(format: Format, mip_slice: u32, array: Range<u32>) -> Self {
+        Self(D3D12_UNORDERED_ACCESS_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_UAV_DIMENSION_TEXTURE1DARRAY,
+            Anonymous: D3D12_UNORDERED_ACCESS_VIEW_DESC_0 {
+                Texture1DArray: D3D12_TEX1D_ARRAY_UAV {
+                    MipSlice: mip_slice,
+                    FirstArraySlice: array.start,
+                    ArraySize: array.count() as u32,
+                },
+            },
+        })
+    }
+
+    #[inline]
+    pub fn texture_2d_array(
+        format: Format,
+        mip_slice: u32,
+        plane_slice: u32,
+        array: Range<u32>,
+    ) -> Self {
+        Self(D3D12_UNORDERED_ACCESS_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_UAV_DIMENSION_TEXTURE2DARRAY,
+            Anonymous: D3D12_UNORDERED_ACCESS_VIEW_DESC_0 {
+                Texture2DArray: D3D12_TEX2D_ARRAY_UAV {
+                    MipSlice: mip_slice,
+                    PlaneSlice: plane_slice,
+                    FirstArraySlice: array.start,
+                    ArraySize: array.count() as u32,
+                },
+            },
+        })
+    }
+
+    #[inline]
+    pub fn texture_2d_ms(format: Format) -> Self {
+        Self(D3D12_UNORDERED_ACCESS_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_UAV_DIMENSION_TEXTURE2DMS,
+            Anonymous: D3D12_UNORDERED_ACCESS_VIEW_DESC_0 {
+                Texture2DMS: D3D12_TEX2DMS_UAV::default(),
+            },
+        })
+    }
+
+    #[inline]
+    pub fn texture_2d_ms_array(format: Format, array: Range<u32>) -> Self {
+        Self(D3D12_UNORDERED_ACCESS_VIEW_DESC {
+            Format: format.as_raw(),
+            ViewDimension: D3D12_UAV_DIMENSION_TEXTURE2DMSARRAY,
+            Anonymous: D3D12_UNORDERED_ACCESS_VIEW_DESC_0 {
+                Texture2DMSArray: D3D12_TEX2DMS_ARRAY_UAV {
+                    FirstArraySlice: array.start,
+                    ArraySize: array.count() as u32,
+                },
+            },
+        })
+    }
 }
 
 /// Describes a vertex buffer view.
 ///
 /// For more information: [`D3D12_VERTEX_BUFFER_VIEW structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_vertex_buffer_view)
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct VertexBufferView {
-    /// Specifies a u64 that identifies the address of the buffer.
-    pub buffer_location: GpuVirtualAddress,
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct VertexBufferView(pub(crate) D3D12_VERTEX_BUFFER_VIEW);
 
-    /// Specifies the size in bytes of the buffer.
-    pub stride_in_bytes: u32,
-
-    /// Specifies the size in bytes of each vertex entry.
-    pub size_in_bytes: u32,
+impl VertexBufferView {
+    #[inline]
+    pub fn new(buffer_location: GpuVirtualAddress, stride: u32, size: u32) -> Self {
+        Self(D3D12_VERTEX_BUFFER_VIEW {
+            BufferLocation: buffer_location,
+            StrideInBytes: stride,
+            SizeInBytes: size,
+        })
+    }
 }
 
 /// Describes the dimensions of a viewport.
 ///
 /// For more information: [`D3D12_VIEWPORT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_viewport)
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub struct Viewport {
-    /// X position of the left hand side of the viewport.
-    pub x: f32,
-
-    /// Y position of the top of the viewport.
-    pub y: f32,
-
-    /// Width of the viewport.
-    pub width: f32,
-
-    /// Height of the viewport.
-    pub height: f32,
-
-    /// Minimum depth of the viewport. Ranges between 0 and 1.
-    pub min_depth: f32,
-
-    /// Maximum depth of the viewport. Ranges between 0 and 1.
-    pub max_depth: f32,
-}
+pub struct Viewport(pub(crate) D3D12_VIEWPORT);
 
 impl Viewport {
     /// Creates a viewport with a minimum depth of 0 and a maximum depth of 1.
     #[inline]
-    pub fn with_position_and_size(
+    pub fn from_position_and_size(
         position: impl Into<(f32, f32)>,
         size: impl Into<(f32, f32)>,
     ) -> Self {
         let (width, height) = size.into();
         let (x, y) = position.into();
 
-        Self {
-            x,
-            y,
-            width,
-            height,
-            min_depth: MIN_DEPTH,
-            max_depth: MAX_DEPTH,
-        }
+        Self(D3D12_VIEWPORT {
+            TopLeftX: x,
+            TopLeftY: y,
+            Width: width,
+            Height: height,
+            MinDepth: MIN_DEPTH,
+            MaxDepth: MAX_DEPTH,
+        })
     }
 
     /// Creates a viewport with a minimum depth of 0 and a maximum depth of 1 and with position in (0, 0).
     #[inline]
-    pub fn with_size(size: impl Into<(f32, f32)>) -> Self {
-        Self::with_position_and_size((0.0, 0.0), size)
+    pub fn from_size(size: impl Into<(f32, f32)>) -> Self {
+        Self::from_position_and_size((0.0, 0.0), size)
     }
 }

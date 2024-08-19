@@ -73,15 +73,15 @@ pub trait ICommandQueue: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<
     /// Updates mappings of tile locations in reserved resources to memory locations in a resource heap.
     ///
     /// For more information: [`ID3D12CommandQueue::UpdateTileMappings method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-updatetilemappings)
-    fn update_tile_mappings<const REGIONS: usize, const RANGES: usize>(
+    fn update_tile_mappings(
         &self,
         resource: &impl IResource,
-        resource_region_start_coordinates: Option<[impl AsRef<TiledResourceCoordinate>; REGIONS]>,
-        resource_region_sizes: Option<[impl AsRef<TileRegionSize>; REGIONS]>,
+        resource_region_start_coordinates: Option<&[TiledResourceCoordinate]>,
+        resource_region_sizes: Option<&[TileRegionSize]>,
         heap: &impl IHeap,
-        range_flags: Option<[impl AsRef<TileRangeFlags>; RANGES]>,
-        heap_range_start_offsets: Option<[u32; RANGES]>,
-        range_tile_counts: Option<[u32; RANGES]>,
+        range_flags: Option<&[TileRangeFlags]>,
+        heap_range_start_offsets: Option<&[u32]>,
+        range_tile_counts: Option<&[u32]>,
     );
 
     /// Queues a GPU-side wait, and returns immediately. A GPU-side wait is where the GPU waits until the specified fence reaches or exceeds the specified value.
@@ -118,17 +118,13 @@ impl_trait! {
         src_region_start_coordinate: &TiledResourceCoordinate,
         region_size: &TileRegionSize,
     ) {
-        let dst_region_start_coordinate = dst_region_start_coordinate.as_raw();
-        let src_region_start_coordinate = src_region_start_coordinate.as_raw();
-        let region_size = region_size.as_raw();
-
         unsafe {
             self.0.CopyTileMappings(
                 dst_resource.as_raw_ref(),
-                &dst_region_start_coordinate,
+                &dst_region_start_coordinate.0,
                 src_resource.as_raw_ref(),
-                &src_region_start_coordinate,
-                &region_size,
+                &src_region_start_coordinate.0,
+                &region_size.0,
                 D3D12_TILE_MAPPING_FLAG_NONE,
             );
         }
@@ -195,48 +191,39 @@ impl_trait! {
         }
     }
 
-    fn update_tile_mappings<const REGIONS: usize, const RANGES: usize>(
+    fn update_tile_mappings(
         &self,
         resource: &impl IResource,
-        resource_region_start_coordinates: Option<[impl AsRef<TiledResourceCoordinate>; REGIONS]>,
-        resource_region_sizes: Option<[impl AsRef<TileRegionSize>; REGIONS]>,
+        resource_region_start_coordinates: Option<&[TiledResourceCoordinate]>,
+        resource_region_sizes: Option<&[TileRegionSize]>,
         heap: &impl IHeap,
-        range_flags: Option<[impl AsRef<TileRangeFlags>; RANGES]>,
-        heap_range_start_offsets: Option<[u32; RANGES]>,
-        range_tile_counts: Option<[u32; RANGES]>,
+        range_flags: Option<&[TileRangeFlags]>,
+        heap_range_start_offsets: Option<&[u32]>,
+        range_tile_counts: Option<&[u32]>,
     ) {
-        let resource_region_start_coordinates = resource_region_start_coordinates.map(|r| {
-            r.into_iter()
-                .map(|r| r.as_ref().as_raw())
-                .collect::<SmallVec<[_; REGIONS]>>()
-        });
-        let resource_region_start_coordinates = resource_region_start_coordinates.map(|r| r.as_ptr());
+        let regions_size = resource_region_start_coordinates.map(|r| r.len())
+            .or_else(|| resource_region_sizes.map(|r| r.len()))
+            .unwrap_or_default();
 
-        let resource_region_sizes = resource_region_sizes.map(|r| {
-            r.into_iter()
-                .map(|r| r.as_ref().as_raw())
-                .collect::<SmallVec<[_; REGIONS]>>()
-        });
-        let resource_region_sizes = resource_region_sizes.map(|r| r.as_ptr());
+        let range_size = range_flags.map(|r| r.len())
+            .or_else(|| heap_range_start_offsets.map(|r| r.len()))
+            .or_else(|| range_tile_counts.map(|r| r.len()))
+            .unwrap_or_default();
 
-        let range_flags = range_flags.map(|r| {
-            r.into_iter()
-                .map(|r| r.as_ref().as_raw())
-                .collect::<SmallVec<[_; REGIONS]>>()
-        });
-        let range_flags = range_flags.map(|r| r.as_ptr());
-
+        let resource_region_start_coordinates = resource_region_start_coordinates.map(|r| r.as_ptr() as *const _);
+        let resource_region_sizes = resource_region_sizes.map(|r| r.as_ptr() as *const _);
+        let range_flags = range_flags.map(|r| r.as_ptr() as *const _);
         let heap_range_start_offsets = heap_range_start_offsets.map(|r| r.as_ptr());
         let range_tile_counts = range_tile_counts.map(|r| r.as_ptr());
 
         unsafe {
             self.0.UpdateTileMappings(
                 resource.as_raw_ref(),
-                REGIONS as u32,
+                regions_size as u32,
                 resource_region_start_coordinates,
                 resource_region_sizes,
                 heap.as_raw_ref(),
-                RANGES as u32,
+                range_size as u32,
                 range_flags,
                 heap_range_start_offsets,
                 range_tile_counts,

@@ -1,6 +1,5 @@
 mod enums;
 mod flags;
-mod structs;
 
 use windows::Win32::{
     Foundation::*,
@@ -10,7 +9,7 @@ use windows::Win32::{
     },
 };
 
-use crate::{error::DxError, types::*, HasInterface};
+use crate::{error::DxError, types::*};
 
 impl From<windows::core::Error> for DxError {
     fn from(value: windows::core::Error) -> Self {

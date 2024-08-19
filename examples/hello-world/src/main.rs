@@ -151,7 +151,7 @@ impl DXSample for Sample {
             .with_buffer_count(FRAME_COUNT)
             .with_format(Format::Bgra8Unorm)
             .with_usage(FrameBufferUsage::RenderTargetOutput)
-            .with_swap_effect(SwapEffect::FlipDiscard); 
+            .with_swap_effect(SwapEffect::FlipDiscard);
 
         let swap_chain: Swapchain3 = self
             .dxgi_factory
@@ -193,7 +193,7 @@ impl DXSample for Sample {
             render_target
         });
 
-        let viewport = Viewport::with_size((width as f32, height as f32));
+        let viewport = Viewport::from_size((width as f32, height as f32));
 
         let scissor_rect = Rect::default().with_size((width, height));
 
@@ -285,7 +285,7 @@ fn populate_command_list(resources: &Resources) {
         .unwrap();
 
     command_list.set_graphics_root_signature(Some(&resources.root_signature));
-    command_list.rs_set_viewports([resources.viewport]);
+    command_list.rs_set_viewports(&[resources.viewport]);
     command_list.rs_set_scissor_rects(&[resources.scissor_rect]);
 
     let barrier = transition_barrier(
@@ -304,7 +304,7 @@ fn populate_command_list(resources: &Resources) {
 
     command_list.clear_render_target_view(rtv_handle, [0.0_f32, 0.2_f32, 0.4_f32, 1.0_f32], &[]);
     command_list.ia_set_primitive_topology(PrimitiveTopology::Triangle);
-    command_list.ia_set_vertex_buffers(0, [resources.vbv]);
+    command_list.ia_set_vertex_buffers(0, &[resources.vbv]);
     command_list.draw_instanced(3, 1, 0, 0);
 
     let barrier = transition_barrier(
@@ -380,8 +380,8 @@ fn get_hardware_adapter(factory: &Factory4) -> Adapter3 {
 }
 
 fn create_root_signature(device: &Device) -> RootSignature {
-    let desc = RootSignatureDesc::default()
-        .with_flags(RootSignatureFlags::AllowInputAssemblerInputLayout);
+    let desc =
+        RootSignatureDesc::default().with_flags(RootSignatureFlags::AllowInputAssemblerInputLayout);
 
     device
         .serialize_and_create_root_signature(&desc, RootSignatureVersion::V1_0, 0)
@@ -430,7 +430,7 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
         .with_rasterizer_state(
             RasterizerDesc::default()
                 .with_cull_mode(CullMode::None)
-                .with_fill_mode(FillMode::Solid)
+                .with_fill_mode(FillMode::Solid),
         )
         .with_primitive_topology(PipelinePrimitiveTopology::Triangle)
         .with_render_targets([Format::Bgra8Unorm]);
@@ -470,11 +470,11 @@ fn create_vertex_buffer(device: &Device, aspect_ratio: f32) -> (Resource, Vertex
         vertex_buffer.unmap(0, None);
     }
 
-    let vbv = VertexBufferView {
-        buffer_location: vertex_buffer.get_gpu_virtual_address(),
-        stride_in_bytes: std::mem::size_of::<Vertex>() as u32,
-        size_in_bytes: std::mem::size_of_val(&vertices) as u32,
-    };
+    let vbv = VertexBufferView::new(
+        vertex_buffer.get_gpu_virtual_address(),
+        std::mem::size_of::<Vertex>() as u32,
+        std::mem::size_of_val(&vertices) as u32,
+    );
 
     (vertex_buffer, vbv)
 }

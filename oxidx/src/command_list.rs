@@ -216,7 +216,7 @@ pub trait IGraphicsCommandList:
     /// Sets a CPU descriptor handle for the vertex buffers.
     ///
     /// For more information: [`ID3D12GraphicsCommandList::IASetVertexBuffers method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-iasetvertexbuffers)
-    fn ia_set_vertex_buffers(&self, slot: u32, buffers: impl IntoIterator<Item = VertexBufferView>);
+    fn ia_set_vertex_buffers(&self, slot: u32, buffers: &[VertexBufferView]);
 
     /// Sets the blend factor that modulate values for a pixel shader, render target, or both.
     ///
@@ -285,7 +285,7 @@ pub trait IGraphicsCommandList:
     /// Bind an array of viewports to the rasterizer stage of the pipeline.
     ///
     /// For more information: [`ID3D12GraphicsCommandList::RSSetViewports method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-rssetviewports)
-    fn rs_set_viewports(&self, viewport: impl IntoIterator<Item = Viewport>);
+    fn rs_set_viewports(&self, viewport: &[Viewport]);
 
     /// Sets a constant in the compute root signature.
     ///
@@ -438,11 +438,7 @@ pub trait IGraphicsCommandList:
     /// Sets the stream output buffer views.
     ///
     /// For more information: [`ID3D12GraphicsCommandList::SOSetTargets method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-sosettargets)
-    fn so_set_targets(
-        &self,
-        start_slot: u32,
-        views: Option<impl IntoIterator<Item = StreamOutputBufferView>>,
-    );
+    fn so_set_targets(&self, start_slot: u32, views: Option<&[StreamOutputBufferView]>);
 }
 
 create_type! { GraphicsCommandList wrap ID3D12GraphicsCommandList }
@@ -622,11 +618,11 @@ impl_trait! {
             let src_box = src_box.map(|s| &s.0 as *const _);
 
             self.0.CopyTextureRegion(
-                &dst.as_raw(),
+                &dst.0,
                 dst_x,
                 dst_y,
                 dst_z,
-                &src.as_raw(),
+                &src.0,
                 src_box,
             );
         }
@@ -644,8 +640,8 @@ impl_trait! {
         unsafe {
             self.0.CopyTiles(
                 tiled_resource.as_raw_ref(),
-                &tile_region_start_coordinate.as_raw(),
-                &tile_region_size.as_raw(),
+                &tile_region_start_coordinate.0,
+                &tile_region_size.0,
                 buffer.as_raw_ref(),
                 buffer_start_offset,
                 flags.as_raw(),
@@ -783,16 +779,16 @@ impl_trait! {
     fn ia_set_vertex_buffers(
         &self,
         slot: u32,
-        buffers: impl IntoIterator<Item = VertexBufferView>,
+        buffers: &[VertexBufferView],
     ) {
         unsafe {
-            let buffers = buffers
-                .into_iter()
-                .map(|r| r.as_raw())
-                .collect::<SmallVec<[_; 8]>>();
+            let buffers = std::slice::from_raw_parts(
+                buffers.as_ptr() as *const _,
+                buffers.len()
+            );
 
             let buffers = if !buffers.is_empty() {
-                Some(buffers.as_slice())
+                Some(buffers)
             } else {
                 None
             };
@@ -907,8 +903,8 @@ impl_trait! {
 
     fn resource_barrier<'a>(&self, barriers: &[ResourceBarrier<'a>]) {
         unsafe {
-            let barriers = core::slice::from_raw_parts(
-                barriers.as_ptr() as *const D3D12_RESOURCE_BARRIER,
+            let barriers = std::slice::from_raw_parts(
+                barriers.as_ptr() as *const _,
                 barriers.len()
             );
             self.0.ResourceBarrier(barriers);
@@ -923,12 +919,12 @@ impl_trait! {
         }
     }
 
-    fn rs_set_viewports(&self, viewport: impl IntoIterator<Item = Viewport>) {
+    fn rs_set_viewports(&self, viewport: &[Viewport]) {
         unsafe {
-            let viewports = viewport
-                .into_iter()
-                .map(|v| v.as_raw())
-                .collect::<SmallVec<[_; 8]>>();
+            let viewports = std::slice::from_raw_parts(
+                viewport.as_ptr() as *const _,
+                viewport.len()
+            );
 
             self.0.RSSetViewports(&viewports);
         }
@@ -1177,20 +1173,18 @@ impl_trait! {
     fn so_set_targets(
         &self,
         start_slot: u32,
-        views: Option<impl IntoIterator<Item = StreamOutputBufferView>>,
+        views: Option<&[StreamOutputBufferView]>,
     ) {
         unsafe {
-            let views = views
-                .map(|views|
-                    views
-                    .into_iter()
-                    .map(|view| view.as_raw())
-                    .collect::<SmallVec<[_; 16]>>()
-                );
+            let views = if let Some(views) = views {
+                Some(std::slice::from_raw_parts(views.as_ptr() as *const _, views.len()))
+            } else {
+                None
+            };
 
             self.0.SOSetTargets(
                 start_slot,
-                views.as_ref().map(|v| v.as_slice())
+                views
             )
         }
     }

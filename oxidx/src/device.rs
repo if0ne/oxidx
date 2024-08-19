@@ -496,8 +496,7 @@ impl_trait! {
         optimized_clear_value: Option<&ClearValue>,
     ) -> Result<R, DxError> {
         unsafe {
-            let clear_value = optimized_clear_value.as_ref().map(|c| c.as_raw());
-            let clear_value = clear_value.as_ref().map(|c| c as *const _);
+            let clear_value = optimized_clear_value.as_ref().map(|c| &c.0 as *const _);
 
             let mut resource = None;
 
@@ -649,8 +648,7 @@ impl_trait! {
         optimized_clear_value: Option<&ClearValue>,
     ) -> Result<R, DxError> {
         unsafe {
-            let clear_value = optimized_clear_value.as_ref().map(|c| c.as_raw());
-            let clear_value = clear_value.as_ref().map(|c| c as *const _);
+            let clear_value = optimized_clear_value.as_ref().map(|c| &c.0 as *const _);
 
             let mut resource = None;
 
@@ -713,8 +711,7 @@ impl_trait! {
         optimized_clear_value: Option<&ClearValue>,
     ) -> Result<R, DxError> {
         unsafe {
-            let clear_value = optimized_clear_value.as_ref().map(|c| c.as_raw());
-            let clear_value = clear_value.as_ref().map(|c| c as *const _);
+            let clear_value = optimized_clear_value.as_ref().map(|c| &c.0 as *const _);
 
             let mut resource = None;
 
@@ -824,8 +821,7 @@ impl_trait! {
         handle: CpuDescriptorHandle,
     ) {
         unsafe {
-            let desc = desc.map(|v| v.as_raw());
-            let desc = desc.as_ref().map(|f| f as *const _);
+            let desc = desc.as_ref().map(|f| &f.0 as *const _);
 
             match (resource, counter_resource) {
                 (Some(r), Some(c)) => {
@@ -999,11 +995,11 @@ impl_trait! {
             if let (Some(src), Some(dst)) = (standard_tile_shape_for_non_packed_mips.as_mut(), standard_tile_shape_for_non_packed_mips_raw.as_ref()) {
                 src.iter_mut().zip(dst.iter())
                     .for_each(|(src, &dst)| {
-                        *src = dst.into();
+                        *src = TileShape(dst);
                     });
             }
 
-            res.into()
+            SubresourceTiling(res)
         }
     }
 
