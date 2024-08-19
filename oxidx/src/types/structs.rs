@@ -1,4 +1,4 @@
-use std::{ffi::CStr, marker::PhantomData, mem::ManuallyDrop, ops::Range, u32};
+use std::{ffi::CStr, marker::PhantomData, mem::ManuallyDrop, ops::Range};
 
 use compact_str::CompactString;
 use windows::{
