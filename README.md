@@ -10,6 +10,10 @@ This project provides low-level bindings/wrapper for D3D12 API.
 * PIX methods.
 * D3D12 and DXGI prefixes have been stripped from all types.
 
+## Minimum supported Rust version
+
+oxidx's MSRV is 1.80.
+
 ## Examples
 
 ### Device creation
