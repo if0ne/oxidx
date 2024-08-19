@@ -1,4 +1,4 @@
-use std::ffi::CStr;
+use std::{ffi::CStr, ops::Range};
 
 use smallvec::SmallVec;
 use windows::{
@@ -280,10 +280,12 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     fn get_copyable_footprints(
         &self,
         resource_desc: &ResourceDesc,
-        first_subresource: u32,
-        num_subresources: u32,
+        subresources: Range<u32>,
         base_offset: u64,
-    ) -> CopyableFootprints;
+        layouts: &mut [PlacedSubresourceFootprint],
+        num_rows: &mut [u32],
+        row_sizes: &mut [u32],
+    ) -> u64;
 
     /// Gets a resource layout that can be copied. Helps the app fill-in [`PlacedSubresourceFootprint`] and [`SubresourceFootprint`] when suballocating space in upload heaps.
     ///
@@ -883,33 +885,27 @@ impl_trait! {
     fn get_copyable_footprints(
         &self,
         resource_desc: &ResourceDesc,
-        first_subresource: u32,
-        num_subresources: u32,
+        subresources: Range<u32>,
         base_offset: u64,
-    ) -> CopyableFootprints {
+        layouts: &mut [PlacedSubresourceFootprint],
+        num_rows: &mut [u32],
+        row_sizes: &mut [u32],
+    ) -> u64 {
         unsafe {
-            let mut layouts: SmallVec<[_; 8]> = SmallVec::with_capacity(num_subresources as usize);
-            let mut num_rows: SmallVec<[_; 8]> = SmallVec::with_capacity(num_subresources as usize);
-            let mut row_sizes: SmallVec<[_; 8]> = SmallVec::with_capacity(num_subresources as usize);
             let mut total_bytes = 0;
 
             self.0.GetCopyableFootprints(
                 &resource_desc.0,
-                first_subresource,
-                num_subresources,
+                subresources.start,
+                subresources.count() as u32,
                 base_offset,
-                Some(layouts.as_mut_ptr()),
-                Some(num_rows.as_mut_ptr()),
-                Some(row_sizes.as_mut_ptr()),
+                Some(layouts.as_mut_ptr() as *mut _),
+                Some(num_rows.as_mut_ptr() as *mut _),
+                Some(row_sizes.as_mut_ptr() as *mut _),
                 Some(&mut total_bytes)
             );
 
-            CopyableFootprints {
-                layouts: layouts.into_iter().map(|l| PlacedSubresourceFootprint(l)).collect(),
-                num_rows,
-                row_sizes,
-                total_bytes
-            }
+            total_bytes
         }
     }
 
