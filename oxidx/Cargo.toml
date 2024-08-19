@@ -16,10 +16,6 @@ version = "2.5.0"
 [dependencies.compact_str]
 version = "0.7.1"
 
-[dependencies.smallvec]
-version = "1.13.2"
-features = ["const_generics"]
-
 [dependencies.strum]
 version = "0.26"
 features = ["derive"]

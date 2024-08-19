@@ -351,7 +351,7 @@ fn create_device(command_line: &SampleCommandLine) -> (Factory4, Device) {
     };
 
     let device: Device = entry
-        .create_device(&adapter, FeatureLevel::Level11)
+        .create_device(Some(&adapter), FeatureLevel::Level11)
         .unwrap();
 
     (dxgi_factory, device)
@@ -369,7 +369,7 @@ fn get_hardware_adapter(factory: &Factory4) -> Adapter3 {
         }
 
         if entry
-            .create_device::<_, Device>(&adapter, FeatureLevel::Level11)
+            .create_device::<_, Device>(Some(&adapter), FeatureLevel::Level11)
             .is_ok()
         {
             return adapter;

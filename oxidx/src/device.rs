@@ -45,10 +45,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// Gets information about the features that are supported by the current graphics driver.
     ///
     /// For more information: [`ID3D12Device::CheckFeatureSupport method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-checkfeaturesupport)
-    fn check_feature_support<F: FeatureObject>(
-        &self,
-        feature_input: F::UserInput<'_>,
-    ) -> Result<F::Output, DxError>;
+    fn check_feature_support<F: FeatureObject>(&self, feature: &mut F) -> Result<(), DxError>;
 
     /// Copies descriptors from a source to a destination.
     ///
@@ -372,20 +369,15 @@ impl_trait! {
     impl IDevice =>
     Device;
 
-    fn check_feature_support<F: FeatureObject>(&self, feature_input: F::UserInput<'_>) -> Result<F::Output, DxError> {
+    fn check_feature_support<F: FeatureObject>(&self, feature: &mut F) -> Result<(), DxError> {
         unsafe {
-            let raw = F::into_input(feature_input);
-            let mut raw = F::from_input(raw);
-
             self.0
                 .CheckFeatureSupport(
                     F::TYPE.as_raw(),
-                    &mut raw as *mut F::Raw as *mut _,
-                    core::mem::size_of::<F::Raw>() as u32,
+                    feature as *mut F as *mut _,
+                    core::mem::size_of::<F>() as u32,
                 )
-                .map_err(DxError::from)?;
-
-            Ok(F::from_raw(raw))
+                .map_err(DxError::from)
         }
     }
 

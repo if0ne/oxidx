@@ -29,14 +29,19 @@ impl Entry {
     /// For more information: [`D3D12CreateDevice function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-d3d12createdevice)
     pub fn create_device<A: IAdapter3, D: IDevice>(
         &self,
-        adapter: &A,
+        adapter: Option<&A>,
         feature_level: FeatureLevel,
     ) -> Result<D, DxError> {
         unsafe {
             let mut inner: Option<D::Raw> = None;
 
-            D3D12CreateDevice(adapter.as_raw_ref(), feature_level.as_raw(), &mut inner)
-                .map_err(DxError::from)?;
+            if let Some(adapter) = adapter {
+                D3D12CreateDevice(adapter.as_raw_ref(), feature_level.as_raw(), &mut inner)
+                    .map_err(DxError::from)?;
+            } else {
+                D3D12CreateDevice(None, feature_level.as_raw(), &mut inner)
+                    .map_err(DxError::from)?;
+            }
 
             let inner = inner.unwrap();
 
@@ -61,7 +66,7 @@ impl Entry {
 
 #[cfg(test)]
 mod test {
-    use crate::{device::Device, factory::*, types::FactoryCreationFlags};
+    use crate::{device::Device, dx::Adapter3, factory::*, types::FactoryCreationFlags};
 
     use super::*;
 
@@ -93,15 +98,7 @@ mod test {
     fn create_device_test() {
         let entry = Entry;
 
-        let factory = entry.create_factory::<Factory4>(FactoryCreationFlags::Debug);
-        assert!(factory.is_ok());
-        let factory = factory.unwrap();
-
-        let adapter = factory.enum_adapters(0);
-        assert!(adapter.is_ok());
-        let adapter = adapter.unwrap();
-
-        let device = entry.create_device::<_, Device>(&adapter, FeatureLevel::Level11);
+        let device = entry.create_device::<_, Device>(None::<&Adapter3>, FeatureLevel::Level11);
         assert!(device.is_ok());
     }
 }

@@ -29,5 +29,6 @@ let device: Device = entry
 ### Feature fetching
 
 ```rust
-let feature = device.check_feature_support::<Options>(())?;
+let mut options = Options1Feature::default();
+device.check_feature_support(&mut options)?;
 ```

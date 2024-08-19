@@ -34,15 +34,6 @@ mod utils;
 
 pub trait FeatureObject: __Sealed {
     const TYPE: types::FeatureType;
-
-    type Raw: Default;
-    type UserInput<'a>;
-    type Input<'a>;
-    type Output;
-
-    fn into_input(input: Self::UserInput<'_>) -> Self::Input<'_>;
-    fn from_input(input: Self::Input<'_>) -> Self::Raw;
-    fn from_raw(raw: Self::Raw) -> Self::Output;
 }
 
 pub(crate) trait HasInterface {

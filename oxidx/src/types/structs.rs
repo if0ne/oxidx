@@ -108,9 +108,7 @@ impl BlendDesc {
 impl Default for BlendDesc {
     fn default() -> Self {
         Self(D3D12_BLEND_DESC {
-            RenderTarget: std::array::from_fn(|_| {
-                RenderTargetBlendDesc::default().0
-            }),
+            RenderTarget: std::array::from_fn(|_| RenderTargetBlendDesc::default().0),
             ..Default::default()
         })
     }
@@ -849,7 +847,6 @@ impl<'a> GraphicsPipelineDesc<'a> {
         self.0.SampleMask = sample_mask;
         self
     }
-
 
     #[inline]
     pub fn with_rasterizer_state(mut self, rasterizer_state: RasterizerDesc) -> Self {
