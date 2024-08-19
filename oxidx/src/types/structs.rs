@@ -1,4 +1,4 @@
-use std::{ffi::CStr, marker::PhantomData, mem::ManuallyDrop, ops::Range};
+use std::{ffi::CStr, marker::PhantomData, mem::ManuallyDrop, ops::Range, u32};
 
 use compact_str::CompactString;
 use windows::{
@@ -72,7 +72,7 @@ impl AdapterDesc1 {
 /// Describes the blend state.
 ///
 /// For more information: [`D3D12_BLEND_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_blend_desc)
-#[derive(Clone, Copy, Default, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(transparent)]
 pub struct BlendDesc(pub(crate) D3D12_BLEND_DESC);
 
@@ -102,6 +102,17 @@ impl BlendDesc {
     pub fn enable_independent_blend(mut self) -> Self {
         self.0.IndependentBlendEnable = true.into();
         self
+    }
+}
+
+impl Default for BlendDesc {
+    fn default() -> Self {
+        Self(D3D12_BLEND_DESC {
+            RenderTarget: std::array::from_fn(|_| {
+                RenderTargetBlendDesc::default().0
+            }),
+            ..Default::default()
+        })
     }
 }
 
@@ -781,6 +792,8 @@ impl<'a> GraphicsPipelineDesc<'a> {
                     Count: 1,
                     Quality: 0,
                 },
+                SampleMask: u32::MAX,
+                BlendState: BlendDesc::default().0,
                 ..Default::default()
             },
             Default::default(),
@@ -826,11 +839,17 @@ impl<'a> GraphicsPipelineDesc<'a> {
     }
 
     #[inline]
-    pub fn with_blend_desc(mut self, blend_desc: BlendDesc, sample_mask: u32) -> Self {
+    pub fn with_blend_desc(mut self, blend_desc: BlendDesc) -> Self {
         self.0.BlendState = blend_desc.0;
+        self
+    }
+
+    #[inline]
+    pub fn with_sample_mask(mut self, sample_mask: u32) -> Self {
         self.0.SampleMask = sample_mask;
         self
     }
+
 
     #[inline]
     pub fn with_rasterizer_state(mut self, rasterizer_state: RasterizerDesc) -> Self {
@@ -1569,6 +1588,15 @@ impl RenderTargetBlendDesc {
             LogicOpEnable: true.into(),
             LogicOp: logic_op.as_raw(),
             RenderTargetWriteMask: mask.bits() as u8,
+            ..Default::default()
+        })
+    }
+}
+
+impl Default for RenderTargetBlendDesc {
+    fn default() -> Self {
+        Self(D3D12_RENDER_TARGET_BLEND_DESC {
+            RenderTargetWriteMask: ColorWriteEnable::all().bits() as u8,
             ..Default::default()
         })
     }

@@ -420,7 +420,7 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
 
     let input_element_descs: [InputElementDesc; 2] = [
         InputElementDesc::per_vertex((c"POSITION", 0), Format::Rgb32Float, 0, 0),
-        InputElementDesc::per_vertex((c"COLOR", 0), Format::Rgba32Float, 0, 12),
+        InputElementDesc::per_vertex((c"COLOR", 0), Format::Rgba32Float, 12, 0),
     ];
 
     let desc = GraphicsPipelineDesc::new(&vertex_shader)
