@@ -43,7 +43,7 @@ pub trait ICommandQueue: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<
     /// Submits an iterator of command lists for execution.
     ///
     /// For more information: [`ID3D12CommandQueue::ExecuteCommandLists method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-executecommandlists)
-    fn execute_command_lists<CL: ICommandList>(&self, command_lists: &[&CL]);
+    fn execute_command_lists<CL: ICommandList>(&self, command_lists: &[Option<CL>]);
 
     /// This method samples the CPU and GPU timestamp counters at the same moment in time.
     ///
@@ -134,7 +134,7 @@ impl_trait! {
 
     fn execute_command_lists<CL: ICommandList>(
         &self,
-        command_lists: &[&CL],
+        command_lists: &[Option<CL>],
     ) {
         unsafe {
             let command_lists = std::slice::from_raw_parts(command_lists.as_ptr() as *const _, command_lists.len());

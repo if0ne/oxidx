@@ -260,7 +260,7 @@ impl DXSample for Sample {
 
             resources
                 .command_queue
-                .execute_command_lists(&[command_list]);
+                .execute_command_lists(&[Some(command_list.clone())]);
 
             resources.command_queue.end_event();
 
