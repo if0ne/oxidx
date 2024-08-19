@@ -31,7 +31,7 @@ impl_trait! {
     fn get_cached_blob(&self) -> Result<Blob, DxError> {
         unsafe {
             self.0.GetCachedBlob()
-                .map(|b| Blob::new(b))
+                .map(Blob::new)
                 .map_err(DxError::from)
         }
     }

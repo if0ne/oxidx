@@ -1,10 +1,12 @@
 use std::{ffi::CStr, marker::PhantomData, mem::ManuallyDrop, ops::Range};
 
 use compact_str::CompactString;
-use smallvec::SmallVec;
 use windows::{
     core::PCSTR,
-    Win32::Foundation::{CloseHandle, HANDLE, LUID, RECT},
+    Win32::{
+        Foundation::{CloseHandle, HANDLE, LUID, RECT},
+        Graphics::Direct3D::D3D_SHADER_MACRO,
+    },
 };
 
 use crate::{
@@ -364,22 +366,6 @@ impl ConstantBufferViewDesc {
             SizeInBytes: size,
         })
     }
-}
-
-/// Type that represent return values of [`IDevice::get_copyable_footprints`](crate::device::IDevice::get_copyable_footprints)
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct CopyableFootprints {
-    /// An array (of length NumSubresources) of [`PlacedSubresourceFootprint`] structures, to be filled with the description and placement of each subresource.
-    pub layouts: SmallVec<[PlacedSubresourceFootprint; 8]>,
-
-    /// An array (of length NumSubresources) of integer variables, to be filled with the number of rows for each subresource.
-    pub num_rows: SmallVec<[u32; 8]>,
-
-    /// An array (of length NumSubresources) of integer variables, each entry to be filled with the unpadded size in bytes of a row, of each subresource.
-    pub row_sizes: SmallVec<[u64; 8]>,
-
-    /// The total size, in bytes.
-    pub total_bytes: u64,
 }
 
 /// Describes a CPU descriptor handle.
@@ -959,9 +945,7 @@ impl HeapDesc {
 
     #[inline]
     pub fn properties(&self) -> &HeapProperties {
-        unsafe {
-            std::mem::transmute(&self.0.Properties)
-        }
+        unsafe { std::mem::transmute(&self.0.Properties) }
     }
 
     #[inline]
@@ -1070,12 +1054,12 @@ impl HeapProperties {
 
     #[inline]
     pub fn visible_node_mask(&self) -> u32 {
-        self.0.VisibleNodeMask.into()
+        self.0.VisibleNodeMask
     }
 
     #[inline]
     pub fn creation_node_mask(&self) -> u32 {
-        self.0.CreationNodeMask.into()
+        self.0.CreationNodeMask
     }
 }
 
@@ -1335,9 +1319,7 @@ impl PlacedSubresourceFootprint {
 
     #[inline]
     pub fn footprint(&self) -> &SubresourceFootprint {
-        unsafe {
-            std::mem::transmute(&self.0.Footprint)
-        }
+        unsafe { std::mem::transmute(&self.0.Footprint) }
     }
 }
 
@@ -2213,6 +2195,29 @@ impl SamplerDesc {
         self.0.MinLOD = lod.start;
         self.0.MaxLOD = lod.end;
         self
+    }
+}
+
+/// Defines a shader macro.
+///
+/// For more information: [`D3D_SHADER_MACRO structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ns-d3dcommon-d3d_shader_macro)
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct ShaderMacro<'a>(pub(crate) D3D_SHADER_MACRO, PhantomData<&'a ()>);
+
+impl<'a> ShaderMacro<'a> {
+    #[inline]
+    pub fn new(name: &'a CStr, definition: &'a CStr) -> Self {
+        let k = PCSTR::from_raw(name.as_ref().as_ptr() as *const _);
+        let v = PCSTR::from_raw(definition.as_ref().as_ptr() as *const _);
+
+        Self(
+            D3D_SHADER_MACRO {
+                Name: k,
+                Definition: v,
+            },
+            Default::default(),
+        )
     }
 }
 

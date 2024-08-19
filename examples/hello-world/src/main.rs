@@ -260,7 +260,7 @@ impl DXSample for Sample {
 
             resources
                 .command_queue
-                .execute_command_lists([command_list]);
+                .execute_command_lists(&[command_list]);
 
             resources.command_queue.end_event();
 
@@ -300,7 +300,7 @@ fn populate_command_list(resources: &Resources) {
         .get_cpu_descriptor_handle_for_heap_start()
         .offset(resources.frame_index as usize * resources.rtv_descriptor_size);
 
-    command_list.om_set_render_targets([rtv_handle], false, None);
+    command_list.om_set_render_targets(&[rtv_handle], false, None);
 
     command_list.clear_render_target_view(rtv_handle, [0.0_f32, 0.2_f32, 0.4_f32, 1.0_f32], &[]);
     command_list.ia_set_primitive_topology(PrimitiveTopology::Triangle);
@@ -401,7 +401,7 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
 
     let vertex_shader = Blob::compile_from_file(
         &shaders_hlsl_path,
-        [],
+        &[],
         c"VSMain",
         c"vs_5_0",
         compile_flags,
@@ -410,7 +410,7 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
     .unwrap();
     let pixel_shader = Blob::compile_from_file(
         &shaders_hlsl_path,
-        [],
+        &[],
         c"PSMain",
         c"ps_5_0",
         compile_flags,
@@ -424,7 +424,7 @@ fn create_pipeline_state(device: &Device, root_signature: &RootSignature) -> Pip
     ];
 
     let desc = GraphicsPipelineDesc::new(&vertex_shader)
-        .with_root_signature(&root_signature)
+        .with_root_signature(root_signature)
         .with_input_layout(&input_element_descs)
         .with_ps(&pixel_shader)
         .with_rasterizer_state(

@@ -1,15 +1,14 @@
 use std::{ffi::CStr, path::Path};
 
-use smallvec::SmallVec;
 use windows::{
     core::{Interface, HSTRING, PCSTR},
     Win32::Graphics::{
-        Direct3D::{Fxc::D3DCompileFromFile, ID3DBlob, D3D_SHADER_MACRO},
+        Direct3D::{Fxc::D3DCompileFromFile, ID3DBlob},
         Direct3D12::{D3D12_CACHED_PIPELINE_STATE, D3D12_SHADER_BYTECODE},
     },
 };
 
-use crate::{create_type, error::DxError, impl_trait, HasInterface};
+use crate::{create_type, error::DxError, impl_trait, types::*, HasInterface};
 
 /// This interface is used to return data of arbitrary length.
 ///
@@ -31,9 +30,9 @@ pub trait IBlobExt: IBlob {
     /// Compiles Microsoft High Level Shader Language (HLSL) code into bytecode for a given target.
     ///
     /// For more information: [`D3DCompileFromFile function`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcompiler/nf-d3dcompiler-d3dcompilefromfile)
-    fn compile_from_file<'a>(
+    fn compile_from_file(
         filename: impl AsRef<Path>,
-        defines: impl IntoIterator<Item = (&'a CStr, &'a CStr)>,
+        defines: &[ShaderMacro],
         entry_point: impl AsRef<CStr>,
         target: impl AsRef<CStr>,
         flags1: u32,
@@ -87,9 +86,9 @@ impl_trait! {
     impl IBlobExt =>
     Blob;
 
-    fn compile_from_file<'a>(
+    fn compile_from_file(
         filename: impl AsRef<Path>,
-        defines: impl IntoIterator<Item = (&'a CStr, &'a CStr)>,
+        defines: &[ShaderMacro],
         entry_point: impl AsRef<CStr>,
         target: impl AsRef<CStr>,
         flags1: u32,
@@ -104,26 +103,16 @@ impl_trait! {
 
         let mut shader = None;
 
-        let defines = defines.into_iter()
-            .map(|(k, v)| {
-                let k = PCSTR::from_raw(k.as_ref().as_ptr() as *const _);
-                let v = PCSTR::from_raw(v.as_ref().as_ptr() as *const _);
-
-                D3D_SHADER_MACRO {
-                    Name: k,
-                    Definition: v
-                }
-            })
-            .chain(std::iter::once(D3D_SHADER_MACRO {
-                Name: PCSTR::null(),
-                Definition: PCSTR::null(),
-            }))
-            .collect::<SmallVec<[_; 8]>>();
+        let defines = if !defines.is_empty() {
+            Some(defines.as_ptr() as *const _)
+        } else {
+            None
+        };
 
         unsafe {
             D3DCompileFromFile(
                 &filename,
-                Some(defines.as_ptr()),
+                defines,
                 None,
                 entry_point,
                 target,

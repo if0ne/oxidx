@@ -1,6 +1,5 @@
 use std::ffi::CStr;
 
-use smallvec::SmallVec;
 use windows::{
     core::{Interface, Param, PCSTR},
     Win32::{Foundation::BOOL, Graphics::Direct3D12::*},
@@ -228,7 +227,7 @@ pub trait IGraphicsCommandList:
     /// For more information: [`ID3D12GraphicsCommandList::OMSetRenderTargets method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-omsetrendertargets)
     fn om_set_render_targets(
         &self,
-        render_targets: impl IntoIterator<Item = CpuDescriptorHandle>,
+        render_targets: &[CpuDescriptorHandle],
         rts_single_handle_to_descriptor_range: bool,
         depth_stencil: Option<CpuDescriptorHandle>,
     );
@@ -275,7 +274,7 @@ pub trait IGraphicsCommandList:
     /// Notifies the driver that it needs to synchronize multiple accesses to resources.
     ///
     /// For more information: [`ID3D12GraphicsCommandList::ResourceBarrier method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-resourcebarrier)
-    fn resource_barrier<'a>(&self, barriers: &[ResourceBarrier<'a>]);
+    fn resource_barrier(&self, barriers: &[ResourceBarrier<'_>]);
 
     /// Binds an array of scissor rectangles to the rasterizer stage.
     ///
@@ -351,10 +350,7 @@ pub trait IGraphicsCommandList:
     /// Changes the currently bound descriptor heaps that are associated with a command list.
     ///
     /// For more information: [`ID3D12GraphicsCommandList::SetDescriptorHeaps method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-setdescriptorheaps)
-    fn set_descriptor_heaps<'a>(
-        &self,
-        descriptor_heaps: impl IntoIterator<Item = &'a DescriptorHeap>,
-    );
+    fn set_descriptor_heaps(&self, descriptor_heaps: &[&DescriptorHeap]);
 
     /// Sets a constant in the graphics root signature.
     ///
@@ -545,7 +541,7 @@ impl_trait! {
                 view_cpu_handle.0,
                 resource.as_raw_ref(),
                 &values.into(),
-                &rects
+                rects
             );
         }
     }
@@ -566,7 +562,7 @@ impl_trait! {
                 view_cpu_handle.0,
                 resource.as_raw_ref(),
                 &values.into(),
-                &rects
+                rects
             );
         }
     }
@@ -805,16 +801,11 @@ impl_trait! {
 
     fn om_set_render_targets(
         &self,
-        render_targets: impl IntoIterator<Item = CpuDescriptorHandle>,
+        render_targets: &[CpuDescriptorHandle],
         rts_single_handle_to_descriptor_range: bool,
         depth_stencil: Option<CpuDescriptorHandle>,
     ) {
         unsafe {
-            let render_targets = render_targets
-                .into_iter()
-                .map(|rt| rt.0)
-                .collect::<SmallVec<[_; 8]>>();
-
             let render_targets_raw = if !render_targets.is_empty() {
                 Some(render_targets.as_ptr() as *const _)
             } else {
@@ -901,7 +892,7 @@ impl_trait! {
         }
     }
 
-    fn resource_barrier<'a>(&self, barriers: &[ResourceBarrier<'a>]) {
+    fn resource_barrier(&self, barriers: &[ResourceBarrier<'_>]) {
         unsafe {
             let barriers = std::slice::from_raw_parts(
                 barriers.as_ptr() as *const _,
@@ -915,7 +906,7 @@ impl_trait! {
         unsafe {
             let rects = std::slice::from_raw_parts(rects.as_ptr() as *const _, rects.len());
 
-            self.0.RSSetScissorRects(&rects);
+            self.0.RSSetScissorRects(rects);
         }
     }
 
@@ -926,7 +917,7 @@ impl_trait! {
                 viewport.len()
             );
 
-            self.0.RSSetViewports(&viewports);
+            self.0.RSSetViewports(viewports);
         }
     }
 
@@ -1023,18 +1014,15 @@ impl_trait! {
         }
     }
 
-    fn set_descriptor_heaps<'a>(
+    fn set_descriptor_heaps(
         &self,
-        descriptor_heaps: impl IntoIterator<Item = &'a DescriptorHeap>,
+        descriptor_heaps: &[&DescriptorHeap],
     ) {
         unsafe {
-            let descriptor_heaps = descriptor_heaps
-                .into_iter()
-                .map(|dh| Some(dh.as_raw().clone()))
-                .collect::<SmallVec<[_; 16]>>();
+            let descriptor_heaps = std::slice::from_raw_parts(descriptor_heaps.as_ptr() as *const _, descriptor_heaps.len());
 
             self.0.SetDescriptorHeaps(
-                descriptor_heaps.as_slice()
+                descriptor_heaps
             );
         }
     }
@@ -1176,11 +1164,7 @@ impl_trait! {
         views: Option<&[StreamOutputBufferView]>,
     ) {
         unsafe {
-            let views = if let Some(views) = views {
-                Some(std::slice::from_raw_parts(views.as_ptr() as *const _, views.len()))
-            } else {
-                None
-            };
+            let views = views.map(|views| std::slice::from_raw_parts(views.as_ptr() as *const _, views.len()));
 
             self.0.SOSetTargets(
                 start_slot,

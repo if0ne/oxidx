@@ -1,6 +1,5 @@
 use std::{ffi::CStr, ops::Range};
 
-use smallvec::SmallVec;
 use windows::{
     core::{Interface, PCWSTR},
     Win32::Graphics::Direct3D12::ID3D12Device,
@@ -267,7 +266,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// Enables the page-out of data, which precludes GPU access of that data.
     ///
     /// For more information: [`ID3D12Device::Evict method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-evict)
-    fn evict(&self, num_objects: u32) -> Result<SmallVec<[Pageable; 16]>, DxError>;
+    fn evict(&self, objects: &[Option<Pageable>]) -> Result<(), DxError>;
 
     /// Gets a locally unique identifier for the current device (adapter).
     ///
@@ -334,10 +333,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// Makes objects resident for the device.
     ///
     /// For more information: [`ID3D12Device::MakeResident method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-makeresident)
-    fn make_resident<'a>(
-        &self,
-        objects: impl IntoIterator<Item = &'a Pageable>,
-    ) -> Result<(), DxError>;
+    fn make_resident(&self, objects: &[&Pageable]) -> Result<(), DxError>;
 
     /// Opens a handle for shared resources, shared heaps, and shared fences, by using [`SharedHandle`].
     ///
@@ -862,17 +858,9 @@ impl_trait! {
         }
     }
 
-    fn evict(&self, num_objects: u32) -> Result<SmallVec<[Pageable; 16]>, DxError> {
+    fn evict(&self, objects: &[Option<Pageable>]) -> Result<(), DxError> {
         unsafe {
-            let mut objects: SmallVec<[_; 16]> = SmallVec::with_capacity(num_objects as usize);
-
-            self.0.Evict(objects.as_mut()).map_err(DxError::from)?;
-
-            let ojbects = objects.into_iter()
-                .map_while(|o| o.map(Pageable::new))
-                .collect();
-
-            Ok(ojbects)
+            self.0.Evict(std::mem::transmute::<&_, &_>(objects)).map_err(DxError::from)
         }
     }
 
@@ -914,8 +902,6 @@ impl_trait! {
         node_mask: u32,
         r#type: HeapType,
     ) -> HeapProperties {
-        assert_ne!(r#type, HeapType::Custom);
-
         unsafe {
             HeapProperties(self.0.GetCustomHeapProperties(node_mask, r#type.as_raw()))
         }
@@ -947,7 +933,7 @@ impl_trait! {
         unsafe {
             let resource_desc = std::slice::from_raw_parts(resource_desc.as_ptr() as *const _, resource_desc.len());
 
-            ResourceAllocationInfo(self.0.GetResourceAllocationInfo(visible_mask, &resource_desc))
+            ResourceAllocationInfo(self.0.GetResourceAllocationInfo(visible_mask, resource_desc))
         }
     }
 
@@ -956,61 +942,34 @@ impl_trait! {
         resource: &impl IResource,
         first_subresource_tiling_to_get: u32,
         num_tiles_for_entire_resource: Option<&mut [u32]>,
-        mut packed_mip_desc: Option<&mut [PackedMipDesc]>,
-        mut standard_tile_shape_for_non_packed_mips: Option<&mut [TileShape]>,
+        packed_mip_desc: Option<&mut [PackedMipDesc]>,
+        standard_tile_shape_for_non_packed_mips: Option<&mut [TileShape]>,
         num_subresource_tilings: Option<&mut [u32]>
     ) -> SubresourceTiling {
         unsafe {
-            let mut packed_mip_desc_raw = packed_mip_desc
-                .as_ref()
-                .map(|v| SmallVec::<[_; 16]>::with_capacity(v.len()));
-
-            let mut standard_tile_shape_for_non_packed_mips_raw =
-                standard_tile_shape_for_non_packed_mips
-                .as_ref()
-                .map(|v| SmallVec::<[_; 16]>::with_capacity(v.len()));
-
             let mut res = Default::default();
             self.0.GetResourceTiling(
                 resource.as_raw_ref(),
                 num_tiles_for_entire_resource.map(|v| v.as_mut_ptr()),
-                packed_mip_desc_raw.as_mut().map(|v| v.as_mut_ptr()),
-                standard_tile_shape_for_non_packed_mips_raw.as_mut().map(|v| v.as_mut_ptr()),
+                packed_mip_desc.map(|v| v.as_mut_ptr() as *mut _),
+                standard_tile_shape_for_non_packed_mips.map(|v| v.as_mut_ptr() as *mut _),
                 num_subresource_tilings.map(|v| v.as_mut_ptr()),
                 first_subresource_tiling_to_get,
                 &mut res
             );
 
-            if let (Some(src), Some(dst)) = (packed_mip_desc.as_mut(), packed_mip_desc_raw.as_ref()) {
-                src.iter_mut().zip(dst.iter())
-                    .for_each(|(src, &dst)| {
-                        *src = PackedMipDesc(dst);
-                    });
-            }
-
-            if let (Some(src), Some(dst)) = (standard_tile_shape_for_non_packed_mips.as_mut(), standard_tile_shape_for_non_packed_mips_raw.as_ref()) {
-                src.iter_mut().zip(dst.iter())
-                    .for_each(|(src, &dst)| {
-                        *src = TileShape(dst);
-                    });
-            }
-
             SubresourceTiling(res)
         }
     }
 
-    fn make_resident<'a>(
+    fn make_resident(
         &self,
-        objects: impl IntoIterator<Item = &'a Pageable>,
+        objects: &[&Pageable],
     ) -> Result<(), DxError> {
         unsafe {
-            let objects = objects
-                .into_iter()
-                .map(|obj| obj.as_raw())
-                .map(|obj| Some(obj.clone()))
-                .collect::<SmallVec<[_; 4]>>();
+            let objects = std::slice::from_raw_parts(objects.as_ptr() as *const _, objects.len());
 
-            self.0.MakeResident(&objects).map_err(DxError::from)
+            self.0.MakeResident(objects).map_err(DxError::from)
         }
     }
 

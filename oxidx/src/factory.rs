@@ -189,7 +189,7 @@ impl_trait! {
     fn enum_adapters_by_gpu_preference(&self, adapter: u32, preference: GpuPreference) -> Result<Adapter3, DxError> {
         unsafe {
             self.0.EnumAdapterByGpuPreference::<IDXGIAdapter3>(adapter, preference.as_raw())
-                .map(|a| Adapter3::new(a))
+                .map(Adapter3::new)
                 .map_err(DxError::from)
         }
     }

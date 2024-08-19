@@ -1,6 +1,5 @@
 use std::ffi::CStr;
 
-use smallvec::SmallVec;
 use windows::{
     core::{IUnknown, Interface, Param, PCSTR},
     Win32::Graphics::Direct3D12::*,
@@ -44,10 +43,7 @@ pub trait ICommandQueue: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<
     /// Submits an iterator of command lists for execution.
     ///
     /// For more information: [`ID3D12CommandQueue::ExecuteCommandLists method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-executecommandlists)
-    fn execute_command_lists<'cl>(
-        &self,
-        command_lists: impl IntoIterator<Item = &'cl (impl ICommandList + 'cl)>,
-    );
+    fn execute_command_lists<CL: ICommandList>(&self, command_lists: &[&CL]);
 
     /// This method samples the CPU and GPU timestamp counters at the same moment in time.
     ///
@@ -136,34 +132,27 @@ impl_trait! {
         }
     }
 
-    fn execute_command_lists<'cl>(
+    fn execute_command_lists<CL: ICommandList>(
         &self,
-        command_lists: impl IntoIterator<Item = &'cl (impl ICommandList + 'cl)>,
+        command_lists: &[&CL],
     ) {
-        let command_lists = command_lists
-            .into_iter()
-            .map(|l| {
-                Some(
-                    l.as_raw()
-                        .cast::<ID3D12CommandList>()
-                        .expect("Can not cast command list raw into ID3D12CommandList"),
-                )
-            })
-            .collect::<SmallVec<[_; 16]>>();
-        unsafe { self.0.ExecuteCommandLists(command_lists.as_slice()) }
+        unsafe {
+            let command_lists = std::slice::from_raw_parts(command_lists.as_ptr() as *const _, command_lists.len());
+            self.0.ExecuteCommandLists(command_lists)
+        }
     }
 
     fn get_clock_calibration(&self) -> Result<(u64, u64), DxError> {
-        let mut gpu = 0;
-        let mut cpu = 0;
-
         unsafe {
+            let mut gpu = 0;
+            let mut cpu = 0;
+
             self.0
                 .GetClockCalibration(&mut gpu, &mut cpu)
                 .map_err(DxError::from)?;
-        }
 
-        Ok((gpu, cpu))
+            Ok((gpu, cpu))
+        }
     }
 
     fn get_desc(&self) -> CommandQueueDesc {
@@ -201,22 +190,22 @@ impl_trait! {
         heap_range_start_offsets: Option<&[u32]>,
         range_tile_counts: Option<&[u32]>,
     ) {
-        let regions_size = resource_region_start_coordinates.map(|r| r.len())
+        unsafe {
+            let regions_size = resource_region_start_coordinates.map(|r| r.len())
             .or_else(|| resource_region_sizes.map(|r| r.len()))
             .unwrap_or_default();
 
-        let range_size = range_flags.map(|r| r.len())
-            .or_else(|| heap_range_start_offsets.map(|r| r.len()))
-            .or_else(|| range_tile_counts.map(|r| r.len()))
-            .unwrap_or_default();
+            let range_size = range_flags.map(|r| r.len())
+                .or_else(|| heap_range_start_offsets.map(|r| r.len()))
+                .or_else(|| range_tile_counts.map(|r| r.len()))
+                .unwrap_or_default();
 
-        let resource_region_start_coordinates = resource_region_start_coordinates.map(|r| r.as_ptr() as *const _);
-        let resource_region_sizes = resource_region_sizes.map(|r| r.as_ptr() as *const _);
-        let range_flags = range_flags.map(|r| r.as_ptr() as *const _);
-        let heap_range_start_offsets = heap_range_start_offsets.map(|r| r.as_ptr());
-        let range_tile_counts = range_tile_counts.map(|r| r.as_ptr());
+            let resource_region_start_coordinates = resource_region_start_coordinates.map(|r| r.as_ptr() as *const _);
+            let resource_region_sizes = resource_region_sizes.map(|r| r.as_ptr() as *const _);
+            let range_flags = range_flags.map(|r| r.as_ptr() as *const _);
+            let heap_range_start_offsets = heap_range_start_offsets.map(|r| r.as_ptr());
+            let range_tile_counts = range_tile_counts.map(|r| r.as_ptr());
 
-        unsafe {
             self.0.UpdateTileMappings(
                 resource.as_raw_ref(),
                 regions_size as u32,
