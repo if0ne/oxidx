@@ -1,7 +1,7 @@
 use windows::{
     core::{Interface, Param},
     Win32::{
-        Foundation::HANDLE,
+        Foundation::{CloseHandle, HANDLE},
         Graphics::Direct3D12::{ID3D12Fence, ID3D12Fence1},
         System::Threading::{CreateEventA, ResetEvent, WaitForSingleObject},
     },
@@ -111,5 +111,12 @@ impl Event {
     /// For more information: [`WaitForSingleObject`](https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject)
     pub fn wait(&self, timeout_ms: u32) -> u32 {
         unsafe { WaitForSingleObject(self.0, timeout_ms).0 }
+    }
+
+    /// Closes an open object handle.
+    ///
+    /// For more information: [`CloseHandle function`](https://learn.microsoft.com/en-us/windows/win32/api/handleapi/nf-handleapi-closehandle)
+    pub fn close(self) -> Result<(), DxError> {
+        unsafe { CloseHandle(self.0).map_err(DxError::from) }
     }
 }
