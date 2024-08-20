@@ -27,9 +27,9 @@ impl Entry {
     /// Creates a device that represents the display adapter.
     ///
     /// For more information: [`D3D12CreateDevice function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-d3d12createdevice)
-    pub fn create_device<A: IAdapter3, D: IDevice>(
+    pub fn create_device<D: IDevice>(
         &self,
-        adapter: Option<&A>,
+        adapter: Option<&impl IAdapter3>,
         feature_level: FeatureLevel,
     ) -> Result<D, DxError> {
         unsafe {
@@ -66,7 +66,7 @@ impl Entry {
 
 #[cfg(test)]
 mod test {
-    use crate::{device::Device, dx::Adapter3, factory::*, types::FactoryCreationFlags};
+    use crate::{device::Device, dx::ADAPTER_NONE, factory::*, types::FactoryCreationFlags};
 
     use super::*;
 
@@ -98,7 +98,7 @@ mod test {
     fn create_device_test() {
         let entry = Entry;
 
-        let device = entry.create_device::<_, Device>(None::<&Adapter3>, FeatureLevel::Level11);
+        let device = entry.create_device::<Device>(ADAPTER_NONE, FeatureLevel::Level11);
         assert!(device.is_ok());
     }
 }

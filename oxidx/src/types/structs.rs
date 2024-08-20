@@ -392,6 +392,11 @@ impl CpuDescriptorHandle {
             ptr: self.0.ptr + offset,
         })
     }
+
+    #[inline]
+    pub fn forward(&self, distance: usize, handle_size: usize) -> Self {
+        self.offset(distance * handle_size)
+    }
 }
 
 /// Describes a vertex element in a vertex buffer in an output slot.
@@ -767,6 +772,11 @@ impl GpuDescriptorHandle {
         Self(D3D12_GPU_DESCRIPTOR_HANDLE {
             ptr: self.0.ptr + offset,
         })
+    }
+
+    #[inline]
+    pub fn forward(&self, distance: u64, handle_size: u64) -> Self {
+        self.offset(distance * handle_size)
     }
 }
 
@@ -1755,7 +1765,6 @@ impl<'a> ResourceBarrier<'a> {
     #[inline]
     pub fn transition(
         resource: &'a Resource,
-        subresource: u32,
         before: ResourceStates,
         after: ResourceStates,
     ) -> Self {
@@ -1766,7 +1775,7 @@ impl<'a> ResourceBarrier<'a> {
                 Anonymous: D3D12_RESOURCE_BARRIER_0 {
                     Transition: ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
                         pResource: unsafe { std::mem::transmute_copy(resource.as_raw()) },
-                        Subresource: subresource,
+                        Subresource: BARRIER_ALL_SUBRESOURCES,
                         StateBefore: before.as_raw(),
                         StateAfter: after.as_raw(),
                     }),

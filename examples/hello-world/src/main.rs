@@ -183,7 +183,7 @@ impl DXSample for Sample {
         let rtv_handle = rtv_heap.get_cpu_descriptor_handle_for_heap_start();
 
         let render_targets: [Resource; FRAME_COUNT as usize] = std::array::from_fn(|i| {
-            let render_target: Resource = swap_chain.get_buffer(i as u32).unwrap();
+            let render_target: Resource = swap_chain.get_buffer(i).unwrap();
             self.device.create_render_target_view(
                 Some(&render_target),
                 None,
@@ -322,12 +322,7 @@ fn transition_barrier(
     state_before: ResourceStates,
     state_after: ResourceStates,
 ) -> ResourceBarrier {
-    ResourceBarrier::transition(
-        resource,
-        BARRIER_ALL_SUBRESOURCES,
-        state_before,
-        state_after,
-    )
+    ResourceBarrier::transition(resource, state_before, state_after)
 }
 
 fn create_device(command_line: &SampleCommandLine) -> (Factory4, Device) {
@@ -369,7 +364,7 @@ fn get_hardware_adapter(factory: &Factory4) -> Adapter3 {
         }
 
         if entry
-            .create_device::<_, Device>(Some(&adapter), FeatureLevel::Level11)
+            .create_device::<Device>(Some(&adapter), FeatureLevel::Level11)
             .is_ok()
         {
             return adapter;

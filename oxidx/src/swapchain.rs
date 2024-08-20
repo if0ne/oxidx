@@ -16,7 +16,7 @@ pub trait ISwapchain1: HasInterface {
     /// Accesses one of the swap-chain's back buffers.
     ///
     /// For more information: [`IDXGISwapChain::GetBuffer method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgiswapchain-getbuffer)
-    fn get_buffer<R: IResource>(&self, buffer: u32) -> Result<R, DxError>;
+    fn get_buffer<R: IResource>(&self, buffer: usize) -> Result<R, DxError>;
 
     /// Presents a rendered image to the user.
     ///
@@ -64,9 +64,9 @@ impl_trait! {
     Swapchain2,
     Swapchain3;
 
-    fn get_buffer<R: IResource>(&self, buffer: u32) -> Result<R, DxError> {
+    fn get_buffer<R: IResource>(&self, buffer: usize) -> Result<R, DxError> {
         unsafe {
-            let buffer: R::Raw = self.0.GetBuffer(buffer).map_err(DxError::from)?;
+            let buffer: R::Raw = self.0.GetBuffer(buffer as u32).map_err(DxError::from)?;
 
             Ok(R::new(buffer))
         }
