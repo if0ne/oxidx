@@ -369,7 +369,7 @@ fn get_hardware_adapter(factory: &Factory4) -> Adapter3 {
         }
 
         if entry
-            .create_device::<_, Device>(Some(&adapter), FeatureLevel::Level11)
+            .create_device::<Device>(Some(&adapter), FeatureLevel::Level11)
             .is_ok()
         {
             return adapter;

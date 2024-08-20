@@ -14,6 +14,8 @@ use windows::Win32::Graphics::{
     Dxgi::{Common::*, *},
 };
 
+use crate::dx::{Adapter3, Output, PipelineState};
+
 pub const MIN_DEPTH: f32 = D3D12_MIN_DEPTH;
 pub const MAX_DEPTH: f32 = D3D12_MAX_DEPTH;
 pub const BARRIER_ALL_SUBRESOURCES: u32 = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
@@ -25,3 +27,7 @@ pub const COMPILE_SKIP_OPT: u32 = D3DCOMPILE_SKIP_OPTIMIZATION;
 pub type GpuVirtualAddress = u64;
 
 pub const DESCRIPTOR_RANGE_OFFSET_APPEND: u32 = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+pub const ADAPTER_NONE: Option<&Adapter3> = None;
+pub const PSO_NONE: Option<&PipelineState> = None;
+pub const OUTPUT_NONE: Option<&Output> = None;

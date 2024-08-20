@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, num::NonZeroU32};
+use std::marker::PhantomData;
 
 use crate::{FeatureObject, __Sealed};
 
@@ -210,10 +210,10 @@ pub struct MultisampleQualityLevelsFeature(
 
 impl MultisampleQualityLevelsFeature {
     #[inline]
-    pub fn new(format: Format, sample_count: NonZeroU32) -> Self {
+    pub fn new(format: Format, sample_count: u32) -> Self {
         Self(D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS {
             Format: format.as_raw(),
-            SampleCount: sample_count.get(),
+            SampleCount: sample_count,
             ..Default::default()
         })
     }
