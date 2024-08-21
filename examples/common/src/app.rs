@@ -1,4 +1,4 @@
-use std::{cell::RefCell, num::NonZero, thread::sleep, time::Duration, u32};
+use std::{cell::RefCell, num::NonZero, rc::Rc, thread::sleep, time::Duration};
 
 use features::MultisampleQualityLevelsFeature;
 use oxidx::dx::*;
@@ -62,7 +62,7 @@ pub struct Base {
     pub msaa_state: bool,
 
     pub context: Option<WindowContext>,
-    pub timer: RefCell<GameTimer>,
+    pub timer: GameTimer,
 }
 
 impl Base {
@@ -298,20 +298,22 @@ impl WindowContext {
 }
 
 pub trait DxSample {
-    fn new(base: Base) -> Self;
-    fn base_mut(&self) -> &mut Base;
+    fn new(base: Rc<RefCell<Base>>) -> Self;
     fn init_resources(&mut self);
-    fn update(&self, timer: &GameTimer);
-    fn render(&self, timer: &GameTimer);
+    fn update(&mut self, timer: &GameTimer);
+    fn render(&mut self, timer: &GameTimer);
 }
 
 #[derive(Debug)]
-pub struct SampleRunner<S: DxSample>(pub(crate) S);
+pub struct SampleRunner<S: DxSample> {
+    pub(crate) base: Rc<RefCell<Base>>,
+    pub(crate) sample: S,
+}
 
 impl<S: DxSample> ApplicationHandler for SampleRunner<S> {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         {
-            let base = self.0.base_mut();
+            let mut base = self.base.borrow_mut();
             let window_attributes = Window::default_attributes()
                 .with_title(&base.title)
                 .with_inner_size(PhysicalSize::new(base.client_width, base.client_height));
@@ -319,36 +321,36 @@ impl<S: DxSample> ApplicationHandler for SampleRunner<S> {
             base.bind_window(window);
         }
 
-        self.0.init_resources();
+        self.sample.init_resources();
     }
 
     fn window_event(
         &mut self,
         event_loop: &winit::event_loop::ActiveEventLoop,
-        window_id: winit::window::WindowId,
+        _window_id: winit::window::WindowId,
         event: winit::event::WindowEvent,
     ) {
-        let mut timer = self.0.base_mut().timer.borrow_mut();
-        timer.tick();
+        self.base.borrow_mut().timer.tick();
+        let timer = self.base.borrow().timer;
         match event {
             WindowEvent::Resized(size) => {}
 
             WindowEvent::RedrawRequested => {
-                if self.0.base_mut().app_paused {
+                if self.base.borrow().app_paused {
                     sleep(Duration::from_millis(100));
                     return;
                 }
 
-                self.0.update(&mut *timer);
-                self.0.render(&mut *timer);
+                self.sample.update(&timer);
+                self.sample.render(&timer);
             }
             WindowEvent::CloseRequested => event_loop.exit(),
             _ => (),
         }
     }
 
-    fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
-        if let Some(context) = self.0.base_mut().context.as_ref() {
+    fn about_to_wait(&mut self, _: &ActiveEventLoop) {
+        if let Some(context) = self.base.borrow().context.as_ref() {
             context.window.request_redraw();
         }
     }

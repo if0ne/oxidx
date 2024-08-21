@@ -2,7 +2,8 @@ use std::time::Instant;
 
 #[derive(Copy, Clone, Debug)]
 pub struct GameTimer {
-    timer: Instant,
+    base_timer: Instant,
+    frame_timer: Instant,
 
     stopped: bool,
 
@@ -16,7 +17,8 @@ pub struct GameTimer {
 impl Default for GameTimer {
     fn default() -> Self {
         Self {
-            timer: Instant::now(),
+            base_timer: Instant::now(),
+            frame_timer: Instant::now(),
             stopped: Default::default(),
             base_time: Default::default(),
             paused_time: Default::default(),
@@ -27,19 +29,45 @@ impl Default for GameTimer {
 }
 
 impl GameTimer {
+    const MILLIS_PER_SECS: f64 = 1000.0;
     pub fn game_time(&self) -> f32 {
-        0.0
+        (self.base_timer.elapsed().as_secs_f64() * Self::MILLIS_PER_SECS
+            - self.paused_time
+            - self.base_time) as f32
     }
 
     pub fn delta_time(&self) -> f32 {
         self.delta_time as f32
     }
 
-    pub fn reset(&mut self) {}
+    pub fn reset(&mut self) {
+        self.stopped = false;
+        self.stop_time = 0.0;
+        self.base_time = self.base_timer.elapsed().as_secs_f64() * Self::MILLIS_PER_SECS;
+        self.frame_timer = Instant::now();
+    }
 
-    pub fn start(&mut self) {}
+    pub fn start(&mut self) {
+        if !self.stopped {
+            return;
+        }
 
-    pub fn stop(&mut self) {}
+        let start_time = self.base_timer.elapsed().as_secs_f64() * Self::MILLIS_PER_SECS;
+        self.paused_time += start_time - self.stop_time;
+
+        self.frame_timer = Instant::now();
+        self.stop_time = 0.0;
+        self.stopped = false;
+    }
+
+    pub fn stop(&mut self) {
+        if self.stopped {
+            return;
+        }
+
+        self.stop_time = self.base_timer.elapsed().as_secs_f64() * Self::MILLIS_PER_SECS;
+        self.stopped = true;
+    }
 
     pub fn tick(&mut self) {
         if self.stopped {
@@ -47,8 +75,8 @@ impl GameTimer {
             return;
         }
 
-        self.delta_time = self.timer.elapsed().as_secs_f64() * 1000.0;
-        self.timer = Instant::now();
+        self.delta_time = self.frame_timer.elapsed().as_secs_f64() * Self::MILLIS_PER_SECS;
+        self.frame_timer = Instant::now();
 
         if self.delta_time < 0.0 {
             self.delta_time = 0.0;
