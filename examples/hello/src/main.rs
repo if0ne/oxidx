@@ -52,7 +52,7 @@ impl DxSample for HelloSample {
 
         base.cmd_list.clear_render_target_view(
             context.current_back_buffer_view(base.rtv_descriptor_size),
-            [0.32, 0.78, 0.0, 1.0],
+            [204.0 / 255.0, 102.0 / 255.0, 102.0 / 255.0, 1.0],
             &[],
         );
         base.cmd_list.clear_depth_stencil_view(

@@ -385,7 +385,7 @@ impl Base {
                     if let Some(ref context) = self.context {
                         context
                             .window
-                            .set_title(&format!("{} FPS: {fps} MSPF: {mspf}", self.title))
+                            .set_title(&format!("{} Fps: {fps} Ms: {mspf}", self.title))
                     }
 
                     *frame_cnt = 0;
