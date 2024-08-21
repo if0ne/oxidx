@@ -1,4 +1,9 @@
-use std::{cell::RefCell, num::NonZero, thread::sleep, time::Duration};
+use std::{
+    cell::{Cell, RefCell},
+    num::NonZero,
+    thread::sleep,
+    time::Duration,
+};
 
 use features::MultisampleQualityLevelsFeature;
 use oxidx::dx::*;
@@ -21,7 +26,7 @@ pub struct SwapchainContext {
     pub hwnd: NonZero<isize>,
 
     pub swapchain: Swapchain1,
-    pub current_back_buffer: usize,
+    pub current_back_buffer: Cell<usize>,
     pub swapchain_buffer: [Resource; Self::BUFFER_COUNT],
     pub depth_buffer: Resource,
 
@@ -106,7 +111,6 @@ impl Base {
         let cmd_list: GraphicsCommandList = device
             .create_command_list(0, CommandListType::Direct, &cmd_list_alloc, PSO_NONE)
             .unwrap();
-        cmd_list.reset(&cmd_list_alloc, PSO_NONE).unwrap();
 
         let rtv_descriptor_size =
             device.get_descriptor_handle_increment_size(DescriptorHeapType::Rtv);
@@ -229,7 +233,7 @@ impl Base {
             hwnd,
             swapchain,
             swapchain_buffer,
-            current_back_buffer: 0,
+            current_back_buffer: Default::default(),
             depth_buffer,
             rtv_heap,
             dsv_heap,
@@ -260,7 +264,7 @@ impl Base {
                 SwapchainFlags::AllowModeSwitch,
             )
             .unwrap();
-        context.current_back_buffer = 0;
+        context.current_back_buffer = Default::default();
 
         let rtv_handle = context.rtv_heap.get_cpu_descriptor_handle_for_heap_start();
 
@@ -396,7 +400,6 @@ impl Base {
 
         while let Ok(adapter) = factory.enum_adapters(i) {
             let desc = adapter.get_desc1().unwrap();
-
             debug!(name: "Adapter", description = %desc.description());
 
             Self::log_adapter_outputs(&adapter, format);
@@ -462,13 +465,13 @@ impl SwapchainContext {
     pub const BUFFER_COUNT: usize = 2;
 
     pub fn current_back_buffer(&self) -> &Resource {
-        &self.swapchain_buffer[self.current_back_buffer]
+        &self.swapchain_buffer[self.current_back_buffer.get()]
     }
 
     pub fn current_back_buffer_view(&self, rtv_descriptor_size: u32) -> CpuDescriptorHandle {
         self.rtv_heap
             .get_cpu_descriptor_handle_for_heap_start()
-            .forward(self.current_back_buffer, rtv_descriptor_size as usize)
+            .forward(self.current_back_buffer.get(), rtv_descriptor_size as usize)
     }
 
     pub fn depth_stencil_view(&self) -> CpuDescriptorHandle {
@@ -480,7 +483,7 @@ pub trait DxSample {
     fn new(base: &Base) -> Self;
     fn init_resources(&mut self, base: &Base);
     fn update(&mut self, base: &Base);
-    fn render(&mut self, base: &Base);
+    fn render(&mut self, base: &mut Base);
 
     fn on_key_down(&mut self, key: KeyCode, repeat: bool);
     fn on_key_up(&mut self, key: KeyCode);
@@ -491,7 +494,7 @@ pub trait DxSample {
 }
 
 #[derive(Debug)]
-pub struct SampleRunner<S: DxSample> {
+pub(crate) struct SampleRunner<S: DxSample> {
     pub(crate) base: Base,
     pub(crate) sample: S,
 }
@@ -522,11 +525,11 @@ impl<S: DxSample> ApplicationHandler for SampleRunner<S> {
         match event {
             WindowEvent::Focused(focused) => {
                 if focused {
-                    self.base.app_paused = true;
-                    self.base.timer.stop();
-                } else {
                     self.base.app_paused = false;
                     self.base.timer.start();
+                } else {
+                    self.base.app_paused = true;
+                    self.base.timer.stop();
                 }
             }
             WindowEvent::KeyboardInput { event, .. } => match event.state {
@@ -575,7 +578,7 @@ impl<S: DxSample> ApplicationHandler for SampleRunner<S> {
                 }
                 self.base.calculate_frame_stats();
                 self.sample.update(&self.base);
-                self.sample.render(&self.base);
+                self.sample.render(&mut self.base);
             }
             WindowEvent::CloseRequested => event_loop.exit(),
             _ => (),
