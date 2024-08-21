@@ -160,7 +160,7 @@ impl DXSample for Sample {
                 hwnd,
                 &swap_chain_desc,
                 None,
-                None::<&Output>,
+                None::<&Output1>,
             )
             .unwrap()
             .try_into()

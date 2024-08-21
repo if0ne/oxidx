@@ -1519,6 +1519,29 @@ pub enum RootSignatureVersion {
     V1_2 = D3D_ROOT_SIGNATURE_VERSION_1_2.0,
 }
 
+/// Specifies the version of root signature layout.
+///
+/// For more information: [`D3D_ROOT_SIGNATURE_VERSION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d_root_signature_version)
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum RotationMode {
+    /// Unspecified rotation.
+    #[default]
+    Unspecified = DXGI_MODE_ROTATION_UNSPECIFIED.0,
+
+    /// Specifies no rotation.
+    Identity = DXGI_MODE_ROTATION_IDENTITY.0,
+
+    /// Specifies 90 degrees of rotation.
+    Rotate90 = DXGI_MODE_ROTATION_ROTATE90.0,
+
+    /// Specifies 180 degrees of rotation.
+    Rotate180 = DXGI_MODE_ROTATION_ROTATE180.0,
+
+    /// Specifies 270 degrees of rotation.
+    Rotate270 = DXGI_MODE_ROTATION_ROTATE270.0,
+}
+
 /// Defines constants that specify sampler feedback support.
 ///
 /// For more information: [`D3D12_SAMPLER_FEEDBACK_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_sampler_feedback_tier)

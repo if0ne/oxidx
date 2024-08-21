@@ -7,7 +7,7 @@ use windows::Win32::Graphics::Dxgi::{
 };
 
 use crate::command_queue::ICommandQueue;
-use crate::swapchain::{IOutput, Swapchain1};
+use crate::swapchain::{IOutput1, Swapchain1};
 use crate::types::*;
 use crate::{adapter::Adapter3, error::DxError};
 use crate::{create_type, impl_trait, HasInterface};
@@ -23,7 +23,7 @@ pub trait IFactory4: HasInterface<Raw: Interface> {
         &self,
         command_queue: &CQ,
         desc: &SwapchainDesc1,
-        restrict_to_output: Option<&impl IOutput>,
+        restrict_to_output: Option<&impl IOutput1>,
     ) -> Result<Swapchain1, DxError>
     where
         CQ: ICommandQueue;
@@ -37,7 +37,7 @@ pub trait IFactory4: HasInterface<Raw: Interface> {
         hwnd: NonZeroIsize,
         desc: &SwapchainDesc1,
         fullscreen_desc: Option<&SwapchainFullscreenDesc>,
-        restrict_to_output: Option<&impl IOutput>,
+        restrict_to_output: Option<&impl IOutput1>,
     ) -> Result<Swapchain1, DxError>
     where
         CQ: ICommandQueue;
@@ -89,7 +89,7 @@ impl_trait! {
         hwnd: NonZeroIsize,
         desc: &SwapchainDesc1,
         fullscreen_desc: Option<&SwapchainFullscreenDesc>,
-        restrict_to_output: Option<&impl IOutput>,
+        restrict_to_output: Option<&impl IOutput1>,
     ) -> Result<Swapchain1, DxError>
     where
         CQ: ICommandQueue
@@ -147,7 +147,7 @@ impl_trait! {
         &self,
         command_queue: &CQ,
         desc: &SwapchainDesc1,
-        restrict_to_output: Option<&impl IOutput>,
+        restrict_to_output: Option<&impl IOutput1>,
     ) -> Result<Swapchain1, DxError>
     where
         CQ: ICommandQueue

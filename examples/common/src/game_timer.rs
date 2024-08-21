@@ -30,7 +30,7 @@ impl Default for GameTimer {
 
 impl GameTimer {
     const MILLIS_PER_SECS: f64 = 1000.0;
-    pub fn game_time(&self) -> f32 {
+    pub fn total_time(&self) -> f32 {
         (self.base_timer.elapsed().as_secs_f64() * Self::MILLIS_PER_SECS
             - self.paused_time
             - self.base_time) as f32

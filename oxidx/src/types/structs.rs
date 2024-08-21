@@ -397,6 +397,11 @@ impl CpuDescriptorHandle {
     pub fn forward(&self, distance: usize, handle_size: usize) -> Self {
         self.offset(distance * handle_size)
     }
+
+    #[inline]
+    pub fn step(&mut self, step: usize, handle_size: usize) {
+        self.0.ptr += step * handle_size;
+    }
 }
 
 /// Describes a vertex element in a vertex buffer in an output slot.
@@ -1290,6 +1295,84 @@ impl Luid {
     #[inline]
     pub fn low_part(&self) -> u32 {
         self.0.LowPart
+    }
+}
+
+/// Describes a display mode and whether the display mode supports stereo.
+///
+/// For more information: [`DXGI_MODE_DESC1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/ns-dxgi1_2-dxgi_mode_desc1)
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct ModeDesc1(pub(crate) DXGI_MODE_DESC1);
+
+impl ModeDesc1 {
+    #[inline]
+    pub fn width(&self) -> u32 {
+        self.0.Width
+    }
+
+    #[inline]
+    pub fn height(&self) -> u32 {
+        self.0.Height
+    }
+
+    #[inline]
+    pub fn refresh_rate(&self) -> &Rational {
+        unsafe { std::mem::transmute(&self.0.RefreshRate) }
+    }
+
+    #[inline]
+    pub fn format(&self) -> Format {
+        self.0.Format.into()
+    }
+
+    #[inline]
+    pub fn scaling(&self) -> Scaling {
+        self.0.Scaling.into()
+    }
+
+    #[inline]
+    pub fn scanline_ordering(&self) -> ScanlineOrdering {
+        self.0.ScanlineOrdering.into()
+    }
+
+    #[inline]
+    pub fn stereo(&self) -> bool {
+        self.0.Stereo.into()
+    }
+}
+
+/// Describes an output or physical connection between the adapter (video card) and a device.
+///
+/// For more information: [`DXGI_OUTPUT_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/ns-dxgi-dxgi_output_desc)
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct OutputDesc(pub(crate) DXGI_OUTPUT_DESC);
+
+impl OutputDesc {
+    #[inline]
+    pub fn device_name(&self) -> CompactString {
+        CompactString::from_utf16_lossy(self.0.DeviceName)
+    }
+
+    #[inline]
+    pub fn desktop_coordinates(&self) -> &Rect {
+        unsafe { std::mem::transmute(&self.0.DesktopCoordinates) }
+    }
+
+    #[inline]
+    pub fn attached_to_desktop(&self) -> bool {
+        self.0.AttachedToDesktop.into()
+    }
+
+    #[inline]
+    pub fn rotation(&self) -> RotationMode {
+        self.0.Rotation.into()
+    }
+
+    #[inline]
+    pub fn monitor(&self) -> isize {
+        self.0.Monitor.0
     }
 }
 

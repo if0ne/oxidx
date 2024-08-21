@@ -1,12 +1,14 @@
-use std::{cell::RefCell, num::NonZero, rc::Rc, thread::sleep, time::Duration};
+use std::{cell::RefCell, num::NonZero, thread::sleep, time::Duration};
 
 use features::MultisampleQualityLevelsFeature;
 use oxidx::dx::*;
+use tracing::debug;
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalSize,
-    event::WindowEvent,
+    event::{MouseButton, WindowEvent},
     event_loop::ActiveEventLoop,
+    keyboard::{KeyCode, PhysicalKey},
     raw_window_handle::{HasWindowHandle, RawWindowHandle},
     window::Window,
 };
@@ -14,13 +16,13 @@ use winit::{
 use crate::game_timer::GameTimer;
 
 #[derive(Debug)]
-pub struct WindowContext {
+pub struct SwapchainContext {
     pub window: Window,
     pub hwnd: NonZero<isize>,
 
     pub swapchain: Swapchain1,
     pub current_back_buffer: usize,
-    pub swapchain_buffer: [Resource; Self::SWAP_CHAIN_BUFFER_COUNT],
+    pub swapchain_buffer: [Resource; Self::BUFFER_COUNT],
     pub depth_buffer: Resource,
 
     pub rtv_heap: DescriptorHeap,
@@ -53,15 +55,11 @@ pub struct Base {
 
     pub title: String,
     pub app_paused: bool,
-    pub minimized: bool,
-    pub maximized: bool,
-    pub resizing: bool,
-    pub fullscreen: bool,
 
     pub msaa_4x_quality: u32,
     pub msaa_state: bool,
 
-    pub context: Option<WindowContext>,
+    pub context: Option<SwapchainContext>,
     pub timer: GameTimer,
 }
 
@@ -117,6 +115,10 @@ impl Base {
         let cbv_srv_uav_descriptor_size =
             device.get_descriptor_handle_increment_size(DescriptorHeapType::CbvSrvUav);
 
+        if cfg!(debug_assertions) {
+            Self::log_adapters(&factory, back_buffer_format);
+        }
+
         Self {
             device,
             factory,
@@ -124,10 +126,6 @@ impl Base {
 
             title: "Dx Sample".to_string(),
             app_paused: false,
-            minimized: false,
-            maximized: false,
-            resizing: false,
-            fullscreen: false,
 
             msaa_4x_quality: feature.num_quality_levels(),
             msaa_state: false,
@@ -163,7 +161,7 @@ impl Base {
         let rtv_heap: DescriptorHeap = self
             .device
             .create_descriptor_heap(&DescriptorHeapDesc::rtv(
-                WindowContext::SWAP_CHAIN_BUFFER_COUNT as u32,
+                SwapchainContext::BUFFER_COUNT as u32,
             ))
             .unwrap();
         let dsv_heap: DescriptorHeap = self
@@ -196,7 +194,9 @@ impl Base {
                     } else {
                         SampleDesc::new(1, 0)
                     })
-                    .with_layout(TextureLayout::Unknown),
+                    .with_layout(TextureLayout::Unknown)
+                    .with_mip_levels(1)
+                    .with_flags(ResourceFlags::AllowDepthStencil),
                 ResourceStates::Common,
                 Some(&ClearValue::depth(self.depth_stencil_format, 1.0, 0)),
             )
@@ -215,19 +215,16 @@ impl Base {
                 ResourceStates::DepthWrite,
             )]);
 
+        self.cmd_list.close().unwrap();
+
         let viewport = Viewport::from_size((self.client_width as f32, self.client_height as f32));
-
-        self.cmd_list.rs_set_viewports(&[viewport]);
-
         let rect = Rect::default().with_size((self.client_width as i32, self.client_height as i32));
-
-        self.cmd_list.rs_set_scissor_rects(&[rect]);
 
         self.cmd_queue
             .execute_command_lists(&[Some(self.cmd_list.clone())]);
         self.flush_command_queue();
 
-        let context = WindowContext {
+        let context = SwapchainContext {
             window,
             hwnd,
             swapchain,
@@ -243,11 +240,94 @@ impl Base {
         self.context = Some(context);
     }
 
-    fn on_resize(&mut self) {}
+    fn on_resize(&mut self, new_width: u32, new_height: u32) {
+        self.flush_command_queue();
+
+        let Some(ref mut context) = self.context else {
+            return;
+        };
+
+        self.client_width = new_width;
+        self.client_height = new_height;
+
+        context
+            .swapchain
+            .resize_buffers(
+                SwapchainContext::BUFFER_COUNT,
+                self.client_width,
+                self.client_height,
+                self.back_buffer_format,
+                SwapchainFlags::AllowModeSwitch,
+            )
+            .unwrap();
+        context.current_back_buffer = 0;
+
+        let rtv_handle = context.rtv_heap.get_cpu_descriptor_handle_for_heap_start();
+
+        let swapchain_buffer = std::array::from_fn(|i| {
+            let render_target: Resource = context.swapchain.get_buffer(i).unwrap();
+            self.device.create_render_target_view(
+                Some(&render_target),
+                None,
+                rtv_handle.forward(i, self.rtv_descriptor_size as usize),
+            );
+
+            render_target
+        });
+
+        let depth_buffer = self
+            .device
+            .create_committed_resource(
+                &HeapProperties::default(),
+                HeapFlags::empty(),
+                &ResourceDesc::texture_2d(self.client_width as u64, self.client_height)
+                    .with_format(Format::R24G8Typeless)
+                    .with_sample_desc(if self.msaa_state {
+                        SampleDesc::new(4, self.msaa_4x_quality)
+                    } else {
+                        SampleDesc::new(1, 0)
+                    })
+                    .with_layout(TextureLayout::Unknown)
+                    .with_mip_levels(1)
+                    .with_flags(ResourceFlags::AllowDepthStencil),
+                ResourceStates::Common,
+                Some(&ClearValue::depth(self.depth_stencil_format, 1.0, 0)),
+            )
+            .unwrap();
+
+        let dsv_desc = DepthStencilViewDesc::texture_2d(self.depth_stencil_format, 0);
+        self.device.create_depth_stencil_view(
+            Some(&depth_buffer),
+            Some(&dsv_desc),
+            context.dsv_heap.get_cpu_descriptor_handle_for_heap_start(),
+        );
+
+        self.cmd_list
+            .resource_barrier(&[ResourceBarrier::transition(
+                &depth_buffer,
+                ResourceStates::Common,
+                ResourceStates::DepthWrite,
+            )]);
+
+        self.cmd_list.close().unwrap();
+
+        let viewport = Viewport::from_size((self.client_width as f32, self.client_height as f32));
+        let rect = Rect::default().with_size((self.client_width as i32, self.client_height as i32));
+
+        self.cmd_queue
+            .execute_command_lists(&[Some(self.cmd_list.clone())]);
+
+        context.swapchain_buffer = swapchain_buffer;
+        context.depth_buffer = depth_buffer;
+        context.viewport = viewport;
+        context.rect = rect;
+
+        self.flush_command_queue();
+    }
 
     fn create_swapchain(&self, hwnd: NonZero<isize>) -> Swapchain1 {
         let swapchain_desc = SwapchainDesc1::new(self.client_width, self.client_height)
-            .with_buffer_count(WindowContext::SWAP_CHAIN_BUFFER_COUNT as u32)
+            .with_buffer_count(SwapchainContext::BUFFER_COUNT as u32)
             .with_usage(FrameBufferUsage::RenderTargetOutput)
             .with_sample_desc(if self.msaa_state {
                 SampleDesc::new(4, self.msaa_4x_quality)
@@ -260,6 +340,95 @@ impl Base {
         self.factory
             .create_swapchain_for_hwnd(&self.cmd_queue, hwnd, &swapchain_desc, None, OUTPUT_NONE)
             .unwrap()
+    }
+
+    fn set_msaa_4x_state(&mut self, state: bool) {
+        if self.msaa_state == state {
+            return;
+        }
+
+        self.msaa_state = state;
+
+        let Some(hwnd) = self.context.as_ref().map(|c| c.hwnd) else {
+            return;
+        };
+
+        let swapchain = self.create_swapchain(hwnd);
+        self.on_resize(self.client_width, self.client_height);
+
+        let Some(ref mut context) = self.context else {
+            return;
+        };
+        context.swapchain = swapchain;
+    }
+
+    fn calculate_frame_stats(&self) {
+        thread_local! {
+            static FRAME_CNT: RefCell<i32> = Default::default();
+            static TIME_ELAPSED: RefCell<f32> = Default::default();
+        }
+
+        FRAME_CNT.with_borrow_mut(|frame_cnt| {
+            *frame_cnt += 1;
+        });
+
+        TIME_ELAPSED.with_borrow_mut(|time_elapsed| {
+            if self.timer.total_time() - *time_elapsed > 1.0 {
+                FRAME_CNT.with_borrow_mut(|frame_cnt| {
+                    let fps = *frame_cnt as f32;
+                    let mspf = 1000.0 / fps;
+
+                    if let Some(ref context) = self.context {
+                        context
+                            .window
+                            .set_title(&format!("{} FPS: {fps} MSPF: {mspf}", self.title))
+                    }
+
+                    *frame_cnt = 0;
+                    *time_elapsed += 1.0;
+                });
+            }
+        })
+    }
+
+    fn log_adapters(factory: &Factory4, format: Format) {
+        let mut i = 0;
+
+        while let Ok(adapter) = factory.enum_adapters(i) {
+            let desc = adapter.get_desc1().unwrap();
+
+            debug!(name: "Adapter", description = %desc.description());
+
+            Self::log_adapter_outputs(&adapter, format);
+
+            i += 1;
+        }
+    }
+
+    fn log_adapter_outputs(adapter: &Adapter3, format: Format) {
+        let mut i = 0;
+
+        while let Ok(output) = adapter.enum_outputs(i) {
+            let desc = output.get_desc().unwrap();
+
+            debug!(name: "  Output", device_name = %desc.device_name());
+
+            Self::log_output_display_mode(&output, format);
+
+            i += 1;
+        }
+    }
+
+    fn log_output_display_mode(output: &Output1, format: Format) {
+        let modes = output
+            .get_display_mode_list1(format, EnumModeFlags::empty())
+            .unwrap();
+
+        for mode in modes {
+            debug!(name: "    Mode", width = %mode.width());
+            debug!(name: "    Mode", height = %mode.height());
+            debug!(name: "    Mode", refresh_rate = ?mode.refresh_rate());
+        }
     }
 
     pub fn aspect_ratio(&self) -> f32 {
@@ -283,8 +452,18 @@ impl Base {
     }
 }
 
-impl WindowContext {
-    pub const SWAP_CHAIN_BUFFER_COUNT: usize = 2;
+impl Drop for Base {
+    fn drop(&mut self) {
+        self.flush_command_queue();
+    }
+}
+
+impl SwapchainContext {
+    pub const BUFFER_COUNT: usize = 2;
+
+    pub fn current_back_buffer(&self) -> &Resource {
+        &self.swapchain_buffer[self.current_back_buffer]
+    }
 
     pub fn current_back_buffer_view(&self, rtv_descriptor_size: u32) -> CpuDescriptorHandle {
         self.rtv_heap
@@ -298,30 +477,39 @@ impl WindowContext {
 }
 
 pub trait DxSample {
-    fn new(base: Rc<RefCell<Base>>) -> Self;
-    fn init_resources(&mut self);
-    fn update(&mut self, timer: &GameTimer);
-    fn render(&mut self, timer: &GameTimer);
+    fn new(base: &Base) -> Self;
+    fn init_resources(&mut self, base: &Base);
+    fn update(&mut self, base: &Base);
+    fn render(&mut self, base: &Base);
+
+    fn on_key_down(&mut self, key: KeyCode, repeat: bool);
+    fn on_key_up(&mut self, key: KeyCode);
+
+    fn on_mouse_down(&mut self, btn: MouseButton);
+    fn on_mouse_up(&mut self, btn: MouseButton);
+    fn on_mouse_move(&mut self, x: f64, y: f64);
 }
 
 #[derive(Debug)]
 pub struct SampleRunner<S: DxSample> {
-    pub(crate) base: Rc<RefCell<Base>>,
+    pub(crate) base: Base,
     pub(crate) sample: S,
 }
 
 impl<S: DxSample> ApplicationHandler for SampleRunner<S> {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         {
-            let mut base = self.base.borrow_mut();
             let window_attributes = Window::default_attributes()
-                .with_title(&base.title)
-                .with_inner_size(PhysicalSize::new(base.client_width, base.client_height));
+                .with_title(&self.base.title)
+                .with_inner_size(PhysicalSize::new(
+                    self.base.client_width,
+                    self.base.client_height,
+                ));
             let window = event_loop.create_window(window_attributes).unwrap();
-            base.bind_window(window);
+            self.base.bind_window(window);
         }
 
-        self.sample.init_resources();
+        self.sample.init_resources(&self.base);
     }
 
     fn window_event(
@@ -330,19 +518,64 @@ impl<S: DxSample> ApplicationHandler for SampleRunner<S> {
         _window_id: winit::window::WindowId,
         event: winit::event::WindowEvent,
     ) {
-        self.base.borrow_mut().timer.tick();
-        let timer = self.base.borrow().timer;
+        self.base.timer.tick();
         match event {
-            WindowEvent::Resized(size) => {}
+            WindowEvent::Focused(focused) => {
+                if focused {
+                    self.base.app_paused = true;
+                    self.base.timer.stop();
+                } else {
+                    self.base.app_paused = false;
+                    self.base.timer.start();
+                }
+            }
+            WindowEvent::KeyboardInput { event, .. } => match event.state {
+                winit::event::ElementState::Pressed => {
+                    if let PhysicalKey::Code(code) = event.physical_key {
+                        self.sample.on_key_down(code, event.repeat);
+                    }
+                }
+                winit::event::ElementState::Released => {
+                    if event.physical_key == PhysicalKey::Code(KeyCode::F2) {
+                        self.base.set_msaa_4x_state(!self.base.msaa_state);
+                    } else if event.physical_key == PhysicalKey::Code(KeyCode::Escape) {
+                        event_loop.exit()
+                    }
 
+                    if let PhysicalKey::Code(code) = event.physical_key {
+                        self.sample.on_key_up(code);
+                    }
+                }
+            },
+            WindowEvent::CursorMoved { position, .. } => {
+                self.sample.on_mouse_move(position.x, position.y);
+            }
+            WindowEvent::MouseInput { state, button, .. } => match state {
+                winit::event::ElementState::Pressed => self.sample.on_mouse_down(button),
+                winit::event::ElementState::Released => self.sample.on_mouse_up(button),
+            },
+            WindowEvent::Resized(size) => {
+                let Some(ref mut context) = self.base.context else {
+                    return;
+                };
+
+                if let Some(minimized) = context.window.is_minimized() {
+                    if minimized {
+                        self.base.app_paused = true;
+                    }
+                } else {
+                    self.base.app_paused = false;
+                    self.base.on_resize(size.width, size.height);
+                }
+            }
             WindowEvent::RedrawRequested => {
-                if self.base.borrow().app_paused {
+                if self.base.app_paused {
                     sleep(Duration::from_millis(100));
                     return;
                 }
-
-                self.sample.update(&timer);
-                self.sample.render(&timer);
+                self.base.calculate_frame_stats();
+                self.sample.update(&self.base);
+                self.sample.render(&self.base);
             }
             WindowEvent::CloseRequested => event_loop.exit(),
             _ => (),
@@ -350,7 +583,7 @@ impl<S: DxSample> ApplicationHandler for SampleRunner<S> {
     }
 
     fn about_to_wait(&mut self, _: &ActiveEventLoop) {
-        if let Some(context) = self.base.borrow().context.as_ref() {
+        if let Some(context) = self.base.context.as_ref() {
             context.window.request_redraw();
         }
     }

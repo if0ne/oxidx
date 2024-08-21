@@ -156,6 +156,28 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Options for enumerating display modes.
+    ///
+    /// For more information: [`DXGI_ENUM_MODES enumeration`](https://learn.microsoft.com/en-us/windows/win32/direct3ddxgi/dxgi-enum-modes)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct EnumModeFlags: u32 {
+        /// Include interlaced modes.
+        const Interlaced = DXGI_ENUM_MODES_INTERLACED;
+
+        /// Include stretched-scaling modes.
+        const Scaling = DXGI_ENUM_MODES_SCALING;
+
+        /// Include stereo modes.
+        const Stereo = DXGI_ENUM_MODES_STEREO;
+
+        /// Include stereo modes that are hidden because the user has disabled stereo.
+        /// Control panel applications can use this option to show stereo capabilities that have been disabled as part of a user interface
+        /// that enables and disables stereo.
+        const DisabledStereo = DXGI_ENUM_MODES_DISABLED_STEREO;
+    }
+}
+
+bitflags::bitflags! {
     /// Identifies the portion of a depth-stencil buffer for writing depth data.
     ///
     /// Empty flag - Turn off writes to the depth-stencil buffer.

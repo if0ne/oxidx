@@ -43,6 +43,7 @@ conv_enum!(ResourceBindingTier to D3D12_RESOURCE_BINDING_TIER);
 conv_enum!(ResourceDimension to D3D12_RESOURCE_DIMENSION);
 conv_enum!(ResourceHeapTier to D3D12_RESOURCE_HEAP_TIER);
 conv_enum!(RootSignatureVersion to D3D_ROOT_SIGNATURE_VERSION);
+conv_enum!(RotationMode to DXGI_MODE_ROTATION);
 conv_enum!(SamplerFeedbackTier to D3D12_SAMPLER_FEEDBACK_TIER);
 conv_enum!(Scaling to DXGI_SCALING);
 conv_enum!(ScalingMode to DXGI_MODE_SCALING);
@@ -92,6 +93,17 @@ impl From<u64> for HeapAlignment {
             0 => HeapAlignment::Default,
             D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT => HeapAlignment::ResourcePlacement,
             D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT => HeapAlignment::MsaaResourcePlacement,
+            _ => unreachable!(),
+        }
+    }
+}
+
+impl From<DXGI_MODE_SCALING> for Scaling {
+    fn from(value: DXGI_MODE_SCALING) -> Self {
+        match value {
+            DXGI_MODE_SCALING_UNSPECIFIED => Self::None,
+            DXGI_MODE_SCALING_CENTERED => Self::None,
+            DXGI_MODE_SCALING_STRETCHED => Self::Stretch,
             _ => unreachable!(),
         }
     }
