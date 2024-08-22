@@ -78,6 +78,17 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// TBD
+    ///
+    /// For more information: [`D3D12_MESSAGE_CALLBACK_FLAGS enumeration`](https://microsoft.github.io/DirectX-Specs/d3d/MessageCallback.html)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct CallbackFlags: i32 {
+        /// TBD
+        const IgnoreFilters = D3D12_MESSAGE_CALLBACK_IGNORE_FILTERS.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Specifies what to clear from the depth stencil view.
     ///
     /// For more information: [`D3D12_CLEAR_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_clear_flags)

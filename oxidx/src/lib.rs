@@ -18,6 +18,7 @@ pub mod entry;
 pub mod error;
 pub mod factory;
 pub mod heap;
+pub mod info_queue;
 pub mod pageable;
 pub mod pso;
 pub mod query_heap;

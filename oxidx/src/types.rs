@@ -24,10 +24,12 @@ pub const TEXTURE_DATA_PITCH_ALIGNMENT: u32 = D3D12_TEXTURE_DATA_PITCH_ALIGNMENT
 pub const COMPILE_DEBUG: u32 = D3DCOMPILE_DEBUG;
 pub const COMPILE_SKIP_OPT: u32 = D3DCOMPILE_SKIP_OPTIMIZATION;
 
-pub type GpuVirtualAddress = u64;
-
 pub const DESCRIPTOR_RANGE_OFFSET_APPEND: u32 = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
 pub const ADAPTER_NONE: Option<&Adapter3> = None;
 pub const PSO_NONE: Option<&PipelineState> = None;
 pub const OUTPUT_NONE: Option<&Output1> = None;
+
+pub type GpuVirtualAddress = u64;
+pub type CallbackData<'a> =
+    std::boxed::Box<dyn Fn(MessageCategory, MessageSeverity, MessageId, &'a str) + Send + Sync>;

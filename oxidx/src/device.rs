@@ -1,8 +1,11 @@
-use std::{ffi::CStr, ops::Range};
+use std::{
+    ffi::{c_void, CStr},
+    ops::Range,
+};
 
 use windows::{
     core::{Interface, PCWSTR},
-    Win32::Graphics::Direct3D12::ID3D12Device,
+    Win32::Graphics::Direct3D12::{ID3D12Device, ID3D12InfoQueue1},
 };
 
 use crate::{
@@ -14,7 +17,7 @@ use crate::{
     create_type,
     descriptor_heap::IDescriptorHeap,
     device_child::{DeviceChild, IDeviceChild},
-    dx::IRootSignatureExt,
+    dx::{IRootSignatureExt, InfoQueue1},
     error::DxError,
     heap::IHeap,
     impl_trait,
@@ -170,6 +173,9 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     ///
     /// For more information: [`ID3D12Device::CreateHeap method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createheap)
     fn create_heap<H: IHeap>(&self, desc: &HeapDesc) -> Result<H, DxError>;
+
+    /// Creates a info queue.
+    fn create_info_queue1(&self) -> Result<InfoQueue1, DxError>;
 
     /// Creates a resource that is placed in a specific heap. Placed resources are the lightest weight resource objects available, and are the fastest to create and destroy.
     ///
@@ -626,6 +632,17 @@ impl_trait! {
             let res = res.unwrap_unchecked();
 
             Ok(H::new(res))
+        }
+    }
+
+    fn create_info_queue1(&self) -> Result<InfoQueue1, DxError> {
+        unsafe {
+            let mut interface: *mut c_void = std::ptr::null_mut();
+            self.0.query(&ID3D12InfoQueue1::IID, &mut interface).ok().map_err(DxError::from)?;
+
+            let info_queue = ID3D12InfoQueue1::from_raw(interface);
+
+            Ok(InfoQueue1::new(info_queue))
         }
     }
 

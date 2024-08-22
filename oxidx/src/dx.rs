@@ -12,6 +12,7 @@ pub use crate::entry::*;
 pub use crate::error::*;
 pub use crate::factory::*;
 pub use crate::heap::*;
+pub use crate::info_queue::*;
 pub use crate::pageable::*;
 pub use crate::pso::*;
 pub use crate::query_heap::*;

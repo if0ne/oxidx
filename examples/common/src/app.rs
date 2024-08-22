@@ -41,6 +41,7 @@ pub struct SwapchainContext {
 pub struct Base {
     pub device: Device,
     pub factory: Factory4,
+    pub info_queue: Option<InfoQueue1>,
 
     pub fence: Fence,
     pub current_fence: u64,
@@ -76,6 +77,7 @@ impl Base {
         let depth_stencil_format = Format::D24UnormS8Uint;
 
         let mut flags = FactoryCreationFlags::empty();
+
         if cfg!(debug_assertions) {
             let debug_controller: Debug = Entry.create_debug().unwrap();
             debug_controller.enable_debug_layer();
@@ -126,6 +128,7 @@ impl Base {
         Self {
             device,
             factory,
+            info_queue: None,
             context: None,
 
             title: "Dx Sample".to_string(),

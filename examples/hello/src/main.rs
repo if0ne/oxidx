@@ -69,12 +69,12 @@ impl DxSample for HelloSample {
             Some(context.depth_stencil_view()),
         );
 
-        base.cmd_list
-            .resource_barrier(&[ResourceBarrier::transition(
-                context.current_back_buffer(),
-                ResourceStates::RenderTarget,
-                ResourceStates::Present,
-            )]);
+        /*base.cmd_list
+        .resource_barrier(&[ResourceBarrier::transition(
+            context.current_back_buffer(),
+            ResourceStates::RenderTarget,
+            ResourceStates::Present,
+        )]);*/
 
         base.cmd_list.close().unwrap();
         base.cmd_queue

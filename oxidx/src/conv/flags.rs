@@ -7,6 +7,7 @@ use super::*;
 conv_flags!(BufferSrvFlags to D3D12_BUFFER_SRV_FLAGS);
 conv_flags!(BufferUavFlags to D3D12_BUFFER_UAV_FLAGS);
 conv_flags!(CacheSupportFlags to D3D12_SHADER_CACHE_SUPPORT_FLAGS);
+conv_flags!(CallbackFlags to D3D12_MESSAGE_CALLBACK_FLAGS);
 conv_flags!(ClearFlags to D3D12_CLEAR_FLAGS);
 conv_flags!(ColorWriteEnable to D3D12_COLOR_WRITE_ENABLE);
 conv_flags!(CommandListSupportFlags to D3D12_COMMAND_LIST_SUPPORT_FLAGS);

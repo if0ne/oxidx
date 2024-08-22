@@ -33,7 +33,8 @@ impl GameTimer {
     pub fn total_time(&self) -> f32 {
         (self.base_timer.elapsed().as_secs_f64() * Self::MILLIS_PER_SECS
             - self.paused_time
-            - self.base_time) as f32 / 1000.0
+            - self.base_time) as f32
+            / 1000.0
     }
 
     pub fn delta_time(&self) -> f32 {
