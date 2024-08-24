@@ -414,17 +414,17 @@ pub struct DeclarationEntry(pub(crate) D3D12_SO_DECLARATION_ENTRY);
 impl DeclarationEntry {
     #[inline]
     pub fn new(
-        (semantic_name, semantic_index): (&'static CStr, u32),
+        semantic: SemanticName,
         stream: u32,
         components: Range<u8>,
         output_slot: u8,
     ) -> Self {
-        let semantic_name = PCSTR::from_raw(semantic_name.as_ref().as_ptr() as *const _);
+        let semantic_name = PCSTR::from_raw(semantic.name().as_ptr() as *const _);
 
         Self(D3D12_SO_DECLARATION_ENTRY {
             Stream: stream,
             SemanticName: semantic_name,
-            SemanticIndex: semantic_index,
+            SemanticIndex: semantic.index() as u32,
             StartComponent: components.start,
             ComponentCount: components.count() as u8,
             OutputSlot: output_slot,
@@ -1238,20 +1238,15 @@ pub struct InputElementDesc(pub(crate) D3D12_INPUT_ELEMENT_DESC);
 
 impl InputElementDesc {
     #[inline]
-    pub fn per_vertex(
-        (semantic_name, semantic_index): (&'static CStr, u32),
-        format: Format,
-        offset: u32,
-        input_slot: u32,
-    ) -> Self {
-        let semantic_name = PCSTR::from_raw(semantic_name.as_ref().as_ptr() as *const _);
+    pub fn per_vertex(semantic: SemanticName, format: Format, input_slot: u32) -> Self {
+        let semantic_name = PCSTR::from_raw(semantic.name().as_ptr() as *const _);
 
         Self(D3D12_INPUT_ELEMENT_DESC {
             SemanticName: semantic_name,
-            SemanticIndex: semantic_index,
+            SemanticIndex: semantic.index() as u32,
             Format: format.as_raw(),
             InputSlot: input_slot,
-            AlignedByteOffset: offset,
+            AlignedByteOffset: APPEND_ALIGNED_ELEMENT,
             InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
             InstanceDataStepRate: 0,
         })
@@ -1259,23 +1254,28 @@ impl InputElementDesc {
 
     #[inline]
     pub fn per_instance(
-        (semantic_name, semantic_index): (&'static CStr, u32),
+        semantic: SemanticName,
         format: Format,
-        offset: u32,
         input_slot: u32,
         instance_data_step_rate: u32,
     ) -> Self {
-        let semantic_name = PCSTR::from_raw(semantic_name.as_ref().as_ptr() as *const _);
+        let semantic_name = PCSTR::from_raw(semantic.name().as_ptr() as *const _);
 
         Self(D3D12_INPUT_ELEMENT_DESC {
             SemanticName: semantic_name,
-            SemanticIndex: semantic_index,
+            SemanticIndex: semantic.index() as u32,
             Format: format.as_raw(),
             InputSlot: input_slot,
-            AlignedByteOffset: offset,
+            AlignedByteOffset: APPEND_ALIGNED_ELEMENT,
             InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA,
             InstanceDataStepRate: instance_data_step_rate,
         })
+    }
+
+    #[inline]
+    pub fn with_offset(mut self, offset: u32) -> Self {
+        self.0.AlignedByteOffset = offset;
+        self
     }
 }
 

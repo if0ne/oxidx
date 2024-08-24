@@ -1,3 +1,5 @@
+use std::ffi::CStr;
+
 use strum::FromRepr;
 use windows::Win32::Graphics::{Direct3D::*, Direct3D12::*};
 
@@ -2935,6 +2937,76 @@ pub enum ScanlineOrdering {
 
     /// The image is created beginning with the lower field.
     LowerFieldFirst = DXGI_MODE_SCANLINE_ORDER_UPPER_FIELD_FIRST.0,
+}
+
+/// Semantic HLSL name
+///
+/// For more information: ['Semantics'](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-semantics)
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+pub enum SemanticName {
+    /// Binormal
+    Binormal(u8),
+
+    /// Blend indices
+    BlendIndices(u8),
+
+    /// Blend weights
+    BlendWeight(u8),
+
+    /// Diffuse and specular color
+    Color(u8),
+
+    /// Normal vector
+    Normal(u8),
+
+    /// Vertex position in object space.
+    Position(u8),
+
+    /// Transformed vertex position.
+    PositionT,
+
+    /// Point size
+    Psize(u8),
+
+    /// Tangent
+    Tangent(u8),
+
+    /// Texture coordinates
+    Texcoord(u8),
+}
+
+impl SemanticName {
+    #[inline]
+    pub(crate) fn name(&self) -> &'static CStr {
+        match self {
+            SemanticName::Binormal(_) => c"BINORMAL",
+            SemanticName::BlendIndices(_) => c"BLENDINDICES",
+            SemanticName::BlendWeight(_) => c"BLENDWEIGHT",
+            SemanticName::Color(_) => c"COLOR",
+            SemanticName::Normal(_) => c"NORMAL",
+            SemanticName::Position(_) => c"POSITION",
+            SemanticName::PositionT => c"POSITIONT",
+            SemanticName::Psize(_) => c"PSIZE",
+            SemanticName::Tangent(_) => c"TANGENT",
+            SemanticName::Texcoord(_) => c"TEXCOORD",
+        }
+    }
+
+    #[inline]
+    pub(crate) fn index(&self) -> u8 {
+        match *self {
+            SemanticName::Binormal(n) => n,
+            SemanticName::BlendIndices(n) => n,
+            SemanticName::BlendWeight(n) => n,
+            SemanticName::Color(n) => n,
+            SemanticName::Normal(n) => n,
+            SemanticName::Position(n) => n,
+            SemanticName::PositionT => 0,
+            SemanticName::Psize(n) => n,
+            SemanticName::Tangent(n) => n,
+            SemanticName::Texcoord(n) => n,
+        }
+    }
 }
 
 /// Specifies a shader model.
