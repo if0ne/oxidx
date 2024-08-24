@@ -1,6 +1,6 @@
 # oxidx
 
-This project provides low-level bindings/wrapper for D3D12 API.
+This project provides low-level wrapper for D3D12 API.
 
 ## Features
 

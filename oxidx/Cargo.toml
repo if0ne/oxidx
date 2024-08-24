@@ -1,9 +1,9 @@
 [package]
 name = "oxidx"
-version = "0.2.2"
+version = "0.3.0"
 edition = "2021"
 authors = ["Pavel Agafonov <pavel.agafonov.al@gmail.com>"]
-description = """Low-level D3D12 bindings/wrapper for Rust."""
+description = """Low-level D3D12 wrapper for Rust."""
 license = "MIT"
 keywords = ["d3d", "d3d12", "directx12", "directx", "dx12"]
 categories = ["rendering::graphics-api", "graphics", "game-development", "api-bindings"]
