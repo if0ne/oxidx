@@ -5,6 +5,7 @@ use windows::{
 
 use crate::{
     create_type,
+    dx::{DxError, IDevice},
     heap::Heap,
     impl_trait, impl_up_down_cast,
     resources::Resource,
@@ -20,6 +21,10 @@ use crate::{
 pub trait IDeviceChild:
     for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12DeviceChild>>
 {
+    /// Gets a pointer to the device that created this interface.
+    ///
+    /// For more information: [`ID3D12DeviceChild::GetDevice interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12devicechild-getdevice)
+    fn get_device<D: IDevice>(&self) -> Result<D, DxError>;
 }
 
 create_type!(
@@ -38,6 +43,15 @@ impl_trait! {
     Resource,
     Fence,
     Fence1;
+
+    fn get_device<D: IDevice>(&self) -> Result<D, DxError> {
+        unsafe {
+            let mut raw: Option<D::Raw> = None;
+            self.0.GetDevice(&mut raw).map_err(DxError::from)?;
+
+            Ok(D::new(raw.unwrap()))
+        }
+    }
 }
 impl_up_down_cast!(Heap inherit DeviceChild);
 impl_up_down_cast!(Resource inherit DeviceChild);

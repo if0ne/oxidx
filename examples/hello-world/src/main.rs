@@ -130,7 +130,7 @@ struct Resources {
 
 impl DXSample for Sample {
     fn new(command_line: &SampleCommandLine) -> Self {
-        let (dxgi_factory, device) = create_device(command_line);
+        let (dxgi_factory, device) = create_device_inner(command_line);
 
         Sample {
             dxgi_factory,
@@ -325,10 +325,8 @@ fn transition_barrier(
     ResourceBarrier::transition(resource, state_before, state_after)
 }
 
-fn create_device(command_line: &SampleCommandLine) -> (Factory4, Device) {
-    let entry = Entry;
-
-    let debug: Debug = entry.create_debug().unwrap();
+fn create_device_inner(command_line: &SampleCommandLine) -> (Factory4, Device) {
+    let debug: Debug = create_debug().unwrap();
     debug.enable_debug_layer();
 
     let dxgi_factory_flags = if cfg!(debug_assertions) {
@@ -337,7 +335,7 @@ fn create_device(command_line: &SampleCommandLine) -> (Factory4, Device) {
         FactoryCreationFlags::empty()
     };
 
-    let dxgi_factory: Factory4 = entry.create_factory(dxgi_factory_flags).unwrap();
+    let dxgi_factory: Factory4 = create_factory(dxgi_factory_flags).unwrap();
 
     let adapter = if command_line.use_warp_device {
         dxgi_factory.enum_warp_adapters().unwrap()
@@ -345,15 +343,12 @@ fn create_device(command_line: &SampleCommandLine) -> (Factory4, Device) {
         get_hardware_adapter(&dxgi_factory)
     };
 
-    let device: Device = entry
-        .create_device(Some(&adapter), FeatureLevel::Level11)
-        .unwrap();
+    let device: Device = create_device(Some(&adapter), FeatureLevel::Level11).unwrap();
 
     (dxgi_factory, device)
 }
 
 fn get_hardware_adapter(factory: &Factory4) -> Adapter3 {
-    let entry = Entry;
     for i in 0.. {
         let adapter = factory.enum_adapters(i).unwrap();
 
@@ -363,10 +358,7 @@ fn get_hardware_adapter(factory: &Factory4) -> Adapter3 {
             continue;
         }
 
-        if entry
-            .create_device::<Device>(Some(&adapter), FeatureLevel::Level11)
-            .is_ok()
-        {
+        if create_device::<Device>(Some(&adapter), FeatureLevel::Level11).is_ok() {
             return adapter;
         }
     }
@@ -453,7 +445,7 @@ fn create_vertex_buffer(device: &Device, aspect_ratio: f32) -> (Resource, Vertex
         .create_committed_resource(
             &HeapProperties::upload(),
             HeapFlags::empty(),
-            &ResourceDesc::buffer(std::mem::size_of_val(&vertices) as u64),
+            &ResourceDesc::buffer(std::mem::size_of_val(&vertices)),
             ResourceStates::GenericRead,
             None,
         )

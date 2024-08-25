@@ -3,6 +3,7 @@ use winit::event_loop::{ControlFlow, EventLoop};
 
 pub mod app;
 pub mod game_timer;
+pub mod utils;
 
 pub fn run_sample<S: DxSample>() {
     let event_loop = EventLoop::new().unwrap();

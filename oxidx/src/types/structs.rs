@@ -10,7 +10,8 @@ use windows::{
 };
 
 use crate::{
-    blob::Blob, error::DxError, resources::Resource, root_signature::RootSignature, HasInterface,
+    blob::Blob, dx::IResource, error::DxError, resources::Resource, root_signature::RootSignature,
+    HasInterface,
 };
 
 use super::*;
@@ -1342,6 +1343,39 @@ impl ModeDesc1 {
     }
 }
 
+/// Describes the destination of a memory copy operation.
+///
+/// For more information: [`D3D12_MEMCPY_DEST structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_memcpy_dest)
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct MemcpyDest<'a, T>(pub(crate) D3D12_MEMCPY_DEST, PhantomData<&'a mut T>);
+
+impl<'a, T> MemcpyDest<'a, T> {
+    #[inline]
+    pub fn new(data: &'a mut [T]) -> Self {
+        Self(
+            D3D12_MEMCPY_DEST {
+                pData: data.as_ptr() as *mut _,
+                RowPitch: data.len() as usize,
+                SlicePitch: data.len() as usize,
+            },
+            Default::default(),
+        )
+    }
+
+    #[inline]
+    pub fn with_slice_pitch(mut self, slice_pitch: usize) -> Self {
+        self.0.SlicePitch = slice_pitch;
+        self
+    }
+
+    #[inline]
+    pub fn with_row_pitch(mut self, row_pitch: usize) -> Self {
+        self.0.RowPitch = row_pitch;
+        self
+    }
+}
+
 /// Describes an output or physical connection between the adapter (video card) and a device.
 ///
 /// For more information: [`DXGI_OUTPUT_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/ns-dxgi-dxgi_output_desc)
@@ -1917,10 +1951,10 @@ pub struct ResourceDesc(pub(crate) D3D12_RESOURCE_DESC);
 
 impl ResourceDesc {
     #[inline]
-    pub fn buffer(size: u64) -> Self {
+    pub fn buffer(size: usize) -> Self {
         Self(D3D12_RESOURCE_DESC {
             Dimension: D3D12_RESOURCE_DIMENSION_BUFFER,
-            Width: size,
+            Width: size as u64,
             Height: 1,
             DepthOrArraySize: 1,
             MipLevels: 1,
@@ -2734,6 +2768,39 @@ impl<'a> StreamOutputDesc<'a> {
     }
 }
 
+/// Describes subresource data.
+///
+/// For more information: [`D3D12_SUBRESOURCE_DATA structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_subresource_data)
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct SubresourceData<'a, T>(pub(crate) D3D12_SUBRESOURCE_DATA, PhantomData<&'a T>);
+
+impl<'a, T> SubresourceData<'a, T> {
+    #[inline]
+    pub fn new(data: &'a [T]) -> Self {
+        Self(
+            D3D12_SUBRESOURCE_DATA {
+                pData: data.as_ptr() as *const _,
+                RowPitch: data.len() as isize,
+                SlicePitch: data.len() as isize,
+            },
+            Default::default(),
+        )
+    }
+
+    #[inline]
+    pub fn with_slice_pitch(mut self, slice_pitch: isize) -> Self {
+        self.0.SlicePitch = slice_pitch;
+        self
+    }
+
+    #[inline]
+    pub fn with_row_pitch(mut self, row_pitch: isize) -> Self {
+        self.0.RowPitch = row_pitch;
+        self
+    }
+}
+
 /// Describes the format, width, height, depth, and row-pitch of the subresource into the parent resource.
 ///
 /// For more information: [`D3D12_SUBRESOURCE_FOOTPRINT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_subresource_footprint)
@@ -2948,7 +3015,7 @@ pub struct TextureCopyLocation<'a>(pub(crate) D3D12_TEXTURE_COPY_LOCATION, Phant
 
 impl<'a> TextureCopyLocation<'a> {
     #[inline]
-    pub fn subresource(resource: &'a Resource, index: u32) -> Self {
+    pub fn subresource(resource: &'a impl IResource, index: u32) -> Self {
         Self(
             D3D12_TEXTURE_COPY_LOCATION {
                 pResource: unsafe { std::mem::transmute_copy(resource.as_raw()) },
@@ -2962,7 +3029,10 @@ impl<'a> TextureCopyLocation<'a> {
     }
 
     #[inline]
-    pub fn placed_footprint(resource: &'a Resource, footprint: PlacedSubresourceFootprint) -> Self {
+    pub fn placed_footprint(
+        resource: &'a impl IResource,
+        footprint: PlacedSubresourceFootprint,
+    ) -> Self {
         Self(
             D3D12_TEXTURE_COPY_LOCATION {
                 pResource: unsafe { std::mem::transmute_copy(resource.as_raw()) },

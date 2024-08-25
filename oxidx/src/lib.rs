@@ -16,6 +16,7 @@ pub mod device;
 pub mod device_child;
 pub mod entry;
 pub mod error;
+pub mod ext;
 pub mod factory;
 pub mod heap;
 pub mod info_queue;

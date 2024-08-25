@@ -1,4 +1,4 @@
-use std::ffi::CStr;
+use std::{ffi::CStr, ops::Range};
 
 use windows::{
     core::{Interface, Param, PCSTR},
@@ -6,10 +6,21 @@ use windows::{
 };
 
 use crate::{
-    command_allocator::ICommandAllocator, command_signature::ICommandSignature, create_type,
-    descriptor_heap::DescriptorHeap, error::DxError, impl_trait, pix::WIN_PIX_EVENT_RUNTIME,
-    pso::IPipelineState, query_heap::IQueryHeap, resources::IResource,
-    root_signature::IRootSignature, types::*, HasInterface,
+    command_allocator::ICommandAllocator,
+    command_signature::ICommandSignature,
+    create_type,
+    descriptor_heap::DescriptorHeap,
+    dx::{Device, IDevice, IDeviceChild},
+    error::DxError,
+    ext::memcpy_subresource,
+    impl_trait,
+    pix::WIN_PIX_EVENT_RUNTIME,
+    pso::IPipelineState,
+    query_heap::IQueryHeap,
+    resources::IResource,
+    root_signature::IRootSignature,
+    types::*,
+    HasInterface,
 };
 
 /// An interface from which [`IGraphicsCommandList`] inherits.
@@ -435,6 +446,38 @@ pub trait IGraphicsCommandList:
     ///
     /// For more information: [`ID3D12GraphicsCommandList::SOSetTargets method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-sosettargets)
     fn so_set_targets(&self, start_slot: u32, views: Option<&[StreamOutputBufferView]>);
+}
+
+pub trait IGraphicsCommandListExt: IGraphicsCommandList {
+    fn update_subresources_raw<T>(
+        &self,
+        dst_resource: &impl IResource,
+        intermediate: &impl IResource,
+        subresources: Range<u32>,
+        required_size: u64,
+        layouts: &[PlacedSubresourceFootprint],
+        num_rows: &[u32],
+        row_sizes: &[u64],
+        src_data: &[SubresourceData<'_, T>],
+    ) -> u64;
+
+    fn update_subresources_fixed<const MAX_SUBRESOURCES: usize, T, R: IResource + IDeviceChild>(
+        &self,
+        dst_resource: &R,
+        intermediate: &R,
+        intermediate_offset: u64,
+        subresources: Range<u32>,
+        src_data: &[SubresourceData<'_, T>],
+    ) -> u64;
+
+    fn update_subresources<T, R: IResource + IDeviceChild>(
+        &self,
+        dst_resource: &R,
+        intermediate: &R,
+        intermediate_offset: u64,
+        subresources: Range<u32>,
+        src_data: &[SubresourceData<'_, T>],
+    ) -> u64;
 }
 
 create_type! { GraphicsCommandList wrap ID3D12GraphicsCommandList }
@@ -1171,5 +1214,128 @@ impl_trait! {
                 views
             )
         }
+    }
+}
+
+impl_trait! {
+    impl IGraphicsCommandListExt =>
+    GraphicsCommandList;
+
+    fn update_subresources_raw<T>(
+        &self,
+        dst_resource: &impl IResource,
+        intermediate: &impl IResource,
+        subresources: Range<u32>,
+        required_size: u64,
+        layouts: &[PlacedSubresourceFootprint],
+        num_rows: &[u32],
+        row_sizes: &[u64],
+        src_data: &[SubresourceData<'_, T>],
+    ) -> u64 {
+        let start = subresources.start;
+        let end = subresources.end;
+
+        let intermediate_desc = intermediate.get_desc();
+        let dst_desc = dst_resource.get_desc();
+
+        if intermediate_desc.dimension() != ResourceDimension::Buffer
+            || intermediate_desc.width() < required_size + layouts[0].offset()
+            || required_size > usize::MAX as u64
+            || (dst_desc.dimension() == ResourceDimension::Buffer && (start != 0 && subresources.count() != 1)) {
+                return 0;
+            }
+
+        let Ok(data) = intermediate.map::<T>(0, None) else {
+            return 0;
+        };
+
+        for i in 0..end {
+            if row_sizes[i as usize] > usize::MAX as u64 {
+                return 0;
+            }
+
+            let data = unsafe {
+                std::slice::from_raw_parts_mut(data.add(layouts[i as usize].offset() as usize).as_mut(), 1)
+            };
+
+            let dst_data = MemcpyDest::new(data)
+                .with_row_pitch(layouts[i as usize].footprint().row_pitch() as usize)
+                .with_slice_pitch((layouts[i as usize].footprint().row_pitch() * num_rows[i as usize]) as usize);
+
+            memcpy_subresource(
+                &dst_data,
+                &src_data[i as usize],
+                row_sizes[i as usize] as usize,
+                num_rows[i as usize],
+                layouts[i as usize].footprint().depth()
+            );
+        }
+
+        intermediate.unmap(0, None);
+
+        if dst_desc.dimension() == ResourceDimension::Buffer {
+            self.copy_buffer_region(
+                dst_resource,
+                0,
+                intermediate,
+                layouts[0].offset(),
+                layouts[0].footprint().width() as u64
+            );
+        } else {
+            for i in 0..end {
+                let dst = TextureCopyLocation::subresource(dst_resource, i + start);
+                let src = TextureCopyLocation::placed_footprint(intermediate, layouts[i as usize]);
+
+                self.copy_texture_region(&dst, 0, 0, 0, &src, None);
+            }
+        }
+
+        0
+    }
+
+    fn update_subresources_fixed<const MAX_SUBRESOURCES: usize, T, R: IResource + IDeviceChild>(
+        &self,
+        dst_resource: &R,
+        intermediate: &R,
+        intermediate_offset: u64,
+        subresources: Range<u32>,
+        src_data: &[SubresourceData<'_, T>],
+    ) -> u64 {
+        let mut layouts = [unsafe { std::mem::zeroed() }; MAX_SUBRESOURCES];
+        let mut num_rows = [0; MAX_SUBRESOURCES];
+        let mut row_sizes = [0; MAX_SUBRESOURCES];
+
+        let desc = dst_resource.get_desc();
+        let device: Device = dst_resource.get_device().unwrap();
+
+        let required_size = device.get_copyable_footprints(&desc, subresources.clone(), intermediate_offset, &mut layouts, &mut num_rows, &mut row_sizes);
+
+        self.update_subresources_raw(dst_resource, intermediate, subresources, required_size, &layouts, &num_rows, &row_sizes, src_data)
+    }
+
+    fn update_subresources<T, R: IResource + IDeviceChild>(
+        &self,
+        dst_resource: &R,
+        intermediate: &R,
+        intermediate_offset: u64,
+        subresources: Range<u32>,
+        src_data: &[SubresourceData<'_, T>],
+    ) -> u64 {
+        let count = subresources.clone().count();
+        let mut layouts = Vec::with_capacity(count);
+        layouts.resize(count, unsafe { std::mem::zeroed() });
+
+        let mut num_rows = Vec::with_capacity(count);
+        num_rows.resize(count, 0);
+
+        let mut row_sizes = Vec::with_capacity(count);
+        row_sizes.resize(count, 0);
+
+        let desc = dst_resource.get_desc();
+        let device: Device = dst_resource.get_device().unwrap();
+
+        let required_size = device.get_copyable_footprints(&desc, subresources.clone(), intermediate_offset, &mut layouts, &mut num_rows, &mut row_sizes);
+
+        self.update_subresources_raw(dst_resource, intermediate, subresources, required_size, &layouts, &num_rows, &row_sizes, src_data)
     }
 }

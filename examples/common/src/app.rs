@@ -79,23 +79,21 @@ impl Base {
         let mut flags = FactoryCreationFlags::empty();
 
         if cfg!(debug_assertions) {
-            let debug_controller: Debug = Entry.create_debug().unwrap();
+            let debug_controller: Debug = create_debug().unwrap();
             debug_controller.enable_debug_layer();
 
             flags = FactoryCreationFlags::Debug;
         }
 
-        let factory: Factory4 = Entry.create_factory(flags).unwrap();
+        let factory: Factory4 = create_factory(flags).unwrap();
 
-        let device: Device =
-            if let Ok(device) = Entry.create_device(ADAPTER_NONE, FeatureLevel::Level11) {
-                device
-            } else {
-                let adapter = factory.enum_warp_adapters().unwrap();
-                Entry
-                    .create_device(Some(&adapter), FeatureLevel::Level11)
-                    .unwrap()
-            };
+        let device: Device = if let Ok(device) = create_device(ADAPTER_NONE, FeatureLevel::Level11)
+        {
+            device
+        } else {
+            let adapter = factory.enum_warp_adapters().unwrap();
+            create_device(Some(&adapter), FeatureLevel::Level11).unwrap()
+        };
 
         let mut feature = MultisampleQualityLevelsFeature::new(back_buffer_format, 4);
         device.check_feature_support(&mut feature).unwrap();
