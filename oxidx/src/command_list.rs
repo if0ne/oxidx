@@ -1233,7 +1233,7 @@ impl_trait! {
         src_data: &[SubresourceData<'_, T>],
     ) -> u64 {
         let start = subresources.start;
-        let end = subresources.end;
+        let num = subresources.count() as u32;
 
         let intermediate_desc = intermediate.get_desc();
         let dst_desc = dst_resource.get_desc();
@@ -1241,7 +1241,7 @@ impl_trait! {
         if intermediate_desc.dimension() != ResourceDimension::Buffer
             || intermediate_desc.width() < required_size + layouts[0].offset()
             || required_size > usize::MAX as u64
-            || (dst_desc.dimension() == ResourceDimension::Buffer && (start != 0 && subresources.count() != 1)) {
+            || (dst_desc.dimension() == ResourceDimension::Buffer && (start != 0 && num != 1)) {
                 return 0;
             }
 
@@ -1249,7 +1249,7 @@ impl_trait! {
             return 0;
         };
 
-        for i in 0..end {
+        for i in 0..num {
             if row_sizes[i as usize] > usize::MAX as u64 {
                 return 0;
             }
@@ -1282,8 +1282,8 @@ impl_trait! {
                 layouts[0].footprint().width() as u64
             );
         } else {
-            for i in 0..end {
-                let dst = TextureCopyLocation::subresource(dst_resource, i + start);
+            for i in start..num {
+                let dst = TextureCopyLocation::subresource(dst_resource, i);
                 let src = TextureCopyLocation::placed_footprint(intermediate, layouts[i as usize]);
 
                 self.copy_texture_region(&dst, 0, 0, 0, &src, None);
