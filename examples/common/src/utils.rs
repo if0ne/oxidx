@@ -1,5 +1,8 @@
 use oxidx::dx::*;
 
+#[repr(align(256))]
+pub struct ConstantBufferData<T>(pub T);
+
 pub fn create_default_buffer<T>(
     device: &Device,
     cmd_list: &GraphicsCommandList,
