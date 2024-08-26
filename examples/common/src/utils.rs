@@ -1,3 +1,9 @@
+use std::{
+    fs::File,
+    io::{BufReader, Read, Seek},
+    path::Path,
+};
+
 use oxidx::dx::*;
 
 #[repr(align(256))]
@@ -49,4 +55,23 @@ pub fn create_default_buffer<T>(
     )]);
 
     (default_buffer, upload_buffer)
+}
+
+pub fn load_binary(filename: impl AsRef<Path>) -> Blob {
+    let mut file = File::open(filename).unwrap();
+    let _ = file.seek(std::io::SeekFrom::Start(0));
+    let size = file.seek(std::io::SeekFrom::End(0)).unwrap() as usize;
+
+    let mut reader = BufReader::new(file);
+    let _ = reader.seek(std::io::SeekFrom::Start(0));
+
+    let blob = Blob::create_blob(size).unwrap();
+
+    let buffer = unsafe {
+        std::slice::from_raw_parts_mut(blob.get_buffer_ptr().as_mut() as *mut () as *mut u8, size)
+    };
+
+    let _ = reader.read(buffer);
+
+    blob
 }

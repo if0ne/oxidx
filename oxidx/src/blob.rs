@@ -3,7 +3,10 @@ use std::{ffi::CStr, path::Path};
 use windows::{
     core::{Interface, HSTRING, PCSTR},
     Win32::Graphics::{
-        Direct3D::{Fxc::D3DCompileFromFile, ID3DBlob},
+        Direct3D::{
+            Fxc::{D3DCompileFromFile, D3DCreateBlob},
+            ID3DBlob,
+        },
         Direct3D12::{D3D12_CACHED_PIPELINE_STATE, D3D12_SHADER_BYTECODE},
     },
 };
@@ -38,6 +41,13 @@ pub trait IBlobExt: IBlob {
         flags1: u32,
         flags2: u32,
     ) -> Result<Self, DxError>
+    where
+        Self: Sized;
+
+    /// Create buffer
+    ///
+    /// For more information: [`D3DCreateBlob function`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcompiler/nf-d3dcompiler-d3dcreateblob)
+    fn create_blob(size: usize) -> Result<Self, DxError>
     where
         Self: Sized;
 }
@@ -125,5 +135,16 @@ impl_trait! {
         }
 
         Ok(Blob::new(shader.unwrap()))
+    }
+
+    fn create_blob(size: usize) -> Result<Self, DxError>
+    where
+        Self: Sized
+    {
+        unsafe {
+            D3DCreateBlob(size)
+                .map(Self::new)
+                .map_err(DxError::from)
+        }
     }
 }

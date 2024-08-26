@@ -1547,7 +1547,7 @@ impl QueryHeapDesc {
 /// Describes rasterizer state.
 ///
 /// For more information: [`D3D12_RASTERIZER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_rasterizer_desc)
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct RasterizerDesc(pub(crate) D3D12_RASTERIZER_DESC);
 
@@ -1610,6 +1610,16 @@ impl RasterizerDesc {
     pub fn with_conservative_raster(mut self, conservative_raster: ConservativeRaster) -> Self {
         self.0.ConservativeRaster = conservative_raster.as_raw();
         self
+    }
+}
+
+impl Default for RasterizerDesc {
+    fn default() -> Self {
+        Self(D3D12_RASTERIZER_DESC {
+            FillMode: D3D12_FILL_MODE_SOLID,
+            CullMode: D3D12_CULL_MODE_BACK,
+            ..Default::default()
+        })
     }
 }
 
