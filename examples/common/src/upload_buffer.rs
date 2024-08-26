@@ -50,13 +50,13 @@ impl<const IS_CONSTANT: bool, T: Clone + Copy> UploadBuffer<IS_CONSTANT, T> {
         &self.buffer
     }
 
-    pub fn copy_data(&self, index: usize, data: &T) {
+    pub fn copy_data(&self, index: usize, data: impl ToOwned<Owned = T>) {
         unsafe {
             std::ptr::write(
                 self.mapped_data
                     .add(index * self.element_byte_size)
                     .as_mut(),
-                *data,
+                data.to_owned(),
             )
         }
     }
