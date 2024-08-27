@@ -87,6 +87,8 @@ impl DxSample for HelloSample {
         base.flush_command_queue();
     }
 
+    fn on_resize(&mut self, _: &mut common::app::Base, _: u32, _: u32) {}
+
     fn on_key_down(&mut self, _: winit::keyboard::KeyCode, _: bool) {}
 
     fn on_key_up(&mut self, _: winit::keyboard::KeyCode) {}

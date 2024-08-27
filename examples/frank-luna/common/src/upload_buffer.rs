@@ -2,30 +2,21 @@ use std::ptr::NonNull;
 
 use oxidx::dx::*;
 
-use crate::utils::ConstantBufferData;
-
 #[derive(Debug)]
-pub struct UploadBuffer<const IS_CONSTANT: bool, T: Clone + Copy> {
+pub struct UploadBuffer<T: Clone + Copy> {
     buffer: Resource,
     mapped_data: NonNull<T>,
     element_byte_size: usize,
 }
 
-impl<T: Clone + Copy> UploadBuffer<true, T> {
-    pub fn new(device: &Device, count: usize) -> Self {
-        let element_byte_size = size_of::<ConstantBufferData<T>>();
-        Self::new_inner(device, count, element_byte_size)
-    }
-}
-
-impl<T: Clone + Copy> UploadBuffer<false, T> {
+impl<T: Clone + Copy> UploadBuffer<T> {
     pub fn new(device: &Device, count: usize) -> Self {
         let element_byte_size = size_of::<T>();
         Self::new_inner(device, count, element_byte_size)
     }
 }
 
-impl<const IS_CONSTANT: bool, T: Clone + Copy> UploadBuffer<IS_CONSTANT, T> {
+impl<T: Clone + Copy> UploadBuffer<T> {
     fn new_inner(device: &Device, count: usize, element_byte_size: usize) -> Self {
         let resource: Resource = device
             .create_committed_resource(
@@ -62,7 +53,7 @@ impl<const IS_CONSTANT: bool, T: Clone + Copy> UploadBuffer<IS_CONSTANT, T> {
     }
 }
 
-impl<const IS_CONSTANT: bool, T: Clone + Copy> Drop for UploadBuffer<IS_CONSTANT, T> {
+impl<T: Clone + Copy> Drop for UploadBuffer<T> {
     fn drop(&mut self) {
         self.buffer.unmap(0, None);
     }

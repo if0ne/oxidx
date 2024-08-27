@@ -112,6 +112,8 @@ impl Base {
             .create_command_list(0, CommandListType::Direct, &cmd_list_alloc, PSO_NONE)
             .unwrap();
 
+        cmd_list.close().unwrap();
+
         let rtv_descriptor_size =
             device.get_descriptor_handle_increment_size(DescriptorHeapType::Rtv);
         let dsv_descriptor_size =
@@ -213,6 +215,8 @@ impl Base {
             dsv_heap.get_cpu_descriptor_handle_for_heap_start(),
         );
 
+        self.cmd_list.reset(&self.cmd_list_alloc, PSO_NONE).unwrap();
+
         self.cmd_list
             .resource_barrier(&[ResourceBarrier::transition(
                 &depth_buffer,
@@ -247,6 +251,8 @@ impl Base {
 
     fn on_resize(&mut self, new_width: u32, new_height: u32) {
         self.flush_command_queue();
+
+        self.cmd_list.reset(&self.cmd_list_alloc, PSO_NONE).unwrap();
 
         let Some(ref mut context) = self.context else {
             return;
@@ -485,6 +491,7 @@ pub trait DxSample {
     fn init_resources(&mut self, base: &Base);
     fn update(&mut self, base: &Base);
     fn render(&mut self, base: &mut Base);
+    fn on_resize(&mut self, base: &mut Base, width: u32, height: u32);
 
     fn on_key_down(&mut self, key: KeyCode, repeat: bool);
     fn on_key_up(&mut self, key: KeyCode);
@@ -570,6 +577,8 @@ impl<S: DxSample> ApplicationHandler for SampleRunner<S> {
                 } else {
                     self.base.app_paused = false;
                     self.base.on_resize(size.width, size.height);
+                    self.sample
+                        .on_resize(&mut self.base, size.width, size.height);
                 }
             }
             WindowEvent::RedrawRequested => {

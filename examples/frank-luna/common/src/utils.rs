@@ -6,6 +6,7 @@ use std::{
 
 use oxidx::dx::*;
 
+#[derive(Clone, Copy, Debug)]
 #[repr(align(256))]
 pub struct ConstantBufferData<T>(pub T);
 
@@ -76,6 +77,6 @@ pub fn load_binary(filename: impl AsRef<Path>) -> Blob {
     blob
 }
 
-pub trait VertexAttr {
-    fn get_input_layout() -> impl Iterator<Item = InputElementDesc>;
+pub trait VertexAttr<const N: usize> {
+    fn get_input_layout() -> [InputElementDesc; N];
 }

@@ -20,7 +20,7 @@ pub trait IBlob: HasInterface<Raw: Interface> {
     /// Gets a pointer to the data.
     ///
     /// For more information: [`ID3D10Blob::GetBufferPointer method`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/nf-d3dcommon-id3d10blob-getbufferpointer)
-    fn get_buffer_ptr(&self) -> std::ptr::NonNull<()>;
+    fn get_buffer_ptr<T>(&self) -> std::ptr::NonNull<T>;
 
     /// Gets the size.
     ///
@@ -79,9 +79,9 @@ impl_trait! {
     impl IBlob =>
     Blob;
 
-    fn get_buffer_ptr(&self) -> std::ptr::NonNull<()> {
+    fn get_buffer_ptr<T>(&self) -> std::ptr::NonNull<T> {
         unsafe {
-            std::ptr::NonNull::new(self.0.GetBufferPointer() as *mut _).expect("Expected valid pointer")
+            std::ptr::NonNull::new(self.0.GetBufferPointer() as *mut T).expect("Expected valid pointer")
         }
     }
 

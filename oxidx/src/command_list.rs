@@ -361,7 +361,7 @@ pub trait IGraphicsCommandList:
     /// Changes the currently bound descriptor heaps that are associated with a command list.
     ///
     /// For more information: [`ID3D12GraphicsCommandList::SetDescriptorHeaps method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-setdescriptorheaps)
-    fn set_descriptor_heaps(&self, descriptor_heaps: &[&DescriptorHeap]);
+    fn set_descriptor_heaps(&self, descriptor_heaps: &[Option<DescriptorHeap>]);
 
     /// Sets a constant in the graphics root signature.
     ///
@@ -1059,7 +1059,7 @@ impl_trait! {
 
     fn set_descriptor_heaps(
         &self,
-        descriptor_heaps: &[&DescriptorHeap],
+        descriptor_heaps: &[Option<DescriptorHeap>],
     ) {
         unsafe {
             let descriptor_heaps = std::slice::from_raw_parts(descriptor_heaps.as_ptr() as *const _, descriptor_heaps.len());
@@ -1322,14 +1322,11 @@ impl_trait! {
         src_data: &[SubresourceData<'_, T>],
     ) -> u64 {
         let count = subresources.clone().count();
-        let mut layouts = Vec::with_capacity(count);
-        layouts.resize(count, unsafe { std::mem::zeroed() });
+        let mut layouts = vec![unsafe { std::mem::zeroed() }; count];
 
-        let mut num_rows = Vec::with_capacity(count);
-        num_rows.resize(count, 0);
+        let mut num_rows = vec![0; count];
 
-        let mut row_sizes = Vec::with_capacity(count);
-        row_sizes.resize(count, 0);
+        let mut row_sizes = vec![0; count];
 
         let desc = dst_resource.get_desc();
         let device: Device = dst_resource.get_device().unwrap();

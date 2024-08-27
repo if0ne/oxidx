@@ -1356,8 +1356,8 @@ impl<'a, T> MemcpyDest<'a, T> {
         Self(
             D3D12_MEMCPY_DEST {
                 pData: data.as_ptr() as *mut _,
-                RowPitch: data.len() as usize,
-                SlicePitch: data.len() as usize,
+                RowPitch: data.len(),
+                SlicePitch: data.len(),
             },
             Default::default(),
         )
