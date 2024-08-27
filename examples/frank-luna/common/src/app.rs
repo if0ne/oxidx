@@ -27,7 +27,7 @@ pub struct SwapchainContext {
 
     pub swapchain: Swapchain1,
     pub current_back_buffer: Cell<usize>,
-    pub swapchain_buffer: [Resource; Self::BUFFER_COUNT],
+    pub swapchain_buffer: Option<[Resource; Self::BUFFER_COUNT]>,
     pub depth_buffer: Resource,
 
     pub rtv_heap: DescriptorHeap,
@@ -237,7 +237,7 @@ impl Base {
             window,
             hwnd,
             swapchain,
-            swapchain_buffer,
+            swapchain_buffer: Some(swapchain_buffer),
             current_back_buffer: Default::default(),
             depth_buffer,
             rtv_heap,
@@ -261,6 +261,10 @@ impl Base {
         self.client_width = new_width;
         self.client_height = new_height;
 
+        if let Some(i) = std::mem::take(&mut context.swapchain_buffer) {
+            drop(i);
+        }
+        
         context
             .swapchain
             .resize_buffers(
@@ -328,7 +332,7 @@ impl Base {
         self.cmd_queue
             .execute_command_lists(&[Some(self.cmd_list.clone())]);
 
-        context.swapchain_buffer = swapchain_buffer;
+        context.swapchain_buffer = Some(swapchain_buffer);
         context.depth_buffer = depth_buffer;
         context.viewport = viewport;
         context.rect = rect;
@@ -472,7 +476,7 @@ impl SwapchainContext {
     pub const BUFFER_COUNT: usize = 2;
 
     pub fn current_back_buffer(&self) -> &Resource {
-        &self.swapchain_buffer[self.current_back_buffer.get()]
+        &self.swapchain_buffer.as_ref().unwrap()[self.current_back_buffer.get()]
     }
 
     pub fn current_back_buffer_view(&self, rtv_descriptor_size: u32) -> CpuDescriptorHandle {
@@ -570,10 +574,8 @@ impl<S: DxSample> ApplicationHandler for SampleRunner<S> {
                     return;
                 };
 
-                if let Some(minimized) = context.window.is_minimized() {
-                    if minimized {
-                        self.base.app_paused = true;
-                    }
+                if context.window.is_minimized().is_some_and(|minized| minized) {
+                    self.base.app_paused = true;
                 } else {
                     self.base.app_paused = false;
                     self.base.on_resize(size.width, size.height);

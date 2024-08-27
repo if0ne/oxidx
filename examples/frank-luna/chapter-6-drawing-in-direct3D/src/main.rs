@@ -22,6 +22,7 @@ fn main() {
     run_sample::<BoxSample>();
 }
 
+#[allow(unused)]
 #[derive(Debug)]
 pub struct BoxSample {
     root_signature: RootSignature,
@@ -87,9 +88,9 @@ impl DxSample for BoxSample {
             .unwrap();
 
         let vs_byte_code =
-            Blob::compile_from_file("shader.hlsl", &[], c"VS", c"vs_5_0", 0, 0).unwrap();
+            Blob::compile_from_file("shader.hlsl", &[], c"VS", c"vs_5_0", PACK_MATRIX_ROW_MAJOR, 0).unwrap();
         let ps_byte_code =
-            Blob::compile_from_file("shader.hlsl", &[], c"PS", c"ps_5_0", 0, 0).unwrap();
+            Blob::compile_from_file("shader.hlsl", &[], c"PS", c"ps_5_0", PACK_MATRIX_ROW_MAJOR, 0).unwrap();
 
         let box_geo = Self::build_box_geometry(&base.device, &base.cmd_list);
 
@@ -152,7 +153,7 @@ impl DxSample for BoxSample {
         self.view = Mat4::look_at_lh(pos, target, up);
 
         let data = ConstantBufferData(ObjectConstants {
-            world_view_proj: self.world * self.view * self.proj,
+            world_view_proj: self.proj * self.view * self.world ,
         });
 
         self.object_cb.copy_data(0, data);

@@ -19,7 +19,7 @@ pub fn create_default_buffer<T>(
         .create_committed_resource(
             &HeapProperties::default(),
             HeapFlags::empty(),
-            &ResourceDesc::buffer(data.len()),
+            &ResourceDesc::buffer(size_of_val(data)),
             ResourceStates::Common,
             None,
         )
@@ -29,7 +29,7 @@ pub fn create_default_buffer<T>(
         .create_committed_resource(
             &HeapProperties::upload(),
             HeapFlags::empty(),
-            &ResourceDesc::buffer(data.len()),
+            &ResourceDesc::buffer(size_of_val(data)),
             ResourceStates::GenericRead,
             None,
         )
@@ -42,13 +42,15 @@ pub fn create_default_buffer<T>(
         ResourceStates::Common,
         ResourceStates::CopyDest,
     )]);
-    cmd_list.update_subresources_fixed::<1, _, _>(
+
+    assert!(cmd_list.update_subresources_fixed::<1, _, _>(
         &default_buffer,
         &upload_buffer,
         0,
         0..1,
         &[subresource_data],
-    );
+    ) > 0);
+    
     cmd_list.resource_barrier(&[ResourceBarrier::transition(
         &default_buffer,
         ResourceStates::CopyDest,

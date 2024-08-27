@@ -1249,6 +1249,7 @@ impl_trait! {
             return 0;
         };
 
+
         for i in 0..num {
             if row_sizes[i as usize] > usize::MAX as u64 {
                 return 0;
@@ -1290,7 +1291,7 @@ impl_trait! {
             }
         }
 
-        0
+        required_size
     }
 
     fn update_subresources_fixed<const MAX_SUBRESOURCES: usize, T, R: IResource + IDeviceChild>(
