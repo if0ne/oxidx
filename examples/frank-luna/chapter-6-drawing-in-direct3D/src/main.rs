@@ -87,10 +87,24 @@ impl DxSample for BoxSample {
             )
             .unwrap();
 
-        let vs_byte_code =
-            Blob::compile_from_file("shader.hlsl", &[], c"VS", c"vs_5_0", PACK_MATRIX_ROW_MAJOR, 0).unwrap();
-        let ps_byte_code =
-            Blob::compile_from_file("shader.hlsl", &[], c"PS", c"ps_5_0", PACK_MATRIX_ROW_MAJOR, 0).unwrap();
+        let vs_byte_code = Blob::compile_from_file(
+            "shader.hlsl",
+            &[],
+            c"VS",
+            c"vs_5_0",
+            PACK_MATRIX_ROW_MAJOR,
+            0,
+        )
+        .unwrap();
+        let ps_byte_code = Blob::compile_from_file(
+            "shader.hlsl",
+            &[],
+            c"PS",
+            c"ps_5_0",
+            PACK_MATRIX_ROW_MAJOR,
+            0,
+        )
+        .unwrap();
 
         let box_geo = Self::build_box_geometry(&base.device, &base.cmd_list);
 
@@ -153,7 +167,7 @@ impl DxSample for BoxSample {
         self.view = Mat4::look_at_lh(pos, target, up);
 
         let data = ConstantBufferData(ObjectConstants {
-            world_view_proj: self.proj * self.view * self.world ,
+            world_view_proj: self.proj * self.view * self.world,
         });
 
         self.object_cb.copy_data(0, data);
@@ -401,7 +415,8 @@ impl VertexAttr<2> for Vertex {
     fn get_input_layout() -> [InputElementDesc; 2] {
         [
             InputElementDesc::per_vertex(SemanticName::Position(0), Format::Rgb32Float, 0),
-            InputElementDesc::per_vertex(SemanticName::Color(0), Format::Rgba32Float, 0),
+            InputElementDesc::per_vertex(SemanticName::Color(0), Format::Rgba32Float, 0)
+                .with_offset(16),
         ]
     }
 }

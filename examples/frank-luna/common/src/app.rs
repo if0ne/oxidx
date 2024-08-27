@@ -264,7 +264,7 @@ impl Base {
         if let Some(i) = std::mem::take(&mut context.swapchain_buffer) {
             drop(i);
         }
-        
+
         context
             .swapchain
             .resize_buffers(

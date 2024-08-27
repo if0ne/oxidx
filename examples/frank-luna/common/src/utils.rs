@@ -43,14 +43,16 @@ pub fn create_default_buffer<T>(
         ResourceStates::CopyDest,
     )]);
 
-    assert!(cmd_list.update_subresources_fixed::<1, _, _>(
-        &default_buffer,
-        &upload_buffer,
-        0,
-        0..1,
-        &[subresource_data],
-    ) > 0);
-    
+    assert!(
+        cmd_list.update_subresources_fixed::<1, _, _>(
+            &default_buffer,
+            &upload_buffer,
+            0,
+            0..1,
+            &[subresource_data],
+        ) > 0
+    );
+
     cmd_list.resource_barrier(&[ResourceBarrier::transition(
         &default_buffer,
         ResourceStates::CopyDest,

@@ -9,7 +9,9 @@ pub use flags::*;
 pub use structs::*;
 
 use windows::Win32::Graphics::{
-    Direct3D::Fxc::{D3DCOMPILE_DEBUG, D3DCOMPILE_PACK_MATRIX_ROW_MAJOR, D3DCOMPILE_SKIP_OPTIMIZATION},
+    Direct3D::Fxc::{
+        D3DCOMPILE_DEBUG, D3DCOMPILE_PACK_MATRIX_ROW_MAJOR, D3DCOMPILE_SKIP_OPTIMIZATION,
+    },
     Direct3D12::*,
     Dxgi::{Common::*, *},
 };
