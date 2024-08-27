@@ -481,7 +481,7 @@ impl SwapchainContext {
 }
 
 pub trait DxSample {
-    fn new(base: &Base) -> Self;
+    fn new(base: &mut Base) -> Self;
     fn init_resources(&mut self, base: &Base);
     fn update(&mut self, base: &Base);
     fn render(&mut self, base: &mut Base);

@@ -4,7 +4,5 @@ members = [
     "oxidx",
 
     "examples/hello-world", 
-
-    "examples/frank-luna/common",
-    "examples/frank-luna/chapter-4-direct3D-initialization", 
+    "examples/frank-luna/*",
 ]

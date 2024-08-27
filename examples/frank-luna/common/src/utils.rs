@@ -75,3 +75,7 @@ pub fn load_binary(filename: impl AsRef<Path>) -> Blob {
 
     blob
 }
+
+pub trait VertexAttr {
+    fn get_input_layout() -> impl Iterator<Item = InputElementDesc>;
+}

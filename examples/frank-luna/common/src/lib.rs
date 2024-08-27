@@ -12,9 +12,9 @@ pub fn run_sample<S: DxSample>() {
 
     event_loop.set_control_flow(ControlFlow::Poll);
 
-    let base = Base::new();
+    let mut base = Base::new();
     let mut app = SampleRunner {
-        sample: S::new(&base),
+        sample: S::new(&mut base),
         base,
     };
     event_loop.run_app(&mut app).unwrap();

@@ -23,7 +23,7 @@ fn main() {
 pub struct HelloSample;
 
 impl DxSample for HelloSample {
-    fn new(_: &common::app::Base) -> Self {
+    fn new(_: &mut common::app::Base) -> Self {
         HelloSample
     }
 
