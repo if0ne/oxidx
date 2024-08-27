@@ -1356,8 +1356,8 @@ impl<'a, T> MemcpyDest<'a, T> {
         Self(
             D3D12_MEMCPY_DEST {
                 pData: data.as_ptr() as *mut _,
-                RowPitch: data.len(),
-                SlicePitch: data.len(),
+                RowPitch: size_of_val(data),
+                SlicePitch: size_of_val(data),
             },
             Default::default(),
         )
@@ -2791,8 +2791,8 @@ impl<'a, T> SubresourceData<'a, T> {
         Self(
             D3D12_SUBRESOURCE_DATA {
                 pData: data.as_ptr() as *const _,
-                RowPitch: data.len() as isize,
-                SlicePitch: data.len() as isize,
+                RowPitch: size_of_val(data) as isize,
+                SlicePitch: size_of_val(data) as isize,
             },
             Default::default(),
         )
