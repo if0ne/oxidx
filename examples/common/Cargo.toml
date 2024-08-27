@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+glam = "0.29.0"
 oxidx = { path = "../../oxidx" }
 tracing = "0.1.40"
 winit = "0.30.2"
