@@ -6,7 +6,6 @@ use oxidx::dx::*;
 pub struct UploadBuffer<T: Clone + Copy> {
     buffer: Resource,
     mapped_data: NonNull<T>,
-    element_byte_size: usize,
 }
 
 impl<T: Clone + Copy> UploadBuffer<T> {
@@ -33,7 +32,6 @@ impl<T: Clone + Copy> UploadBuffer<T> {
         Self {
             buffer: resource,
             mapped_data,
-            element_byte_size,
         }
     }
 
@@ -42,14 +40,7 @@ impl<T: Clone + Copy> UploadBuffer<T> {
     }
 
     pub fn copy_data(&self, index: usize, data: impl ToOwned<Owned = T>) {
-        unsafe {
-            std::ptr::write(
-                self.mapped_data
-                    .add(index * self.element_byte_size)
-                    .as_mut(),
-                data.to_owned(),
-            )
-        }
+        unsafe { std::ptr::write(self.mapped_data.add(index).as_mut(), data.to_owned()) }
     }
 }
 

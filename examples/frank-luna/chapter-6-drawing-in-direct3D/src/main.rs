@@ -34,7 +34,8 @@ pub struct BoxSample {
     ps_byte_code: Blob,
 
     pso: PipelineState,
-    world: Mat4,
+    world_pyramid: Mat4,
+    world_box: Mat4,
     view: Mat4,
     proj: Mat4,
 
@@ -53,20 +54,28 @@ impl DxSample for BoxSample {
         let cbv_heap: DescriptorHeap = base
             .device
             .create_descriptor_heap(
-                &DescriptorHeapDesc::cbr_srv_uav(1).with_flags(DescriptorHeapFlags::ShaderVisible),
+                &DescriptorHeapDesc::cbr_srv_uav(2).with_flags(DescriptorHeapFlags::ShaderVisible),
             )
             .unwrap();
 
-        let object_cb = UploadBuffer::new(&base.device, 1);
+        let object_cb = UploadBuffer::new(&base.device, 2);
         let object_size = size_of::<ConstantBufferData<ObjectConstants>>() as u64;
 
-        let mut address = object_cb.resource().get_gpu_virtual_address();
-        let box_index = 0;
-        address += box_index * object_size;
+        let address = object_cb.resource().get_gpu_virtual_address();
 
         base.device.create_constant_buffer_view(
             Some(&ConstantBufferViewDesc::new(address, object_size as u32)),
             cbv_heap.get_cpu_descriptor_handle_for_heap_start(),
+        );
+
+        base.device.create_constant_buffer_view(
+            Some(&ConstantBufferViewDesc::new(
+                address + object_size,
+                object_size as u32,
+            )),
+            cbv_heap
+                .get_cpu_descriptor_handle_for_heap_start()
+                .forward(1, base.cbv_srv_uav_descriptor_size as usize),
         );
 
         let cbv_table = [DescriptorRange::cbv(1)];
@@ -105,9 +114,13 @@ impl DxSample for BoxSample {
         )
         .unwrap();
 
-        let box_geo = Self::build_box_geometry(&base.device, &base.cmd_list);
+        let box_geo = Self::build_box_pyramid_geometry(&base.device, &base.cmd_list);
 
-        let input_layout = [VertexPos::get_input_layout(), VertexColor::get_input_layout()].concat();
+        let input_layout = [
+            VertexPos::get_input_layout(),
+            VertexColor::get_input_layout(),
+        ]
+        .concat();
 
         let pso_desc = GraphicsPipelineDesc::new(&vs_byte_code)
             .with_ps(&ps_byte_code)
@@ -140,11 +153,12 @@ impl DxSample for BoxSample {
             vs_byte_code,
             ps_byte_code,
             pso,
-            world: Mat4::IDENTITY,
+            world_box: Mat4::IDENTITY,
+            world_pyramid: Mat4::from_translation(vec3(2.0, 0.0, 0.0)),
             view: Mat4::IDENTITY,
             proj: Mat4::IDENTITY,
-            theta: 1.5 * std::f32::consts::PI,
-            phi: std::f32::consts::FRAC_PI_4,
+            theta: 0.0,
+            phi: 0.0,
             radius: 5.0,
             is_lmb_pressed: false,
             is_rmb_pressed: false,
@@ -165,10 +179,16 @@ impl DxSample for BoxSample {
         self.view = Mat4::look_at_lh(pos, target, up);
 
         let data = ConstantBufferData(ObjectConstants {
-            world_view_proj: self.proj * self.view * self.world,
+            world_view_proj: self.proj * self.view * self.world_box,
         });
 
         self.object_cb.copy_data(0, data);
+
+        let data = ConstantBufferData(ObjectConstants {
+            world_view_proj: self.proj * self.view * self.world_pyramid,
+        });
+
+        self.object_cb.copy_data(1, data);
     }
 
     fn render(&mut self, base: &mut common::app::Base) {
@@ -227,6 +247,7 @@ impl DxSample for BoxSample {
             .ia_set_index_buffer(Some(&self.box_geo.index_buffer_view()));
         base.cmd_list
             .ia_set_primitive_topology(PrimitiveTopology::Triangle);
+
         base.cmd_list.set_graphics_root_descriptor_table(
             0,
             self.cbv_heap.get_gpu_descriptor_handle_for_heap_start(),
@@ -237,6 +258,29 @@ impl DxSample for BoxSample {
             1,
             0,
             0,
+            0,
+        );
+
+        base.cmd_list.set_graphics_root_descriptor_table(
+            0,
+            self.cbv_heap
+                .get_gpu_descriptor_handle_for_heap_start()
+                .forward(1, base.cbv_srv_uav_descriptor_size as u64),
+        );
+
+        base.cmd_list.draw_indexed_instanced(
+            self.box_geo.draw_args.get("pyramid").unwrap().index_count,
+            1,
+            self.box_geo
+                .draw_args
+                .get("pyramid")
+                .unwrap()
+                .start_index_location,
+            self.box_geo
+                .draw_args
+                .get("pyramid")
+                .unwrap()
+                .base_vertex_location as i32,
             0,
         );
 
@@ -306,8 +350,9 @@ impl DxSample for BoxSample {
 }
 
 impl BoxSample {
-    fn build_box_geometry(device: &Device, cmd_list: &GraphicsCommandList) -> MeshGeometry {
+    fn build_box_pyramid_geometry(device: &Device, cmd_list: &GraphicsCommandList) -> MeshGeometry {
         let position = [
+            // Box
             VertexPos {
                 pos: vec3(-1.0, -1.0, -1.0),
             },
@@ -331,6 +376,22 @@ impl BoxSample {
             },
             VertexPos {
                 pos: vec3(1.0, -1.0, 1.0),
+            },
+            // Pyramid
+            VertexPos {
+                pos: vec3(0.0, 1.0, 0.0),
+            },
+            VertexPos {
+                pos: vec3(-1.0, -1.0, -1.0),
+            },
+            VertexPos {
+                pos: vec3(-1.0, -1.0, 1.0),
+            },
+            VertexPos {
+                pos: vec3(1.0, -1.0, 1.0),
+            },
+            VertexPos {
+                pos: vec3(1.0, -1.0, -1.0),
             },
         ];
 
@@ -359,16 +420,33 @@ impl BoxSample {
             VertexColor {
                 color: vec4(0.0, 0.67, 0.32, 1.0),
             },
+            VertexColor {
+                color: vec4(0.0, 1.0, 0.0, 1.0),
+            },
+            VertexColor {
+                color: vec4(0.0, 0.0, 1.0, 1.0),
+            },
+            VertexColor {
+                color: vec4(0.5, 0.32, 0.0, 1.0),
+            },
+            VertexColor {
+                color: vec4(0.32, 0.0, 0.67, 1.0),
+            },
+            VertexColor {
+                color: vec4(0.0, 0.67, 0.32, 1.0),
+            },
         ];
 
         let indices = [
-            // front face
-            0u16, 1, 2, 0, 2, 3, // back face
-            4, 6, 5, 4, 7, 6, // left face
-            4, 5, 1, 4, 1, 0, // right face
-            3, 2, 6, 3, 6, 7, // top face
-            1, 5, 6, 1, 6, 2, // bottom face
-            4, 0, 3, 4, 3, 7,
+            0u16, 1, 2, 0, 2, 3, // front face
+            4, 6, 5, 4, 7, 6, // back face
+            4, 5, 1, 4, 1, 0, // left face
+            3, 2, 6, 3, 6, 7, // right face
+            1, 5, 6, 1, 6, 2, // top face
+            4, 0, 3, 4, 3, 7, // bottom face
+            0, 4, 1, 0, 1, 2, //
+            0, 2, 3, 0, 3, 4, //
+            1, 4, 2, 2, 4, 3, //
         ];
 
         let vb_pos_byte_size = size_of_val(&position);
@@ -387,7 +465,9 @@ impl BoxSample {
             );
             std::ptr::copy_nonoverlapping(
                 colors.as_ptr(),
-                vertex_buffer_color_cpu.get_buffer_ptr::<VertexColor>().as_mut(),
+                vertex_buffer_color_cpu
+                    .get_buffer_ptr::<VertexColor>()
+                    .as_mut(),
                 colors.len(),
             );
             std::ptr::copy_nonoverlapping(
@@ -421,18 +501,32 @@ impl BoxSample {
             vertex_color_byte_size: vb_color_byte_size as u32,
             index_format: Format::R16Uint,
             index_buffer_byte_size: ib_byte_size as u32,
-            draw_args: HashMap::from_iter([(
-                "box".to_string(),
-                SubmeshGeometry {
-                    index_count: indices.len() as u32,
-                    start_index_location: 0,
-                    base_vertex_location: 0,
-                    bounds: BoundingBox {
-                        min: vec3(-1.0, -1.0, -1.0),
-                        max: vec3(1.0, 1.0, 1.0),
+            draw_args: HashMap::from_iter([
+                (
+                    "box".to_string(),
+                    SubmeshGeometry {
+                        index_count: 36,
+                        start_index_location: 0,
+                        base_vertex_location: 0,
+                        bounds: BoundingBox {
+                            min: vec3(-1.0, -1.0, -1.0),
+                            max: vec3(1.0, 1.0, 1.0),
+                        },
                     },
-                },
-            )]),
+                ),
+                (
+                    "pyramid".to_string(),
+                    SubmeshGeometry {
+                        index_count: 18,
+                        start_index_location: 36,
+                        base_vertex_location: 8,
+                        bounds: BoundingBox {
+                            min: vec3(-1.0, -1.0, -1.0),
+                            max: vec3(1.0, 1.0, 1.0),
+                        },
+                    },
+                ),
+            ]),
         }
     }
 }
