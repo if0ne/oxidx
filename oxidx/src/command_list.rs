@@ -112,10 +112,10 @@ pub trait IGraphicsCommandList:
     fn copy_buffer_region(
         &self,
         dst_buffer: &impl IResource,
-        dst_offset: u64,
+        dst_offset: usize,
         src_buffer: &impl IResource,
-        src_offset: u64,
-        num_bytes: u64,
+        src_offset: usize,
+        num_bytes: usize,
     );
 
     /// Copies the entire contents of the source resource to the destination resource.
@@ -449,35 +449,39 @@ pub trait IGraphicsCommandList:
 }
 
 pub trait IGraphicsCommandListExt: IGraphicsCommandList {
-    fn update_subresources_raw<T>(
+    fn update_subresources_raw<T: Copy>(
         &self,
         dst_resource: &impl IResource,
         intermediate: &impl IResource,
         subresources: Range<u32>,
-        required_size: u64,
+        required_size: usize,
         layouts: &[PlacedSubresourceFootprint],
         num_rows: &[u32],
         row_sizes: &[u64],
         src_data: &[SubresourceData<'_, T>],
-    ) -> u64;
+    ) -> usize;
 
-    fn update_subresources_fixed<const MAX_SUBRESOURCES: usize, T, R: IResource + IDeviceChild>(
+    fn update_subresources_fixed<
+        const MAX_SUBRESOURCES: usize,
+        T: Copy,
+        R: IResource + IDeviceChild,
+    >(
         &self,
         dst_resource: &R,
         intermediate: &R,
         intermediate_offset: u64,
         subresources: Range<u32>,
         src_data: &[SubresourceData<'_, T>],
-    ) -> u64;
+    ) -> usize;
 
-    fn update_subresources<T, R: IResource + IDeviceChild>(
+    fn update_subresources<T: Copy, R: IResource + IDeviceChild>(
         &self,
         dst_resource: &R,
         intermediate: &R,
         intermediate_offset: u64,
         subresources: Range<u32>,
         src_data: &[SubresourceData<'_, T>],
-    ) -> u64;
+    ) -> usize;
 }
 
 create_type! { GraphicsCommandList wrap ID3D12GraphicsCommandList }
@@ -619,18 +623,18 @@ impl_trait! {
     fn copy_buffer_region(
         &self,
         dst_buffer: &impl IResource,
-        dst_offset: u64,
+        dst_offset: usize,
         src_buffer: &impl IResource,
-        src_offset: u64,
-        num_bytes: u64,
+        src_offset: usize,
+        num_bytes: usize,
     ) {
         unsafe {
             self.0.CopyBufferRegion(
                 dst_buffer.as_raw_ref(),
-                dst_offset,
+                dst_offset as u64,
                 src_buffer.as_raw_ref(),
-                src_offset,
-                num_bytes
+                src_offset as u64,
+                num_bytes as u64
             );
         }
     }
@@ -1221,26 +1225,26 @@ impl_trait! {
     impl IGraphicsCommandListExt =>
     GraphicsCommandList;
 
-    fn update_subresources_raw<T>(
+    fn update_subresources_raw<T: Copy>(
         &self,
         dst_resource: &impl IResource,
         intermediate: &impl IResource,
         subresources: Range<u32>,
-        required_size: u64,
+        required_size: usize,
         layouts: &[PlacedSubresourceFootprint],
         num_rows: &[u32],
         row_sizes: &[u64],
         src_data: &[SubresourceData<'_, T>],
-    ) -> u64 {
-        let start = subresources.start;
-        let num = subresources.count() as u32;
+    ) -> usize {
+        let start = subresources.start as usize;
+        let num = subresources.count() as usize;
 
         let intermediate_desc = intermediate.get_desc();
         let dst_desc = dst_resource.get_desc();
 
         if intermediate_desc.dimension() != ResourceDimension::Buffer
-            || intermediate_desc.width() < required_size + layouts[0].offset()
-            || required_size > usize::MAX as u64
+            || (intermediate_desc.width() as usize) < (required_size + layouts[0].offset())
+            || required_size > usize::MAX
             || (dst_desc.dimension() == ResourceDimension::Buffer && (start != 0 && num != 1)) {
                 return 0;
             }
@@ -1249,26 +1253,35 @@ impl_trait! {
             return 0;
         };
 
-
         for i in 0..num {
-            if row_sizes[i as usize] > usize::MAX as u64 {
+            if row_sizes[i] > usize::MAX as u64 {
                 return 0;
             }
 
+            let num_slices = layouts[i].footprint().depth();
+            let slice_pitch = layouts[i].footprint().row_pitch() * num_rows[i] as usize;
+            let total_size = num_slices * slice_pitch;
+
+            let mut count = total_size / size_of::<T>();
+
+            if total_size % size_of::<T>() > 0 {
+                count += 1;
+            }
+
             let data = unsafe {
-                std::slice::from_raw_parts_mut(data.add(layouts[i as usize].offset() as usize).as_mut(), 1)
+                std::slice::from_raw_parts_mut(data.add(layouts[i].offset()).as_mut(), count)
             };
 
-            let dst_data = MemcpyDest::new(data)
-                .with_row_pitch(layouts[i as usize].footprint().row_pitch() as usize)
-                .with_slice_pitch((layouts[i as usize].footprint().row_pitch() * num_rows[i as usize]) as usize);
+            let mut dst_data = MemcpyDest::new(data)
+                .with_row_pitch(layouts[i].footprint().row_pitch() as usize)
+                .with_slice_pitch(slice_pitch);
 
             memcpy_subresource(
-                &dst_data,
-                &src_data[i as usize],
-                row_sizes[i as usize] as usize,
-                num_rows[i as usize],
-                layouts[i as usize].footprint().depth()
+                &mut dst_data,
+                &src_data[i],
+                row_sizes[i] as usize,
+                num_rows[i] as usize,
+                num_slices,
             );
         }
 
@@ -1280,12 +1293,12 @@ impl_trait! {
                 0,
                 intermediate,
                 layouts[0].offset(),
-                layouts[0].footprint().width() as u64
+                layouts[0].footprint().width() as usize
             );
         } else {
             for i in start..num {
-                let dst = TextureCopyLocation::subresource(dst_resource, i);
-                let src = TextureCopyLocation::placed_footprint(intermediate, layouts[i as usize]);
+                let dst = TextureCopyLocation::subresource(dst_resource, i as u32);
+                let src = TextureCopyLocation::placed_footprint(intermediate, layouts[i]);
 
                 self.copy_texture_region(&dst, 0, 0, 0, &src, None);
             }
@@ -1294,14 +1307,14 @@ impl_trait! {
         required_size
     }
 
-    fn update_subresources_fixed<const MAX_SUBRESOURCES: usize, T, R: IResource + IDeviceChild>(
+    fn update_subresources_fixed<const MAX_SUBRESOURCES: usize, T: Copy, R: IResource + IDeviceChild>(
         &self,
         dst_resource: &R,
         intermediate: &R,
         intermediate_offset: u64,
         subresources: Range<u32>,
         src_data: &[SubresourceData<'_, T>],
-    ) -> u64 {
+    ) -> usize {
         let mut layouts = [unsafe { std::mem::zeroed() }; MAX_SUBRESOURCES];
         let mut num_rows = [0; MAX_SUBRESOURCES];
         let mut row_sizes = [0; MAX_SUBRESOURCES];
@@ -1309,19 +1322,35 @@ impl_trait! {
         let desc = dst_resource.get_desc();
         let device: Device = dst_resource.get_device().unwrap();
 
-        let required_size = device.get_copyable_footprints(&desc, subresources.clone(), intermediate_offset, &mut layouts, &mut num_rows, &mut row_sizes);
+        let required_size = device.get_copyable_footprints(
+            &desc,
+            subresources.clone(),
+            intermediate_offset,
+            &mut layouts,
+            &mut num_rows,
+            &mut row_sizes
+        );
 
-        self.update_subresources_raw(dst_resource, intermediate, subresources, required_size, &layouts, &num_rows, &row_sizes, src_data)
+        self.update_subresources_raw(
+            dst_resource,
+            intermediate,
+            subresources,
+            required_size as usize,
+            &layouts,
+            &num_rows,
+            &row_sizes,
+            src_data
+        )
     }
 
-    fn update_subresources<T, R: IResource + IDeviceChild>(
+    fn update_subresources<T: Copy, R: IResource + IDeviceChild>(
         &self,
         dst_resource: &R,
         intermediate: &R,
         intermediate_offset: u64,
         subresources: Range<u32>,
         src_data: &[SubresourceData<'_, T>],
-    ) -> u64 {
+    ) -> usize {
         let count = subresources.clone().count();
         let mut layouts = vec![unsafe { std::mem::zeroed() }; count];
 
@@ -1332,8 +1361,24 @@ impl_trait! {
         let desc = dst_resource.get_desc();
         let device: Device = dst_resource.get_device().unwrap();
 
-        let required_size = device.get_copyable_footprints(&desc, subresources.clone(), intermediate_offset, &mut layouts, &mut num_rows, &mut row_sizes);
+        let required_size = device.get_copyable_footprints(
+            &desc,
+            subresources.clone(),
+            intermediate_offset,
+            &mut layouts,
+            &mut num_rows,
+            &mut row_sizes
+        );
 
-        self.update_subresources_raw(dst_resource, intermediate, subresources, required_size, &layouts, &num_rows, &row_sizes, src_data)
+        self.update_subresources_raw(
+            dst_resource,
+            intermediate,
+            subresources,
+            required_size as usize,
+            &layouts,
+            &num_rows,
+            &row_sizes,
+            src_data
+        )
     }
 }

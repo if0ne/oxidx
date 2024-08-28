@@ -1,24 +1,27 @@
 use crate::dx::*;
 
-pub fn memcpy_subresource<T>(
-    dst: &MemcpyDest<'_, T>,
+pub fn memcpy_subresource<T: Copy>(
+    dst: &mut MemcpyDest<'_, T>,
     src: &SubresourceData<'_, T>,
     row_size: usize,
-    num_rows: u32,
-    num_slices: u32,
+    num_rows: usize,
+    num_slices: usize,
 ) {
-    unsafe {
-        for z in 0..num_slices {
-            let dst_slice = (dst.0.pData as *mut u8).add(dst.0.SlicePitch * z as usize);
-            let src_slice = (src.0.pData as *const u8).add(src.0.SlicePitch as usize * z as usize);
+    let dst_slice = dst.as_slice_mut(num_slices);
+    let src_slice = src.as_slice(num_slices);
 
-            for y in 0..num_rows {
-                std::ptr::copy_nonoverlapping(
-                    src_slice.add(src.0.RowPitch as usize * y as usize),
-                    dst_slice.add(dst.0.RowPitch * y as usize),
-                    row_size,
-                );
-            }
+    for z in 0..num_slices {
+        let dst_slice = &mut dst_slice[(z * dst.slice_pitch())..((z + 1) * dst.slice_pitch())];
+        let src_slice = &src_slice[(z * src.slice_pitch())..((z + 1) * src.slice_pitch())];
+
+        for y in 0..num_rows {
+            let dst_slice = &mut dst_slice[(y * dst.row_pitch())..((y + 1) * dst.row_pitch())];
+            let src_slice = &src_slice[(y * src.row_pitch())..((y + 1) * src.row_pitch())];
+
+            let dst_slice = &mut dst_slice[..row_size];
+            let src_slice = &src_slice[..row_size];
+
+            dst_slice.copy_from_slice(src_slice);
         }
     }
 }

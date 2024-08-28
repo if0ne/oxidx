@@ -1374,6 +1374,28 @@ impl<'a, T> MemcpyDest<'a, T> {
         self.0.RowPitch = row_pitch;
         self
     }
+
+    #[inline]
+    pub fn slice_pitch(&self) -> usize {
+        self.0.SlicePitch
+    }
+
+    #[inline]
+    pub fn row_pitch(&self) -> usize {
+        self.0.RowPitch
+    }
+
+    #[inline]
+    pub fn as_slice_mut(&mut self, num_slices: usize) -> &'a mut [T] {
+        let bytes = self.0.SlicePitch * num_slices;
+        let mut count = bytes / size_of::<T>();
+
+        if bytes % size_of::<T>() > 0 {
+            count += 1;
+        }
+
+        unsafe { std::slice::from_raw_parts_mut(self.0.pData as *mut _, count) }
+    }
 }
 
 /// Describes an output or physical connection between the adapter (video card) and a device.
@@ -1456,8 +1478,8 @@ impl PlacedSubresourceFootprint {
     }
 
     #[inline]
-    pub fn offset(&self) -> u64 {
-        self.0.Offset
+    pub fn offset(&self) -> usize {
+        self.0.Offset as usize
     }
 
     #[inline]
@@ -2799,15 +2821,37 @@ impl<'a, T> SubresourceData<'a, T> {
     }
 
     #[inline]
-    pub fn with_slice_pitch(mut self, slice_pitch: isize) -> Self {
-        self.0.SlicePitch = slice_pitch;
+    pub fn with_slice_pitch(mut self, slice_pitch: usize) -> Self {
+        self.0.SlicePitch = slice_pitch as isize;
         self
     }
 
     #[inline]
-    pub fn with_row_pitch(mut self, row_pitch: isize) -> Self {
-        self.0.RowPitch = row_pitch;
+    pub fn with_row_pitch(mut self, row_pitch: usize) -> Self {
+        self.0.RowPitch = row_pitch as isize;
         self
+    }
+
+    #[inline]
+    pub fn slice_pitch(&self) -> usize {
+        self.0.SlicePitch as usize
+    }
+
+    #[inline]
+    pub fn row_pitch(&self) -> usize {
+        self.0.RowPitch as usize
+    }
+
+    #[inline]
+    pub fn as_slice(&self, num_slices: usize) -> &'a [T] {
+        let bytes = self.0.SlicePitch as usize * num_slices;
+        let mut count = bytes / size_of::<T>();
+
+        if bytes % size_of::<T>() > 0 {
+            count += 1;
+        }
+
+        unsafe { std::slice::from_raw_parts(self.0.pData as *const _, count) }
     }
 }
 
@@ -2855,23 +2899,23 @@ impl SubresourceFootprint {
     }
 
     #[inline]
-    pub fn width(&self) -> u32 {
-        self.0.Width
+    pub fn width(&self) -> usize {
+        self.0.Width as usize
     }
 
     #[inline]
-    pub fn height(&self) -> u32 {
-        self.0.Height
+    pub fn height(&self) -> usize {
+        self.0.Height as usize
     }
 
     #[inline]
-    pub fn depth(&self) -> u32 {
-        self.0.Depth
+    pub fn depth(&self) -> usize {
+        self.0.Depth as usize
     }
 
     #[inline]
-    pub fn row_pitch(&self) -> u32 {
-        self.0.RowPitch
+    pub fn row_pitch(&self) -> usize {
+        self.0.RowPitch as usize
     }
 }
 

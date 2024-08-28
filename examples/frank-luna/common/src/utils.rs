@@ -10,7 +10,7 @@ use oxidx::dx::*;
 #[repr(align(256))]
 pub struct ConstantBufferData<T>(pub T);
 
-pub fn create_default_buffer<T>(
+pub fn create_default_buffer<T: Copy>(
     device: &Device,
     cmd_list: &GraphicsCommandList,
     data: &[T],
