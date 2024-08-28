@@ -1,7 +1,8 @@
-cbuffer cbPerObject : register(b0)
-{
+struct ObjectConstants {
 	float4x4 gWorldViewProj; 
 };
+
+ConstantBuffer<ObjectConstants> gObjConstants : register(b0);
 
 struct VertexIn
 {
@@ -20,7 +21,7 @@ VertexOut VS(VertexIn vin)
 	VertexOut vout;
 	
 	// Transform to homogeneous clip space.
-	vout.PosH = mul(float4(vin.PosL, 1.0f), gWorldViewProj);
+	vout.PosH = mul(float4(vin.PosL, 1.0f), gObjConstants.gWorldViewProj);
 	
 	// Just pass vertex color into the pixel shader.
     vout.Color = vin.Color;

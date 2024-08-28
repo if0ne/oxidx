@@ -1279,7 +1279,7 @@ impl_trait! {
             memcpy_subresource(
                 &mut dst_data,
                 &src_data[i],
-                row_sizes[i] as usize,
+                row_sizes[i] as usize / size_of::<T>(),
                 num_rows[i] as usize,
                 num_slices,
             );

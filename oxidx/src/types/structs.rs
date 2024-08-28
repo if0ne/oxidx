@@ -1377,12 +1377,12 @@ impl<'a, T> MemcpyDest<'a, T> {
 
     #[inline]
     pub fn slice_pitch(&self) -> usize {
-        self.0.SlicePitch
+        self.0.SlicePitch / size_of::<T>()
     }
 
     #[inline]
     pub fn row_pitch(&self) -> usize {
-        self.0.RowPitch
+        self.0.RowPitch / size_of::<T>()
     }
 
     #[inline]
@@ -2834,12 +2834,12 @@ impl<'a, T> SubresourceData<'a, T> {
 
     #[inline]
     pub fn slice_pitch(&self) -> usize {
-        self.0.SlicePitch as usize
+        self.0.SlicePitch as usize / size_of::<T>()
     }
 
     #[inline]
     pub fn row_pitch(&self) -> usize {
-        self.0.RowPitch as usize
+        self.0.RowPitch as usize / size_of::<T>()
     }
 
     #[inline]

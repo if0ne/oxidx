@@ -294,8 +294,7 @@ impl DxSample for BoxSample {
             self.phi = (self.phi + dy).clamp(0.01, std::f32::consts::PI - 0.1);
         } else if self.is_rmb_pressed {
             let dx = 0.005 * x;
-            let dy = 0.005 * y;
-
+            let dy = -0.005 * y;
             self.radius = (self.radius + dx - dy).clamp(3.0, 15.0);
         }
     }
