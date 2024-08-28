@@ -90,7 +90,7 @@ impl DxSample for BoxSample {
             "shader.hlsl",
             &[],
             c"VS",
-            c"vs_5_0",
+            c"vs_5_1",
             PACK_MATRIX_ROW_MAJOR,
             0,
         )
@@ -99,7 +99,7 @@ impl DxSample for BoxSample {
             "shader.hlsl",
             &[],
             c"PS",
-            c"ps_5_0",
+            c"ps_5_1",
             PACK_MATRIX_ROW_MAJOR,
             0,
         )
