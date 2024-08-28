@@ -11,7 +11,7 @@ use tracing::debug;
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalSize,
-    event::{MouseButton, WindowEvent},
+    event::{DeviceEvent, DeviceId, MouseButton, WindowEvent},
     event_loop::ActiveEventLoop,
     keyboard::{KeyCode, PhysicalKey},
     raw_window_handle::{HasWindowHandle, RawWindowHandle},
@@ -562,9 +562,6 @@ impl<S: DxSample> ApplicationHandler for SampleRunner<S> {
                     }
                 }
             },
-            WindowEvent::CursorMoved { position, .. } => {
-                self.sample.on_mouse_move(position.x, position.y);
-            }
             WindowEvent::MouseInput { state, button, .. } => match state {
                 winit::event::ElementState::Pressed => self.sample.on_mouse_down(button),
                 winit::event::ElementState::Released => self.sample.on_mouse_up(button),
@@ -594,6 +591,13 @@ impl<S: DxSample> ApplicationHandler for SampleRunner<S> {
             }
             WindowEvent::CloseRequested => event_loop.exit(),
             _ => (),
+        }
+    }
+
+    fn device_event(&mut self, _: &ActiveEventLoop, _: DeviceId, event: DeviceEvent) {
+        match event {
+            DeviceEvent::MouseMotion { delta } => self.sample.on_mouse_move(delta.0, delta.0),
+            _ => {}
         }
     }
 

@@ -42,7 +42,6 @@ pub struct BoxSample {
     phi: f32,
     radius: f32,
 
-    last_moust_pos: (f32, f32),
     is_lmb_pressed: bool,
     is_rmb_pressed: bool,
 }
@@ -147,7 +146,6 @@ impl DxSample for BoxSample {
             theta: 1.5 * std::f32::consts::PI,
             phi: std::f32::consts::FRAC_PI_4,
             radius: 5.0,
-            last_moust_pos: (0.0, 0.0),
             is_lmb_pressed: false,
             is_rmb_pressed: false,
         }
@@ -289,19 +287,17 @@ impl DxSample for BoxSample {
         let y = y as f32;
 
         if self.is_lmb_pressed {
-            let dx = (0.25 * (x - self.last_moust_pos.0)).to_radians();
-            let dy = (0.25 * (y - self.last_moust_pos.1)).to_radians();
+            let dx = (0.25 * x).to_radians();
+            let dy = (0.25 * y).to_radians();
 
             self.theta += dx;
             self.phi = (self.phi + dy).clamp(0.01, std::f32::consts::PI - 0.1);
         } else if self.is_rmb_pressed {
-            let dx = 0.005 * (x - self.last_moust_pos.0);
-            let dy = 0.005 * (y - self.last_moust_pos.1);
+            let dx = 0.005 * x;
+            let dy = 0.005 * y;
 
             self.radius = (self.radius + dx - dy).clamp(3.0, 15.0);
         }
-
-        self.last_moust_pos = (x, y);
     }
 }
 
