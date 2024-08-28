@@ -107,7 +107,7 @@ impl DxSample for BoxSample {
 
         let box_geo = Self::build_box_geometry(&base.device, &base.cmd_list);
 
-        let input_layout = Vertex::get_input_layout();
+        let input_layout = [VertexPos::get_input_layout(), VertexColor::get_input_layout()].concat();
 
         let pso_desc = GraphicsPipelineDesc::new(&vs_byte_code)
             .with_ps(&ps_byte_code)
@@ -216,8 +216,13 @@ impl DxSample for BoxSample {
 
         base.cmd_list
             .set_graphics_root_signature(Some(&self.root_signature));
-        base.cmd_list
-            .ia_set_vertex_buffers(0, &[self.box_geo.vertex_buffer_view()]);
+        base.cmd_list.ia_set_vertex_buffers(
+            0,
+            &[
+                self.box_geo.vertex_buffer_position_view(),
+                self.box_geo.vertex_buffer_color_view(),
+            ],
+        );
         base.cmd_list
             .ia_set_index_buffer(Some(&self.box_geo.index_buffer_view()));
         base.cmd_list
@@ -302,37 +307,56 @@ impl DxSample for BoxSample {
 
 impl BoxSample {
     fn build_box_geometry(device: &Device, cmd_list: &GraphicsCommandList) -> MeshGeometry {
-        let vertices = [
-            Vertex {
+        let position = [
+            VertexPos {
                 pos: vec3(-1.0, -1.0, -1.0),
+            },
+            VertexPos {
+                pos: vec3(-1.0, 1.0, -1.0),
+            },
+            VertexPos {
+                pos: vec3(1.0, 1.0, -1.0),
+            },
+            VertexPos {
+                pos: vec3(1.0, -1.0, -1.0),
+            },
+            VertexPos {
+                pos: vec3(-1.0, -1.0, 1.0),
+            },
+            VertexPos {
+                pos: vec3(-1.0, 1.0, 1.0),
+            },
+            VertexPos {
+                pos: vec3(1.0, 1.0, 1.0),
+            },
+            VertexPos {
+                pos: vec3(1.0, -1.0, 1.0),
+            },
+        ];
+
+        let colors = [
+            VertexColor {
                 color: vec4(0.0, 0.0, 0.0, 1.0),
             },
-            Vertex {
-                pos: vec3(-1.0, 1.0, -1.0),
+            VertexColor {
                 color: vec4(1.0, 1.0, 1.0, 1.0),
             },
-            Vertex {
-                pos: vec3(1.0, 1.0, -1.0),
+            VertexColor {
                 color: vec4(1.0, 0.0, 0.0, 1.0),
             },
-            Vertex {
-                pos: vec3(1.0, -1.0, -1.0),
+            VertexColor {
                 color: vec4(0.0, 1.0, 0.0, 1.0),
             },
-            Vertex {
-                pos: vec3(-1.0, -1.0, 1.0),
+            VertexColor {
                 color: vec4(0.0, 0.0, 1.0, 1.0),
             },
-            Vertex {
-                pos: vec3(-1.0, 1.0, 1.0),
+            VertexColor {
                 color: vec4(0.5, 0.32, 0.0, 1.0),
             },
-            Vertex {
-                pos: vec3(1.0, 1.0, 1.0),
+            VertexColor {
                 color: vec4(0.32, 0.0, 0.67, 1.0),
             },
-            Vertex {
-                pos: vec3(1.0, -1.0, 1.0),
+            VertexColor {
                 color: vec4(0.0, 0.67, 0.32, 1.0),
             },
         ];
@@ -347,17 +371,24 @@ impl BoxSample {
             4, 0, 3, 4, 3, 7,
         ];
 
-        let vb_byte_size = size_of_val(&vertices);
+        let vb_pos_byte_size = size_of_val(&position);
+        let vb_color_byte_size = size_of_val(&colors);
         let ib_byte_size = size_of_val(&indices);
 
-        let vertex_buffer_cpu = Blob::create_blob(vb_byte_size).unwrap();
+        let vertex_buffer_pos_cpu = Blob::create_blob(vb_color_byte_size).unwrap();
+        let vertex_buffer_color_cpu = Blob::create_blob(vb_color_byte_size).unwrap();
         let index_buffer_cpu = Blob::create_blob(ib_byte_size).unwrap();
 
         unsafe {
             std::ptr::copy_nonoverlapping(
-                vertices.as_ptr(),
-                vertex_buffer_cpu.get_buffer_ptr::<Vertex>().as_mut(),
-                vertices.len(),
+                position.as_ptr(),
+                vertex_buffer_pos_cpu.get_buffer_ptr::<VertexPos>().as_mut(),
+                position.len(),
+            );
+            std::ptr::copy_nonoverlapping(
+                colors.as_ptr(),
+                vertex_buffer_color_cpu.get_buffer_ptr::<VertexColor>().as_mut(),
+                colors.len(),
             );
             std::ptr::copy_nonoverlapping(
                 indices.as_ptr(),
@@ -366,21 +397,28 @@ impl BoxSample {
             );
         }
 
-        let (vertex_buffer_gpu, vertex_buffer_uploader) =
-            create_default_buffer(device, cmd_list, &vertices);
+        let (vertex_buffer_pos_gpu, vertex_pos_buffer_uploader) =
+            create_default_buffer(device, cmd_list, &position);
+        let (vertex_buffer_color_gpu, vertex_buffer_color_uploader) =
+            create_default_buffer(device, cmd_list, &colors);
         let (index_buffer_gpu, index_buffer_uploader) =
             create_default_buffer(device, cmd_list, &indices);
 
         MeshGeometry {
             name: "boxGeo".to_string(),
-            vertex_buffer_cpu,
+            vertex_buffer_pos_cpu,
+            vertex_buffer_color_cpu,
             index_buffer_cpu,
-            vertex_buffer_gpu,
+            vertex_buffer_pos_gpu,
+            vertex_buffer_color_gpu,
             index_buffer_gpu,
-            vertex_buffer_uploader: Some(vertex_buffer_uploader),
+            vertex_buffer_pos_uploader: Some(vertex_pos_buffer_uploader),
+            vertex_buffer_color_uploader: Some(vertex_buffer_color_uploader),
             index_buffer_uploader: Some(index_buffer_uploader),
-            vertex_byte_stride: size_of::<Vertex>() as u32,
-            vertex_buffer_byte_size: vb_byte_size as u32,
+            vertex_pos_byte_stride: size_of::<VertexPos>() as u32,
+            vertex_pos_byte_size: vb_pos_byte_size as u32,
+            vertex_color_byte_stride: size_of::<VertexColor>() as u32,
+            vertex_color_byte_size: vb_color_byte_size as u32,
             index_format: Format::R16Uint,
             index_buffer_byte_size: ib_byte_size as u32,
             draw_args: HashMap::from_iter([(
@@ -401,18 +439,33 @@ impl BoxSample {
 
 #[derive(Clone, Copy, Debug)]
 #[repr(C)]
-pub struct Vertex {
+pub struct VertexPos {
     pub pos: Vec3,
+}
+
+#[derive(Clone, Copy, Debug)]
+#[repr(C)]
+pub struct VertexColor {
     pub color: Vec4,
 }
 
-impl VertexAttr<2> for Vertex {
-    fn get_input_layout() -> [InputElementDesc; 2] {
-        [
-            InputElementDesc::per_vertex(SemanticName::Position(0), Format::Rgb32Float, 0),
-            InputElementDesc::per_vertex(SemanticName::Color(0), Format::Rgba32Float, 0)
-                .with_offset(16),
-        ]
+impl VertexAttr<1> for VertexPos {
+    fn get_input_layout() -> [InputElementDesc; 1] {
+        [InputElementDesc::per_vertex(
+            SemanticName::Position(0),
+            Format::Rgb32Float,
+            0,
+        )]
+    }
+}
+
+impl VertexAttr<1> for VertexColor {
+    fn get_input_layout() -> [InputElementDesc; 1] {
+        [InputElementDesc::per_vertex(
+            SemanticName::Color(0),
+            Format::Rgba32Float,
+            1,
+        )]
     }
 }
 

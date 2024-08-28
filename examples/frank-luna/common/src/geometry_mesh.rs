@@ -20,17 +20,22 @@ pub struct SubmeshGeometry {
 pub struct MeshGeometry {
     pub name: String,
 
-    pub vertex_buffer_cpu: Blob,
+    pub vertex_buffer_pos_cpu: Blob,
+    pub vertex_buffer_color_cpu: Blob,
     pub index_buffer_cpu: Blob,
 
-    pub vertex_buffer_gpu: Resource,
+    pub vertex_buffer_pos_gpu: Resource,
+    pub vertex_buffer_color_gpu: Resource,
     pub index_buffer_gpu: Resource,
 
-    pub vertex_buffer_uploader: Option<Resource>,
+    pub vertex_buffer_pos_uploader: Option<Resource>,
+    pub vertex_buffer_color_uploader: Option<Resource>,
     pub index_buffer_uploader: Option<Resource>,
 
-    pub vertex_byte_stride: u32,
-    pub vertex_buffer_byte_size: u32,
+    pub vertex_pos_byte_stride: u32,
+    pub vertex_pos_byte_size: u32,
+    pub vertex_color_byte_stride: u32,
+    pub vertex_color_byte_size: u32,
     pub index_format: Format,
     pub index_buffer_byte_size: u32,
 
@@ -38,11 +43,19 @@ pub struct MeshGeometry {
 }
 
 impl MeshGeometry {
-    pub fn vertex_buffer_view(&self) -> VertexBufferView {
+    pub fn vertex_buffer_position_view(&self) -> VertexBufferView {
         VertexBufferView::new(
-            self.vertex_buffer_gpu.get_gpu_virtual_address(),
-            self.vertex_byte_stride,
-            self.vertex_buffer_byte_size,
+            self.vertex_buffer_pos_gpu.get_gpu_virtual_address(),
+            self.vertex_pos_byte_stride,
+            self.vertex_pos_byte_size,
+        )
+    }
+
+    pub fn vertex_buffer_color_view(&self) -> VertexBufferView {
+        VertexBufferView::new(
+            self.vertex_buffer_color_gpu.get_gpu_virtual_address(),
+            self.vertex_color_byte_stride,
+            self.vertex_color_byte_size,
         )
     }
 
@@ -55,7 +68,7 @@ impl MeshGeometry {
     }
 
     pub fn dispose_uploaders(&mut self) {
-        self.vertex_buffer_uploader.take();
+        self.vertex_buffer_pos_uploader.take();
         self.index_buffer_uploader.take();
     }
 }
