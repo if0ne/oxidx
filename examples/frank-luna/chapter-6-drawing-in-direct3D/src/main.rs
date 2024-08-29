@@ -82,7 +82,7 @@ impl DxSample for BoxSample {
 
         let root_parameter = [
             RootParameter::descriptor_table(&cbv_table),
-            RootParameter::constant_32bit(1, 0, 0.0),
+            RootParameter::constant_32bit(1, 0, 1),
         ];
 
         let root_signature_desc = RootSignatureDesc::default()

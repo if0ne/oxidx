@@ -2165,13 +2165,11 @@ impl<'a> RootParameter<'a> {
     }
 
     #[inline]
-    pub fn constant_32bit<T: Copy>(
+    pub fn constant_32bit(
         shader_register: u32,
         register_space: u32,
-        num_32bit_values: T,
+        num_32bit_values: u32,
     ) -> Self {
-        let bits = unsafe { std::mem::transmute_copy(&num_32bit_values) };
-
         Self(
             D3D12_ROOT_PARAMETER {
                 ParameterType: D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
@@ -2179,7 +2177,7 @@ impl<'a> RootParameter<'a> {
                     Constants: D3D12_ROOT_CONSTANTS {
                         ShaderRegister: shader_register,
                         RegisterSpace: register_space,
-                        Num32BitValues: bits,
+                        Num32BitValues: num_32bit_values,
                     },
                 },
                 ..Default::default()
