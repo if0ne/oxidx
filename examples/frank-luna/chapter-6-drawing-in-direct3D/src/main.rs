@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use common::{
     app::{DxSample, SwapchainContext},
-    geometry_mesh::{BoundingBox, MeshGeometry, SubmeshGeometry},
+    geometry_mesh::{BoundingBox, MeshGeometrySplitted, SubmeshGeometry},
     run_sample,
     upload_buffer::UploadBuffer,
     utils::{create_default_buffer, ConstantBufferData, VertexAttr},
@@ -28,7 +28,7 @@ pub struct BoxSample {
     root_signature: RootSignature,
     cbv_heap: DescriptorHeap,
     object_cb: UploadBuffer<ConstantBufferData<ObjectConstants>>,
-    box_geo: MeshGeometry,
+    box_geo: MeshGeometrySplitted,
 
     vs_byte_code: Blob,
     ps_byte_code: Blob,
@@ -356,7 +356,7 @@ impl DxSample for BoxSample {
 }
 
 impl BoxSample {
-    fn build_box_pyramid_geometry(device: &Device, cmd_list: &GraphicsCommandList) -> MeshGeometry {
+    fn build_box_pyramid_geometry(device: &Device, cmd_list: &GraphicsCommandList) -> MeshGeometrySplitted {
         let position = [
             // Box
             VertexPos {
@@ -490,7 +490,7 @@ impl BoxSample {
         let (index_buffer_gpu, index_buffer_uploader) =
             create_default_buffer(device, cmd_list, &indices);
 
-        MeshGeometry {
+        MeshGeometrySplitted {
             name: "boxGeo".to_string(),
             vertex_buffer_pos_cpu,
             vertex_buffer_color_cpu,

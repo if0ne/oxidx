@@ -17,7 +17,7 @@ pub struct SubmeshGeometry {
 }
 
 #[derive(Clone, Debug)]
-pub struct MeshGeometry {
+pub struct MeshGeometrySplitted {
     pub name: String,
 
     pub vertex_buffer_pos_cpu: Blob,
@@ -42,7 +42,7 @@ pub struct MeshGeometry {
     pub draw_args: HashMap<String, SubmeshGeometry>,
 }
 
-impl MeshGeometry {
+impl MeshGeometrySplitted {
     pub fn vertex_buffer_position_view(&self) -> VertexBufferView {
         VertexBufferView::new(
             self.vertex_buffer_pos_gpu.get_gpu_virtual_address(),
@@ -69,6 +69,51 @@ impl MeshGeometry {
 
     pub fn dispose_uploaders(&mut self) {
         self.vertex_buffer_pos_uploader.take();
+        self.vertex_buffer_color_uploader.take();
+        self.index_buffer_uploader.take();
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct MeshGeometry {
+    pub name: String,
+
+    pub vertex_buffer_cpu: Blob,
+    pub index_buffer_cpu: Blob,
+
+    pub vertex_buffer_gpu: Resource,
+    pub index_buffer_gpu: Resource,
+
+    pub vertex_buffer_uploader: Option<Resource>,
+    pub index_buffer_uploader: Option<Resource>,
+
+    pub vertex_byte_stride: u32,
+    pub vertex_byte_size: u32,
+    pub index_format: Format,
+    pub index_buffer_byte_size: u32,
+
+    pub draw_args: HashMap<String, SubmeshGeometry>,
+}
+
+impl MeshGeometry {
+    pub fn vertex_buffer_view(&self) -> VertexBufferView {
+        VertexBufferView::new(
+            self.vertex_buffer_gpu.get_gpu_virtual_address(),
+            self.vertex_byte_stride,
+            self.vertex_byte_size,
+        )
+    }
+
+    pub fn index_buffer_view(&self) -> IndexBufferView {
+        IndexBufferView::new(
+            self.index_buffer_gpu.get_gpu_virtual_address(),
+            self.index_buffer_byte_size,
+            self.index_format,
+        )
+    }
+
+    pub fn dispose_uploaders(&mut self) {
+        self.vertex_buffer_uploader.take();
         self.index_buffer_uploader.take();
     }
 }
