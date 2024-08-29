@@ -80,7 +80,10 @@ impl DxSample for BoxSample {
 
         let cbv_table = [DescriptorRange::cbv(1)];
 
-        let root_parameter = [RootParameter::descriptor_table(&cbv_table)];
+        let root_parameter = [
+            RootParameter::descriptor_table(&cbv_table),
+            RootParameter::constant_32bit(1, 0, 0.0),
+        ];
 
         let root_signature_desc = RootSignatureDesc::default()
             .with_parameters(&root_parameter)
@@ -247,6 +250,9 @@ impl DxSample for BoxSample {
             .ia_set_index_buffer(Some(&self.box_geo.index_buffer_view()));
         base.cmd_list
             .ia_set_primitive_topology(PrimitiveTopology::Triangle);
+
+        base.cmd_list
+            .set_graphics_root_32bit_constant(1, base.timer.total_time(), 0);
 
         base.cmd_list.set_graphics_root_descriptor_table(
             0,

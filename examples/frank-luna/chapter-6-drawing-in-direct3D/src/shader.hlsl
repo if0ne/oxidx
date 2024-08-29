@@ -3,6 +3,7 @@ struct ObjectConstants {
 };
 
 ConstantBuffer<ObjectConstants> gObjConstants : register(b0);
+ConstantBuffer<float> gGameTime : register(b1);
 
 struct VertexIn
 {
@@ -20,6 +21,9 @@ VertexOut VS(VertexIn vin)
 {
 	VertexOut vout;
 	
+	vin.PosL.xy += 0.5f*sin(vinL.Pos.x)*sin(3.0f*gGameTime);
+	vin.PosL.z *= 0.6f + 0.4f*sin(2.0f*gGameTime);
+
 	// Transform to homogeneous clip space.
 	vout.PosH = mul(float4(vin.PosL, 1.0f), gObjConstants.gWorldViewProj);
 	

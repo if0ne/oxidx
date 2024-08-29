@@ -300,10 +300,10 @@ pub trait IGraphicsCommandList:
     /// Sets a constant in the compute root signature.
     ///
     /// For more information: [`ID3D12GraphicsCommandList::SetComputeRoot32BitConstant method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-setcomputeroot32bitconstant)
-    fn set_compute_root_32bit_constant(
+    fn set_compute_root_32bit_constant<T: Copy>(
         &self,
         root_parameter_index: u32,
-        src_data: u32,
+        src_data: T,
         dest_offset_in_32bit_values: u32,
     );
 
@@ -366,10 +366,10 @@ pub trait IGraphicsCommandList:
     /// Sets a constant in the graphics root signature.
     ///
     /// For more information: [`ID3D12GraphicsCommandList::SetGraphicsRoot32BitConstant method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-setgraphicsroot32bitconstant)
-    fn set_graphics_root_32bit_constant(
+    fn set_graphics_root_32bit_constant<T: Copy>(
         &self,
         root_parameter_index: u32,
-        src_data: u32,
+        src_data: T,
         dest_offset_in_32bit_values: u32,
     );
 
@@ -968,16 +968,20 @@ impl_trait! {
         }
     }
 
-    fn set_compute_root_32bit_constant(
+    fn set_compute_root_32bit_constant<T: Copy>(
         &self,
         root_parameter_index: u32,
-        src_data: u32,
+        src_data: T,
         dest_offset_in_32bit_values: u32,
     ) {
+        let bits = unsafe {
+            std::mem::transmute_copy(&src_data)
+        };
+
         unsafe {
             self.0.SetComputeRoot32BitConstant(
                 root_parameter_index,
-                src_data,
+                bits,
                 dest_offset_in_32bit_values
             );
         }
@@ -989,6 +993,8 @@ impl_trait! {
         src_data: &[T],
         dest_offset_in_32bit_values: u32,
     ) {
+        debug_assert_eq!(size_of::<T>(), 4);
+
         unsafe {
             self.0.SetComputeRoot32BitConstants(
                 root_parameter_index,
@@ -1074,16 +1080,20 @@ impl_trait! {
         }
     }
 
-    fn set_graphics_root_32bit_constant(
+    fn set_graphics_root_32bit_constant<T: Copy>(
         &self,
         root_parameter_index: u32,
-        src_data: u32,
+        src_data: T,
         dest_offset_in_32bit_values: u32,
     ) {
+        let bits = unsafe {
+            std::mem::transmute_copy(&src_data)
+        };
+
         unsafe {
             self.0.SetGraphicsRoot32BitConstant(
                 root_parameter_index,
-                src_data,
+                bits,
                 dest_offset_in_32bit_values
             );
         }
@@ -1095,6 +1105,8 @@ impl_trait! {
         src_data: &[T],
         dest_offset_in_32bit_values: u32,
     ) {
+        debug_assert_eq!(size_of::<T>(), 4);
+
         unsafe {
             self.0.SetGraphicsRoot32BitConstants(
                 root_parameter_index,
