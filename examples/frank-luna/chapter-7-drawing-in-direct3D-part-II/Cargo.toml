@@ -1,0 +1,12 @@
+[package]
+name = "chapter-7-drawing-in-direct3D-part-II"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+common = { path = "../common" }
+glam = "0.29.0"
+oxidx = { path = "../../../oxidx" }
+tracing = "0.1.40"
+tracing-subscriber = "0.3.0"
+winit = "0.30.2"
