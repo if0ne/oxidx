@@ -3,8 +3,8 @@ use winit::event_loop::{ControlFlow, EventLoop};
 
 pub mod app;
 pub mod game_timer;
-pub mod geometry_mesh;
 pub mod geometry_generator;
+pub mod geometry_mesh;
 pub mod upload_buffer;
 pub mod utils;
 

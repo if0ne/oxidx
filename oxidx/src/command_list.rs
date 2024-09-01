@@ -1249,14 +1249,13 @@ impl_trait! {
         src_data: &[SubresourceData<'_, T>],
     ) -> usize {
         let start = subresources.start as usize;
-        let num = subresources.count() as usize;
+        let num = subresources.count();
 
         let intermediate_desc = intermediate.get_desc();
         let dst_desc = dst_resource.get_desc();
 
         if intermediate_desc.dimension() != ResourceDimension::Buffer
             || (intermediate_desc.width() as usize) < (required_size + layouts[0].offset())
-            || required_size > usize::MAX
             || (dst_desc.dimension() == ResourceDimension::Buffer && (start != 0 && num != 1)) {
                 return 0;
             }
@@ -1285,7 +1284,7 @@ impl_trait! {
             };
 
             let mut dst_data = MemcpyDest::new(data)
-                .with_row_pitch(layouts[i].footprint().row_pitch() as usize)
+                .with_row_pitch(layouts[i].footprint().row_pitch())
                 .with_slice_pitch(slice_pitch);
 
             memcpy_subresource(
@@ -1308,9 +1307,9 @@ impl_trait! {
                 layouts[0].footprint().width() as usize
             );
         } else {
-            for i in start..num {
+            for (i, layout) in layouts.iter().enumerate().take(num).skip(start) {
                 let dst = TextureCopyLocation::subresource(dst_resource, i as u32);
-                let src = TextureCopyLocation::placed_footprint(intermediate, layouts[i]);
+                let src = TextureCopyLocation::placed_footprint(intermediate, *layout);
 
                 self.copy_texture_region(&dst, 0, 0, 0, &src, None);
             }
