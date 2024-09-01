@@ -395,7 +395,7 @@ impl CpuDescriptorHandle {
     }
 
     #[inline]
-    pub fn forward(&self, distance: usize, handle_size: usize) -> Self {
+    pub fn advance(&self, distance: usize, handle_size: usize) -> Self {
         self.offset(distance * handle_size)
     }
 
@@ -685,45 +685,43 @@ pub struct DescriptorRange(pub(crate) D3D12_DESCRIPTOR_RANGE);
 
 impl DescriptorRange {
     #[inline]
-    pub fn cbv(num: u32) -> Self {
+    pub fn cbv(num: u32, base_shader_register: u32) -> Self {
         Self(D3D12_DESCRIPTOR_RANGE {
             RangeType: D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
             NumDescriptors: num,
+            BaseShaderRegister: base_shader_register,
             ..Default::default()
         })
     }
 
     #[inline]
-    pub fn srv(num: u32) -> Self {
+    pub fn srv(num: u32, base_shader_register: u32) -> Self {
         Self(D3D12_DESCRIPTOR_RANGE {
             RangeType: D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
             NumDescriptors: num,
+            BaseShaderRegister: base_shader_register,
             ..Default::default()
         })
     }
 
     #[inline]
-    pub fn sampler(num: u32) -> Self {
+    pub fn sampler(num: u32, base_shader_register: u32) -> Self {
         Self(D3D12_DESCRIPTOR_RANGE {
             RangeType: D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER,
             NumDescriptors: num,
+            BaseShaderRegister: base_shader_register,
             ..Default::default()
         })
     }
 
     #[inline]
-    pub fn uav(num: u32) -> Self {
+    pub fn uav(num: u32, base_shader_register: u32) -> Self {
         Self(D3D12_DESCRIPTOR_RANGE {
             RangeType: D3D12_DESCRIPTOR_RANGE_TYPE_UAV,
             NumDescriptors: num,
+            BaseShaderRegister: base_shader_register,
             ..Default::default()
         })
-    }
-
-    #[inline]
-    pub fn with_base_shader_register(mut self, base_shader_register: u32) -> Self {
-        self.0.BaseShaderRegister = base_shader_register;
-        self
     }
 
     #[inline]

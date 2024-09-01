@@ -1,14 +1,17 @@
-use std::collections::HashMap;
+mod frame_resources;
+mod render_item;
+
+use std::{mem::offset_of, rc::Rc};
 
 use common::{
     app::{DxSample, SwapchainContext},
-    geometry_mesh::{BoundingBox, MeshGeometrySplitted, SubmeshGeometry},
     run_sample,
-    upload_buffer::UploadBuffer,
-    utils::{create_default_buffer, ConstantBufferData, VertexAttr},
+    utils::{ConstantBufferData, VertexAttr},
 };
-use glam::{vec3, vec4, Mat4, Vec3, Vec4};
+use frame_resources::{FrameResource, ObjectConstants, PassConstants};
+use glam::{vec2, Mat4, Vec3, Vec4};
 use oxidx::dx::*;
+use render_item::RenderItem;
 use tracing_subscriber::layer::SubscriberExt;
 
 fn main() {
@@ -19,23 +22,27 @@ fn main() {
     let subscriber = tracing_subscriber::registry().with(console_log);
 
     let _ = tracing::subscriber::set_global_default(subscriber);
-    run_sample::<BoxSample>();
+    run_sample::<ShapesSample>();
 }
 
 #[allow(unused)]
 #[derive(Debug)]
-pub struct BoxSample {
+pub struct ShapesSample {
     root_signature: RootSignature,
     cbv_heap: DescriptorHeap,
-    object_cb: UploadBuffer<ConstantBufferData<ObjectConstants>>,
-    box_geo: MeshGeometrySplitted,
+    frame_resources: [FrameResource; Self::FRAME_COUNT],
+    curr_frame_resource: usize,
+
+    all_ritems: Vec<Rc<RenderItem>>,
+    opaque_ritems: Vec<Rc<RenderItem>>,
+    transparent_ritems: Vec<Rc<RenderItem>>,
 
     vs_byte_code: Blob,
     ps_byte_code: Blob,
 
     pso: PipelineState,
-    world_pyramid: Mat4,
-    world_box: Mat4,
+
+    eye_pos: Vec3,
     view: Mat4,
     proj: Mat4,
 
@@ -47,7 +54,7 @@ pub struct BoxSample {
     is_rmb_pressed: bool,
 }
 
-impl DxSample for BoxSample {
+impl DxSample for ShapesSample {
     fn new(base: &mut common::app::Base) -> Self {
         base.cmd_list.reset(&base.cmd_list_alloc, PSO_NONE).unwrap();
 
@@ -58,31 +65,14 @@ impl DxSample for BoxSample {
             )
             .unwrap();
 
-        let object_cb = UploadBuffer::new(&base.device, 2);
-        let object_size = size_of::<ConstantBufferData<ObjectConstants>>() as u64;
+        let frame_resources = std::array::from_fn(|_| FrameResource::new(&base.device, 1, 1));
 
-        let address = object_cb.resource().get_gpu_virtual_address();
-
-        base.device.create_constant_buffer_view(
-            Some(&ConstantBufferViewDesc::new(address, object_size as u32)),
-            cbv_heap.get_cpu_descriptor_handle_for_heap_start(),
-        );
-
-        base.device.create_constant_buffer_view(
-            Some(&ConstantBufferViewDesc::new(
-                address + object_size,
-                object_size as u32,
-            )),
-            cbv_heap
-                .get_cpu_descriptor_handle_for_heap_start()
-                .forward(1, base.cbv_srv_uav_descriptor_size as usize),
-        );
-
-        let cbv_table = [DescriptorRange::cbv(1)];
+        let cbv_table1 = [DescriptorRange::cbv(1, 0)];
+        let cbv_table2 = [DescriptorRange::cbv(1, 1)];
 
         let root_parameter = [
-            RootParameter::descriptor_table(&cbv_table),
-            RootParameter::constant_32bit(1, 0, 1),
+            RootParameter::descriptor_table(&cbv_table1),
+            RootParameter::descriptor_table(&cbv_table2),
         ];
 
         let root_signature_desc = RootSignatureDesc::default()
@@ -117,13 +107,7 @@ impl DxSample for BoxSample {
         )
         .unwrap();
 
-        let box_geo = Self::build_box_pyramid_geometry(&base.device, &base.cmd_list);
-
-        let input_layout = [
-            VertexPos::get_input_layout(),
-            VertexColor::get_input_layout(),
-        ]
-        .concat();
+        let input_layout = Vertex::get_input_layout();
 
         let pso_desc = GraphicsPipelineDesc::new(&vs_byte_code)
             .with_ps(&ps_byte_code)
@@ -151,13 +135,12 @@ impl DxSample for BoxSample {
         Self {
             root_signature,
             cbv_heap,
-            object_cb,
-            box_geo,
+            frame_resources,
+            curr_frame_resource: 0,
             vs_byte_code,
             ps_byte_code,
             pso,
-            world_box: Mat4::IDENTITY,
-            world_pyramid: Mat4::from_translation(vec3(2.0, 0.0, 0.0)),
+            eye_pos: Vec3::ZERO,
             view: Mat4::IDENTITY,
             proj: Mat4::IDENTITY,
             theta: 0.0,
@@ -165,33 +148,31 @@ impl DxSample for BoxSample {
             radius: 5.0,
             is_lmb_pressed: false,
             is_rmb_pressed: false,
+            all_ritems: vec![],
+            opaque_ritems: vec![],
+            transparent_ritems: vec![],
         }
     }
 
     fn init_resources(&mut self, _: &common::app::Base) {}
 
-    fn update(&mut self, _: &common::app::Base) {
-        let x = self.radius * self.phi.sin() * self.theta.cos();
-        let y = self.radius * self.phi.sin() * self.theta.sin();
-        let z = self.radius * self.phi.cos();
+    fn update(&mut self, base: &common::app::Base) {
+        self.curr_frame_resource = (self.curr_frame_resource + 1) % Self::FRAME_COUNT;
+        let curr_frame_resource = &self.frame_resources[self.curr_frame_resource];
 
-        let pos = vec3(x, y, z);
-        let target = Vec3::ZERO;
-        let up = Vec3::Y;
+        if curr_frame_resource.fence != 0
+            && base.fence.get_completed_value() < curr_frame_resource.fence
+        {
+            let event = Event::create(false, false).unwrap();
+            base.fence
+                .set_event_on_completion(curr_frame_resource.fence, event)
+                .unwrap();
+            event.wait(u32::MAX);
+            event.close().unwrap();
+        }
 
-        self.view = Mat4::look_at_lh(pos, target, up);
-
-        let data = ConstantBufferData(ObjectConstants {
-            world_view_proj: self.proj * self.view * self.world_box,
-        });
-
-        self.object_cb.copy_data(0, data);
-
-        let data = ConstantBufferData(ObjectConstants {
-            world_view_proj: self.proj * self.view * self.world_pyramid,
-        });
-
-        self.object_cb.copy_data(1, data);
+        self.update_object_cb(base);
+        self.update_pass_cb(base);
     }
 
     fn render(&mut self, base: &mut common::app::Base) {
@@ -239,56 +220,9 @@ impl DxSample for BoxSample {
 
         base.cmd_list
             .set_graphics_root_signature(Some(&self.root_signature));
-        base.cmd_list.ia_set_vertex_buffers(
-            0,
-            &[
-                self.box_geo.vertex_buffer_position_view(),
-                self.box_geo.vertex_buffer_color_view(),
-            ],
-        );
-        base.cmd_list
-            .ia_set_index_buffer(Some(&self.box_geo.index_buffer_view()));
+
         base.cmd_list
             .ia_set_primitive_topology(PrimitiveTopology::Triangle);
-
-        base.cmd_list
-            .set_graphics_root_32bit_constant(1, base.timer.total_time(), 0);
-
-        base.cmd_list.set_graphics_root_descriptor_table(
-            0,
-            self.cbv_heap.get_gpu_descriptor_handle_for_heap_start(),
-        );
-
-        base.cmd_list.draw_indexed_instanced(
-            self.box_geo.draw_args.get("box").unwrap().index_count,
-            1,
-            0,
-            0,
-            0,
-        );
-
-        base.cmd_list.set_graphics_root_descriptor_table(
-            0,
-            self.cbv_heap
-                .get_gpu_descriptor_handle_for_heap_start()
-                .forward(1, base.cbv_srv_uav_descriptor_size as u64),
-        );
-
-        base.cmd_list.draw_indexed_instanced(
-            self.box_geo.draw_args.get("pyramid").unwrap().index_count,
-            1,
-            self.box_geo
-                .draw_args
-                .get("pyramid")
-                .unwrap()
-                .start_index_location,
-            self.box_geo
-                .draw_args
-                .get("pyramid")
-                .unwrap()
-                .base_vertex_location as i32,
-            0,
-        );
 
         base.cmd_list
             .resource_barrier(&[ResourceBarrier::transition(
@@ -305,7 +239,11 @@ impl DxSample for BoxSample {
             .current_back_buffer
             .set((context.current_back_buffer.get() + 1) % SwapchainContext::BUFFER_COUNT);
 
-        base.flush_command_queue();
+        base.current_fence += 1;
+        self.frame_resources[self.curr_frame_resource].fence = base.current_fence;
+        base.cmd_queue
+            .signal(&base.fence, base.current_fence)
+            .unwrap();
     }
 
     fn on_resize(&mut self, base: &mut common::app::Base, _: u32, _: u32) {
@@ -355,222 +293,72 @@ impl DxSample for BoxSample {
     }
 }
 
-impl BoxSample {
-    fn build_box_pyramid_geometry(device: &Device, cmd_list: &GraphicsCommandList) -> MeshGeometrySplitted {
-        let position = [
-            // Box
-            VertexPos {
-                pos: vec3(-1.0, -1.0, -1.0),
-            },
-            VertexPos {
-                pos: vec3(-1.0, 1.0, -1.0),
-            },
-            VertexPos {
-                pos: vec3(1.0, 1.0, -1.0),
-            },
-            VertexPos {
-                pos: vec3(1.0, -1.0, -1.0),
-            },
-            VertexPos {
-                pos: vec3(-1.0, -1.0, 1.0),
-            },
-            VertexPos {
-                pos: vec3(-1.0, 1.0, 1.0),
-            },
-            VertexPos {
-                pos: vec3(1.0, 1.0, 1.0),
-            },
-            VertexPos {
-                pos: vec3(1.0, -1.0, 1.0),
-            },
-            // Pyramid
-            VertexPos {
-                pos: vec3(0.0, 1.0, 0.0),
-            },
-            VertexPos {
-                pos: vec3(-1.0, -1.0, -1.0),
-            },
-            VertexPos {
-                pos: vec3(-1.0, -1.0, 1.0),
-            },
-            VertexPos {
-                pos: vec3(1.0, -1.0, 1.0),
-            },
-            VertexPos {
-                pos: vec3(1.0, -1.0, -1.0),
-            },
-        ];
+impl ShapesSample {
+    const FRAME_COUNT: usize = 3;
 
-        let colors = [
-            VertexColor {
-                color: vec4(0.0, 0.0, 0.0, 1.0),
-            },
-            VertexColor {
-                color: vec4(1.0, 1.0, 1.0, 1.0),
-            },
-            VertexColor {
-                color: vec4(1.0, 0.0, 0.0, 1.0),
-            },
-            VertexColor {
-                color: vec4(0.0, 1.0, 0.0, 1.0),
-            },
-            VertexColor {
-                color: vec4(0.0, 0.0, 1.0, 1.0),
-            },
-            VertexColor {
-                color: vec4(0.5, 0.32, 0.0, 1.0),
-            },
-            VertexColor {
-                color: vec4(0.32, 0.0, 0.67, 1.0),
-            },
-            VertexColor {
-                color: vec4(0.0, 0.67, 0.32, 1.0),
-            },
-            VertexColor {
-                color: vec4(0.0, 1.0, 0.0, 1.0),
-            },
-            VertexColor {
-                color: vec4(0.0, 0.0, 1.0, 1.0),
-            },
-            VertexColor {
-                color: vec4(0.5, 0.32, 0.0, 1.0),
-            },
-            VertexColor {
-                color: vec4(0.32, 0.0, 0.67, 1.0),
-            },
-            VertexColor {
-                color: vec4(0.0, 0.67, 0.32, 1.0),
-            },
-        ];
+    fn update_object_cb(&mut self, _: &common::app::Base) {
+        let curr_obj_cb = &self.frame_resources[self.curr_frame_resource].object_cb;
 
-        let indices = [
-            0u16, 1, 2, 0, 2, 3, // front face
-            4, 6, 5, 4, 7, 6, // back face
-            4, 5, 1, 4, 1, 0, // left face
-            3, 2, 6, 3, 6, 7, // right face
-            1, 5, 6, 1, 6, 2, // top face
-            4, 0, 3, 4, 3, 7, // bottom face
-            0, 4, 1, 0, 1, 2, //
-            0, 2, 3, 0, 3, 4, //
-            1, 4, 2, 2, 4, 3, //
-        ];
-
-        let vb_pos_byte_size = size_of_val(&position);
-        let vb_color_byte_size = size_of_val(&colors);
-        let ib_byte_size = size_of_val(&indices);
-
-        let vertex_buffer_pos_cpu = Blob::create_blob(vb_color_byte_size).unwrap();
-        let vertex_buffer_color_cpu = Blob::create_blob(vb_color_byte_size).unwrap();
-        let index_buffer_cpu = Blob::create_blob(ib_byte_size).unwrap();
-
-        unsafe {
-            std::ptr::copy_nonoverlapping(
-                position.as_ptr(),
-                vertex_buffer_pos_cpu.get_buffer_ptr::<VertexPos>().as_mut(),
-                position.len(),
-            );
-            std::ptr::copy_nonoverlapping(
-                colors.as_ptr(),
-                vertex_buffer_color_cpu
-                    .get_buffer_ptr::<VertexColor>()
-                    .as_mut(),
-                colors.len(),
-            );
-            std::ptr::copy_nonoverlapping(
-                indices.as_ptr(),
-                index_buffer_cpu.get_buffer_ptr::<u16>().as_mut(),
-                indices.len(),
-            );
+        for e in &mut self.all_ritems {
+            let num_frames_dirty = e.num_frames_dirty.get();
+            if num_frames_dirty > 0 {
+                curr_obj_cb.copy_data(
+                    e.obj_cb_index,
+                    ConstantBufferData(ObjectConstants { world: e.world }),
+                );
+                e.num_frames_dirty.set(num_frames_dirty - 1);
+            }
         }
+    }
 
-        let (vertex_buffer_pos_gpu, vertex_pos_buffer_uploader) =
-            create_default_buffer(device, cmd_list, &position);
-        let (vertex_buffer_color_gpu, vertex_buffer_color_uploader) =
-            create_default_buffer(device, cmd_list, &colors);
-        let (index_buffer_gpu, index_buffer_uploader) =
-            create_default_buffer(device, cmd_list, &indices);
+    fn update_pass_cb(&mut self, base: &common::app::Base) {
+        let view = self.view;
+        let proj = self.proj;
 
-        MeshGeometrySplitted {
-            name: "boxGeo".to_string(),
-            vertex_buffer_pos_cpu,
-            vertex_buffer_color_cpu,
-            index_buffer_cpu,
-            vertex_buffer_pos_gpu,
-            vertex_buffer_color_gpu,
-            index_buffer_gpu,
-            vertex_buffer_pos_uploader: Some(vertex_pos_buffer_uploader),
-            vertex_buffer_color_uploader: Some(vertex_buffer_color_uploader),
-            index_buffer_uploader: Some(index_buffer_uploader),
-            vertex_pos_byte_stride: size_of::<VertexPos>() as u32,
-            vertex_pos_byte_size: vb_pos_byte_size as u32,
-            vertex_color_byte_stride: size_of::<VertexColor>() as u32,
-            vertex_color_byte_size: vb_color_byte_size as u32,
-            index_format: Format::R16Uint,
-            index_buffer_byte_size: ib_byte_size as u32,
-            draw_args: HashMap::from_iter([
-                (
-                    "box".to_string(),
-                    SubmeshGeometry {
-                        index_count: 36,
-                        start_index_location: 0,
-                        base_vertex_location: 0,
-                        bounds: BoundingBox {
-                            min: vec3(-1.0, -1.0, -1.0),
-                            max: vec3(1.0, 1.0, 1.0),
-                        },
-                    },
-                ),
-                (
-                    "pyramid".to_string(),
-                    SubmeshGeometry {
-                        index_count: 18,
-                        start_index_location: 36,
-                        base_vertex_location: 8,
-                        bounds: BoundingBox {
-                            min: vec3(-1.0, -1.0, -1.0),
-                            max: vec3(1.0, 1.0, 1.0),
-                        },
-                    },
-                ),
-            ]),
-        }
+        let view_proj = proj * view;
+        let inv_view = view.inverse();
+        let inv_proj = proj.inverse();
+        let inv_view_proj = view_proj.inverse();
+
+        let pass_const = PassConstants {
+            view,
+            inv_view,
+            proj,
+            inv_proj,
+            view_proj,
+            inv_view_proj,
+            eye_pos: self.eye_pos,
+            cb_per_object_pad1: 0.0,
+            render_target_size: vec2(base.client_width as f32, base.client_height as f32),
+            inv_render_target_size: vec2(
+                1.0 / base.client_width as f32,
+                1.0 / base.client_height as f32,
+            ),
+            near_z: 1.0,
+            far_z: 1000.0,
+            total_time: base.timer.total_time(),
+            delta_time: base.timer.delta_time(),
+        };
+
+        self.frame_resources[self.curr_frame_resource]
+            .pass_cb
+            .copy_data(0, ConstantBufferData(pass_const));
     }
 }
 
 #[derive(Clone, Copy, Debug)]
 #[repr(C)]
-pub struct VertexPos {
+pub struct Vertex {
     pub pos: Vec3,
-}
-
-#[derive(Clone, Copy, Debug)]
-#[repr(C)]
-pub struct VertexColor {
     pub color: Vec4,
 }
 
-impl VertexAttr<1> for VertexPos {
-    fn get_input_layout() -> [InputElementDesc; 1] {
-        [InputElementDesc::per_vertex(
-            SemanticName::Position(0),
-            Format::Rgb32Float,
-            0,
-        )]
+impl VertexAttr<2> for Vertex {
+    fn get_input_layout() -> [InputElementDesc; 2] {
+        [
+            InputElementDesc::per_vertex(SemanticName::Position(0), Format::Rgb32Float, 0),
+            InputElementDesc::per_vertex(SemanticName::Color(0), Format::Rgba32Float, 0)
+                .with_offset(offset_of!(Vertex, color) as u32),
+        ]
     }
-}
-
-impl VertexAttr<1> for VertexColor {
-    fn get_input_layout() -> [InputElementDesc; 1] {
-        [InputElementDesc::per_vertex(
-            SemanticName::Color(0),
-            Format::Rgba32Float,
-            1,
-        )]
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-#[repr(C)]
-pub struct ObjectConstants {
-    pub world_view_proj: Mat4,
 }

@@ -75,10 +75,10 @@ impl DxSample for BoxSample {
             )),
             cbv_heap
                 .get_cpu_descriptor_handle_for_heap_start()
-                .forward(1, base.cbv_srv_uav_descriptor_size as usize),
+                .advance(1, base.cbv_srv_uav_descriptor_size as usize),
         );
 
-        let cbv_table = [DescriptorRange::cbv(1)];
+        let cbv_table = [DescriptorRange::cbv(1, 0)];
 
         let root_parameter = [
             RootParameter::descriptor_table(&cbv_table),
@@ -356,7 +356,10 @@ impl DxSample for BoxSample {
 }
 
 impl BoxSample {
-    fn build_box_pyramid_geometry(device: &Device, cmd_list: &GraphicsCommandList) -> MeshGeometrySplitted {
+    fn build_box_pyramid_geometry(
+        device: &Device,
+        cmd_list: &GraphicsCommandList,
+    ) -> MeshGeometrySplitted {
         let position = [
             // Box
             VertexPos {
@@ -574,7 +577,6 @@ impl VertexAttr<1> for VertexColor {
 pub struct ObjectConstants {
     pub world_view_proj: Mat4,
 }
-
 
 #[derive(Clone, Debug)]
 pub struct MeshGeometrySplitted {

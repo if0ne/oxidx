@@ -183,7 +183,7 @@ impl Base {
             self.device.create_render_target_view(
                 Some(&render_target),
                 None,
-                rtv_handle.forward(i, self.rtv_descriptor_size as usize),
+                rtv_handle.advance(i, self.rtv_descriptor_size as usize),
             );
 
             render_target
@@ -284,7 +284,7 @@ impl Base {
             self.device.create_render_target_view(
                 Some(&render_target),
                 None,
-                rtv_handle.forward(i, self.rtv_descriptor_size as usize),
+                rtv_handle.advance(i, self.rtv_descriptor_size as usize),
             );
 
             render_target
@@ -482,7 +482,7 @@ impl SwapchainContext {
     pub fn current_back_buffer_view(&self, rtv_descriptor_size: u32) -> CpuDescriptorHandle {
         self.rtv_heap
             .get_cpu_descriptor_handle_for_heap_start()
-            .forward(self.current_back_buffer.get(), rtv_descriptor_size as usize)
+            .advance(self.current_back_buffer.get(), rtv_descriptor_size as usize)
     }
 
     pub fn depth_stencil_view(&self) -> CpuDescriptorHandle {

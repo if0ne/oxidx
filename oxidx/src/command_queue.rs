@@ -52,7 +52,7 @@ pub trait ICommandQueue: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<
 
     /// Gets the description of the command queue.
     ///
-    /// For more information: [`ID3D12CommandQueue::GetDesc method `](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-getdesc)
+    /// For more information: [`ID3D12CommandQueue::GetDesc method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandqueue-getdesc)
     fn get_desc(&self) -> CommandQueueDesc;
 
     /// This method is used to determine the rate at which the GPU timestamp counter increments.
