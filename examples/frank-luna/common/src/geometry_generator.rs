@@ -1,11 +1,14 @@
-use std::cell::{Ref, RefCell};
+use std::{
+    cell::{Ref, RefCell},
+    f32::consts::PI,
+};
 
 use glam::{vec2, vec3, Vec2, Vec3};
 
 #[derive(Debug)]
 pub struct GeometryGenerator;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 #[repr(C)]
 pub struct Vertex {
     pub pos: Vec3,
@@ -157,10 +160,153 @@ impl GeometryGenerator {
     }
 
     pub fn create_sphere(radius: f32, slice_count: u32, stack_count: u32) -> MeshData {
-        todo!()
+        let mut vertices = vec![];
+
+        let top_vertex = Vertex::new(0.0, radius, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+        let bottom_vertex = Vertex::new(0.0, -radius, 0.0, 0.0, -1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+
+        vertices.push(top_vertex);
+
+        let phi_step = PI / stack_count as f32;
+        let theta_step = 2.0 * PI / slice_count as f32;
+
+        for i in 1..stack_count {
+            let phi = i as f32 * phi_step;
+
+            for j in 0..=slice_count {
+                let theta = j as f32 * theta_step;
+
+                let pos = vec3(
+                    radius * phi.sin() * theta.cos(),
+                    radius * phi.cos(),
+                    radius * phi.sin() * theta.sin(),
+                );
+
+                vertices.push(Vertex {
+                    pos,
+                    normal: pos.normalize(),
+                    tangent: vec3(
+                        -radius * phi.sin() * theta.sin(),
+                        0.0,
+                        radius * phi.sin() * theta.cos(),
+                    ),
+                    uv: vec2(theta / (2.0 * PI), phi / PI),
+                });
+            }
+        }
+
+        vertices.push(bottom_vertex);
+
+        let mut indices = vec![];
+
+        for i in 0..=slice_count {
+            indices.push(0);
+            indices.push(i + 1);
+            indices.push(i);
+        }
+
+        let base_index = 1;
+        let ring_vertex_count = slice_count + 1;
+
+        for i in 0..(stack_count - 2) {
+            for j in 0..slice_count {
+                indices.push(base_index + i * ring_vertex_count + j);
+                indices.push(base_index + i * ring_vertex_count + j + 1);
+                indices.push(base_index + (i + 1) * ring_vertex_count + j);
+
+                indices.push(base_index + (i + 1_ * ring_vertex_count + j));
+                indices.push(base_index + i * ring_vertex_count + j + 1);
+                indices.push(base_index + (i + 1) * ring_vertex_count + j + 1);
+            }
+        }
+
+        let south_pole_index = vertices.len() as u32 - 1;
+
+        let base_index = south_pole_index - ring_vertex_count;
+
+        for i in 0..=slice_count {
+            indices.push(south_pole_index);
+            indices.push(base_index + 1);
+            indices.push(base_index + i + 1);
+        }
+
+        MeshData {
+            vertices: vertices,
+            indices32: indices,
+            indices16: Default::default(),
+        }
     }
 
     pub fn create_geosphere(radius: f32, num_subdivisions: u32) -> MeshData {
+        let num_subdivisions = num_subdivisions.min(6);
+
+        const X: f32 = 0.525731;
+        const Z: f32 = 0.850651;
+
+        let indices = vec![
+            1, 4, 0, 4, 9, 0, 4, 5, 9, 8, 5, 4, 1, 8, 4, 1, 10, 8, 10, 3, 8, 8, 3, 5, 3, 2, 5, 3,
+            7, 2, 3, 10, 7, 10, 6, 7, 6, 11, 7, 6, 0, 11, 6, 1, 0, 10, 1, 6, 11, 0, 9, 2, 11, 9, 5,
+            2, 9, 11, 2, 7,
+        ];
+
+        let pos = [
+            vec3(-X, 0.0, Z),
+            vec3(X, 0.0, Z),
+            vec3(-X, 0.0, -Z),
+            vec3(X, 0.0, Z),
+            vec3(0.0, Z, X),
+            vec3(0.0, Z, -X),
+            vec3(0.0, -Z, X),
+            vec3(0.0, -Z, -X),
+            vec3(Z, X, 0.0),
+            vec3(-Z, X, 0.0),
+            vec3(Z, -X, 0.0),
+            vec3(-Z, -X, 0.0),
+        ];
+
+        let mut vertices = Vec::with_capacity(pos.len());
+
+        for pos in pos.into_iter() {
+            vertices.push(Vertex {
+                pos,
+                ..Default::default()
+            })
+        }
+
+        let mut mesh_data = MeshData {
+            vertices,
+            indices32: indices,
+            indices16: Default::default(),
+        };
+
+        for _ in 0..num_subdivisions {
+            Self::subdivide(&mut mesh_data);
+        }
+
+        for vert in mesh_data.vertices.iter_mut() {
+            let n = vert.pos.normalize();
+            let p = radius * n;
+
+            vert.pos = p;
+            vert.normal = n;
+
+            let mut theta = vert.pos.z.atan2(vert.pos.x);
+
+            if theta < 0.0 {
+                theta += 2.0 * PI;
+            }
+
+            let phi = (vert.pos.y / radius).acos();
+
+            vert.uv = vec2(theta / (2.0 * PI), phi / PI);
+            vert.tangent = vec3(
+                -radius * phi.sin() * theta.sin(),
+                0.0,
+                radius * phi.sin() * theta.cos(),
+            )
+            .normalize();
+        }
+
         todo!()
     }
 
@@ -171,15 +317,141 @@ impl GeometryGenerator {
         slice_count: u32,
         stack_count: u32,
     ) -> MeshData {
-        todo!()
+        let mut vertices = vec![];
+
+        let stack_height = height / stack_count as f32;
+        let radius_step = (top_radius - bottom_radius) / stack_count as f32;
+        let ring_count = stack_count + 1;
+
+        for i in 0..ring_count {
+            let y = -0.5 * height + i as f32 * stack_height;
+            let r = bottom_radius + i as f32 * radius_step;
+
+            let dtheta = 2.0 * PI / slice_count as f32;
+
+            for j in 0..=slice_count {
+                let c = (j as f32 * dtheta).cos();
+                let s = (j as f32 * dtheta).sin();
+
+                let dr = bottom_radius - top_radius;
+                let bitangent = vec3(dr * c, -height, dr * s);
+                let tangent = vec3(-s, 0.0, c);
+                let normal = tangent.cross(bitangent).normalize();
+
+                vertices.push(Vertex {
+                    pos: vec3(r * c, y, r * s),
+                    normal,
+                    tangent,
+                    uv: vec2(
+                        j as f32 / slice_count as f32,
+                        1.0 - i as f32 / stack_count as f32,
+                    ),
+                })
+            }
+        }
+
+        let mut indices = vec![];
+
+        let ring_vertex_count = slice_count + 1;
+
+        for i in 0..stack_count {
+            for j in 0..slice_count {
+                indices.push(i * ring_vertex_count + j);
+                indices.push((i + 1) * ring_vertex_count + j);
+                indices.push((i + 1) * ring_vertex_count + (j + 1));
+
+                indices.push(i * ring_vertex_count + j);
+                indices.push((i + 1) * ring_vertex_count + j + 1);
+                indices.push(i * ring_vertex_count + (j + 1));
+            }
+        }
+
+        let mut mesh_data = MeshData {
+            vertices,
+            indices32: indices,
+            indices16: Default::default(),
+        };
+
+        Self::build_cylider_top_cap(
+            bottom_radius,
+            top_radius,
+            height,
+            slice_count,
+            stack_count,
+            &mut mesh_data,
+        );
+        Self::build_cylider_bottom_cap(
+            bottom_radius,
+            top_radius,
+            height,
+            slice_count,
+            stack_count,
+            &mut mesh_data,
+        );
+
+        mesh_data
     }
 
     pub fn create_grid(width: f32, depth: f32, m: u32, n: u32) -> MeshData {
-        todo!()
+        let vertex_count = m * n;
+
+        let half_width = width * 0.5;
+        let half_depth = depth * 0.5;
+
+        let dx = width / (n as f32 - 1.0);
+        let dz = depth / (m as f32 - 1.0);
+
+        let du = 1.0 / (n as f32 - 1.0);
+        let dv = 1.0 / (m as f32 - 1.0);
+
+        let mut vertices = Vec::with_capacity(vertex_count as usize);
+
+        for i in 0..m {
+            let z = half_depth - i as f32 * dz;
+            for j in 0..n {
+                let x = -half_width + j as f32 * dx;
+
+                vertices.push(Vertex {
+                    pos: vec3(x, 0.0, z),
+                    normal: Vec3::Y,
+                    tangent: Vec3::X,
+                    uv: vec2(j as f32 * du, i as f32 * dv),
+                });
+            }
+        }
+
+        let mut indices = Vec::with_capacity(vertex_count as usize);
+
+        for i in 0..(m - 1) {
+            for j in 0..(n - 1) {
+                indices.push(i * n + j);
+                indices.push(i * n + j + 1);
+                indices.push((i + 1) * n + j);
+
+                indices.push((i + 1) * n + j);
+                indices.push(i * n + j + 1);
+                indices.push((i + 1) * n + j + 1);
+            }
+        }
+
+        MeshData {
+            vertices,
+            indices32: indices,
+            indices16: Default::default(),
+        }
     }
 
     pub fn create_quad(x: f32, y: f32, w: f32, h: f32, depth: f32) -> MeshData {
-        todo!()
+        MeshData {
+            vertices: vec![
+                Vertex::new(x, y - h, depth, 0.0, 0.0, -1.0, 1.0, 0.0, 0.0, 0.0, 1.0),
+                Vertex::new(x, y, depth, 0.0, 0.0, -1.0, 1.0, 0.0, 0.0, 0.0, 0.0),
+                Vertex::new(x + w, y, depth, 0.0, 0.0, -1.0, 1.0, 0.0, 0.0, 1.0, 0.0),
+                Vertex::new(x + w, y - h, depth, 0.0, 0.0, -1.0, 1.0, 0.0, 0.0, 1.0, 1.0),
+            ],
+            indices32: vec![0, 1, 2, 0, 2, 3],
+            indices16: Default::default(),
+        }
     }
 }
 
@@ -241,24 +513,78 @@ impl GeometryGenerator {
     }
 
     fn build_cylider_top_cap(
-        bottom_radius: f32,
+        _bottom_radius: f32,
         top_radius: f32,
         height: f32,
         slice_count: u32,
-        stack_count: u32,
+        _stack_count: u32,
         mesh_data: &mut MeshData,
-    ) -> Vertex {
-        todo!()
+    ) {
+        let base_index = mesh_data.vertices.len() as u32;
+
+        let y = 0.5 * height;
+        let dtheta = 2.0 * PI / slice_count as f32;
+
+        for i in 0..slice_count {
+            let x = top_radius * (i as f32 * dtheta).cos();
+            let z = top_radius * (i as f32 * dtheta).sin();
+
+            let u = x / height + 0.5;
+            let v = z / height + 0.5;
+
+            mesh_data
+                .vertices
+                .push(Vertex::new(x, y, z, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, u, v));
+        }
+
+        mesh_data.vertices.push(Vertex::new(
+            0.0, y, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.5, 0.5,
+        ));
+
+        let center = mesh_data.vertices.len() as u32 - 1;
+
+        for i in 0..slice_count {
+            mesh_data.indices32.push(center);
+            mesh_data.indices32.push(base_index + i + 1);
+            mesh_data.indices32.push(base_index + i);
+        }
     }
 
     fn build_cylider_bottom_cap(
         bottom_radius: f32,
-        top_radius: f32,
+        _top_radius: f32,
         height: f32,
         slice_count: u32,
-        stack_count: u32,
+        _stack_count: u32,
         mesh_data: &mut MeshData,
-    ) -> Vertex {
-        todo!()
+    ) {
+        let base_index = mesh_data.vertices.len() as u32;
+
+        let y = -0.5 * height;
+        let dtheta = 2.0 * PI / slice_count as f32;
+
+        for i in 0..slice_count {
+            let x = bottom_radius * (i as f32 * dtheta).cos();
+            let z = bottom_radius * (i as f32 * dtheta).sin();
+
+            let u = x / height + 0.5;
+            let v = z / height + 0.5;
+
+            mesh_data
+                .vertices
+                .push(Vertex::new(x, y, z, 0.0, -1.0, 0.0, 1.0, 0.0, 0.0, u, v));
+        }
+
+        mesh_data.vertices.push(Vertex::new(
+            0.0, y, 0.0, 0.0, -1.0, 0.0, 1.0, 0.0, 0.0, 0.5, 0.5,
+        ));
+
+        let center = mesh_data.vertices.len() as u32 - 1;
+
+        for i in 0..slice_count {
+            mesh_data.indices32.push(center);
+            mesh_data.indices32.push(base_index + i);
+            mesh_data.indices32.push(base_index + i + 1);
+        }
     }
 }
