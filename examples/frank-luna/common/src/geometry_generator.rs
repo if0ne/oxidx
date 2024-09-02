@@ -214,7 +214,7 @@ impl GeometryGenerator {
                 indices.push(base_index + i * ring_vertex_count + j + 1);
                 indices.push(base_index + (i + 1) * ring_vertex_count + j);
 
-                indices.push(base_index + (i + 1_ * ring_vertex_count + j));
+                indices.push(base_index + (i + 1) * ring_vertex_count + j);
                 indices.push(base_index + i * ring_vertex_count + j + 1);
                 indices.push(base_index + (i + 1) * ring_vertex_count + j + 1);
             }
@@ -525,7 +525,7 @@ impl GeometryGenerator {
         let y = 0.5 * height;
         let dtheta = 2.0 * PI / slice_count as f32;
 
-        for i in 0..slice_count {
+        for i in 0..=slice_count {
             let x = top_radius * (i as f32 * dtheta).cos();
             let z = top_radius * (i as f32 * dtheta).sin();
 
@@ -563,7 +563,7 @@ impl GeometryGenerator {
         let y = -0.5 * height;
         let dtheta = 2.0 * PI / slice_count as f32;
 
-        for i in 0..slice_count {
+        for i in 0..=slice_count {
             let x = bottom_radius * (i as f32 * dtheta).cos();
             let z = bottom_radius * (i as f32 * dtheta).sin();
 
