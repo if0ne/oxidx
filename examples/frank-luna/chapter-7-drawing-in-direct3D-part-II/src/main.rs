@@ -1,15 +1,17 @@
 mod frame_resources;
 mod render_item;
 
-use std::{mem::offset_of, rc::Rc};
+use std::{cell::Cell, collections::HashMap, rc::Rc};
 
 use common::{
     app::{DxSample, SwapchainContext},
+    geometry_generator::GeometryGenerator,
+    geometry_mesh::{BoundingBox, MeshGeometry, SubmeshGeometry},
     run_sample,
-    utils::{ConstantBufferData, VertexAttr},
+    utils::{create_default_buffer, ConstantBufferData},
 };
 use frame_resources::{FrameResource, ObjectConstants, PassConstants};
-use glam::{vec2, Mat4, Vec3, Vec4};
+use glam::{vec2, vec3, vec4, Mat4, Vec3, Vec4};
 use oxidx::dx::*;
 use render_item::RenderItem;
 use tracing_subscriber::layer::SubscriberExt;
@@ -37,14 +39,18 @@ pub struct ShapesSample {
     opaque_ritems: Vec<Rc<RenderItem>>,
     transparent_ritems: Vec<Rc<RenderItem>>,
 
-    vs_byte_code: Blob,
-    ps_byte_code: Blob,
-
-    pso: PipelineState,
+    geometries: HashMap<String, Rc<MeshGeometry>>,
+    shaders: HashMap<String, Blob>,
+    pso: HashMap<String, PipelineState>,
 
     eye_pos: Vec3,
     view: Mat4,
     proj: Mat4,
+
+    main_pass_cb: ConstantBufferData<PassConstants>,
+    pass_cbv_offset: u32,
+
+    is_wireframe: bool,
 
     theta: f32,
     phi: f32,
@@ -57,15 +63,6 @@ pub struct ShapesSample {
 impl DxSample for ShapesSample {
     fn new(base: &mut common::app::Base) -> Self {
         base.cmd_list.reset(&base.cmd_list_alloc, PSO_NONE).unwrap();
-
-        let cbv_heap: DescriptorHeap = base
-            .device
-            .create_descriptor_heap(
-                &DescriptorHeapDesc::cbr_srv_uav(2).with_flags(DescriptorHeapFlags::ShaderVisible),
-            )
-            .unwrap();
-
-        let frame_resources = std::array::from_fn(|_| FrameResource::new(&base.device, 1, 1));
 
         let cbv_table1 = [DescriptorRange::cbv(1, 0)];
         let cbv_table2 = [DescriptorRange::cbv(1, 1)];
@@ -107,10 +104,46 @@ impl DxSample for ShapesSample {
         )
         .unwrap();
 
-        let input_layout = Vertex::get_input_layout();
+        let shaders = HashMap::from_iter([
+            ("standardVS".to_string(), vs_byte_code),
+            ("opaquePS".to_string(), ps_byte_code),
+        ]);
 
-        let pso_desc = GraphicsPipelineDesc::new(&vs_byte_code)
-            .with_ps(&ps_byte_code)
+        let input_layout = [
+            InputElementDesc::per_vertex(SemanticName::Position(0), Format::Rgb32Float, 0),
+            InputElementDesc::per_vertex(SemanticName::Color(0), Format::Rgba32Float, 0)
+                .with_offset(12),
+        ];
+
+        let geometries = HashMap::from_iter([(
+            "shapeGeo".to_string(),
+            Rc::new(Self::build_geometry(&base.device, &base.cmd_list)),
+        )]);
+
+        let all_ritems = Self::build_render_items(&geometries);
+        let opaque_ritems = all_ritems.clone();
+
+        let frame_resources = std::array::from_fn(|_| FrameResource::new(&base.device, 1, 1));
+
+        let pass_cbv_offset = opaque_ritems.len() * Self::FRAME_COUNT;
+        let cbv_heap: DescriptorHeap = base
+            .device
+            .create_descriptor_heap(
+                &DescriptorHeapDesc::cbr_srv_uav((opaque_ritems.len() + 1) * Self::FRAME_COUNT)
+                    .with_flags(DescriptorHeapFlags::ShaderVisible),
+            )
+            .unwrap();
+
+        Self::build_constant_buffer_view(
+            &base.device,
+            &cbv_heap,
+            opaque_ritems.len(),
+            &frame_resources,
+            base.cbv_srv_uav_descriptor_size as usize,
+        );
+
+        let pso_desc = GraphicsPipelineDesc::new(shaders.get("standardVS").unwrap())
+            .with_ps(shaders.get("opaquePS").unwrap())
             .with_input_layout(&input_layout)
             .with_root_signature(&root_signature)
             .with_rasterizer_state(RasterizerDesc::default())
@@ -125,7 +158,17 @@ impl DxSample for ShapesSample {
                 SampleDesc::new(1, 0)
             });
 
-        let pso = base.device.create_graphics_pipeline(&pso_desc).unwrap();
+        let pso_opaque = base.device.create_graphics_pipeline(&pso_desc).unwrap();
+
+        let pso_desc = pso_desc
+            .with_rasterizer_state(RasterizerDesc::default().with_fill_mode(FillMode::Wireframe));
+
+        let pso_wireframe = base.device.create_graphics_pipeline(&pso_desc).unwrap();
+
+        let pso = HashMap::from_iter([
+            ("opaque".to_string(), pso_opaque),
+            ("opaque_wireframe".to_string(), pso_wireframe),
+        ]);
 
         base.cmd_list.close().unwrap();
         base.cmd_queue
@@ -137,8 +180,6 @@ impl DxSample for ShapesSample {
             cbv_heap,
             frame_resources,
             curr_frame_resource: 0,
-            vs_byte_code,
-            ps_byte_code,
             pso,
             eye_pos: Vec3::ZERO,
             view: Mat4::IDENTITY,
@@ -148,9 +189,14 @@ impl DxSample for ShapesSample {
             radius: 5.0,
             is_lmb_pressed: false,
             is_rmb_pressed: false,
-            all_ritems: vec![],
-            opaque_ritems: vec![],
+            all_ritems,
+            opaque_ritems,
             transparent_ritems: vec![],
+            geometries,
+            shaders,
+            main_pass_cb: ConstantBufferData(PassConstants::default()),
+            pass_cbv_offset: pass_cbv_offset as u32,
+            is_wireframe: false,
         }
     }
 
@@ -344,21 +390,242 @@ impl ShapesSample {
             .pass_cb
             .copy_data(0, ConstantBufferData(pass_const));
     }
-}
 
-#[derive(Clone, Copy, Debug)]
-#[repr(C)]
-pub struct Vertex {
-    pub pos: Vec3,
-    pub color: Vec4,
-}
+    fn build_geometry(device: &Device, cmd_list: &GraphicsCommandList) -> MeshGeometry {
+        let r#box = GeometryGenerator::create_box(1.5, 0.5, 1.5, 3);
+        let grid = GeometryGenerator::create_grid(20.0, 30.0, 60, 40);
+        let sphere = GeometryGenerator::create_sphere(0.5, 20, 20);
+        let cylinder = GeometryGenerator::create_cylinder(0.5, 0.3, 3.0, 20, 20);
 
-impl VertexAttr<2> for Vertex {
-    fn get_input_layout() -> [InputElementDesc; 2] {
-        [
-            InputElementDesc::per_vertex(SemanticName::Position(0), Format::Rgb32Float, 0),
-            InputElementDesc::per_vertex(SemanticName::Color(0), Format::Rgba32Float, 0)
-                .with_offset(offset_of!(Vertex, color) as u32),
-        ]
+        let box_vert_offset = 0;
+        let grid_vert_offset = r#box.vertices.len() as u32;
+        let sphere_vert_offset = grid_vert_offset + grid.vertices.len() as u32;
+        let cylinder_vert_offset = sphere_vert_offset + sphere.vertices.len() as u32;
+
+        let box_idx_offset = 0;
+        let grid_idx_offset = r#box.indices32.len() as u32;
+        let sphere_idx_offset = grid_idx_offset + grid.indices32.len() as u32;
+        let cylinder_idx_offset = sphere_idx_offset + sphere.indices32.len() as u32;
+
+        let box_submesh = SubmeshGeometry {
+            index_count: r#box.indices32.len() as u32,
+            start_index_location: box_idx_offset,
+            base_vertex_location: box_vert_offset,
+            bounds: BoundingBox::default(),
+        };
+
+        let grid_submesh = SubmeshGeometry {
+            index_count: grid.indices32.len() as u32,
+            start_index_location: grid_idx_offset,
+            base_vertex_location: grid_vert_offset,
+            bounds: BoundingBox::default(),
+        };
+
+        let sphere_submesh = SubmeshGeometry {
+            index_count: sphere.indices32.len() as u32,
+            start_index_location: sphere_idx_offset,
+            base_vertex_location: sphere_vert_offset,
+            bounds: BoundingBox::default(),
+        };
+
+        let cylinder_submesh = SubmeshGeometry {
+            index_count: cylinder.indices32.len() as u32,
+            start_index_location: cylinder_idx_offset,
+            base_vertex_location: cylinder_vert_offset,
+            bounds: BoundingBox::default(),
+        };
+
+        let vertices = r#box
+            .vertices
+            .iter()
+            .map(|v| Vertex {
+                pos: v.pos,
+                color: vec4(1.0 / 255.0, 50.0 / 255.0, 32.0 / 255.0, 1.0),
+            })
+            .chain(grid.vertices.iter().map(|v| Vertex {
+                pos: v.pos,
+                color: vec4(34.0 / 255.0, 139.0 / 255.0, 34.0 / 255.0, 1.0),
+            }))
+            .chain(sphere.vertices.iter().map(|v| Vertex {
+                pos: v.pos,
+                color: vec4(220.0 / 255.0, 20.0 / 255.0, 60.0 / 255.0, 1.0),
+            }))
+            .chain(cylinder.vertices.iter().map(|v| Vertex {
+                pos: v.pos,
+                color: vec4(0.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0, 1.0),
+            }))
+            .collect::<Vec<_>>();
+
+        let indices = r#box
+            .indices32
+            .iter()
+            .chain(grid.indices32.iter())
+            .chain(sphere.indices32.iter())
+            .chain(cylinder.indices32.iter())
+            .map(|i| *i as u16)
+            .collect::<Vec<_>>();
+
+        let vertex_buffer = Blob::create_blob(size_of_val(&vertices)).unwrap();
+        let index_buffer = Blob::create_blob(size_of_val(&indices)).unwrap();
+
+        unsafe {
+            std::ptr::copy_nonoverlapping(
+                vertices.as_ptr(),
+                vertex_buffer.get_buffer_ptr::<Vertex>().as_mut(),
+                vertices.len(),
+            );
+            std::ptr::copy_nonoverlapping(
+                indices.as_ptr(),
+                index_buffer.get_buffer_ptr::<u16>().as_mut(),
+                indices.len(),
+            );
+        }
+
+        let (vertex_buffer_gpu, vertex_buffer_uploader) =
+            create_default_buffer(device, cmd_list, &vertices);
+        let (index_buffer_gpu, index_buffer_uploader) =
+            create_default_buffer(device, cmd_list, &indices);
+
+        MeshGeometry {
+            name: "shapeGeo".to_string(),
+            vertex_buffer_cpu: vertex_buffer,
+            index_buffer_cpu: index_buffer,
+            vertex_buffer_gpu,
+            index_buffer_gpu,
+            vertex_buffer_uploader: Some(vertex_buffer_uploader),
+            index_buffer_uploader: Some(index_buffer_uploader),
+            vertex_byte_stride: size_of::<Vertex>() as u32,
+            vertex_byte_size: size_of_val(&vertices) as u32,
+            index_format: Format::R16Uint,
+            index_buffer_byte_size: size_of_val(&indices) as u32,
+            draw_args: HashMap::from_iter([
+                ("box".to_string(), box_submesh),
+                ("grid".to_string(), grid_submesh),
+                ("cylinder".to_string(), cylinder_submesh),
+                ("sphere".to_string(), sphere_submesh),
+            ]),
+        }
     }
+
+    fn build_render_items(geometries: &HashMap<String, Rc<MeshGeometry>>) -> Vec<Rc<RenderItem>> {
+        let mut vec = vec![];
+        let geo = geometries.get("shapeGeo").unwrap();
+
+        vec.push(Rc::new(RenderItem {
+            world: Mat4::from_scale(vec3(2.0, 2.0, 2.0))
+                * Mat4::from_translation(vec3(0.0, 0.5, 0.0)),
+            num_frames_dirty: Cell::new(Self::FRAME_COUNT),
+            obj_cb_index: 0,
+            geo: Rc::clone(geo),
+            primitive_type: PrimitiveTopology::Triangle,
+            index_count: geo.draw_args.get("box").unwrap().index_count,
+            start_index_location: geo.draw_args.get("box").unwrap().start_index_location,
+            base_vertex_location: geo.draw_args.get("box").unwrap().base_vertex_location,
+        }));
+
+        vec.push(Rc::new(RenderItem {
+            world: Mat4::IDENTITY,
+            num_frames_dirty: Cell::new(Self::FRAME_COUNT),
+            obj_cb_index: 1,
+            geo: Rc::clone(geo),
+            primitive_type: PrimitiveTopology::Triangle,
+            index_count: geo.draw_args.get("grid").unwrap().index_count,
+            start_index_location: geo.draw_args.get("grid").unwrap().start_index_location,
+            base_vertex_location: geo.draw_args.get("grid").unwrap().base_vertex_location,
+        }));
+
+        let mut obj_index = 2;
+
+        for i in 0..5 {
+            vec.push(Rc::new(RenderItem {
+                world: Mat4::from_translation(vec3(-5.0, 1.5, -10.0 + i as f32 * 5.0)),
+                num_frames_dirty: Cell::new(Self::FRAME_COUNT),
+                obj_cb_index: obj_index,
+                geo: Rc::clone(geo),
+                primitive_type: PrimitiveTopology::Triangle,
+                index_count: geo.draw_args.get("cylinder").unwrap().index_count,
+                start_index_location: geo.draw_args.get("cylinder").unwrap().start_index_location,
+                base_vertex_location: geo.draw_args.get("cylinder").unwrap().base_vertex_location,
+            }));
+
+            obj_index += 1;
+
+            vec.push(Rc::new(RenderItem {
+                world: Mat4::from_translation(vec3(5.0, 1.5, -10.0 + i as f32 * 5.0)),
+                num_frames_dirty: Cell::new(Self::FRAME_COUNT),
+                obj_cb_index: obj_index,
+                geo: Rc::clone(geo),
+                primitive_type: PrimitiveTopology::Triangle,
+                index_count: geo.draw_args.get("cylinder").unwrap().index_count,
+                start_index_location: geo.draw_args.get("cylinder").unwrap().start_index_location,
+                base_vertex_location: geo.draw_args.get("cylinder").unwrap().base_vertex_location,
+            }));
+
+            obj_index += 1;
+
+            vec.push(Rc::new(RenderItem {
+                world: Mat4::from_translation(vec3(-5.0, 3.5, -10.0 + i as f32 * 5.0)),
+                num_frames_dirty: Cell::new(Self::FRAME_COUNT),
+                obj_cb_index: obj_index,
+                geo: Rc::clone(geo),
+                primitive_type: PrimitiveTopology::Triangle,
+                index_count: geo.draw_args.get("sphere").unwrap().index_count,
+                start_index_location: geo.draw_args.get("sphere").unwrap().start_index_location,
+                base_vertex_location: geo.draw_args.get("sphere").unwrap().base_vertex_location,
+            }));
+
+            obj_index += 1;
+
+            vec.push(Rc::new(RenderItem {
+                world: Mat4::from_translation(vec3(5.0, 3.5, -10.0 + i as f32 * 5.0)),
+                num_frames_dirty: Cell::new(Self::FRAME_COUNT),
+                obj_cb_index: obj_index,
+                geo: Rc::clone(geo),
+                primitive_type: PrimitiveTopology::Triangle,
+                index_count: geo.draw_args.get("sphere").unwrap().index_count,
+                start_index_location: geo.draw_args.get("sphere").unwrap().start_index_location,
+                base_vertex_location: geo.draw_args.get("sphere").unwrap().base_vertex_location,
+            }));
+
+            obj_index += 1;
+        }
+
+        vec
+    }
+
+    fn build_constant_buffer_view(
+        device: &Device,
+        cbv_heap: &DescriptorHeap,
+        obj_count: usize,
+        frame_resources: &[FrameResource; Self::FRAME_COUNT],
+        handle_size: usize,
+    ) {
+        let obj_size = size_of::<ConstantBufferData<ObjectConstants>>();
+
+        for (frame, resource) in frame_resources.iter().enumerate() {
+            let obj_cb = resource.object_cb.resource();
+
+            for i in 0..obj_count {
+                let mut addr = obj_cb.get_gpu_virtual_address();
+
+                addr += (i * obj_size) as u64;
+
+                let heap_idx = frame * obj_count + i;
+                let handle = cbv_heap.get_cpu_descriptor_handle_for_heap_start();
+                let handle = handle.advance(heap_idx, handle_size);
+
+                device.create_constant_buffer_view(
+                    Some(&ConstantBufferViewDesc::new(addr, obj_size as u32)),
+                    handle,
+                );
+            }
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+#[repr(C)]
+struct Vertex {
+    pos: Vec3,
+    color: Vec4,
 }

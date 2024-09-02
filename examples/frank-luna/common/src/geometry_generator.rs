@@ -44,7 +44,7 @@ impl Vertex {
 pub struct MeshData {
     pub vertices: Vec<Vertex>,
     pub indices32: Vec<u32>,
-    pub indices16: RefCell<Vec<u16>>,
+    indices16: RefCell<Vec<u16>>,
 }
 
 impl MeshData {

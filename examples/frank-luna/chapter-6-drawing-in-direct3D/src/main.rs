@@ -5,7 +5,7 @@ use common::{
     geometry_mesh::{BoundingBox, SubmeshGeometry},
     run_sample,
     upload_buffer::UploadBuffer,
-    utils::{create_default_buffer, ConstantBufferData, VertexAttr},
+    utils::{create_default_buffer, ConstantBufferData},
 };
 use glam::{vec3, vec4, Mat4, Vec3, Vec4};
 use oxidx::dx::*;
@@ -120,10 +120,9 @@ impl DxSample for BoxSample {
         let box_geo = Self::build_box_pyramid_geometry(&base.device, &base.cmd_list);
 
         let input_layout = [
-            VertexPos::get_input_layout(),
-            VertexColor::get_input_layout(),
-        ]
-        .concat();
+            InputElementDesc::per_vertex(SemanticName::Position(0), Format::Rgb32Float, 0),
+            InputElementDesc::per_vertex(SemanticName::Color(0), Format::Rgba32Float, 1),
+        ];
 
         let pso_desc = GraphicsPipelineDesc::new(&vs_byte_code)
             .with_ps(&ps_byte_code)
@@ -550,26 +549,6 @@ pub struct VertexPos {
 #[repr(C)]
 pub struct VertexColor {
     pub color: Vec4,
-}
-
-impl VertexAttr<1> for VertexPos {
-    fn get_input_layout() -> [InputElementDesc; 1] {
-        [InputElementDesc::per_vertex(
-            SemanticName::Position(0),
-            Format::Rgb32Float,
-            0,
-        )]
-    }
-}
-
-impl VertexAttr<1> for VertexColor {
-    fn get_input_layout() -> [InputElementDesc; 1] {
-        [InputElementDesc::per_vertex(
-            SemanticName::Color(0),
-            Format::Rgba32Float,
-            1,
-        )]
-    }
 }
 
 #[derive(Clone, Copy, Debug)]

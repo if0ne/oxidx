@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use oxidx::dx::*;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct BoundingBox {
     pub min: glam::Vec3,
     pub max: glam::Vec3,

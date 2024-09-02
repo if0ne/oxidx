@@ -1,6 +1,7 @@
 use std::{
     fs::File,
     io::{BufReader, Read, Seek},
+    ops::Deref,
     path::Path,
 };
 
@@ -9,6 +10,14 @@ use oxidx::dx::*;
 #[derive(Clone, Copy, Debug)]
 #[repr(align(256))]
 pub struct ConstantBufferData<T>(pub T);
+
+impl<T> Deref for ConstantBufferData<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 pub fn create_default_buffer<T: Copy>(
     device: &Device,
@@ -79,8 +88,4 @@ pub fn load_binary(filename: impl AsRef<Path>) -> Blob {
     let _ = reader.read(buffer);
 
     blob
-}
-
-pub trait VertexAttr<const N: usize> {
-    fn get_input_layout() -> [InputElementDesc; N];
 }

@@ -622,28 +622,28 @@ impl DescriptorHeapDesc {
     }
 
     #[inline]
-    pub fn dsv(num: u32) -> Self {
+    pub fn dsv(num: usize) -> Self {
         Self(D3D12_DESCRIPTOR_HEAP_DESC {
             Type: D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
-            NumDescriptors: num,
+            NumDescriptors: num as u32,
             ..Default::default()
         })
     }
 
     #[inline]
-    pub fn cbr_srv_uav(num: u32) -> Self {
+    pub fn cbr_srv_uav(num: usize) -> Self {
         Self(D3D12_DESCRIPTOR_HEAP_DESC {
             Type: D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-            NumDescriptors: num,
+            NumDescriptors: num as u32,
             ..Default::default()
         })
     }
 
     #[inline]
-    pub fn sampler(num: u32) -> Self {
+    pub fn sampler(num: usize) -> Self {
         Self(D3D12_DESCRIPTOR_HEAP_DESC {
             Type: D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER,
-            NumDescriptors: num,
+            NumDescriptors: num as u32,
             ..Default::default()
         })
     }
