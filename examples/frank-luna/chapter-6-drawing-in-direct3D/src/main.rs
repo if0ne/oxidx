@@ -270,7 +270,7 @@ impl DxSample for BoxSample {
             0,
             self.cbv_heap
                 .get_gpu_descriptor_handle_for_heap_start()
-                .forward(1, base.cbv_srv_uav_descriptor_size as u64),
+                .advance(1, base.cbv_srv_uav_descriptor_size as usize),
         );
 
         base.cmd_list.draw_indexed_instanced(

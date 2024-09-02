@@ -15,6 +15,7 @@ use glam::{vec2, vec3, vec4, Mat4, Vec3, Vec4};
 use oxidx::dx::*;
 use render_item::RenderItem;
 use tracing_subscriber::layer::SubscriberExt;
+use winit::keyboard::KeyCode;
 
 fn main() {
     let console_log = tracing_subscriber::fmt::Layer::new()
@@ -123,7 +124,7 @@ impl DxSample for ShapesSample {
         let all_ritems = Self::build_render_items(&geometries);
         let opaque_ritems = all_ritems.clone();
 
-        let frame_resources = std::array::from_fn(|_| FrameResource::new(&base.device, 1, 1));
+        let frame_resources = std::array::from_fn(|_| FrameResource::new(&base.device, 1, opaque_ritems.len()));
 
         let pass_cbv_offset = opaque_ritems.len() * Self::FRAME_COUNT;
         let cbv_heap: DescriptorHeap = base
@@ -137,6 +138,7 @@ impl DxSample for ShapesSample {
         Self::build_constant_buffer_view(
             &base.device,
             &cbv_heap,
+            pass_cbv_offset,
             opaque_ritems.len(),
             &frame_resources,
             base.cbv_srv_uav_descriptor_size as usize,
@@ -203,6 +205,13 @@ impl DxSample for ShapesSample {
     fn init_resources(&mut self, _: &common::app::Base) {}
 
     fn update(&mut self, base: &common::app::Base) {
+        self.eye_pos = vec3(
+            self.radius * self.phi.sin() * self.theta.cos(),
+            self.radius * self.phi.cos(),
+            self.radius * self.phi.sin() * self.theta.sin(),
+        );
+        self.view = Mat4::look_at_lh(self.eye_pos, Vec3::ZERO, Vec3::Y);
+
         self.curr_frame_resource = (self.curr_frame_resource + 1) % Self::FRAME_COUNT;
         let curr_frame_resource = &self.frame_resources[self.curr_frame_resource];
 
@@ -226,12 +235,25 @@ impl DxSample for ShapesSample {
             return;
         };
 
-        base.cmd_list_alloc.reset().unwrap();
+        let cmd_list_alloc = &self.frame_resources[self.curr_frame_resource].cmd_list_alloc;
+        cmd_list_alloc.reset().unwrap();
 
-        base.cmd_list
-            .reset(&base.cmd_list_alloc, Some(&self.pso))
-            .unwrap();
-
+        if self.is_wireframe {
+            base.cmd_list
+                .reset(
+                    cmd_list_alloc,
+                    Some(self.pso.get("opaque_wireframe").unwrap()),
+                )
+                .unwrap();
+        } else {
+            base.cmd_list
+                .reset(
+                    cmd_list_alloc, 
+                    Some(self.pso.get("opaque").unwrap())
+                )
+                .unwrap();
+        }
+        
         base.cmd_list
             .resource_barrier(&[ResourceBarrier::transition(
                 context.current_back_buffer(),
@@ -241,7 +263,6 @@ impl DxSample for ShapesSample {
 
         base.cmd_list.rs_set_viewports(&[context.viewport]);
         base.cmd_list.rs_set_scissor_rects(&[context.rect]);
-
         base.cmd_list.clear_render_target_view(
             context.current_back_buffer_view(base.rtv_descriptor_size),
             [204.0 / 255.0, 102.0 / 255.0, 102.0 / 255.0, 1.0],
@@ -261,14 +282,26 @@ impl DxSample for ShapesSample {
             Some(context.depth_stencil_view()),
         );
 
+
         base.cmd_list
             .set_descriptor_heaps(&[Some(self.cbv_heap.clone())]);
 
         base.cmd_list
             .set_graphics_root_signature(Some(&self.root_signature));
 
+        let pass_cbv_index = self.pass_cbv_offset as usize + self.curr_frame_resource;
+        let pass_cbv_handle = self
+            .cbv_heap
+            .get_gpu_descriptor_handle_for_heap_start()
+            .advance(pass_cbv_index, base.cbv_srv_uav_descriptor_size as usize);
         base.cmd_list
-            .ia_set_primitive_topology(PrimitiveTopology::Triangle);
+            .set_graphics_root_descriptor_table(1, pass_cbv_handle);
+
+        self.draw_render_items(
+            &base.cmd_list,
+            &self.opaque_ritems,
+            base.cbv_srv_uav_descriptor_size as usize,
+        );
 
         base.cmd_list
             .resource_barrier(&[ResourceBarrier::transition(
@@ -303,7 +336,13 @@ impl DxSample for ShapesSample {
 
     fn on_key_down(&mut self, _: winit::keyboard::KeyCode, _: bool) {}
 
-    fn on_key_up(&mut self, _: winit::keyboard::KeyCode) {}
+    fn on_key_up(&mut self, key: winit::keyboard::KeyCode) {
+        match key {
+            KeyCode::Digit1 => self.is_wireframe = false,
+            KeyCode::Digit2 => self.is_wireframe = true,
+            _ => {}
+        }
+    }
 
     fn on_mouse_down(&mut self, mouse: winit::event::MouseButton) {
         match mouse {
@@ -465,8 +504,8 @@ impl ShapesSample {
             .map(|i| *i as u16)
             .collect::<Vec<_>>();
 
-        let vertex_buffer = Blob::create_blob(size_of_val(&vertices)).unwrap();
-        let index_buffer = Blob::create_blob(size_of_val(&indices)).unwrap();
+        let vertex_buffer = Blob::create_blob(size_of_val(vertices.as_slice())).unwrap();
+        let index_buffer = Blob::create_blob(size_of_val(indices.as_slice())).unwrap();
 
         unsafe {
             std::ptr::copy_nonoverlapping(
@@ -480,11 +519,11 @@ impl ShapesSample {
                 indices.len(),
             );
         }
-
+        
         let (vertex_buffer_gpu, vertex_buffer_uploader) =
             create_default_buffer(device, cmd_list, &vertices);
         let (index_buffer_gpu, index_buffer_uploader) =
-            create_default_buffer(device, cmd_list, &indices);
+            create_default_buffer(device, cmd_list, &indices); 
 
         MeshGeometry {
             name: "shapeGeo".to_string(),
@@ -495,9 +534,9 @@ impl ShapesSample {
             vertex_buffer_uploader: Some(vertex_buffer_uploader),
             index_buffer_uploader: Some(index_buffer_uploader),
             vertex_byte_stride: size_of::<Vertex>() as u32,
-            vertex_byte_size: size_of_val(&vertices) as u32,
+            vertex_byte_size: size_of_val(vertices.as_slice()) as u32,
             index_format: Format::R16Uint,
-            index_buffer_byte_size: size_of_val(&indices) as u32,
+            index_buffer_byte_size: size_of_val(indices.as_slice()) as u32,
             draw_args: HashMap::from_iter([
                 ("box".to_string(), box_submesh),
                 ("grid".to_string(), grid_submesh),
@@ -596,6 +635,7 @@ impl ShapesSample {
     fn build_constant_buffer_view(
         device: &Device,
         cbv_heap: &DescriptorHeap,
+        pass_offset: usize,
         obj_count: usize,
         frame_resources: &[FrameResource; Self::FRAME_COUNT],
         handle_size: usize,
@@ -619,6 +659,49 @@ impl ShapesSample {
                     handle,
                 );
             }
+        }
+
+        let pass_size = size_of::<ConstantBufferData<PassConstants>>();
+
+        for (frame, resource) in frame_resources.iter().enumerate() {
+            let pass_cb = resource.pass_cb.resource();
+
+            let addr = pass_cb.get_gpu_virtual_address();
+
+            let heap_idx = frame + pass_offset;
+            let handle = cbv_heap.get_cpu_descriptor_handle_for_heap_start();
+            let handle = handle.advance(heap_idx, handle_size);
+
+            device.create_constant_buffer_view(
+                Some(&ConstantBufferViewDesc::new(addr, pass_size as u32)),
+                handle,
+            );
+        }
+    }
+
+    fn draw_render_items(
+        &self,
+        cmd_list: &GraphicsCommandList,
+        ritems: &[Rc<RenderItem>],
+        cbv_descriptor_size: usize,
+    ) {
+        for item in ritems {
+            cmd_list.ia_set_vertex_buffers(0, &[item.geo.vertex_buffer_view()]);
+            cmd_list.ia_set_index_buffer(Some(&item.geo.index_buffer_view()));
+            cmd_list.ia_set_primitive_topology(item.primitive_type);
+
+            let cbv_index = self.curr_frame_resource * self.opaque_ritems.len() + item.obj_cb_index;
+            let cbv_handle = self.cbv_heap.get_gpu_descriptor_handle_for_heap_start();
+            let cbv_handle = cbv_handle.advance(cbv_index, cbv_descriptor_size);
+
+            cmd_list.set_graphics_root_descriptor_table(0, cbv_handle);
+            cmd_list.draw_indexed_instanced(
+                item.index_count,
+                1,
+                item.start_index_location,
+                item.base_vertex_location as i32,
+                0,
+            );
         }
     }
 }

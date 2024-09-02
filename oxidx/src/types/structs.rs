@@ -772,14 +772,14 @@ pub struct GpuDescriptorHandle(pub(crate) D3D12_GPU_DESCRIPTOR_HANDLE);
 impl GpuDescriptorHandle {
     /// Returns a new handle with offset relative to the current handle.
     #[inline]
-    pub fn offset(&self, offset: u64) -> Self {
+    pub fn offset(&self, offset: usize) -> Self {
         Self(D3D12_GPU_DESCRIPTOR_HANDLE {
-            ptr: self.0.ptr + offset,
+            ptr: self.0.ptr + offset as u64,
         })
     }
 
     #[inline]
-    pub fn forward(&self, distance: u64, handle_size: u64) -> Self {
+    pub fn advance(&self, distance: usize, handle_size: usize) -> Self {
         self.offset(distance * handle_size)
     }
 }
