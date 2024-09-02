@@ -124,7 +124,8 @@ impl DxSample for ShapesSample {
         let all_ritems = Self::build_render_items(&geometries);
         let opaque_ritems = all_ritems.clone();
 
-        let frame_resources = std::array::from_fn(|_| FrameResource::new(&base.device, 1, opaque_ritems.len()));
+        let frame_resources =
+            std::array::from_fn(|_| FrameResource::new(&base.device, 1, opaque_ritems.len()));
 
         let pass_cbv_offset = opaque_ritems.len() * Self::FRAME_COUNT;
         let cbv_heap: DescriptorHeap = base
@@ -247,13 +248,10 @@ impl DxSample for ShapesSample {
                 .unwrap();
         } else {
             base.cmd_list
-                .reset(
-                    cmd_list_alloc, 
-                    Some(self.pso.get("opaque").unwrap())
-                )
+                .reset(cmd_list_alloc, Some(self.pso.get("opaque").unwrap()))
                 .unwrap();
         }
-        
+
         base.cmd_list
             .resource_barrier(&[ResourceBarrier::transition(
                 context.current_back_buffer(),
@@ -281,7 +279,6 @@ impl DxSample for ShapesSample {
             true,
             Some(context.depth_stencil_view()),
         );
-
 
         base.cmd_list
             .set_descriptor_heaps(&[Some(self.cbv_heap.clone())]);
@@ -491,7 +488,7 @@ impl ShapesSample {
             }))
             .chain(cylinder.vertices.iter().map(|v| Vertex {
                 pos: v.pos,
-                color: vec4(0.0 / 255.0, 0.0 / 255.0, 255.0 / 255.0, 1.0),
+                color: vec4(0.0 / 255.0, 0.0 / 255.0, 255.0, 1.0),
             }))
             .collect::<Vec<_>>();
 
@@ -519,11 +516,11 @@ impl ShapesSample {
                 indices.len(),
             );
         }
-        
+
         let (vertex_buffer_gpu, vertex_buffer_uploader) =
             create_default_buffer(device, cmd_list, &vertices);
         let (index_buffer_gpu, index_buffer_uploader) =
-            create_default_buffer(device, cmd_list, &indices); 
+            create_default_buffer(device, cmd_list, &indices);
 
         MeshGeometry {
             name: "shapeGeo".to_string(),

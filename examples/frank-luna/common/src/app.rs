@@ -594,6 +594,7 @@ impl<S: DxSample> ApplicationHandler for SampleRunner<S> {
         }
     }
 
+    #[allow(clippy::single_match)]
     fn device_event(&mut self, _: &ActiveEventLoop, _: DeviceId, event: DeviceEvent) {
         match event {
             DeviceEvent::MouseMotion { delta } => self.sample.on_mouse_move(delta.0, delta.0),

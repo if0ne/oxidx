@@ -1304,7 +1304,7 @@ impl_trait! {
                 0,
                 intermediate,
                 layouts[0].offset(),
-                layouts[0].footprint().width() as usize
+                layouts[0].footprint().width()
             );
         } else {
             for (i, layout) in layouts.iter().enumerate().take(num).skip(start) {

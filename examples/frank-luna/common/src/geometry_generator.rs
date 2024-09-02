@@ -18,6 +18,7 @@ pub struct Vertex {
 }
 
 impl Vertex {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         x: f32,
         y: f32,
@@ -48,7 +49,7 @@ pub struct MeshData {
 }
 
 impl MeshData {
-    pub fn indices16<'a>(&self) -> Ref<'_, Vec<u16>> {
+    pub fn indices16(&self) -> Ref<'_, Vec<u16>> {
         {
             let idx = &mut *self.indices16.borrow_mut();
 
@@ -231,7 +232,7 @@ impl GeometryGenerator {
         }
 
         MeshData {
-            vertices: vertices,
+            vertices,
             indices32: indices,
             indices16: Default::default(),
         }
@@ -485,7 +486,7 @@ impl GeometryGenerator {
             mesh_data.vertices.push(m1);
             mesh_data.vertices.push(m2);
 
-            mesh_data.indices32.push(idx * 6 + 0);
+            mesh_data.indices32.push(idx * 6);
             mesh_data.indices32.push(idx * 6 + 3);
             mesh_data.indices32.push(idx * 6 + 5);
 
