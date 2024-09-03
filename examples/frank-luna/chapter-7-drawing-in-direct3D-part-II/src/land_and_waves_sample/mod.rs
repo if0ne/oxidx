@@ -1,5 +1,6 @@
 mod frame_resources;
 mod render_item;
+mod waves;
 
 use std::{collections::HashMap, rc::Rc};
 
