@@ -12,7 +12,12 @@ pub struct FrameResource {
 }
 
 impl FrameResource {
-    pub fn new(device: &Device, pass_count: usize, object_count: usize, wave_vert_count: usize) -> Self {
+    pub fn new(
+        device: &Device,
+        pass_count: usize,
+        object_count: usize,
+        wave_vert_count: usize,
+    ) -> Self {
         let cmd_list_alloc = device
             .create_command_allocator::<CommandAllocator>(CommandListType::Direct)
             .unwrap();
