@@ -2,6 +2,7 @@ mod land_and_waves_sample;
 mod shape_sample;
 
 use common::run_sample;
+use land_and_waves_sample::LandAndWavesSample;
 use shape_sample::ShapesSample;
 use tracing_subscriber::layer::SubscriberExt;
 
@@ -13,5 +14,5 @@ fn main() {
     let subscriber = tracing_subscriber::registry().with(console_log);
 
     let _ = tracing::subscriber::set_global_default(subscriber);
-    run_sample::<ShapesSample>();
+    run_sample::<LandAndWavesSample>();
 }

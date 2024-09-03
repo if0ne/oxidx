@@ -2,7 +2,11 @@ mod frame_resources;
 mod render_item;
 mod waves;
 
-use std::{collections::HashMap, rc::Rc};
+use std::{
+    cell::{Cell, RefCell},
+    collections::HashMap,
+    rc::Rc,
+};
 
 use common::{
     app::{DxSample, SwapchainContext},
@@ -13,6 +17,8 @@ use common::{
 use glam::{vec2, vec3, vec4, Mat4, Vec3};
 use oxidx::dx::*;
 
+use rand::Rng;
+use waves::Waves;
 use winit::keyboard::KeyCode;
 
 use frame_resources::{FrameResource, ObjectConstants, PassConstants, Vertex};
@@ -22,15 +28,15 @@ use render_item::RenderItem;
 #[derive(Debug)]
 pub struct LandAndWavesSample {
     root_signature: RootSignature,
-    cbv_heap: DescriptorHeap,
     frame_resources: [FrameResource; Self::FRAME_COUNT],
     curr_frame_resource: usize,
 
     all_ritems: Vec<Rc<RenderItem>>,
     opaque_ritems: Vec<Rc<RenderItem>>,
-    transparent_ritems: Vec<Rc<RenderItem>>,
+    waves_ritem: Rc<RenderItem>,
+    waves: Box<Waves>,
 
-    geometries: HashMap<String, Rc<MeshGeometry>>,
+    geometries: HashMap<String, Rc<RefCell<MeshGeometry>>>,
     shaders: HashMap<String, Blob>,
     pso: HashMap<String, PipelineState>,
 
@@ -39,7 +45,6 @@ pub struct LandAndWavesSample {
     proj: Mat4,
 
     main_pass_cb: ConstantBufferData<PassConstants>,
-    pass_cbv_offset: u32,
 
     is_wireframe: bool,
 
@@ -55,13 +60,9 @@ impl DxSample for LandAndWavesSample {
     fn new(base: &mut common::app::Base) -> Self {
         base.cmd_list.reset(&base.cmd_list_alloc, PSO_NONE).unwrap();
 
-        let cbv_table1 = [DescriptorRange::cbv(1, 0)];
-        let cbv_table2 = [DescriptorRange::cbv(1, 1)];
+        let waves = Box::new(Waves::new(128, 128, 1.0, 0.03, 4.0, 0.2));
 
-        let root_parameter = [
-            RootParameter::descriptor_table(&cbv_table1),
-            RootParameter::descriptor_table(&cbv_table2),
-        ];
+        let root_parameter = [RootParameter::cbv(0, 0), RootParameter::cbv(1, 0)];
 
         let root_signature_desc = RootSignatureDesc::default()
             .with_parameters(&root_parameter)
@@ -106,34 +107,98 @@ impl DxSample for LandAndWavesSample {
                 .with_offset(12),
         ];
 
-        let geometries = HashMap::from_iter([(
-            "landGeo".to_string(),
-            Rc::new(Self::build_land_geometry(&base.device, &base.cmd_list)),
-        )]);
+        let geometries = HashMap::from_iter([
+            (
+                "landGeo".to_string(),
+                Rc::new(RefCell::new(Self::build_land_geometry(
+                    &base.device,
+                    &base.cmd_list,
+                ))),
+            ),
+            (
+                "waterGeo".to_string(),
+                Rc::new(RefCell::new(Self::build_waves_geometry(
+                    &base.device,
+                    &base.cmd_list,
+                    &waves,
+                ))),
+            ),
+        ]);
 
-        let all_ritems = vec![];
+        let all_ritems = vec![
+            Rc::new(RenderItem {
+                world: Mat4::IDENTITY,
+                num_frames_dirty: Cell::new(Self::FRAME_COUNT),
+                obj_cb_index: 0,
+                geo: Rc::clone(geometries.get("waterGeo").unwrap()),
+                primitive_type: PrimitiveTopology::Triangle,
+                index_count: geometries
+                    .get("waterGeo")
+                    .unwrap()
+                    .borrow()
+                    .draw_args
+                    .get("grid")
+                    .unwrap()
+                    .index_count,
+                start_index_location: geometries
+                    .get("waterGeo")
+                    .unwrap()
+                    .borrow()
+                    .draw_args
+                    .get("grid")
+                    .unwrap()
+                    .start_index_location,
+                base_vertex_location: geometries
+                    .get("waterGeo")
+                    .unwrap()
+                    .borrow()
+                    .draw_args
+                    .get("grid")
+                    .unwrap()
+                    .base_vertex_location,
+            }),
+            Rc::new(RenderItem {
+                world: Mat4::IDENTITY,
+                num_frames_dirty: Cell::new(Self::FRAME_COUNT),
+                obj_cb_index: 1,
+                geo: Rc::clone(geometries.get("landGeo").unwrap()),
+                primitive_type: PrimitiveTopology::Triangle,
+                index_count: geometries
+                    .get("landGeo")
+                    .unwrap()
+                    .borrow()
+                    .draw_args
+                    .get("grid")
+                    .unwrap()
+                    .index_count,
+                start_index_location: geometries
+                    .get("landGeo")
+                    .unwrap()
+                    .borrow()
+                    .draw_args
+                    .get("grid")
+                    .unwrap()
+                    .start_index_location,
+                base_vertex_location: geometries
+                    .get("landGeo")
+                    .unwrap()
+                    .borrow()
+                    .draw_args
+                    .get("grid")
+                    .unwrap()
+                    .base_vertex_location,
+            }),
+        ];
         let opaque_ritems = all_ritems.clone();
 
-        let frame_resources =
-            std::array::from_fn(|_| FrameResource::new(&base.device, 1, opaque_ritems.len(), 1));
-
-        let pass_cbv_offset = opaque_ritems.len() * Self::FRAME_COUNT;
-        let cbv_heap: DescriptorHeap = base
-            .device
-            .create_descriptor_heap(
-                &DescriptorHeapDesc::cbr_srv_uav((opaque_ritems.len() + 1) * Self::FRAME_COUNT)
-                    .with_flags(DescriptorHeapFlags::ShaderVisible),
+        let frame_resources = std::array::from_fn(|_| {
+            FrameResource::new(
+                &base.device,
+                1,
+                opaque_ritems.len(),
+                waves.vertex_count as usize,
             )
-            .unwrap();
-
-        Self::build_constant_buffer_view(
-            &base.device,
-            &cbv_heap,
-            pass_cbv_offset,
-            opaque_ritems.len(),
-            &frame_resources,
-            base.cbv_srv_uav_descriptor_size as usize,
-        );
+        });
 
         let pso_desc = GraphicsPipelineDesc::new(shaders.get("standardVS").unwrap())
             .with_ps(shaders.get("opaquePS").unwrap())
@@ -149,7 +214,11 @@ impl DxSample for LandAndWavesSample {
                 SampleDesc::new(4, base.msaa_4x_quality)
             } else {
                 SampleDesc::new(1, 0)
-            });
+            })
+            .with_depth_stencil(
+                DepthStencilDesc::default().enable_depth(ComparisonFunc::Less),
+                base.depth_stencil_format,
+            );
 
         let pso_opaque = base.device.create_graphics_pipeline(&pso_desc).unwrap();
 
@@ -170,7 +239,6 @@ impl DxSample for LandAndWavesSample {
 
         Self {
             root_signature,
-            cbv_heap,
             frame_resources,
             curr_frame_resource: 0,
             pso,
@@ -179,16 +247,16 @@ impl DxSample for LandAndWavesSample {
             proj: Mat4::IDENTITY,
             theta: 0.0,
             phi: 0.0,
-            radius: 5.0,
+            radius: 200.0,
             is_lmb_pressed: false,
             is_rmb_pressed: false,
+            waves_ritem: Rc::clone(&all_ritems[0]),
+            waves,
             all_ritems,
             opaque_ritems,
-            transparent_ritems: vec![],
             geometries,
             shaders,
             main_pass_cb: ConstantBufferData(PassConstants::default()),
-            pass_cbv_offset: pass_cbv_offset as u32,
             is_wireframe: false,
         }
     }
@@ -219,6 +287,7 @@ impl DxSample for LandAndWavesSample {
 
         self.update_object_cb(base);
         self.update_pass_cb(base);
+        self.update_waves(base);
     }
 
     fn render(&mut self, base: &mut common::app::Base) {
@@ -271,24 +340,15 @@ impl DxSample for LandAndWavesSample {
         );
 
         base.cmd_list
-            .set_descriptor_heaps(&[Some(self.cbv_heap.clone())]);
-
-        base.cmd_list
             .set_graphics_root_signature(Some(&self.root_signature));
 
-        let pass_cbv_index = self.pass_cbv_offset as usize + self.curr_frame_resource;
-        let pass_cbv_handle = self
-            .cbv_heap
-            .get_gpu_descriptor_handle_for_heap_start()
-            .advance(pass_cbv_index, base.cbv_srv_uav_descriptor_size as usize);
+        let pass_cb = self.frame_resources[self.curr_frame_resource]
+            .pass_cb
+            .resource();
         base.cmd_list
-            .set_graphics_root_descriptor_table(1, pass_cbv_handle);
+            .set_graphics_root_constant_buffer_view(1, pass_cb.get_gpu_virtual_address());
 
-        self.draw_render_items(
-            &base.cmd_list,
-            &self.opaque_ritems,
-            base.cbv_srv_uav_descriptor_size as usize,
-        );
+        self.draw_render_items(&base.cmd_list, &self.opaque_ritems);
 
         base.cmd_list
             .resource_barrier(&[ResourceBarrier::transition(
@@ -360,7 +420,7 @@ impl DxSample for LandAndWavesSample {
         } else if self.is_rmb_pressed {
             let dx = 0.005 * x;
             let dy = -0.005 * y;
-            self.radius = (self.radius + dx - dy).clamp(3.0, 15.0);
+            self.radius = (self.radius + dx - dy).clamp(3.0, 400.0);
         }
     }
 }
@@ -417,51 +477,37 @@ impl LandAndWavesSample {
             .copy_data(0, ConstantBufferData(pass_const));
     }
 
-    fn build_constant_buffer_view(
-        device: &Device,
-        cbv_heap: &DescriptorHeap,
-        pass_offset: usize,
-        obj_count: usize,
-        frame_resources: &[FrameResource; Self::FRAME_COUNT],
-        handle_size: usize,
-    ) {
-        let obj_size = size_of::<ConstantBufferData<ObjectConstants>>();
+    fn update_waves(&mut self, base: &common::app::Base) {
+        thread_local! {
+            static T: RefCell<f32> = Default::default();
+        }
 
-        for (frame, resource) in frame_resources.iter().enumerate() {
-            let obj_cb = resource.object_cb.resource();
+        T.with_borrow_mut(|t_base| {
+            if base.timer.total_time() - *t_base >= 0.25 {
+                *t_base += 0.25;
 
-            for i in 0..obj_count {
-                let mut addr = obj_cb.get_gpu_virtual_address();
+                let i = rand::thread_rng().gen_range(4..(self.waves.rows - 5));
+                let j = rand::thread_rng().gen_range(4..(self.waves.cols - 5));
 
-                addr += (i * obj_size) as u64;
+                let r = rand::thread_rng().gen_range(0.2..0.5) as f32;
 
-                let heap_idx = frame * obj_count + i;
-                let handle = cbv_heap.get_cpu_descriptor_handle_for_heap_start();
-                let handle = handle.advance(heap_idx, handle_size);
-
-                device.create_constant_buffer_view(
-                    Some(&ConstantBufferViewDesc::new(addr, obj_size as u32)),
-                    handle,
-                );
+                self.waves.disturb(i, j, r);
             }
-        }
 
-        let pass_size = size_of::<ConstantBufferData<PassConstants>>();
+            self.waves.update(base.timer.delta_time());
 
-        for (frame, resource) in frame_resources.iter().enumerate() {
-            let pass_cb = resource.pass_cb.resource();
+            let curr_waves_vb = &self.frame_resources[self.curr_frame_resource].wave_cb;
+            for i in 0..self.waves.vertex_count {
+                let v = Vertex {
+                    pos: self.waves.curr_solution[i as usize],
+                    color: vec4(0.0, 0.0, 0.67, 1.0),
+                };
 
-            let addr = pass_cb.get_gpu_virtual_address();
+                curr_waves_vb.copy_data(i as usize, v);
+            }
 
-            let heap_idx = frame + pass_offset;
-            let handle = cbv_heap.get_cpu_descriptor_handle_for_heap_start();
-            let handle = handle.advance(heap_idx, handle_size);
-
-            device.create_constant_buffer_view(
-                Some(&ConstantBufferViewDesc::new(addr, pass_size as u32)),
-                handle,
-            );
-        }
+            self.waves_ritem.geo.borrow_mut().vertex_buffer_gpu = curr_waves_vb.resource().clone();
+        });
     }
 
     fn build_land_geometry(device: &Device, cmd_list: &GraphicsCommandList) -> MeshGeometry {
@@ -518,7 +564,7 @@ impl LandAndWavesSample {
             std::ptr::copy_nonoverlapping(
                 grid.indices16().as_ptr(),
                 index_buffer_cpu.get_buffer_ptr::<u16>().as_mut(),
-                grid.indices16().len(),
+                grid.indices32.len(),
             );
         }
 
@@ -553,26 +599,90 @@ impl LandAndWavesSample {
         }
     }
 
+    fn build_waves_geometry(
+        device: &Device,
+        cmd_list: &GraphicsCommandList,
+        waves: &Waves,
+    ) -> MeshGeometry {
+        let mut indices = Vec::with_capacity(3 * waves.triangle_count as usize);
+
+        let m = waves.rows;
+        let n = waves.cols;
+
+        for i in 0..(m - 1) {
+            for j in 0..(n - 1) {
+                indices.push((i * n + j) as u16);
+                indices.push((i * n + j + 1) as u16);
+                indices.push(((i + 1) * n + j) as u16);
+
+                indices.push(((i + 1) * n + j) as u16);
+                indices.push((i * n + j + 1) as u16);
+                indices.push(((i + 1) * n + j + 1) as u16);
+            }
+        }
+
+        let vertex_buffer_cpu =
+            Blob::create_blob(waves.vertex_count as usize * size_of::<Vertex>()).unwrap();
+        let index_buffer_cpu = Blob::create_blob(size_of_val(indices.as_slice())).unwrap();
+
+        unsafe {
+            std::ptr::copy_nonoverlapping(
+                indices.as_ptr(),
+                index_buffer_cpu.get_buffer_ptr::<u16>().as_mut(),
+                indices.len(),
+            );
+        }
+
+        let (index_buffer_gpu, index_buffer_uploader) =
+            create_default_buffer(device, cmd_list, indices.as_slice());
+
+        let (vertex_buffer_gpu, _) =
+            create_default_buffer::<Vertex>(device, cmd_list, &[Vertex::default()]);
+
+        let index_buffer_byte_size = size_of_val(indices.as_slice()) as u32;
+
+        MeshGeometry {
+            name: "waterGeo".to_string(),
+            vertex_buffer_cpu,
+            index_buffer_cpu,
+            vertex_buffer_gpu,
+            index_buffer_gpu,
+            vertex_buffer_uploader: None,
+            index_buffer_uploader: Some(index_buffer_uploader),
+            vertex_byte_stride: size_of::<Vertex>() as u32,
+            vertex_byte_size: waves.vertex_count * size_of::<Vertex>() as u32,
+            index_format: Format::R16Uint,
+            index_buffer_byte_size,
+            draw_args: HashMap::from_iter([(
+                "grid".to_string(),
+                SubmeshGeometry {
+                    index_count: indices.len() as u32,
+                    start_index_location: 0,
+                    base_vertex_location: 0,
+                    bounds: BoundingBox::default(),
+                },
+            )]),
+        }
+    }
+
     fn get_hills_height(x: f32, z: f32) -> f32 {
         0.3 * (z * (0.1 * x).sin()) + x * (0.1 * z).cos()
     }
 
-    fn draw_render_items(
-        &self,
-        cmd_list: &GraphicsCommandList,
-        ritems: &[Rc<RenderItem>],
-        cbv_descriptor_size: usize,
-    ) {
+    fn draw_render_items(&self, cmd_list: &GraphicsCommandList, ritems: &[Rc<RenderItem>]) {
+        let obj_size = size_of::<ConstantBufferData<ObjectConstants>>();
+        let obj_cb = self.frame_resources[self.curr_frame_resource]
+            .object_cb
+            .resource();
+
         for item in ritems {
-            cmd_list.ia_set_vertex_buffers(0, &[item.geo.vertex_buffer_view()]);
-            cmd_list.ia_set_index_buffer(Some(&item.geo.index_buffer_view()));
+            cmd_list.ia_set_vertex_buffers(0, &[item.geo.borrow().vertex_buffer_view()]);
+            cmd_list.ia_set_index_buffer(Some(&item.geo.borrow().index_buffer_view()));
             cmd_list.ia_set_primitive_topology(item.primitive_type);
 
-            let cbv_index = self.curr_frame_resource * self.opaque_ritems.len() + item.obj_cb_index;
-            let cbv_handle = self.cbv_heap.get_gpu_descriptor_handle_for_heap_start();
-            let cbv_handle = cbv_handle.advance(cbv_index, cbv_descriptor_size);
+            let obj_addr = obj_cb.get_gpu_virtual_address() + (item.obj_cb_index * obj_size) as u64;
 
-            cmd_list.set_graphics_root_descriptor_table(0, cbv_handle);
+            cmd_list.set_graphics_root_constant_buffer_view(0, obj_addr);
             cmd_list.draw_indexed_instanced(
                 item.index_count,
                 1,

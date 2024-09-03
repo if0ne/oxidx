@@ -148,7 +148,11 @@ impl DxSample for ShapesSample {
                 SampleDesc::new(4, base.msaa_4x_quality)
             } else {
                 SampleDesc::new(1, 0)
-            });
+            })
+            .with_depth_stencil(
+                DepthStencilDesc::default().enable_depth(ComparisonFunc::Less),
+                base.depth_stencil_format,
+            );
 
         let pso_opaque = base.device.create_graphics_pipeline(&pso_desc).unwrap();
 

@@ -133,7 +133,7 @@ pub trait IGraphicsCommandList:
         dst_y: u32,
         dst_z: u32,
         src: &TextureCopyLocation<'_>,
-        src_box: Option<&Box>,
+        src_box: Option<&DxBox>,
     );
 
     /// Copies tiles from buffer to tiled resource or vice versa.
@@ -655,7 +655,7 @@ impl_trait! {
         dst_y: u32,
         dst_z: u32,
         src: &TextureCopyLocation<'_>,
-        src_box: Option<&Box>,
+        src_box: Option<&DxBox>,
     ) {
         unsafe {
             let src_box = src_box.map(|s| &s.0 as *const _);

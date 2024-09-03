@@ -120,9 +120,9 @@ impl Default for BlendDesc {
 /// For more information: [`D3D12_BOX structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_box)
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 #[repr(transparent)]
-pub struct Box(pub(crate) D3D12_BOX);
+pub struct DxBox(pub(crate) D3D12_BOX);
 
-impl Box {
+impl DxBox {
     #[inline]
     pub fn with_left(mut self, val: u32) -> Self {
         self.0.left = val;
@@ -436,7 +436,7 @@ impl DeclarationEntry {
 /// Describes depth-stencil state.
 ///
 /// For more information: [`D3D12_DEPTH_STENCIL_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_depth_stencil_desc)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(transparent)]
 pub struct DepthStencilDesc(pub(crate) D3D12_DEPTH_STENCIL_DESC);
 
@@ -472,6 +472,15 @@ impl DepthStencilDesc {
     pub fn with_back_face(mut self, back_face: DepthStencilOpDesc) -> Self {
         self.0.BackFace = back_face.0;
         self
+    }
+}
+
+impl Default for DepthStencilDesc {
+    fn default() -> Self {
+        Self(D3D12_DEPTH_STENCIL_DESC {
+            DepthWriteMask: D3D12_DEPTH_WRITE_MASK_ALL,
+            ..Default::default()
+        })
     }
 }
 

@@ -9,7 +9,7 @@ use crate::{
     create_type,
     error::DxError,
     impl_trait,
-    types::{Box, GpuVirtualAddress, HeapFlags, HeapProperties, ResourceDesc},
+    types::{DxBox, GpuVirtualAddress, HeapFlags, HeapProperties, ResourceDesc},
     HasInterface,
 };
 
@@ -54,7 +54,7 @@ pub trait IResource:
         dst_row_pitch: u32,
         dst_depth_pitch: u32,
         src_subresource: u32,
-        src_box: Option<&Box>,
+        src_box: Option<&DxBox>,
     ) -> Result<(), DxError>;
 
     /// Invalidates the CPU pointer to the specified subresource in the resource.
@@ -68,7 +68,7 @@ pub trait IResource:
     fn write_to_subresource(
         &self,
         dst_subresource: u32,
-        dst_box: Option<&Box>,
+        dst_box: Option<&DxBox>,
         src_data: &mut [u8],
         src_row_pitch: u32,
         src_depth_pitch: u32,
@@ -136,7 +136,7 @@ impl_trait! {
         dst_row_pitch: u32,
         dst_depth_pitch: u32,
         src_subresource: u32,
-        src_box: Option<&Box>,
+        src_box: Option<&DxBox>,
     ) -> Result<(), DxError> {
         unsafe {
             let src_box = src_box.map(|s| &s.0 as *const _);
@@ -166,7 +166,7 @@ impl_trait! {
     fn write_to_subresource(
         &self,
         dst_subresource: u32,
-        dst_box: Option<&Box>,
+        dst_box: Option<&DxBox>,
         src_data: &mut [u8],
         src_row_pitch: u32,
         src_depth_pitch: u32,

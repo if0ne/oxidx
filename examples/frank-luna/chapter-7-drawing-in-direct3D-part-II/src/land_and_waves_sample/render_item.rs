@@ -1,4 +1,7 @@
-use std::{cell::Cell, rc::Rc};
+use std::{
+    cell::{Cell, RefCell},
+    rc::Rc,
+};
 
 use common::geometry_mesh::MeshGeometry;
 use glam::Mat4;
@@ -9,7 +12,7 @@ pub struct RenderItem {
     pub world: Mat4,
     pub num_frames_dirty: Cell<usize>,
     pub obj_cb_index: usize,
-    pub geo: Rc<MeshGeometry>,
+    pub geo: Rc<RefCell<MeshGeometry>>,
     pub primitive_type: PrimitiveTopology,
     pub index_count: u32,
     pub start_index_location: u32,

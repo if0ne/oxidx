@@ -1,15 +1,14 @@
 use std::cell::RefCell;
 
 use glam::{vec3, Vec3};
-use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 
 #[derive(Clone, Debug, Default)]
 pub struct Waves {
-    rows: u32,
-    cols: u32,
+    pub(super) rows: u32,
+    pub(super) cols: u32,
 
-    vertex_count: u32,
-    triangle_count: u32,
+    pub(super) vertex_count: u32,
+    pub(super) triangle_count: u32,
 
     k1: f32,
     k2: f32,
@@ -19,7 +18,7 @@ pub struct Waves {
     spatial_step: f32,
 
     prev_solution: Vec<Vec3>,
-    curr_solution: Vec<Vec3>,
+    pub curr_solution: Vec<Vec3>,
     normals: Vec<Vec3>,
     tangent_x: Vec<Vec3>,
 }
@@ -82,50 +81,32 @@ impl Waves {
             *t += dt;
 
             if *t > self.time_step {
-                self.prev_solution
-                    .par_iter_mut()
-                    .enumerate()
-                    .for_each(|(idx, prev)| {
-                        let i = idx / self.rows as usize;
-                        if i == 0 || i == self.curr_solution.len() - 1 {
-                            return;
-                        }
-
-                        for j in 1..(self.cols as usize - 1) {
-                            prev.y = self.k1 * prev.y
-                                + self.k2 * self.curr_solution[i * self.rows as usize + j].y
-                                + self.k3
-                                    * (self.curr_solution[(i + 1) * self.cols as usize + j].y
-                                        + self.curr_solution[(i - 1) * self.cols as usize + j].y
-                                        + self.curr_solution[i * self.cols as usize + j + 1].y
-                                        + self.curr_solution[i * self.cols as usize + j - 1].y);
-                        }
-                    });
+                for i in 1..(self.rows as usize - 1) {
+                    for j in 1..(self.cols as usize - 1) {
+                        self.curr_solution[i * self.rows as usize + j].y = self.k1 * self.curr_solution[i * self.rows as usize + j].y
+                            + self.k2 * self.curr_solution[i * self.rows as usize + j].y
+                            + self.k3
+                                * (self.curr_solution[(i + 1) * self.cols as usize + j].y
+                                    + self.curr_solution[(i - 1) * self.cols as usize + j].y
+                                    + self.curr_solution[i * self.cols as usize + j + 1].y
+                                    + self.curr_solution[i * self.cols as usize + j - 1].y);
+                    }
+                }
 
                 std::mem::swap(&mut self.prev_solution, &mut self.curr_solution);
 
                 *t = 0.0;
 
-                self.normals
-                    .par_iter_mut()
-                    .zip(self.tangent_x.par_iter_mut())
-                    .enumerate()
-                    .for_each(|(idx, (normal, tangent))| {
-                        let i = idx / self.rows as usize;
-                        if i == 0 || i == self.curr_solution.len() - 1 {
-                            return;
-                        }
+                for i in 1..(self.rows as usize - 1) {
+                    for j in 1..(self.cols as usize - 1) {
+                        let r = self.curr_solution[i * self.cols as usize + j + 1].y;
+                        let t = self.curr_solution[(i - 1) * self.cols as usize + j].y;
+                        let b = self.curr_solution[(i + 1) * self.cols as usize + j].y;
 
-                        for j in 1..(self.cols as usize - 1) {
-                            let l = self.curr_solution[i * self.cols as usize + j - 1].y;
-                            let r = self.curr_solution[i * self.cols as usize + j + 1].y;
-                            let t = self.curr_solution[(i - 1) * self.cols as usize + j].y;
-                            let b = self.curr_solution[(i + 1) * self.cols as usize + j].y;
-
-                            *normal = vec3(-r + 1.0, 2.0 * self.spatial_step, b - t).normalize();
-                            *tangent = vec3(2.0 * self.spatial_step, r - 1.0, 0.0).normalize();
-                        }
-                    });
+                        self.normals[i * self.cols as usize + j] = vec3(-r + 1.0, 2.0 * self.spatial_step, b - t).normalize();
+                        self.tangent_x[i * self.cols as usize + j] = vec3(2.0 * self.spatial_step, r - 1.0, 0.0).normalize();
+                    }
+                }
             }
         });
     }

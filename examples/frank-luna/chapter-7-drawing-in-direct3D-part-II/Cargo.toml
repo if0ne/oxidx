@@ -8,6 +8,7 @@ common = { path = "../common" }
 glam = "0.29.0"
 oxidx = { path = "../../../oxidx" }
 rayon = "1.10.0"
+rand = "0.8.0"
 tracing = "0.1.40"
 tracing-subscriber = "0.3.0"
 winit = "0.30.2"
