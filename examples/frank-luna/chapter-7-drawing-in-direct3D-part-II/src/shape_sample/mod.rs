@@ -9,12 +9,12 @@ use common::{
     geometry_mesh::{BoundingBox, MeshGeometry, SubmeshGeometry},
     utils::{create_default_buffer, ConstantBufferData},
 };
-use glam::{vec2, vec3, vec4, Mat4, Vec3, Vec4};
+use glam::{vec2, vec3, vec4, Mat4, Vec3};
 use oxidx::dx::*;
 
 use winit::keyboard::KeyCode;
 
-use frame_resources::{FrameResource, ObjectConstants, PassConstants};
+use frame_resources::{FrameResource, ObjectConstants, PassConstants, Vertex};
 use render_item::RenderItem;
 
 #[allow(unused)]
@@ -690,11 +690,4 @@ impl ShapesSample {
             );
         }
     }
-}
-
-#[derive(Clone, Copy, Debug, Default)]
-#[repr(C)]
-struct Vertex {
-    pos: Vec3,
-    color: Vec4,
 }

@@ -7,21 +7,24 @@ pub struct FrameResource {
     pub cmd_list_alloc: CommandAllocator,
     pub pass_cb: UploadBuffer<ConstantBufferData<PassConstants>>,
     pub object_cb: UploadBuffer<ConstantBufferData<ObjectConstants>>,
+    pub wave_cb: UploadBuffer<Vertex>,
     pub fence: u64,
 }
 
 impl FrameResource {
-    pub fn new(device: &Device, pass_count: usize, object_count: usize) -> Self {
+    pub fn new(device: &Device, pass_count: usize, object_count: usize, wave_vert_count: usize) -> Self {
         let cmd_list_alloc = device
             .create_command_allocator::<CommandAllocator>(CommandListType::Direct)
             .unwrap();
         let pass_cb = UploadBuffer::new(device, pass_count);
         let object_cb = UploadBuffer::new(device, object_count);
+        let wave_cb = UploadBuffer::new(device, wave_vert_count);
 
         Self {
             cmd_list_alloc,
             pass_cb,
             object_cb,
+            wave_cb,
             fence: 0,
         }
     }
