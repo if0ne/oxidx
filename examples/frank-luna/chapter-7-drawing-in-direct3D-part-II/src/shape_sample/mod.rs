@@ -1,3 +1,6 @@
+mod frame_resources;
+mod render_item;
+
 use std::{cell::Cell, collections::HashMap, rc::Rc};
 
 use common::{
@@ -11,8 +14,8 @@ use oxidx::dx::*;
 
 use winit::keyboard::KeyCode;
 
-use crate::frame_resources::{FrameResource, ObjectConstants, PassConstants};
-use crate::render_item::RenderItem;
+use frame_resources::{FrameResource, ObjectConstants, PassConstants};
+use render_item::RenderItem;
 
 #[allow(unused)]
 #[derive(Debug)]

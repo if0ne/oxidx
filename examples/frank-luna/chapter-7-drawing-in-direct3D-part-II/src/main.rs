@@ -1,6 +1,5 @@
-mod frame_resources;
-mod render_item;
 mod shape_sample;
+mod land_and_waves_sample;
 
 use common::run_sample;
 use shape_sample::ShapesSample;
