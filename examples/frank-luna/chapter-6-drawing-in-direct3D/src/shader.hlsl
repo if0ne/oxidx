@@ -1,3 +1,9 @@
+//***************************************************************************************
+// color.hlsl by Frank Luna (C) 2015 All Rights Reserved.
+//
+// Transforms and colors geometry.
+//***************************************************************************************
+
 struct ObjectConstants {
 	float4x4 gWorldViewProj; 
 };
