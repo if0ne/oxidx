@@ -231,7 +231,7 @@ impl DxSample for LandAndWavesSample {
             ("opaque".to_string(), pso_opaque),
             ("opaque_wireframe".to_string(), pso_wireframe),
         ]);
-        
+
         base.cmd_list.close().unwrap();
 
         base.cmd_queue
@@ -507,7 +507,8 @@ impl LandAndWavesSample {
                 curr_waves_vb.copy_data(i as usize, v);
             }
 
-            self.waves_ritem.geo.borrow_mut().vertex_buffer_gpu = curr_waves_vb.resource().clone();
+            self.waves_ritem.geo.borrow_mut().vertex_buffer_gpu =
+                Some(curr_waves_vb.resource().clone());
         });
     }
 
@@ -580,8 +581,8 @@ impl LandAndWavesSample {
             name: "landGeo".to_string(),
             vertex_buffer_cpu,
             index_buffer_cpu,
-            vertex_buffer_gpu,
-            index_buffer_gpu,
+            vertex_buffer_gpu: Some(vertex_buffer_gpu),
+            index_buffer_gpu: Some(index_buffer_gpu),
             vertex_buffer_uploader: Some(vertex_buffer_uploader),
             index_buffer_uploader: Some(index_buffer_uploader),
             vertex_byte_stride: size_of::<Vertex>() as u32,
@@ -637,17 +638,14 @@ impl LandAndWavesSample {
         let (index_buffer_gpu, index_buffer_uploader) =
             create_default_buffer(device, cmd_list, indices.as_slice());
 
-        let (vertex_buffer_gpu, _) =
-            create_default_buffer::<Vertex>(device, cmd_list, &[Vertex::default()]);
-
         let index_buffer_byte_size = size_of_val(indices.as_slice()) as u32;
 
         MeshGeometry {
             name: "waterGeo".to_string(),
             vertex_buffer_cpu,
             index_buffer_cpu,
-            vertex_buffer_gpu,
-            index_buffer_gpu,
+            vertex_buffer_gpu: None,
+            index_buffer_gpu: Some(index_buffer_gpu),
             vertex_buffer_uploader: None,
             index_buffer_uploader: Some(index_buffer_uploader),
             vertex_byte_stride: size_of::<Vertex>() as u32,

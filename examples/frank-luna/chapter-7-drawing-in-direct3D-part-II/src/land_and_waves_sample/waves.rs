@@ -83,8 +83,8 @@ impl Waves {
             if *t > self.time_step {
                 for i in 1..(self.rows as usize - 1) {
                     for j in 1..(self.cols as usize - 1) {
-                        self.prev_solution[i * self.rows as usize + j].y = 
-                            self.k1 * self.prev_solution[i * self.rows as usize + j].y
+                        self.prev_solution[i * self.rows as usize + j].y = self.k1
+                            * self.prev_solution[i * self.rows as usize + j].y
                             + self.k2 * self.curr_solution[i * self.rows as usize + j].y
                             + self.k3
                                 * (self.curr_solution[(i + 1) * self.cols as usize + j].y
@@ -100,13 +100,15 @@ impl Waves {
 
                 for i in 1..(self.rows as usize - 1) {
                     for j in 1..(self.cols as usize - 1) {
-                        let l =  self.curr_solution[i * self.cols as usize + j - 1].y;
+                        let l = self.curr_solution[i * self.cols as usize + j - 1].y;
                         let r = self.curr_solution[i * self.cols as usize + j + 1].y;
                         let t = self.curr_solution[(i - 1) * self.cols as usize + j].y;
                         let b = self.curr_solution[(i + 1) * self.cols as usize + j].y;
 
-                        self.normals[i * self.cols as usize + j] = vec3(-r + l, 2.0 * self.spatial_step, b - t).normalize();
-                        self.tangent_x[i * self.cols as usize + j] = vec3(2.0 * self.spatial_step, r - l, 0.0).normalize();
+                        self.normals[i * self.cols as usize + j] =
+                            vec3(-r + l, 2.0 * self.spatial_step, b - t).normalize();
+                        self.tangent_x[i * self.cols as usize + j] =
+                            vec3(2.0 * self.spatial_step, r - l, 0.0).normalize();
                     }
                 }
             }

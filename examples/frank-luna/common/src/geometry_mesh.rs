@@ -23,8 +23,8 @@ pub struct MeshGeometry {
     pub vertex_buffer_cpu: Blob,
     pub index_buffer_cpu: Blob,
 
-    pub vertex_buffer_gpu: Resource,
-    pub index_buffer_gpu: Resource,
+    pub vertex_buffer_gpu: Option<Resource>,
+    pub index_buffer_gpu: Option<Resource>,
 
     pub vertex_buffer_uploader: Option<Resource>,
     pub index_buffer_uploader: Option<Resource>,
@@ -40,7 +40,10 @@ pub struct MeshGeometry {
 impl MeshGeometry {
     pub fn vertex_buffer_view(&self) -> VertexBufferView {
         VertexBufferView::new(
-            self.vertex_buffer_gpu.get_gpu_virtual_address(),
+            self.vertex_buffer_gpu
+                .as_ref()
+                .expect("Vertex buffer should be set")
+                .get_gpu_virtual_address(),
             self.vertex_byte_stride,
             self.vertex_byte_size,
         )
@@ -48,7 +51,10 @@ impl MeshGeometry {
 
     pub fn index_buffer_view(&self) -> IndexBufferView {
         IndexBufferView::new(
-            self.index_buffer_gpu.get_gpu_virtual_address(),
+            self.index_buffer_gpu
+                .as_ref()
+                .expect("Index buffer should be set")
+                .get_gpu_virtual_address(),
             self.index_buffer_byte_size,
             self.index_format,
         )
