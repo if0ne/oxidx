@@ -104,7 +104,7 @@ impl DxSample for LandAndWavesSample {
         let input_layout = [
             InputElementDesc::per_vertex(SemanticName::Position(0), Format::Rgb32Float, 0),
             InputElementDesc::per_vertex(SemanticName::Color(0), Format::Rgba32Float, 0)
-                .with_offset(12),
+                .with_offset(16),
         ];
 
         let geometries = HashMap::from_iter([
@@ -231,8 +231,9 @@ impl DxSample for LandAndWavesSample {
             ("opaque".to_string(), pso_opaque),
             ("opaque_wireframe".to_string(), pso_wireframe),
         ]);
-
+        
         base.cmd_list.close().unwrap();
+
         base.cmd_queue
             .execute_command_lists(&[Some(base.cmd_list.clone())]);
         base.flush_command_queue();
@@ -500,7 +501,7 @@ impl LandAndWavesSample {
             for i in 0..self.waves.vertex_count {
                 let v = Vertex {
                     pos: self.waves.curr_solution[i as usize],
-                    color: vec4(0.0, 0.0, 0.67, 1.0),
+                    color: vec4(0.0, 0.0, 1.0, 1.0),
                 };
 
                 curr_waves_vb.copy_data(i as usize, v);
