@@ -1,4 +1,8 @@
-use common::{upload_buffer::UploadBuffer, utils::ConstantBufferData};
+use common::{
+    lights::{Light, MAX_LIGHTS},
+    upload_buffer::UploadBuffer,
+    utils::ConstantBufferData,
+};
 use glam::{Mat4, Vec2, Vec3, Vec4};
 use oxidx::dx::*;
 
@@ -7,21 +11,29 @@ pub struct FrameResource {
     pub cmd_list_alloc: CommandAllocator,
     pub pass_cb: UploadBuffer<ConstantBufferData<PassConstants>>,
     pub object_cb: UploadBuffer<ConstantBufferData<ObjectConstants>>,
+    pub material_cb: UploadBuffer<ConstantBufferData<MaterialConstant>>,
     pub fence: u64,
 }
 
 impl FrameResource {
-    pub fn new(device: &Device, pass_count: usize, object_count: usize) -> Self {
+    pub fn new(
+        device: &Device,
+        pass_count: usize,
+        object_count: usize,
+        material_count: usize,
+    ) -> Self {
         let cmd_list_alloc = device
             .create_command_allocator::<CommandAllocator>(CommandListType::Direct)
             .unwrap();
         let pass_cb = UploadBuffer::new(device, pass_count);
         let object_cb = UploadBuffer::new(device, object_count);
+        let material_cb = UploadBuffer::new(device, material_count);
 
         Self {
             cmd_list_alloc,
             pass_cb,
             object_cb,
+            material_cb,
             fence: 0,
         }
     }
@@ -50,11 +62,22 @@ pub struct PassConstants {
     pub far_z: f32,
     pub total_time: f32,
     pub delta_time: f32,
+    pub ambient_light: Vec4,
+    pub lights: [Light; MAX_LIGHTS],
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+#[repr(C)]
+pub struct MaterialConstant {
+    pub diffuse_albedo: Vec4,
+    pub fresnel_r0: Vec3,
+    pub roughness: f32,
+    pub transform: Mat4,
 }
 
 #[derive(Clone, Copy, Debug, Default)]
 #[repr(C)]
 pub struct Vertex {
     pub pos: Vec3,
-    pub color: Vec4,
+    pub normal: Vec3,
 }

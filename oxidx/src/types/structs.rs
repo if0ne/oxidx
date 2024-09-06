@@ -1281,8 +1281,8 @@ impl InputElementDesc {
     }
 
     #[inline]
-    pub fn with_offset(mut self, offset: u32) -> Self {
-        self.0.AlignedByteOffset = offset;
+    pub fn with_offset(mut self, offset: usize) -> Self {
+        self.0.AlignedByteOffset = offset as u32;
         self
     }
 }

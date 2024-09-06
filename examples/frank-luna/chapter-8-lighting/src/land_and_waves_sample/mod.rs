@@ -116,7 +116,7 @@ impl DxSample for LandAndWavesSample {
         let input_layout = [
             InputElementDesc::per_vertex(SemanticName::Position(0), Format::Rgb32Float, 0),
             InputElementDesc::per_vertex(SemanticName::Normal(0), Format::Rgb32Float, 0)
-                .with_offset(offset_of!(Vertex, normal) as u32),
+                .with_offset(offset_of!(Vertex, normal)),
         ];
 
         let geometries = HashMap::from_iter([

@@ -1,5 +1,3 @@
-
-
 mod land_and_waves_sample;
 mod shape_sample;
 
@@ -18,5 +16,5 @@ fn main() {
     let subscriber = tracing_subscriber::registry().with(console_log);
 
     let _ = tracing::subscriber::set_global_default(subscriber);
-    run_sample::<LandAndWavesSample>();
+    run_sample::<ShapesSample>();
 }
