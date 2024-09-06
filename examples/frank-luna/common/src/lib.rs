@@ -5,9 +5,9 @@ pub mod app;
 pub mod game_timer;
 pub mod geometry_generator;
 pub mod geometry_mesh;
+pub mod material;
 pub mod upload_buffer;
 pub mod utils;
-pub mod material;
 
 pub fn run_sample<S: DxSample>() {
     let event_loop = EventLoop::new().unwrap();
