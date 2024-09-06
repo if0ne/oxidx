@@ -5,6 +5,7 @@ mod waves;
 use std::{
     cell::{Cell, RefCell},
     collections::HashMap,
+    f32::consts::{FRAC_PI_4, PI},
     mem::offset_of,
     rc::Rc,
 };
@@ -14,6 +15,7 @@ use common::{
     geometry_generator::GeometryGenerator,
     geometry_mesh::{BoundingBox, MeshGeometry, SubmeshGeometry},
     material::Material,
+    math::spherical_to_cartesian,
     utils::{create_default_buffer, ConstantBufferData},
 };
 use glam::{vec2, vec3, vec4, Mat4, Vec3};
@@ -57,6 +59,9 @@ pub struct LandAndWavesSample {
 
     is_lmb_pressed: bool,
     is_rmb_pressed: bool,
+
+    sun_theta: f32,
+    sun_phi: f32,
 }
 
 impl DxSample for LandAndWavesSample {
@@ -299,6 +304,8 @@ impl DxSample for LandAndWavesSample {
             materials,
             main_pass_cb: ConstantBufferData(PassConstants::default()),
             is_wireframe: false,
+            sun_theta: 1.25 * PI,
+            sun_phi: FRAC_PI_4,
         }
     }
 
@@ -423,7 +430,15 @@ impl DxSample for LandAndWavesSample {
         );
     }
 
-    fn on_key_down(&mut self, _: winit::keyboard::KeyCode, _: bool) {}
+    fn on_key_down(&mut self, key: winit::keyboard::KeyCode, _: bool) {
+        match key {
+            KeyCode::KeyW => self.sun_theta += 0.1,
+            KeyCode::KeyS => self.sun_theta -= 0.1,
+            KeyCode::KeyD => self.sun_phi += 0.1,
+            KeyCode::KeyA => self.sun_phi -= 0.1,
+            _ => {}
+        }
+    }
 
     fn on_key_up(&mut self, key: winit::keyboard::KeyCode) {
         match key {
@@ -494,7 +509,7 @@ impl LandAndWavesSample {
         let inv_proj = proj.inverse();
         let inv_view_proj = view_proj.inverse();
 
-        let pass_const = PassConstants {
+        let mut pass_const = PassConstants {
             view,
             inv_view,
             proj,
@@ -512,7 +527,12 @@ impl LandAndWavesSample {
             far_z: 1000.0,
             total_time: base.timer.total_time(),
             delta_time: base.timer.delta_time(),
+            ambient_light: vec4(0.25, 0.25, 0.35, 1.0),
+            lights: Default::default(),
         };
+
+        pass_const.lights[0].direction = spherical_to_cartesian(1.0, self.sun_theta, self.sun_phi);
+        pass_const.lights[0].strength = vec3(1.0, 1.0, 0.9);
 
         self.frame_resources[self.curr_frame_resource]
             .pass_cb

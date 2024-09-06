@@ -5,7 +5,7 @@ use windows::{
     Win32::Graphics::{
         Direct3D::{
             Fxc::{D3DCompileFromFile, D3DCreateBlob},
-            ID3DBlob,
+            ID3DBlob, ID3DInclude,
         },
         Direct3D12::{D3D12_CACHED_PIPELINE_STATE, D3D12_SHADER_BYTECODE},
     },
@@ -119,19 +119,35 @@ impl_trait! {
             None
         };
 
+        let mut error_msg = None;
+
         unsafe {
-            D3DCompileFromFile(
+            let res = D3DCompileFromFile(
                 &filename,
                 defines,
-                None,
+                Some(&std::mem::transmute::<isize, ID3DInclude>(1isize)),
                 entry_point,
                 target,
                 flags1,
                 flags2,
                 &mut shader,
-                None,
+                Some(&mut error_msg),
             )
-            .map_err(DxError::from)?;
+            .map_err(DxError::from);
+
+            if res.is_err() {
+                let error_msg = error_msg.unwrap();
+                let pointer = error_msg.GetBufferPointer() as *mut u8;
+                let size = error_msg.GetBufferSize();
+
+                let slice = std::slice::from_raw_parts(pointer, size);
+
+                return Err(DxError::ShaderCompilationError(
+                    std::str::from_utf8(slice)
+                        .unwrap_or_default()
+                        .to_string())
+                );
+            }
         }
 
         Ok(Blob::new(shader.unwrap()))

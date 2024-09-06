@@ -46,4 +46,8 @@ pub enum DxError {
     /// Generic DXGI error
     #[error("{0}")]
     Dxgi(String),
+
+    /// Shader compilation error
+    #[error("{0}")]
+    ShaderCompilationError(String),
 }

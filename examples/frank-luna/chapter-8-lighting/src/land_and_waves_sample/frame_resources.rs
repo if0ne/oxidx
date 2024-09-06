@@ -1,4 +1,8 @@
-use common::{upload_buffer::UploadBuffer, utils::ConstantBufferData};
+use common::{
+    lights::{Light, MAX_LIGHTS},
+    upload_buffer::UploadBuffer,
+    utils::ConstantBufferData,
+};
 use glam::{Mat4, Vec2, Vec3, Vec4};
 use oxidx::dx::*;
 
@@ -62,6 +66,8 @@ pub struct PassConstants {
     pub far_z: f32,
     pub total_time: f32,
     pub delta_time: f32,
+    pub ambient_light: Vec4,
+    pub lights: [Light; MAX_LIGHTS],
 }
 
 #[derive(Clone, Copy, Debug, Default)]

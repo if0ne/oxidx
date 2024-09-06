@@ -5,7 +5,9 @@ pub mod app;
 pub mod game_timer;
 pub mod geometry_generator;
 pub mod geometry_mesh;
+pub mod lights;
 pub mod material;
+pub mod math;
 pub mod upload_buffer;
 pub mod utils;
 
