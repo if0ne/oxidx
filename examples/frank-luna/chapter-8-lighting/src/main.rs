@@ -1,8 +1,12 @@
+
+
 mod land_and_waves_sample;
 mod shape_sample;
 
 use common::run_sample;
+#[allow(unused_imports)]
 use land_and_waves_sample::LandAndWavesSample;
+#[allow(unused_imports)]
 use shape_sample::ShapesSample;
 use tracing_subscriber::layer::SubscriberExt;
 
