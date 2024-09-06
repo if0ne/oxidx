@@ -7,6 +7,7 @@ pub mod geometry_generator;
 pub mod geometry_mesh;
 pub mod upload_buffer;
 pub mod utils;
+pub mod material;
 
 pub fn run_sample<S: DxSample>() {
     let event_loop = EventLoop::new().unwrap();
