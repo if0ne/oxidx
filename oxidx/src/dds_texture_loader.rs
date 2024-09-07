@@ -71,3 +71,19 @@ struct DdsHeaderDxt10 {
     array_size: u32,
     misc_flags2: u32,
 }
+
+fn count_mips(mut width: u32, mut height: u32) -> u32 {
+    if width == 0 || height == 0 {
+        return 0;
+    }
+
+    let mut count = 1;
+
+    while width > 1 || height > 1 {
+        width >>= 1;
+        height >>= 1;
+        count += 1;
+    }
+
+    count
+}
