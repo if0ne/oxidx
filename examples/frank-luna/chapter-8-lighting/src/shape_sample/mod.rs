@@ -442,10 +442,10 @@ impl ShapesSample {
         pass_const.lights[0].strength = vec3(1.0, 0.0, 0.25);
         pass_const.lights[1].falloff_start = 40.0;
         pass_const.lights[1].falloff_end = 50.0;
-	    pass_const.lights[1].strength = vec3(0.8, 0.8, 0.8);
+        pass_const.lights[1].strength = vec3(0.8, 0.8, 0.8);
         pass_const.lights[1].position = vec3(5.0, 5.0, 0.3);
-	    pass_const.lights[2].direction = vec3(0.0, -0.707, -0.707);
-	    pass_const.lights[2].strength = vec3(0.8, 0.8, 0.8);
+        pass_const.lights[2].direction = vec3(0.0, -0.707, -0.707);
+        pass_const.lights[2].strength = vec3(0.8, 0.8, 0.8);
         pass_const.lights[2].position = vec3(0.0, 1.3, 0.3);
         pass_const.lights[2].falloff_start = 40.0;
         pass_const.lights[2].falloff_end = 50.0;

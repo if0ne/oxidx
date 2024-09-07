@@ -1,6 +1,8 @@
+use std::ffi::CStr;
+
 use windows::{
     core::{Interface, Param},
-    Win32::Graphics::Direct3D12::ID3D12DeviceChild,
+    Win32::Graphics::{Direct3D::WKPDID_D3DDebugObjectName, Direct3D12::ID3D12DeviceChild},
 };
 
 use crate::{
@@ -25,6 +27,10 @@ pub trait IDeviceChild:
     ///
     /// For more information: [`ID3D12DeviceChild::GetDevice interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12devicechild-getdevice)
     fn get_device<D: IDevice>(&self) -> Result<D, DxError>;
+}
+
+pub trait IDeviceChildExt: IDeviceChild {
+    fn set_debug_object_name(&self, name: &CStr) -> Result<(), DxError>;
 }
 
 create_type!(
@@ -53,6 +59,23 @@ impl_trait! {
         }
     }
 }
+
+impl_trait! {
+    impl IDeviceChildExt =>
+    DeviceChild,
+    Heap,
+    Resource,
+    Fence,
+    Fence1;
+
+    fn set_debug_object_name(&self, name: &CStr) -> Result<(), DxError> {
+        unsafe {
+            self.0.SetPrivateData(&WKPDID_D3DDebugObjectName, name.to_bytes().len() as u32, Some(name.as_ptr() as *const _))
+                .map_err(DxError::from)
+        }
+    }
+}
+
 impl_up_down_cast!(Heap inherit DeviceChild);
 impl_up_down_cast!(Resource inherit DeviceChild);
 impl_up_down_cast!(Fence inherit DeviceChild);
