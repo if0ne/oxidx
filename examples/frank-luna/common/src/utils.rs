@@ -5,6 +5,7 @@ use std::{
     path::Path,
 };
 
+use image::ImageReader;
 use oxidx::dx::*;
 
 #[derive(Clone, Copy, Debug)]
@@ -88,4 +89,15 @@ pub fn load_binary(filename: impl AsRef<Path>) -> Blob {
     let _ = reader.read(buffer);
 
     blob
+}
+
+pub fn load_texture_from_file(
+    filename: impl AsRef<Path>,
+) -> Result<Resource, DxError> {
+    let img = ImageReader::open(filename)
+        .map_err(|e| DxError::Fail(e.to_string()))?
+        .decode()
+        .map_err(|e| DxError::Fail(e.to_string()))?;
+
+    todo!()
 }

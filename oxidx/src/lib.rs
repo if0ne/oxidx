@@ -10,7 +10,6 @@ pub mod command_allocator;
 pub mod command_list;
 pub mod command_queue;
 pub mod command_signature;
-pub mod dds_texture_loader;
 pub mod debug;
 pub mod descriptor_heap;
 pub mod device;
