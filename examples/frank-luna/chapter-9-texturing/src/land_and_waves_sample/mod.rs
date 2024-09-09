@@ -185,7 +185,7 @@ impl DxSample for LandAndWavesSample {
                 Rc::new(RefCell::new(Material {
                     name: "grass".to_string(),
                     cb_index: 0,
-                    diffuse_srv_heap_index: Some(1),
+                    diffuse_srv_heap_index: Some(0),
                     num_frames_dirty: Self::FRAME_COUNT,
                     diffuse_albedo: vec4(0.2, 0.6, 0.6, 1.0),
                     fresnel_r0: vec3(0.01, 0.01, 0.01),
@@ -198,7 +198,7 @@ impl DxSample for LandAndWavesSample {
                 Rc::new(RefCell::new(Material {
                     name: "water".to_string(),
                     cb_index: 1,
-                    diffuse_srv_heap_index: Some(2),
+                    diffuse_srv_heap_index: Some(1),
                     num_frames_dirty: Self::FRAME_COUNT,
                     diffuse_albedo: vec4(0.0, 0.2, 0.6, 1.0),
                     fresnel_r0: vec3(0.1, 0.1, 0.1),
@@ -704,12 +704,10 @@ impl LandAndWavesSample {
 
     fn animate_materials(&mut self, base: &common::app::Base) {
         let mut material = self.materials.get_mut("water").unwrap().borrow_mut();
-
         let mut tu = material.transform.w_axis.x;
         let mut tv = material.transform.w_axis.y;
-
-        tu += 0.1 * base.timer.delta_time();
-        tv += 0.02 * base.timer.delta_time();
+        tu += 0.01 * base.timer.delta_time() / 1000.0;
+        tv += 0.2 * base.timer.delta_time() / 1000.0;
 
         if tu >= 1.0 {
             tu -= 1.0;
@@ -883,7 +881,7 @@ impl LandAndWavesSample {
                 .srv_descriptor_heap
                 .get_gpu_descriptor_handle_for_heap_start();
             let tex = tex.advance(
-                item.material.borrow().diffuse_srv_heap_index.unwrap_or(0),
+                item.material.borrow().diffuse_srv_heap_index.unwrap(),
                 self.cbv_srv_descriptor_size,
             );
             cmd_list.set_graphics_root_descriptor_table(0, tex);

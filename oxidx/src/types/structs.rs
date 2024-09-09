@@ -2437,7 +2437,7 @@ impl ShaderResourceViewDesc {
                     Flags: flags.as_raw(),
                 },
             },
-            Shader4ComponentMapping: 0x7,
+            Shader4ComponentMapping: D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
         })
     }
 
@@ -2458,7 +2458,7 @@ impl ShaderResourceViewDesc {
                     ResourceMinLODClamp: resource_min_lod_clamp,
                 },
             },
-            Shader4ComponentMapping: 0x7,
+            Shader4ComponentMapping: D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
         })
     }
 
@@ -2481,7 +2481,7 @@ impl ShaderResourceViewDesc {
                     PlaneSlice: plane_slice,
                 },
             },
-            Shader4ComponentMapping: 0x7,
+            Shader4ComponentMapping: D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
         })
     }
 
@@ -2502,7 +2502,7 @@ impl ShaderResourceViewDesc {
                     ResourceMinLODClamp: resource_min_lod_clamp,
                 },
             },
-            Shader4ComponentMapping: 0x7,
+            Shader4ComponentMapping: D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
         })
     }
 
@@ -2526,7 +2526,7 @@ impl ShaderResourceViewDesc {
                     ArraySize: array.count() as u32,
                 },
             },
-            Shader4ComponentMapping: 0x7,
+            Shader4ComponentMapping: D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
         })
     }
 
@@ -2552,7 +2552,7 @@ impl ShaderResourceViewDesc {
                     ArraySize: array.count() as u32,
                 },
             },
-            Shader4ComponentMapping: 0x7,
+            Shader4ComponentMapping: D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
         })
     }
 
@@ -2564,7 +2564,7 @@ impl ShaderResourceViewDesc {
             Anonymous: D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
                 Texture2DMS: D3D12_TEX2DMS_SRV::default(),
             },
-            Shader4ComponentMapping: 0x7,
+            Shader4ComponentMapping: D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
         })
     }
 
@@ -2579,7 +2579,7 @@ impl ShaderResourceViewDesc {
                     ArraySize: array.count() as u32,
                 },
             },
-            Shader4ComponentMapping: 0x7,
+            Shader4ComponentMapping: D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
         })
     }
 
@@ -2600,7 +2600,7 @@ impl ShaderResourceViewDesc {
                     ResourceMinLODClamp: resource_min_lod_clamp,
                 },
             },
-            Shader4ComponentMapping: 0x7,
+            Shader4ComponentMapping: D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
         })
     }
 
@@ -2624,7 +2624,7 @@ impl ShaderResourceViewDesc {
                     NumCubes: array.count() as u32,
                 },
             },
-            Shader4ComponentMapping: 0x7,
+            Shader4ComponentMapping: D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
         })
     }
 
@@ -2638,7 +2638,7 @@ impl ShaderResourceViewDesc {
                     Location: location,
                 },
             },
-            Shader4ComponentMapping: 0x7,
+            Shader4ComponentMapping: D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
         })
     }
 }
@@ -3097,7 +3097,7 @@ impl<'a> TextureCopyLocation<'a> {
         Self(
             D3D12_TEXTURE_COPY_LOCATION {
                 pResource: unsafe { std::mem::transmute_copy(resource.as_raw()) },
-                Type: D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+                Type: D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,
                 Anonymous: D3D12_TEXTURE_COPY_LOCATION_0 {
                     PlacedFootprint: footprint.0,
                 },
