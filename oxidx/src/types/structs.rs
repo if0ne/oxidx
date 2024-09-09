@@ -1471,7 +1471,7 @@ impl PackedMipDesc {
 /// Describes the footprint of a placed subresource, including the offset and the [`SubresourceFootprint`].
 ///
 /// For more information: [`D3D12_PLACED_SUBRESOURCE_FOOTPRINT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_placed_subresource_footprint)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 #[repr(transparent)]
 pub struct PlacedSubresourceFootprint(pub(crate) D3D12_PLACED_SUBRESOURCE_FOOTPRINT);
 

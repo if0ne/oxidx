@@ -5,7 +5,6 @@ use std::{
     path::Path,
 };
 
-use image::ImageReader;
 use oxidx::dx::*;
 
 #[derive(Clone, Copy, Debug)]
@@ -92,12 +91,61 @@ pub fn load_binary(filename: impl AsRef<Path>) -> Blob {
 }
 
 pub fn load_texture_from_file(
+    device: &Device,
+    cmd_list: &GraphicsCommandList,
     filename: impl AsRef<Path>,
-) -> Result<Resource, DxError> {
-    let img = ImageReader::open(filename)
+) -> Result<(Resource, Resource), DxError> {
+    let img = image::open(filename)
         .map_err(|e| DxError::Fail(e.to_string()))?
-        .decode()
-        .map_err(|e| DxError::Fail(e.to_string()))?;
+        .to_rgba8();
 
-    todo!()
+    let texture_bytes = img.as_raw();
+
+    let desc = ResourceDesc::texture_2d(img.width() as u64, img.height())
+        .with_format(Format::Rgba8Typeless);
+
+    let resource = device.create_committed_resource(
+        &HeapProperties::default(),
+        HeapFlags::empty(),
+        &desc,
+        ResourceStates::CopyDest,
+        None,
+    )?;
+
+    let mut layouts = [Default::default(); 1];
+    let mut num_rows = [Default::default(); 1];
+    let mut row_sizes = [Default::default(); 1];
+
+    let total_size =
+        device.get_copyable_footprints(&desc, 0..1, 0, &mut layouts, &mut num_rows, &mut row_sizes);
+
+    let upload_buffer = device.create_committed_resource(
+        &HeapProperties::upload(),
+        HeapFlags::empty(),
+        &ResourceDesc::buffer(total_size as usize).with_layout(TextureLayout::RowMajor),
+        ResourceStates::GenericRead,
+        None,
+    )?;
+
+    let subresource_data = SubresourceData::new(texture_bytes)
+        .with_row_pitch(4 * img.width() as usize)
+        .with_slice_pitch(4 * (img.width() * img.height()) as usize);
+
+    assert!(
+        cmd_list.update_subresources_fixed::<1, _, _>(
+            &resource,
+            &upload_buffer,
+            0,
+            0..1,
+            &[subresource_data],
+        ) > 0
+    );
+
+    cmd_list.resource_barrier(&[ResourceBarrier::transition(
+        &resource,
+        ResourceStates::CopyDest,
+        ResourceStates::PixelShaderResource,
+    )]);
+
+    Ok((resource, upload_buffer))
 }
