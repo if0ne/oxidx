@@ -75,7 +75,7 @@ impl DxSample for BoxSample {
             )),
             cbv_heap
                 .get_cpu_descriptor_handle_for_heap_start()
-                .advance(1, base.cbv_srv_uav_descriptor_size as usize),
+                .advance(1, base.cbv_srv_uav_descriptor_size),
         );
 
         let cbv_table = [DescriptorRange::cbv(1, 0)];
@@ -274,7 +274,7 @@ impl DxSample for BoxSample {
             0,
             self.cbv_heap
                 .get_gpu_descriptor_handle_for_heap_start()
-                .advance(1, base.cbv_srv_uav_descriptor_size as usize),
+                .advance(1, base.cbv_srv_uav_descriptor_size),
         );
 
         base.cmd_list.draw_indexed_instanced(

@@ -1,12 +1,20 @@
 mod frame_resources;
 mod render_item;
 
-use std::{cell::Cell, collections::HashMap, rc::Rc};
+use std::{
+    cell::{Cell, RefCell},
+    collections::HashMap,
+    f32::consts::{FRAC_PI_4, PI},
+    mem::offset_of,
+    rc::Rc,
+};
 
 use common::{
     app::{DxSample, SwapchainContext},
     geometry_generator::GeometryGenerator,
     geometry_mesh::{BoundingBox, MeshGeometry, SubmeshGeometry},
+    material::Material,
+    math::spherical_to_cartesian,
     utils::{create_default_buffer, ConstantBufferData},
 };
 use glam::{vec2, vec3, vec4, Mat4, Vec3};
@@ -14,14 +22,13 @@ use oxidx::dx::*;
 
 use winit::keyboard::KeyCode;
 
-use frame_resources::{FrameResource, ObjectConstants, PassConstants, Vertex};
+use frame_resources::{FrameResource, MaterialConstant, ObjectConstants, PassConstants, Vertex};
 use render_item::RenderItem;
 
 #[allow(unused)]
 #[derive(Debug)]
 pub struct ShapesSample {
     root_signature: RootSignature,
-    cbv_heap: DescriptorHeap,
     frame_resources: [FrameResource; Self::FRAME_COUNT],
     curr_frame_resource: usize,
 
@@ -31,6 +38,7 @@ pub struct ShapesSample {
 
     geometries: HashMap<String, Rc<MeshGeometry>>,
     shaders: HashMap<String, Blob>,
+    materials: HashMap<String, Rc<RefCell<Material>>>,
     pso: HashMap<String, PipelineState>,
 
     eye_pos: Vec3,
@@ -38,7 +46,6 @@ pub struct ShapesSample {
     proj: Mat4,
 
     main_pass_cb: ConstantBufferData<PassConstants>,
-    pass_cbv_offset: u32,
 
     is_wireframe: bool,
 
@@ -48,18 +55,19 @@ pub struct ShapesSample {
 
     is_lmb_pressed: bool,
     is_rmb_pressed: bool,
+
+    sun_theta: f32,
+    sun_phi: f32,
 }
 
 impl DxSample for ShapesSample {
     fn new(base: &mut common::app::Base) -> Self {
         base.cmd_list.reset(&base.cmd_list_alloc, PSO_NONE).unwrap();
 
-        let cbv_table1 = [DescriptorRange::cbv(1, 0)];
-        let cbv_table2 = [DescriptorRange::cbv(1, 1)];
-
         let root_parameter = [
-            RootParameter::descriptor_table(&cbv_table1),
-            RootParameter::descriptor_table(&cbv_table2),
+            RootParameter::cbv(0, 0),
+            RootParameter::cbv(1, 0),
+            RootParameter::cbv(2, 0),
         ];
 
         let root_signature_desc = RootSignatureDesc::default()
@@ -101,38 +109,50 @@ impl DxSample for ShapesSample {
 
         let input_layout = [
             InputElementDesc::per_vertex(SemanticName::Position(0), Format::Rgb32Float, 0),
-            InputElementDesc::per_vertex(SemanticName::Color(0), Format::Rgba32Float, 0)
-                .with_offset(12),
+            InputElementDesc::per_vertex(SemanticName::Normal(0), Format::Rgb32Float, 0)
+                .with_offset(offset_of!(Vertex, normal)),
         ];
+
+        let materials = HashMap::from_iter([
+            (
+                "grass".to_string(),
+                Rc::new(RefCell::new(Material {
+                    name: "grass".to_string(),
+                    cb_index: 0,
+                    diffuse_srv_heap_index: None,
+                    num_frames_dirty: Self::FRAME_COUNT,
+                    diffuse_albedo: vec4(0.2, 0.6, 0.6, 1.0),
+                    fresnel_r0: vec3(0.01, 0.01, 0.01),
+                    roughness: 0.125,
+                    transform: Mat4::IDENTITY,
+                })),
+            ),
+            (
+                "water".to_string(),
+                Rc::new(RefCell::new(Material {
+                    name: "water".to_string(),
+                    cb_index: 1,
+                    diffuse_srv_heap_index: None,
+                    num_frames_dirty: Self::FRAME_COUNT,
+                    diffuse_albedo: vec4(0.0, 0.2, 0.6, 1.0),
+                    fresnel_r0: vec3(0.1, 0.1, 0.1),
+                    roughness: 0.0,
+                    transform: Mat4::IDENTITY,
+                })),
+            ),
+        ]);
 
         let geometries = HashMap::from_iter([(
             "shapeGeo".to_string(),
             Rc::new(Self::build_geometry(&base.device, &base.cmd_list)),
         )]);
 
-        let all_ritems = Self::build_render_items(&geometries);
+        let all_ritems = Self::build_render_items(&geometries, &materials);
         let opaque_ritems = all_ritems.clone();
 
-        let frame_resources =
-            std::array::from_fn(|_| FrameResource::new(&base.device, 1, opaque_ritems.len()));
-
-        let pass_cbv_offset = opaque_ritems.len() * Self::FRAME_COUNT;
-        let cbv_heap: DescriptorHeap = base
-            .device
-            .create_descriptor_heap(
-                &DescriptorHeapDesc::cbr_srv_uav((opaque_ritems.len() + 1) * Self::FRAME_COUNT)
-                    .with_flags(DescriptorHeapFlags::ShaderVisible),
-            )
-            .unwrap();
-
-        Self::build_constant_buffer_view(
-            &base.device,
-            &cbv_heap,
-            pass_cbv_offset,
-            opaque_ritems.len(),
-            &frame_resources,
-            base.cbv_srv_uav_descriptor_size,
-        );
+        let frame_resources = std::array::from_fn(|_| {
+            FrameResource::new(&base.device, 1, opaque_ritems.len(), materials.len())
+        });
 
         let pso_desc = GraphicsPipelineDesc::new(shaders.get("standardVS").unwrap())
             .with_ps(shaders.get("opaquePS").unwrap())
@@ -173,7 +193,6 @@ impl DxSample for ShapesSample {
 
         Self {
             root_signature,
-            cbv_heap,
             frame_resources,
             curr_frame_resource: 0,
             pso,
@@ -191,8 +210,10 @@ impl DxSample for ShapesSample {
             geometries,
             shaders,
             main_pass_cb: ConstantBufferData(PassConstants::default()),
-            pass_cbv_offset: pass_cbv_offset as u32,
             is_wireframe: false,
+            materials,
+            sun_theta: 1.25 * PI,
+            sun_phi: FRAC_PI_4,
         }
     }
 
@@ -222,6 +243,7 @@ impl DxSample for ShapesSample {
 
         self.update_object_cb(base);
         self.update_pass_cb(base);
+        self.update_material_cb(base);
     }
 
     fn render(&mut self, base: &mut common::app::Base) {
@@ -274,24 +296,15 @@ impl DxSample for ShapesSample {
         );
 
         base.cmd_list
-            .set_descriptor_heaps(&[Some(self.cbv_heap.clone())]);
-
-        base.cmd_list
             .set_graphics_root_signature(Some(&self.root_signature));
 
-        let pass_cbv_index = self.pass_cbv_offset as usize + self.curr_frame_resource;
-        let pass_cbv_handle = self
-            .cbv_heap
-            .get_gpu_descriptor_handle_for_heap_start()
-            .advance(pass_cbv_index, base.cbv_srv_uav_descriptor_size);
+        let pass_cb = self.frame_resources[self.curr_frame_resource]
+            .pass_cb
+            .resource();
         base.cmd_list
-            .set_graphics_root_descriptor_table(1, pass_cbv_handle);
+            .set_graphics_root_constant_buffer_view(2, pass_cb.get_gpu_virtual_address());
 
-        self.draw_render_items(
-            &base.cmd_list,
-            &self.opaque_ritems,
-            base.cbv_srv_uav_descriptor_size,
-        );
+        self.draw_render_items(&base.cmd_list, &self.opaque_ritems);
 
         base.cmd_list
             .resource_barrier(&[ResourceBarrier::transition(
@@ -324,7 +337,15 @@ impl DxSample for ShapesSample {
         );
     }
 
-    fn on_key_down(&mut self, _: winit::keyboard::KeyCode, _: bool) {}
+    fn on_key_down(&mut self, key: winit::keyboard::KeyCode, _: bool) {
+        match key {
+            KeyCode::KeyW => self.sun_theta += 0.1,
+            KeyCode::KeyS => self.sun_theta -= 0.1,
+            KeyCode::KeyD => self.sun_phi += 0.1,
+            KeyCode::KeyA => self.sun_phi -= 0.1,
+            _ => {}
+        }
+    }
 
     fn on_key_up(&mut self, key: winit::keyboard::KeyCode) {
         match key {
@@ -395,7 +416,7 @@ impl ShapesSample {
         let inv_proj = proj.inverse();
         let inv_view_proj = view_proj.inverse();
 
-        let pass_const = PassConstants {
+        let mut pass_const = PassConstants {
             view,
             inv_view,
             proj,
@@ -413,11 +434,46 @@ impl ShapesSample {
             far_z: 1000.0,
             total_time: base.timer.total_time(),
             delta_time: base.timer.delta_time(),
+            ambient_light: vec4(0.25, 0.25, 0.35, 1.0),
+            lights: Default::default(),
         };
+
+        pass_const.lights[0].direction = spherical_to_cartesian(1.0, self.sun_theta, self.sun_phi);
+        pass_const.lights[0].strength = vec3(1.0, 0.0, 0.25);
+        pass_const.lights[1].falloff_start = 40.0;
+        pass_const.lights[1].falloff_end = 50.0;
+        pass_const.lights[1].strength = vec3(0.8, 0.8, 0.8);
+        pass_const.lights[1].position = vec3(5.0, 5.0, 0.3);
+        pass_const.lights[2].direction = vec3(0.0, -0.707, -0.707);
+        pass_const.lights[2].strength = vec3(0.8, 0.8, 0.8);
+        pass_const.lights[2].position = vec3(0.0, 1.3, 0.3);
+        pass_const.lights[2].falloff_start = 40.0;
+        pass_const.lights[2].falloff_end = 50.0;
+        pass_const.lights[2].spot_power = 1.0;
 
         self.frame_resources[self.curr_frame_resource]
             .pass_cb
             .copy_data(0, ConstantBufferData(pass_const));
+    }
+
+    fn update_material_cb(&mut self, _: &common::app::Base) {
+        let curr_obj_cb = &self.frame_resources[self.curr_frame_resource].material_cb;
+
+        for e in &mut self.materials.values_mut() {
+            let mut e = e.borrow_mut();
+            if e.num_frames_dirty > 0 {
+                curr_obj_cb.copy_data(
+                    e.cb_index,
+                    ConstantBufferData(MaterialConstant {
+                        diffuse_albedo: e.diffuse_albedo,
+                        fresnel_r0: e.fresnel_r0,
+                        roughness: e.roughness,
+                        transform: e.transform,
+                    }),
+                );
+                e.num_frames_dirty -= 1;
+            }
+        }
     }
 
     fn build_geometry(device: &Device, cmd_list: &GraphicsCommandList) -> MeshGeometry {
@@ -469,19 +525,19 @@ impl ShapesSample {
             .iter()
             .map(|v| Vertex {
                 pos: v.pos,
-                color: vec4(1.0 / 255.0, 50.0 / 255.0, 32.0 / 255.0, 1.0),
+                normal: v.normal,
             })
             .chain(grid.vertices.iter().map(|v| Vertex {
                 pos: v.pos,
-                color: vec4(34.0 / 255.0, 139.0 / 255.0, 34.0 / 255.0, 1.0),
+                normal: v.normal,
             }))
             .chain(sphere.vertices.iter().map(|v| Vertex {
                 pos: v.pos,
-                color: vec4(220.0 / 255.0, 20.0 / 255.0, 60.0 / 255.0, 1.0),
+                normal: v.normal,
             }))
             .chain(cylinder.vertices.iter().map(|v| Vertex {
                 pos: v.pos,
-                color: vec4(0.0 / 255.0, 0.0 / 255.0, 255.0, 1.0),
+                normal: v.normal,
             }))
             .collect::<Vec<_>>();
 
@@ -536,7 +592,10 @@ impl ShapesSample {
         }
     }
 
-    fn build_render_items(geometries: &HashMap<String, Rc<MeshGeometry>>) -> Vec<Rc<RenderItem>> {
+    fn build_render_items(
+        geometries: &HashMap<String, Rc<MeshGeometry>>,
+        materials: &HashMap<String, Rc<RefCell<Material>>>,
+    ) -> Vec<Rc<RenderItem>> {
         let mut vec = vec![];
         let geo = geometries.get("shapeGeo").unwrap();
 
@@ -550,6 +609,7 @@ impl ShapesSample {
             index_count: geo.draw_args.get("box").unwrap().index_count,
             start_index_location: geo.draw_args.get("box").unwrap().start_index_location,
             base_vertex_location: geo.draw_args.get("box").unwrap().base_vertex_location,
+            material: Rc::clone(materials.get("grass").unwrap()),
         }));
 
         vec.push(Rc::new(RenderItem {
@@ -561,6 +621,7 @@ impl ShapesSample {
             index_count: geo.draw_args.get("grid").unwrap().index_count,
             start_index_location: geo.draw_args.get("grid").unwrap().start_index_location,
             base_vertex_location: geo.draw_args.get("grid").unwrap().base_vertex_location,
+            material: Rc::clone(materials.get("water").unwrap()),
         }));
 
         let mut obj_index = 2;
@@ -575,6 +636,7 @@ impl ShapesSample {
                 index_count: geo.draw_args.get("cylinder").unwrap().index_count,
                 start_index_location: geo.draw_args.get("cylinder").unwrap().start_index_location,
                 base_vertex_location: geo.draw_args.get("cylinder").unwrap().base_vertex_location,
+                material: Rc::clone(materials.get("grass").unwrap()),
             }));
 
             obj_index += 1;
@@ -588,6 +650,7 @@ impl ShapesSample {
                 index_count: geo.draw_args.get("cylinder").unwrap().index_count,
                 start_index_location: geo.draw_args.get("cylinder").unwrap().start_index_location,
                 base_vertex_location: geo.draw_args.get("cylinder").unwrap().base_vertex_location,
+                material: Rc::clone(materials.get("grass").unwrap()),
             }));
 
             obj_index += 1;
@@ -601,6 +664,7 @@ impl ShapesSample {
                 index_count: geo.draw_args.get("sphere").unwrap().index_count,
                 start_index_location: geo.draw_args.get("sphere").unwrap().start_index_location,
                 base_vertex_location: geo.draw_args.get("sphere").unwrap().base_vertex_location,
+                material: Rc::clone(materials.get("water").unwrap()),
             }));
 
             obj_index += 1;
@@ -614,6 +678,7 @@ impl ShapesSample {
                 index_count: geo.draw_args.get("sphere").unwrap().index_count,
                 start_index_location: geo.draw_args.get("sphere").unwrap().start_index_location,
                 base_vertex_location: geo.draw_args.get("sphere").unwrap().base_vertex_location,
+                material: Rc::clone(materials.get("water").unwrap()),
             }));
 
             obj_index += 1;
@@ -622,69 +687,29 @@ impl ShapesSample {
         vec
     }
 
-    fn build_constant_buffer_view(
-        device: &Device,
-        cbv_heap: &DescriptorHeap,
-        pass_offset: usize,
-        obj_count: usize,
-        frame_resources: &[FrameResource; Self::FRAME_COUNT],
-        handle_size: usize,
-    ) {
+    fn draw_render_items(&self, cmd_list: &GraphicsCommandList, ritems: &[Rc<RenderItem>]) {
         let obj_size = size_of::<ConstantBufferData<ObjectConstants>>();
+        let obj_cb = self.frame_resources[self.curr_frame_resource]
+            .object_cb
+            .resource();
 
-        for (frame, resource) in frame_resources.iter().enumerate() {
-            let obj_cb = resource.object_cb.resource();
+        let mat_size = size_of::<ConstantBufferData<MaterialConstant>>();
+        let mat_cb = self.frame_resources[self.curr_frame_resource]
+            .material_cb
+            .resource();
 
-            for i in 0..obj_count {
-                let mut addr = obj_cb.get_gpu_virtual_address();
-
-                addr += (i * obj_size) as u64;
-
-                let heap_idx = frame * obj_count + i;
-                let handle = cbv_heap.get_cpu_descriptor_handle_for_heap_start();
-                let handle = handle.advance(heap_idx, handle_size);
-
-                device.create_constant_buffer_view(
-                    Some(&ConstantBufferViewDesc::new(addr, obj_size as u32)),
-                    handle,
-                );
-            }
-        }
-
-        let pass_size = size_of::<ConstantBufferData<PassConstants>>();
-
-        for (frame, resource) in frame_resources.iter().enumerate() {
-            let pass_cb = resource.pass_cb.resource();
-
-            let addr = pass_cb.get_gpu_virtual_address();
-
-            let heap_idx = frame + pass_offset;
-            let handle = cbv_heap.get_cpu_descriptor_handle_for_heap_start();
-            let handle = handle.advance(heap_idx, handle_size);
-
-            device.create_constant_buffer_view(
-                Some(&ConstantBufferViewDesc::new(addr, pass_size as u32)),
-                handle,
-            );
-        }
-    }
-
-    fn draw_render_items(
-        &self,
-        cmd_list: &GraphicsCommandList,
-        ritems: &[Rc<RenderItem>],
-        cbv_descriptor_size: usize,
-    ) {
         for item in ritems {
             cmd_list.ia_set_vertex_buffers(0, &[item.geo.vertex_buffer_view()]);
             cmd_list.ia_set_index_buffer(Some(&item.geo.index_buffer_view()));
             cmd_list.ia_set_primitive_topology(item.primitive_type);
 
-            let cbv_index = self.curr_frame_resource * self.opaque_ritems.len() + item.obj_cb_index;
-            let cbv_handle = self.cbv_heap.get_gpu_descriptor_handle_for_heap_start();
-            let cbv_handle = cbv_handle.advance(cbv_index, cbv_descriptor_size);
+            let obj_addr = obj_cb.get_gpu_virtual_address() + (item.obj_cb_index * obj_size) as u64;
+            cmd_list.set_graphics_root_constant_buffer_view(0, obj_addr);
 
-            cmd_list.set_graphics_root_descriptor_table(0, cbv_handle);
+            let mat_addr = mat_cb.get_gpu_virtual_address()
+                + (item.material.borrow().cb_index * mat_size) as u64;
+            cmd_list.set_graphics_root_constant_buffer_view(1, mat_addr);
+
             cmd_list.draw_indexed_instanced(
                 item.index_count,
                 1,

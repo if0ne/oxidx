@@ -50,9 +50,9 @@ pub struct Base {
     pub cmd_list_alloc: CommandAllocator,
     pub cmd_list: GraphicsCommandList,
 
-    pub rtv_descriptor_size: u32,
-    pub dsv_descriptor_size: u32,
-    pub cbv_srv_uav_descriptor_size: u32,
+    pub rtv_descriptor_size: usize,
+    pub dsv_descriptor_size: usize,
+    pub cbv_srv_uav_descriptor_size: usize,
 
     pub client_width: u32,
     pub client_height: u32,
@@ -183,7 +183,7 @@ impl Base {
             self.device.create_render_target_view(
                 Some(&render_target),
                 None,
-                rtv_handle.advance(i, self.rtv_descriptor_size as usize),
+                rtv_handle.advance(i, self.rtv_descriptor_size),
             );
 
             render_target
@@ -284,7 +284,7 @@ impl Base {
             self.device.create_render_target_view(
                 Some(&render_target),
                 None,
-                rtv_handle.advance(i, self.rtv_descriptor_size as usize),
+                rtv_handle.advance(i, self.rtv_descriptor_size),
             );
 
             render_target
@@ -479,10 +479,10 @@ impl SwapchainContext {
         &self.swapchain_buffer.as_ref().unwrap()[self.current_back_buffer.get()]
     }
 
-    pub fn current_back_buffer_view(&self, rtv_descriptor_size: u32) -> CpuDescriptorHandle {
+    pub fn current_back_buffer_view(&self, rtv_descriptor_size: usize) -> CpuDescriptorHandle {
         self.rtv_heap
             .get_cpu_descriptor_handle_for_heap_start()
-            .advance(self.current_back_buffer.get(), rtv_descriptor_size as usize)
+            .advance(self.current_back_buffer.get(), rtv_descriptor_size)
     }
 
     pub fn depth_stencil_view(&self) -> CpuDescriptorHandle {

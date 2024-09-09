@@ -2270,7 +2270,7 @@ impl<'a> RootSignatureDesc<'a> {
     }
 
     #[inline]
-    pub fn with_sampler<'b>(mut self, samplers: &'a [StaticSamplerDesc]) -> Self
+    pub fn with_samplers<'b>(mut self, samplers: &'a [StaticSamplerDesc]) -> Self
     where
         'a: 'b,
     {

@@ -8,6 +8,7 @@ pub mod geometry_mesh;
 pub mod lights;
 pub mod material;
 pub mod math;
+pub mod texture;
 pub mod upload_buffer;
 pub mod utils;
 

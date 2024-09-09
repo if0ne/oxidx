@@ -7,6 +7,8 @@ use std::{
 
 use oxidx::dx::*;
 
+use crate::texture::Texture;
+
 #[derive(Clone, Copy, Debug)]
 #[repr(align(256))]
 pub struct ConstantBufferData<T>(pub T);
@@ -93,9 +95,11 @@ pub fn load_binary(filename: impl AsRef<Path>) -> Blob {
 pub fn load_texture_from_file(
     device: &Device,
     cmd_list: &GraphicsCommandList,
+    name: impl Into<String>,
     filename: impl AsRef<Path>,
-) -> Result<(Resource, Resource), DxError> {
-    let img = image::open(filename)
+) -> Result<Texture, DxError> {
+    let filename = filename.as_ref().to_path_buf();
+    let img = image::open(&filename)
         .map_err(|e| DxError::Fail(e.to_string()))?
         .to_rgba8();
 
@@ -147,5 +151,10 @@ pub fn load_texture_from_file(
         ResourceStates::PixelShaderResource,
     )]);
 
-    Ok((resource, upload_buffer))
+    Ok(Texture {
+        name: name.into(),
+        filename,
+        image: resource,
+        upload_buffer,
+    })
 }
