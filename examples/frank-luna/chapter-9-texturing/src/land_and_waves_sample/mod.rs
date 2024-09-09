@@ -210,7 +210,7 @@ impl DxSample for LandAndWavesSample {
 
         let all_ritems = vec![
             Rc::new(RenderItem {
-                world: Mat4::IDENTITY,
+                world: Mat4::from_scale(vec3(5.0, 5.0, 5.0)),
                 num_frames_dirty: Cell::new(Self::FRAME_COUNT),
                 obj_cb_index: 0,
                 geo: Rc::clone(geometries.get("waterGeo").unwrap()),
@@ -378,6 +378,7 @@ impl DxSample for LandAndWavesSample {
             event.close().unwrap();
         }
 
+        self.animate_materials(base);
         self.update_object_cb(base);
         self.update_pass_cb(base);
         self.update_waves(base);
@@ -699,6 +700,29 @@ impl LandAndWavesSample {
                 e.num_frames_dirty -= 1;
             }
         }
+    }
+
+    fn animate_materials(&mut self, base: &common::app::Base) {
+        let mut material = self.materials.get_mut("water").unwrap().borrow_mut();
+
+        let mut tu = material.transform.w_axis.x;
+        let mut tv = material.transform.w_axis.y;
+
+        tu += 0.1 * base.timer.delta_time();
+        tv += 0.02 * base.timer.delta_time();
+
+        if tu >= 1.0 {
+            tu -= 1.0;
+        }
+
+        if tv >= 1.0 {
+            tv -= 1.0;
+        }
+
+        material.transform.w_axis.x = tu;
+        material.transform.w_axis.y = tv;
+
+        material.num_frames_dirty = Self::FRAME_COUNT;
     }
 
     fn build_land_geometry(device: &Device, cmd_list: &GraphicsCommandList) -> MeshGeometry {
