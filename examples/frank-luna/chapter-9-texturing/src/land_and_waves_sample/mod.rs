@@ -8,6 +8,7 @@ use std::{
     f32::consts::{FRAC_PI_4, PI},
     mem::offset_of,
     rc::Rc,
+    u32,
 };
 
 use common::{
@@ -34,6 +35,7 @@ use render_item::RenderItem;
 pub struct LandAndWavesSample {
     root_signature: RootSignature,
     frame_resources: [FrameResource; Self::FRAME_COUNT],
+    srv_descriptor_heap: DescriptorHeap,
     curr_frame_resource: usize,
     cbv_srv_descriptor_size: usize,
 
@@ -79,8 +81,31 @@ impl DxSample for LandAndWavesSample {
 
         let textures = Self::load_textures(&base.device, &base.cmd_list);
 
-        let table = [DescriptorRange::srv(1, 0)];
+        let heap_desc =
+            DescriptorHeapDesc::cbr_srv_uav(3).with_flags(DescriptorHeapFlags::ShaderVisible);
 
+        let descriptor_heap = base
+            .device
+            .create_descriptor_heap::<DescriptorHeap>(&heap_desc)
+            .unwrap();
+
+        let srv_desc = ShaderResourceViewDesc::texture_2d(Format::Rgba8Unorm, 0, u32::MAX, 0.0, 0);
+
+        let descriptor = descriptor_heap.get_cpu_descriptor_handle_for_heap_start();
+        base.device.create_shader_resource_view(
+            Some(&textures.get("grass").unwrap().image),
+            Some(&srv_desc),
+            descriptor,
+        );
+
+        let descriptor = descriptor.advance(1, cbv_srv_descriptor_size);
+        base.device.create_shader_resource_view(
+            Some(&textures.get("water").unwrap().image),
+            Some(&srv_desc),
+            descriptor,
+        );
+
+        let table = [DescriptorRange::srv(1, 0)];
         let root_parameter = [
             RootParameter::cbv(0, 0),
             RootParameter::cbv(1, 0),
@@ -132,6 +157,8 @@ impl DxSample for LandAndWavesSample {
             InputElementDesc::per_vertex(SemanticName::Position(0), Format::Rgb32Float, 0),
             InputElementDesc::per_vertex(SemanticName::Normal(0), Format::Rgb32Float, 0)
                 .with_offset(offset_of!(Vertex, normal)),
+            InputElementDesc::per_vertex(SemanticName::TexCoord(0), Format::Rgb32Float, 0)
+                .with_offset(offset_of!(Vertex, uv)),
         ];
 
         let geometries = HashMap::from_iter([
@@ -158,7 +185,7 @@ impl DxSample for LandAndWavesSample {
                 Rc::new(RefCell::new(Material {
                     name: "grass".to_string(),
                     cb_index: 0,
-                    diffuse_srv_heap_index: None,
+                    diffuse_srv_heap_index: Some(1),
                     num_frames_dirty: Self::FRAME_COUNT,
                     diffuse_albedo: vec4(0.2, 0.6, 0.6, 1.0),
                     fresnel_r0: vec3(0.01, 0.01, 0.01),
@@ -171,7 +198,7 @@ impl DxSample for LandAndWavesSample {
                 Rc::new(RefCell::new(Material {
                     name: "water".to_string(),
                     cb_index: 1,
-                    diffuse_srv_heap_index: None,
+                    diffuse_srv_heap_index: Some(2),
                     num_frames_dirty: Self::FRAME_COUNT,
                     diffuse_albedo: vec4(0.0, 0.2, 0.6, 1.0),
                     fresnel_r0: vec3(0.1, 0.1, 0.1),
@@ -323,6 +350,7 @@ impl DxSample for LandAndWavesSample {
             sun_phi: FRAC_PI_4,
             cbv_srv_descriptor_size,
             textures,
+            srv_descriptor_heap: descriptor_heap,
         }
     }
 
@@ -406,13 +434,16 @@ impl DxSample for LandAndWavesSample {
         );
 
         base.cmd_list
+            .set_descriptor_heaps(&[Some(self.srv_descriptor_heap.clone())]);
+
+        base.cmd_list
             .set_graphics_root_signature(Some(&self.root_signature));
 
         let pass_cb = self.frame_resources[self.curr_frame_resource]
             .pass_cb
             .resource();
         base.cmd_list
-            .set_graphics_root_constant_buffer_view(2, pass_cb.get_gpu_virtual_address());
+            .set_graphics_root_constant_buffer_view(3, pass_cb.get_gpu_virtual_address());
 
         self.draw_render_items(&base.cmd_list, &self.opaque_ritems);
 
@@ -550,10 +581,6 @@ impl LandAndWavesSample {
             (
                 "water".to_string(),
                 load_texture_from_file(device, cmd_list, "water", "textures/water.png").unwrap(),
-            ),
-            (
-                "fence".to_string(),
-                load_texture_from_file(device, cmd_list, "fence", "textures/fence.png").unwrap(),
             ),
         ])
     }
@@ -828,12 +855,21 @@ impl LandAndWavesSample {
             cmd_list.ia_set_index_buffer(Some(&item.geo.borrow().index_buffer_view()));
             cmd_list.ia_set_primitive_topology(item.primitive_type);
 
+            let tex = self
+                .srv_descriptor_heap
+                .get_gpu_descriptor_handle_for_heap_start();
+            let tex = tex.advance(
+                item.material.borrow().diffuse_srv_heap_index.unwrap_or(0),
+                self.cbv_srv_descriptor_size,
+            );
+            cmd_list.set_graphics_root_descriptor_table(0, tex);
+
             let obj_addr = obj_cb.get_gpu_virtual_address() + (item.obj_cb_index * obj_size) as u64;
-            cmd_list.set_graphics_root_constant_buffer_view(0, obj_addr);
+            cmd_list.set_graphics_root_constant_buffer_view(1, obj_addr);
 
             let mat_addr = mat_cb.get_gpu_virtual_address()
                 + (item.material.borrow().cb_index * mat_size) as u64;
-            cmd_list.set_graphics_root_constant_buffer_view(1, mat_addr);
+            cmd_list.set_graphics_root_constant_buffer_view(2, mat_addr);
 
             cmd_list.draw_indexed_instanced(
                 item.index_count,

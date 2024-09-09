@@ -2972,7 +2972,7 @@ pub enum SemanticName {
     Tangent(u8),
 
     /// Texture coordinates
-    Texcoord(u8),
+    TexCoord(u8),
 }
 
 impl SemanticName {
@@ -2988,7 +2988,7 @@ impl SemanticName {
             SemanticName::PositionT => c"POSITIONT",
             SemanticName::Psize(_) => c"PSIZE",
             SemanticName::Tangent(_) => c"TANGENT",
-            SemanticName::Texcoord(_) => c"TEXCOORD",
+            SemanticName::TexCoord(_) => c"TEXCOORD",
         }
     }
 
@@ -3004,7 +3004,7 @@ impl SemanticName {
             SemanticName::PositionT => 0,
             SemanticName::Psize(n) => n,
             SemanticName::Tangent(n) => n,
-            SemanticName::Texcoord(n) => n,
+            SemanticName::TexCoord(n) => n,
         }
     }
 }

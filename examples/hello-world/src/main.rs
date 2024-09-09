@@ -177,9 +177,9 @@ impl DXSample for Sample {
             .create_descriptor_heap(&DescriptorHeapDesc::rtv(FRAME_COUNT))
             .unwrap();
 
-        let rtv_descriptor_size =
-            self.device
-                .get_descriptor_handle_increment_size(DescriptorHeapType::Rtv);
+        let rtv_descriptor_size = self
+            .device
+            .get_descriptor_handle_increment_size(DescriptorHeapType::Rtv);
         let rtv_handle = rtv_heap.get_cpu_descriptor_handle_for_heap_start();
 
         let render_targets: [Resource; FRAME_COUNT as usize] = std::array::from_fn(|i| {
