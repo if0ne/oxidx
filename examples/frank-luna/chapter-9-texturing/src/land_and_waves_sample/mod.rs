@@ -107,10 +107,10 @@ impl DxSample for LandAndWavesSample {
 
         let table = [DescriptorRange::srv(1, 0)];
         let root_parameter = [
+            RootParameter::descriptor_table(&table).with_visibility(ShaderVisibility::Pixel),
             RootParameter::cbv(0, 0),
             RootParameter::cbv(1, 0),
             RootParameter::cbv(2, 0),
-            RootParameter::descriptor_table(&table).with_visibility(ShaderVisibility::Pixel),
         ];
 
         let static_samplers = Self::get_static_samplers();
