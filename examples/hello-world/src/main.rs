@@ -97,7 +97,7 @@ where
     });
 }
 
-const FRAME_COUNT: u32 = 2;
+const FRAME_COUNT: usize = 2;
 
 pub struct Sample {
     dxgi_factory: Factory4,
@@ -109,7 +109,7 @@ struct Resources {
     command_queue: CommandQueue,
     swap_chain: Swapchain3,
     frame_index: u32,
-    render_targets: [Resource; FRAME_COUNT as usize],
+    render_targets: [Resource; FRAME_COUNT],
     rtv_heap: DescriptorHeap,
     rtv_descriptor_size: usize,
     viewport: Viewport,
@@ -148,7 +148,7 @@ impl DXSample for Sample {
         let (width, height) = self.window_size();
 
         let swap_chain_desc = SwapchainDesc1::new(width as u32, height as u32)
-            .with_buffer_count(FRAME_COUNT)
+            .with_buffer_count(FRAME_COUNT as u32)
             .with_format(Format::Bgra8Unorm)
             .with_usage(FrameBufferUsage::RenderTargetOutput)
             .with_swap_effect(SwapEffect::FlipDiscard);
@@ -182,7 +182,7 @@ impl DXSample for Sample {
             .get_descriptor_handle_increment_size(DescriptorHeapType::Rtv);
         let rtv_handle = rtv_heap.get_cpu_descriptor_handle_for_heap_start();
 
-        let render_targets: [Resource; FRAME_COUNT as usize] = std::array::from_fn(|i| {
+        let render_targets: [Resource; FRAME_COUNT] = std::array::from_fn(|i| {
             let render_target: Resource = swap_chain.get_buffer(i).unwrap();
             self.device.create_render_target_view(
                 Some(&render_target),

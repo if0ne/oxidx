@@ -622,10 +622,10 @@ pub struct DescriptorHeapDesc(pub(crate) D3D12_DESCRIPTOR_HEAP_DESC);
 
 impl DescriptorHeapDesc {
     #[inline]
-    pub fn rtv(num: u32) -> Self {
+    pub fn rtv(num: usize) -> Self {
         Self(D3D12_DESCRIPTOR_HEAP_DESC {
             Type: D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-            NumDescriptors: num,
+            NumDescriptors: num as u32,
             ..Default::default()
         })
     }
