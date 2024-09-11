@@ -202,6 +202,13 @@ impl DxSample for LandAndWavesSample {
                     &waves,
                 ))),
             ),
+            (
+                "boxGeo".to_string(),
+                Rc::new(RefCell::new(Self::build_box_geometry(
+                    &base.device,
+                    &base.cmd_list,
+                ))),
+            ),
         ]);
 
         let materials = HashMap::from_iter([
@@ -228,6 +235,19 @@ impl DxSample for LandAndWavesSample {
                     diffuse_albedo: vec4(0.0, 0.2, 0.6, 1.0),
                     fresnel_r0: vec3(0.1, 0.1, 0.1),
                     roughness: 0.0,
+                    transform: Mat4::IDENTITY,
+                })),
+            ),
+            (
+                "fence".to_string(),
+                Rc::new(RefCell::new(Material {
+                    name: "fence".to_string(),
+                    cb_index: 2,
+                    diffuse_srv_heap_index: Some(2),
+                    num_frames_dirty: Self::FRAME_COUNT,
+                    diffuse_albedo: vec4(1.0, 1.0, 1.0, 1.0),
+                    fresnel_r0: vec3(0.1, 0.1, 0.1),
+                    roughness: 0.25,
                     transform: Mat4::IDENTITY,
                 })),
             ),
@@ -299,12 +319,46 @@ impl DxSample for LandAndWavesSample {
                 .base_vertex_location,
         });
 
+        let ri_box = Rc::new(RenderItem {
+            world: Mat4::from_translation(vec3(3.0, 2.0, -9.0)),
+            num_frames_dirty: Cell::new(Self::FRAME_COUNT),
+            obj_cb_index: 1,
+            geo: Rc::clone(geometries.get("boxGeo").unwrap()),
+            material: Rc::clone(materials.get("fence").unwrap()),
+            primitive_type: PrimitiveTopology::Triangle,
+            index_count: geometries
+                .get("boxGeo")
+                .unwrap()
+                .borrow()
+                .draw_args
+                .get("box")
+                .unwrap()
+                .index_count,
+            start_index_location: geometries
+                .get("boxGeo")
+                .unwrap()
+                .borrow()
+                .draw_args
+                .get("box")
+                .unwrap()
+                .start_index_location,
+            base_vertex_location: geometries
+                .get("boxGeo")
+                .unwrap()
+                .borrow()
+                .draw_args
+                .get("box")
+                .unwrap()
+                .base_vertex_location,
+        });
+
         let ritems_by_layer = HashMap::from_iter([
             (RenderLayer::Opaque, vec![Rc::clone(&ri_land)]),
             (RenderLayer::Transparent, vec![Rc::clone(&ri_water)]),
+            (RenderLayer::AlphaTested, vec![Rc::clone(&ri_box)]),
         ]);
 
-        let all_ritems = vec![ri_land, ri_water];
+        let all_ritems = vec![ri_land, ri_water, ri_box];
 
         let frame_resources = std::array::from_fn(|_| {
             FrameResource::new(
@@ -686,6 +740,10 @@ impl LandAndWavesSample {
                 "water".to_string(),
                 load_texture_from_file(device, cmd_list, "water", "textures/water.png").unwrap(),
             ),
+            (
+                "fence".to_string(),
+                load_texture_from_file(device, cmd_list, "fence", "textures/fence.png").unwrap(),
+            ),
         ])
     }
 
@@ -948,6 +1006,66 @@ impl LandAndWavesSample {
                 "grid".to_string(),
                 SubmeshGeometry {
                     index_count: indices.len() as u32,
+                    start_index_location: 0,
+                    base_vertex_location: 0,
+                    bounds: BoundingBox::default(),
+                },
+            )]),
+        }
+    }
+
+    fn build_box_geometry(device: &Device, cmd_list: &GraphicsCommandList) -> MeshGeometry {
+        let mut r#box = GeometryGenerator::create_box(8.0, 8.0, 8.0, 3);
+
+        let mut vertices = Vec::with_capacity(r#box.vertices.len());
+        for v in r#box.vertices.iter_mut() {
+            vertices.push(Vertex {
+                pos: v.pos,
+                normal: v.normal,
+                uv: v.uv,
+            });
+        }
+
+        let vertex_buffer_cpu = Blob::create_blob(size_of_val(vertices.as_slice())).unwrap();
+        let index_buffer_cpu =
+            Blob::create_blob(size_of_val(r#box.indices16().as_slice())).unwrap();
+
+        unsafe {
+            std::ptr::copy_nonoverlapping(
+                vertices.as_ptr(),
+                vertex_buffer_cpu.get_buffer_ptr::<Vertex>().as_mut(),
+                vertices.len(),
+            );
+            std::ptr::copy_nonoverlapping(
+                r#box.indices16().as_ptr(),
+                index_buffer_cpu.get_buffer_ptr::<u16>().as_mut(),
+                r#box.indices32.len(),
+            );
+        }
+
+        let (vertex_buffer_gpu, vertex_buffer_uploader) =
+            create_default_buffer(device, cmd_list, &vertices);
+        let (index_buffer_gpu, index_buffer_uploader) =
+            create_default_buffer(device, cmd_list, r#box.indices16().as_slice());
+
+        let index_buffer_byte_size = size_of_val(r#box.indices16().as_slice()) as u32;
+
+        MeshGeometry {
+            name: "boxGeo".to_string(),
+            vertex_buffer_cpu,
+            index_buffer_cpu,
+            vertex_buffer_gpu: Some(vertex_buffer_gpu),
+            index_buffer_gpu: Some(index_buffer_gpu),
+            vertex_buffer_uploader: Some(vertex_buffer_uploader),
+            index_buffer_uploader: Some(index_buffer_uploader),
+            vertex_byte_stride: size_of::<Vertex>() as u32,
+            vertex_byte_size: size_of_val(vertices.as_slice()) as u32,
+            index_format: Format::R16Uint,
+            index_buffer_byte_size,
+            draw_args: HashMap::from_iter([(
+                "box".to_string(),
+                SubmeshGeometry {
+                    index_count: r#box.indices32.len() as u32,
                     start_index_location: 0,
                     base_vertex_location: 0,
                     bounds: BoundingBox::default(),
