@@ -29,6 +29,13 @@ use winit::keyboard::KeyCode;
 use frame_resources::{FrameResource, MaterialConstant, ObjectConstants, PassConstants, Vertex};
 use render_item::RenderItem;
 
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+enum RenderLayer {
+    Opaque,
+    Transparent,
+    AlphaTested,
+}
+
 #[allow(unused)]
 #[derive(Debug)]
 pub struct LandAndWavesSample {
@@ -39,7 +46,7 @@ pub struct LandAndWavesSample {
     cbv_srv_descriptor_size: usize,
 
     all_ritems: Vec<Rc<RenderItem>>,
-    opaque_ritems: Vec<Rc<RenderItem>>,
+    ritems_by_layer: HashMap<RenderLayer, Vec<Rc<RenderItem>>>,
     waves_ritem: Rc<RenderItem>,
     waves: Box<Waves>,
 
@@ -128,7 +135,15 @@ impl DxSample for LandAndWavesSample {
             )
             .unwrap();
 
-        let vs_byte_code = Blob::compile_from_file(
+        let opaque_defines = [ShaderMacro::new(c"FOG", c"1"), ShaderMacro::default()];
+
+        let alpha_tested_defines = [
+            ShaderMacro::new(c"FOG", c"1"),
+            ShaderMacro::new(c"ALPHA_TEST", c"1"),
+            ShaderMacro::default(),
+        ];
+
+        let standard_vs = Blob::compile_from_file(
             "shader.hlsl",
             &[],
             c"VS",
@@ -137,9 +152,19 @@ impl DxSample for LandAndWavesSample {
             0,
         )
         .unwrap();
-        let ps_byte_code = Blob::compile_from_file(
+        let opaque_ps = Blob::compile_from_file(
             "shader.hlsl",
-            &[],
+            &opaque_defines,
+            c"PS",
+            c"ps_5_1",
+            PACK_MATRIX_ROW_MAJOR,
+            0,
+        )
+        .unwrap();
+
+        let alpha_ps = Blob::compile_from_file(
+            "shader.hlsl",
+            &alpha_tested_defines,
             c"PS",
             c"ps_5_1",
             PACK_MATRIX_ROW_MAJOR,
@@ -148,8 +173,9 @@ impl DxSample for LandAndWavesSample {
         .unwrap();
 
         let shaders = HashMap::from_iter([
-            ("standardVS".to_string(), vs_byte_code),
-            ("opaquePS".to_string(), ps_byte_code),
+            ("standardVS".to_string(), standard_vs),
+            ("opaquePS".to_string(), opaque_ps),
+            ("alphaTestedPS".to_string(), alpha_ps),
         ]);
 
         let input_layout = [
@@ -207,79 +233,84 @@ impl DxSample for LandAndWavesSample {
             ),
         ]);
 
-        let all_ritems = vec![
-            Rc::new(RenderItem {
-                world: Mat4::from_scale(vec3(5.0, 5.0, 5.0)),
-                num_frames_dirty: Cell::new(Self::FRAME_COUNT),
-                obj_cb_index: 0,
-                geo: Rc::clone(geometries.get("waterGeo").unwrap()),
-                material: Rc::clone(materials.get("water").unwrap()),
-                primitive_type: PrimitiveTopology::Triangle,
-                index_count: geometries
-                    .get("waterGeo")
-                    .unwrap()
-                    .borrow()
-                    .draw_args
-                    .get("grid")
-                    .unwrap()
-                    .index_count,
-                start_index_location: geometries
-                    .get("waterGeo")
-                    .unwrap()
-                    .borrow()
-                    .draw_args
-                    .get("grid")
-                    .unwrap()
-                    .start_index_location,
-                base_vertex_location: geometries
-                    .get("waterGeo")
-                    .unwrap()
-                    .borrow()
-                    .draw_args
-                    .get("grid")
-                    .unwrap()
-                    .base_vertex_location,
-            }),
-            Rc::new(RenderItem {
-                world: Mat4::IDENTITY,
-                num_frames_dirty: Cell::new(Self::FRAME_COUNT),
-                obj_cb_index: 1,
-                geo: Rc::clone(geometries.get("landGeo").unwrap()),
-                material: Rc::clone(materials.get("grass").unwrap()),
-                primitive_type: PrimitiveTopology::Triangle,
-                index_count: geometries
-                    .get("landGeo")
-                    .unwrap()
-                    .borrow()
-                    .draw_args
-                    .get("grid")
-                    .unwrap()
-                    .index_count,
-                start_index_location: geometries
-                    .get("landGeo")
-                    .unwrap()
-                    .borrow()
-                    .draw_args
-                    .get("grid")
-                    .unwrap()
-                    .start_index_location,
-                base_vertex_location: geometries
-                    .get("landGeo")
-                    .unwrap()
-                    .borrow()
-                    .draw_args
-                    .get("grid")
-                    .unwrap()
-                    .base_vertex_location,
-            }),
-        ];
-        let opaque_ritems = all_ritems.clone();
+        let ri_land = Rc::new(RenderItem {
+            world: Mat4::IDENTITY,
+            num_frames_dirty: Cell::new(Self::FRAME_COUNT),
+            obj_cb_index: 1,
+            geo: Rc::clone(geometries.get("landGeo").unwrap()),
+            material: Rc::clone(materials.get("grass").unwrap()),
+            primitive_type: PrimitiveTopology::Triangle,
+            index_count: geometries
+                .get("landGeo")
+                .unwrap()
+                .borrow()
+                .draw_args
+                .get("grid")
+                .unwrap()
+                .index_count,
+            start_index_location: geometries
+                .get("landGeo")
+                .unwrap()
+                .borrow()
+                .draw_args
+                .get("grid")
+                .unwrap()
+                .start_index_location,
+            base_vertex_location: geometries
+                .get("landGeo")
+                .unwrap()
+                .borrow()
+                .draw_args
+                .get("grid")
+                .unwrap()
+                .base_vertex_location,
+        });
+
+        let ri_water = Rc::new(RenderItem {
+            world: Mat4::from_scale(vec3(5.0, 5.0, 5.0)),
+            num_frames_dirty: Cell::new(Self::FRAME_COUNT),
+            obj_cb_index: 0,
+            geo: Rc::clone(geometries.get("waterGeo").unwrap()),
+            material: Rc::clone(materials.get("water").unwrap()),
+            primitive_type: PrimitiveTopology::Triangle,
+            index_count: geometries
+                .get("waterGeo")
+                .unwrap()
+                .borrow()
+                .draw_args
+                .get("grid")
+                .unwrap()
+                .index_count,
+            start_index_location: geometries
+                .get("waterGeo")
+                .unwrap()
+                .borrow()
+                .draw_args
+                .get("grid")
+                .unwrap()
+                .start_index_location,
+            base_vertex_location: geometries
+                .get("waterGeo")
+                .unwrap()
+                .borrow()
+                .draw_args
+                .get("grid")
+                .unwrap()
+                .base_vertex_location,
+        });
+
+        let ritems_by_layer = HashMap::from_iter([
+            (RenderLayer::Opaque, vec![Rc::clone(&ri_land)]),
+            (RenderLayer::Transparent, vec![Rc::clone(&ri_water)]),
+        ]);
+
+        let all_ritems = vec![ri_land, ri_water];
 
         let frame_resources = std::array::from_fn(|_| {
             FrameResource::new(
                 &base.device,
                 1,
-                opaque_ritems.len(),
+                all_ritems.len(),
                 waves.vertex_count as usize,
                 materials.len(),
             )
@@ -312,9 +343,65 @@ impl DxSample for LandAndWavesSample {
 
         let pso_wireframe = base.device.create_graphics_pipeline(&pso_desc).unwrap();
 
+        let pso_desc = GraphicsPipelineDesc::new(shaders.get("standardVS").unwrap())
+            .with_ps(shaders.get("opaquePS").unwrap())
+            .with_input_layout(&input_layout)
+            .with_root_signature(&root_signature)
+            .with_rasterizer_state(RasterizerDesc::default())
+            .with_blend_desc(BlendDesc::default().with_render_targets([
+                RenderTargetBlendDesc::blend_with_alpha(
+                    Blend::SrcAlpha,
+                    Blend::InvSrcAlpha,
+                    BlendOp::Add,
+                    Blend::One,
+                    Blend::Zero,
+                    BlendOp::Add,
+                    ColorWriteEnable::all(),
+                ),
+            ]))
+            .with_depth_stencil(DepthStencilDesc::default(), base.depth_stencil_format)
+            .with_sample_mask(u32::MAX)
+            .with_primitive_topology(PipelinePrimitiveTopology::Triangle)
+            .with_render_targets([base.back_buffer_format])
+            .with_sample_desc(if base.msaa_state {
+                SampleDesc::new(4, base.msaa_4x_quality)
+            } else {
+                SampleDesc::new(1, 0)
+            })
+            .with_depth_stencil(
+                DepthStencilDesc::default().enable_depth(ComparisonFunc::Less),
+                base.depth_stencil_format,
+            );
+
+        let pso_transparent = base.device.create_graphics_pipeline(&pso_desc).unwrap();
+
+        let pso_desc = GraphicsPipelineDesc::new(shaders.get("standardVS").unwrap())
+            .with_ps(shaders.get("alphaTestedPS").unwrap())
+            .with_input_layout(&input_layout)
+            .with_root_signature(&root_signature)
+            .with_rasterizer_state(RasterizerDesc::default().with_cull_mode(CullMode::None))
+            .with_blend_desc(BlendDesc::default())
+            .with_depth_stencil(DepthStencilDesc::default(), base.depth_stencil_format)
+            .with_sample_mask(u32::MAX)
+            .with_primitive_topology(PipelinePrimitiveTopology::Triangle)
+            .with_render_targets([base.back_buffer_format])
+            .with_sample_desc(if base.msaa_state {
+                SampleDesc::new(4, base.msaa_4x_quality)
+            } else {
+                SampleDesc::new(1, 0)
+            })
+            .with_depth_stencil(
+                DepthStencilDesc::default().enable_depth(ComparisonFunc::Less),
+                base.depth_stencil_format,
+            );
+
+        let pso_alpha_tested = base.device.create_graphics_pipeline(&pso_desc).unwrap();
+
         let pso = HashMap::from_iter([
             ("opaque".to_string(), pso_opaque),
             ("opaque_wireframe".to_string(), pso_wireframe),
+            ("transparent".to_string(), pso_transparent),
+            ("alphaTested".to_string(), pso_alpha_tested),
         ]);
 
         base.cmd_list.close().unwrap();
@@ -336,10 +423,10 @@ impl DxSample for LandAndWavesSample {
             radius: 200.0,
             is_lmb_pressed: false,
             is_rmb_pressed: false,
-            waves_ritem: Rc::clone(&all_ritems[0]),
+            waves_ritem: Rc::clone(&all_ritems[1]),
             waves,
             all_ritems,
-            opaque_ritems,
+            ritems_by_layer,
             geometries,
             shaders,
             materials,
@@ -445,7 +532,24 @@ impl DxSample for LandAndWavesSample {
         base.cmd_list
             .set_graphics_root_constant_buffer_view(3, pass_cb.get_gpu_virtual_address());
 
-        self.draw_render_items(&base.cmd_list, &self.opaque_ritems);
+        self.draw_render_items(
+            &base.cmd_list,
+            self.ritems_by_layer.get(&RenderLayer::Opaque).unwrap(),
+        );
+
+        base.cmd_list
+            .set_pipeline_state(self.pso.get("alphaTested").unwrap());
+        self.draw_render_items(
+            &base.cmd_list,
+            self.ritems_by_layer.get(&RenderLayer::AlphaTested).unwrap(),
+        );
+
+        base.cmd_list
+            .set_pipeline_state(self.pso.get("transparent").unwrap());
+        self.draw_render_items(
+            &base.cmd_list,
+            self.ritems_by_layer.get(&RenderLayer::Transparent).unwrap(),
+        );
 
         base.cmd_list
             .resource_barrier(&[ResourceBarrier::transition(
@@ -632,6 +736,10 @@ impl LandAndWavesSample {
             delta_time: base.timer.delta_time(),
             ambient_light: vec4(0.25, 0.25, 0.35, 1.0),
             lights: Default::default(),
+            fog_color: vec4(0.7, 0.7, 0.7, 1.0),
+            fog_start: 5.0,
+            fog_range: 150.0,
+            cb_per_object_pad2: Default::default(),
         };
 
         pass_const.lights[0].direction = spherical_to_cartesian(1.0, self.sun_theta, self.sun_phi);
