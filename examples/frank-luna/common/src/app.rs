@@ -167,9 +167,7 @@ impl Base {
 
         let rtv_heap: DescriptorHeap = self
             .device
-            .create_descriptor_heap(&DescriptorHeapDesc::rtv(
-                SwapchainContext::BUFFER_COUNT,
-            ))
+            .create_descriptor_heap(&DescriptorHeapDesc::rtv(SwapchainContext::BUFFER_COUNT))
             .unwrap();
         let dsv_heap: DescriptorHeap = self
             .device

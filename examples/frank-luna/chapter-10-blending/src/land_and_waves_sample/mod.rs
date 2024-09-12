@@ -111,6 +111,13 @@ impl DxSample for LandAndWavesSample {
             descriptor,
         );
 
+        let descriptor = descriptor.advance(1, cbv_srv_descriptor_size);
+        base.device.create_shader_resource_view(
+            Some(&textures.get("fence").unwrap().image),
+            Some(&srv_desc),
+            descriptor,
+        );
+
         let table = [DescriptorRange::srv(1, 0)];
         let root_parameter = [
             RootParameter::descriptor_table(&table).with_visibility(ShaderVisibility::Pixel),
@@ -148,7 +155,7 @@ impl DxSample for LandAndWavesSample {
             &[],
             c"VS",
             c"vs_5_1",
-            PACK_MATRIX_ROW_MAJOR,
+            PACK_MATRIX_ROW_MAJOR | COMPILE_DEBUG | COMPILE_SKIP_OPT,
             0,
         )
         .unwrap();
@@ -157,7 +164,7 @@ impl DxSample for LandAndWavesSample {
             &opaque_defines,
             c"PS",
             c"ps_5_1",
-            PACK_MATRIX_ROW_MAJOR,
+            PACK_MATRIX_ROW_MAJOR | COMPILE_DEBUG | COMPILE_SKIP_OPT,
             0,
         )
         .unwrap();
@@ -167,7 +174,7 @@ impl DxSample for LandAndWavesSample {
             &alpha_tested_defines,
             c"PS",
             c"ps_5_1",
-            PACK_MATRIX_ROW_MAJOR,
+            PACK_MATRIX_ROW_MAJOR | COMPILE_DEBUG | COMPILE_SKIP_OPT,
             0,
         )
         .unwrap();
@@ -232,7 +239,7 @@ impl DxSample for LandAndWavesSample {
                     cb_index: 1,
                     diffuse_srv_heap_index: Some(1),
                     num_frames_dirty: Self::FRAME_COUNT,
-                    diffuse_albedo: vec4(0.0, 0.2, 0.6, 1.0),
+                    diffuse_albedo: vec4(0.0, 0.2, 0.6, 0.5),
                     fresnel_r0: vec3(0.1, 0.1, 0.1),
                     roughness: 0.0,
                     transform: Mat4::IDENTITY,
@@ -254,9 +261,9 @@ impl DxSample for LandAndWavesSample {
         ]);
 
         let ri_land = Rc::new(RenderItem {
-            world: Mat4::IDENTITY,
+            world: Mat4::from_scale(vec3(5.0, 1.0, 5.0)),
             num_frames_dirty: Cell::new(Self::FRAME_COUNT),
-            obj_cb_index: 1,
+            obj_cb_index: 0,
             geo: Rc::clone(geometries.get("landGeo").unwrap()),
             material: Rc::clone(materials.get("grass").unwrap()),
             primitive_type: PrimitiveTopology::Triangle,
@@ -289,7 +296,7 @@ impl DxSample for LandAndWavesSample {
         let ri_water = Rc::new(RenderItem {
             world: Mat4::from_scale(vec3(5.0, 5.0, 5.0)),
             num_frames_dirty: Cell::new(Self::FRAME_COUNT),
-            obj_cb_index: 0,
+            obj_cb_index: 1,
             geo: Rc::clone(geometries.get("waterGeo").unwrap()),
             material: Rc::clone(materials.get("water").unwrap()),
             primitive_type: PrimitiveTopology::Triangle,
@@ -320,9 +327,10 @@ impl DxSample for LandAndWavesSample {
         });
 
         let ri_box = Rc::new(RenderItem {
-            world: Mat4::from_translation(vec3(3.0, 2.0, -9.0)),
+            world: Mat4::from_scale(vec3(5.0, 5.0, 5.0))
+                * Mat4::from_translation(vec3(3.0, 2.0, -9.0)),
             num_frames_dirty: Cell::new(Self::FRAME_COUNT),
-            obj_cb_index: 1,
+            obj_cb_index: 2,
             geo: Rc::clone(geometries.get("boxGeo").unwrap()),
             material: Rc::clone(materials.get("fence").unwrap()),
             primitive_type: PrimitiveTopology::Triangle,
@@ -413,7 +421,12 @@ impl DxSample for LandAndWavesSample {
                     ColorWriteEnable::all(),
                 ),
             ]))
-            .with_depth_stencil(DepthStencilDesc::default(), base.depth_stencil_format)
+            .with_depth_stencil(
+                DepthStencilDesc::default()
+                    .enable_depth(ComparisonFunc::Less)
+                    .with_depth_write_mask(DepthWriteMask::empty()),
+                base.depth_stencil_format,
+            )
             .with_sample_mask(u32::MAX)
             .with_primitive_topology(PipelinePrimitiveTopology::Triangle)
             .with_render_targets([base.back_buffer_format])
@@ -434,7 +447,6 @@ impl DxSample for LandAndWavesSample {
             .with_input_layout(&input_layout)
             .with_root_signature(&root_signature)
             .with_rasterizer_state(RasterizerDesc::default().with_cull_mode(CullMode::None))
-            .with_blend_desc(BlendDesc::default())
             .with_depth_stencil(DepthStencilDesc::default(), base.depth_stencil_format)
             .with_sample_mask(u32::MAX)
             .with_primitive_topology(PipelinePrimitiveTopology::Triangle)
@@ -681,9 +693,9 @@ impl DxSample for LandAndWavesSample {
             self.theta += dx;
             self.phi = (self.phi + dy).clamp(0.01, std::f32::consts::PI - 0.1);
         } else if self.is_rmb_pressed {
-            let dx = 0.005 * x;
-            let dy = -0.005 * y;
-            self.radius = (self.radius + dx - dy).clamp(3.0, 400.0);
+            let dx = 0.2 * x;
+            let dy = -0.2 * y;
+            self.radius = (self.radius + dx - dy).clamp(5.0, 400.0);
         }
     }
 }
@@ -792,12 +804,12 @@ impl LandAndWavesSample {
             far_z: 1000.0,
             total_time: base.timer.total_time(),
             delta_time: base.timer.delta_time(),
+            fog_color: vec4(0.7, 0.7, 0.7, 1.0),
+            fog_start: 255.0,
+            fog_range: 550.0,
+            cb_per_object_pad2: Default::default(),
             ambient_light: vec4(0.25, 0.25, 0.35, 1.0),
             lights: Default::default(),
-            fog_color: vec4(0.7, 0.7, 0.7, 1.0),
-            fog_start: 5.0,
-            fog_range: 150.0,
-            cb_per_object_pad2: Default::default(),
         };
 
         pass_const.lights[0].direction = spherical_to_cartesian(1.0, self.sun_theta, self.sun_phi);

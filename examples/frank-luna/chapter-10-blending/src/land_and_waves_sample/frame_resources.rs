@@ -67,7 +67,6 @@ pub struct PassConstants {
     pub far_z: f32,
     pub total_time: f32,
     pub delta_time: f32,
-    pub ambient_light: Vec4,
 
     pub fog_color: Vec4,
     pub fog_start: f32,
@@ -75,6 +74,7 @@ pub struct PassConstants {
 
     pub cb_per_object_pad2: Vec2,
 
+    pub ambient_light: Vec4,
     pub lights: [Light; MAX_LIGHTS],
 }
 
