@@ -1594,7 +1594,7 @@ impl RasterizerDesc {
     }
 
     #[inline]
-    pub fn enable_front_facing(mut self) -> Self {
+    pub fn enable_front_counter_clockwise(mut self) -> Self {
         self.0.FrontCounterClockwise = true.into();
         self
     }
@@ -1753,6 +1753,12 @@ impl RenderTargetBlendDesc {
             RenderTargetWriteMask: mask.bits() as u8,
             ..Default::default()
         })
+    }
+
+    #[inline]
+    pub fn with_write_mask(mut self, mask: ColorWriteEnable) -> Self {
+        self.0.RenderTargetWriteMask = mask.bits() as u8;
+        self
     }
 }
 

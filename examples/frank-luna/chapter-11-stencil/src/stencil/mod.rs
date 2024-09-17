@@ -1,39 +1,40 @@
 mod frame_resources;
 mod render_item;
-mod waves;
 
 use std::{
     cell::{Cell, RefCell},
     collections::HashMap,
-    f32::consts::{FRAC_PI_4, PI},
+    f32::consts::PI,
+    io::{BufRead, BufReader},
     mem::offset_of,
     rc::Rc,
 };
 
 use common::{
     app::{DxSample, SwapchainContext},
-    geometry_generator::GeometryGenerator,
     geometry_mesh::{BoundingBox, MeshGeometry, SubmeshGeometry},
     material::Material,
-    math::spherical_to_cartesian,
     texture::Texture,
     utils::{create_default_buffer, load_texture_from_file, ConstantBufferData},
 };
-use glam::{vec2, vec3, vec4, Mat4, Vec3};
+use glam::{vec2, vec3, vec4, Mat4, Vec2, Vec3};
 use oxidx::dx::*;
 
-use rand::Rng;
-use waves::Waves;
 use winit::keyboard::KeyCode;
 
 use frame_resources::{FrameResource, MaterialConstant, ObjectConstants, PassConstants, Vertex};
 use render_item::RenderItem;
+
+use crate::utils::MatrixExt;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 enum RenderLayer {
     Opaque,
     Transparent,
     AlphaTested,
+    Mirrors,
+    Reflected,
+    Shadow,
 }
 
 #[allow(unused)]
@@ -47,8 +48,10 @@ pub struct LandAndWavesSample {
 
     all_ritems: Vec<Rc<RenderItem>>,
     ritems_by_layer: HashMap<RenderLayer, Vec<Rc<RenderItem>>>,
-    waves_ritem: Rc<RenderItem>,
-    waves: Box<Waves>,
+
+    skull_ritem: Rc<RenderItem>,
+    skull_reflected: Rc<RenderItem>,
+    skull_shadow: Rc<RenderItem>,
 
     geometries: HashMap<String, Rc<RefCell<MeshGeometry>>>,
     shaders: HashMap<String, Blob>,
@@ -61,6 +64,7 @@ pub struct LandAndWavesSample {
     proj: Mat4,
 
     main_pass_cb: ConstantBufferData<PassConstants>,
+    reflected_pass_cb: ConstantBufferData<PassConstants>,
 
     is_wireframe: bool,
 
@@ -71,8 +75,7 @@ pub struct LandAndWavesSample {
     is_lmb_pressed: bool,
     is_rmb_pressed: bool,
 
-    sun_theta: f32,
-    sun_phi: f32,
+    skull_translation: Vec3,
 }
 
 impl DxSample for LandAndWavesSample {
@@ -83,12 +86,10 @@ impl DxSample for LandAndWavesSample {
             .device
             .get_descriptor_handle_increment_size(DescriptorHeapType::CbvSrvUav);
 
-        let waves = Box::new(Waves::new(128, 128, 1.0, 0.03, 4.0, 0.2));
-
         let textures = Self::load_textures(&base.device, &base.cmd_list);
 
         let heap_desc =
-            DescriptorHeapDesc::cbr_srv_uav(3).with_flags(DescriptorHeapFlags::ShaderVisible);
+            DescriptorHeapDesc::cbr_srv_uav(4).with_flags(DescriptorHeapFlags::ShaderVisible);
 
         let descriptor_heap = base
             .device
@@ -99,21 +100,28 @@ impl DxSample for LandAndWavesSample {
 
         let descriptor = descriptor_heap.get_cpu_descriptor_handle_for_heap_start();
         base.device.create_shader_resource_view(
-            Some(&textures.get("grass").unwrap().image),
+            Some(&textures.get("bricks").unwrap().image),
             Some(&srv_desc),
             descriptor,
         );
 
         let descriptor = descriptor.advance(1, cbv_srv_descriptor_size);
         base.device.create_shader_resource_view(
-            Some(&textures.get("water").unwrap().image),
+            Some(&textures.get("checkboard").unwrap().image),
             Some(&srv_desc),
             descriptor,
         );
 
         let descriptor = descriptor.advance(1, cbv_srv_descriptor_size);
         base.device.create_shader_resource_view(
-            Some(&textures.get("fence").unwrap().image),
+            Some(&textures.get("ice").unwrap().image),
+            Some(&srv_desc),
+            descriptor,
+        );
+
+        let descriptor = descriptor.advance(1, cbv_srv_descriptor_size);
+        base.device.create_shader_resource_view(
+            Some(&textures.get("white1x1").unwrap().image),
             Some(&srv_desc),
             descriptor,
         );
@@ -195,23 +203,15 @@ impl DxSample for LandAndWavesSample {
 
         let geometries = HashMap::from_iter([
             (
-                "landGeo".to_string(),
-                Rc::new(RefCell::new(Self::build_land_geometry(
+                "roomGeo".to_string(),
+                Rc::new(RefCell::new(Self::build_room_geometry(
                     &base.device,
                     &base.cmd_list,
                 ))),
             ),
             (
-                "waterGeo".to_string(),
-                Rc::new(RefCell::new(Self::build_waves_geometry(
-                    &base.device,
-                    &base.cmd_list,
-                    &waves,
-                ))),
-            ),
-            (
-                "boxGeo".to_string(),
-                Rc::new(RefCell::new(Self::build_box_geometry(
+                "skullGeo".to_string(),
+                Rc::new(RefCell::new(Self::build_skull_geometry(
                     &base.device,
                     &base.cmd_list,
                 ))),
@@ -220,165 +220,244 @@ impl DxSample for LandAndWavesSample {
 
         let materials = HashMap::from_iter([
             (
-                "grass".to_string(),
+                "bricks".to_string(),
                 Rc::new(RefCell::new(Material {
-                    name: "grass".to_string(),
+                    name: "bricks".to_string(),
                     cb_index: 0,
                     diffuse_srv_heap_index: Some(0),
                     num_frames_dirty: Self::FRAME_COUNT,
-                    diffuse_albedo: vec4(0.2, 0.6, 0.6, 1.0),
-                    fresnel_r0: vec3(0.01, 0.01, 0.01),
-                    roughness: 0.125,
+                    diffuse_albedo: vec4(1.0, 1.0, 1.0, 1.0),
+                    fresnel_r0: vec3(0.05, 0.05, 0.05),
+                    roughness: 0.25,
                     transform: Mat4::IDENTITY,
                 })),
             ),
             (
-                "water".to_string(),
+                "checkertile".to_string(),
                 Rc::new(RefCell::new(Material {
-                    name: "water".to_string(),
+                    name: "checkertile".to_string(),
                     cb_index: 1,
                     diffuse_srv_heap_index: Some(1),
                     num_frames_dirty: Self::FRAME_COUNT,
-                    diffuse_albedo: vec4(0.0, 0.2, 0.6, 0.5),
-                    fresnel_r0: vec3(0.1, 0.1, 0.1),
-                    roughness: 0.0,
+                    diffuse_albedo: vec4(1.0, 1.0, 1.0, 1.0),
+                    fresnel_r0: vec3(0.07, 0.07, 0.07),
+                    roughness: 0.3,
                     transform: Mat4::IDENTITY,
                 })),
             ),
             (
-                "fence".to_string(),
+                "icemirror".to_string(),
                 Rc::new(RefCell::new(Material {
-                    name: "fence".to_string(),
+                    name: "icemirror".to_string(),
                     cb_index: 2,
                     diffuse_srv_heap_index: Some(2),
                     num_frames_dirty: Self::FRAME_COUNT,
                     diffuse_albedo: vec4(1.0, 1.0, 1.0, 1.0),
                     fresnel_r0: vec3(0.1, 0.1, 0.1),
-                    roughness: 0.25,
+                    roughness: 0.5,
+                    transform: Mat4::IDENTITY,
+                })),
+            ),
+            (
+                "skullMat".to_string(),
+                Rc::new(RefCell::new(Material {
+                    name: "skullMat".to_string(),
+                    cb_index: 3,
+                    diffuse_srv_heap_index: Some(3),
+                    num_frames_dirty: Self::FRAME_COUNT,
+                    diffuse_albedo: vec4(1.0, 1.0, 1.0, 1.0),
+                    fresnel_r0: vec3(0.05, 0.05, 0.05),
+                    roughness: 0.3,
+                    transform: Mat4::IDENTITY,
+                })),
+            ),
+            (
+                "shadowMat".to_string(),
+                Rc::new(RefCell::new(Material {
+                    name: "shadowMat".to_string(),
+                    cb_index: 4,
+                    diffuse_srv_heap_index: Some(4),
+                    num_frames_dirty: Self::FRAME_COUNT,
+                    diffuse_albedo: vec4(0.0, 0.0, 0.0, 1.0),
+                    fresnel_r0: vec3(0.001, 0.001, 0.001),
+                    roughness: 0.0,
                     transform: Mat4::IDENTITY,
                 })),
             ),
         ]);
 
-        let ri_land = Rc::new(RenderItem {
-            world: Mat4::from_scale(vec3(5.0, 1.0, 5.0)),
+        let ri_floor = Rc::new(RenderItem {
+            world: RefCell::new(Mat4::IDENTITY),
             num_frames_dirty: Cell::new(Self::FRAME_COUNT),
             obj_cb_index: 0,
-            geo: Rc::clone(geometries.get("landGeo").unwrap()),
-            material: Rc::clone(materials.get("grass").unwrap()),
+            geo: Rc::clone(geometries.get("roomGeo").unwrap()),
+            material: Rc::clone(materials.get("checkertile").unwrap()),
             primitive_type: PrimitiveTopology::Triangle,
             index_count: geometries
-                .get("landGeo")
+                .get("roomGeo")
                 .unwrap()
                 .borrow()
                 .draw_args
-                .get("grid")
+                .get("floor")
                 .unwrap()
                 .index_count,
             start_index_location: geometries
-                .get("landGeo")
+                .get("roomGeo")
                 .unwrap()
                 .borrow()
                 .draw_args
-                .get("grid")
+                .get("floor")
                 .unwrap()
                 .start_index_location,
             base_vertex_location: geometries
-                .get("landGeo")
+                .get("roomGeo")
                 .unwrap()
                 .borrow()
                 .draw_args
-                .get("grid")
+                .get("floor")
                 .unwrap()
                 .base_vertex_location,
         });
 
-        let ri_water = Rc::new(RenderItem {
-            world: Mat4::from_scale(vec3(5.0, 5.0, 5.0)),
+        let ri_walls = Rc::new(RenderItem {
+            world: RefCell::new(Mat4::IDENTITY),
             num_frames_dirty: Cell::new(Self::FRAME_COUNT),
             obj_cb_index: 1,
-            geo: Rc::clone(geometries.get("waterGeo").unwrap()),
-            material: Rc::clone(materials.get("water").unwrap()),
+            geo: Rc::clone(geometries.get("roomGeo").unwrap()),
+            material: Rc::clone(materials.get("bricks").unwrap()),
             primitive_type: PrimitiveTopology::Triangle,
             index_count: geometries
-                .get("waterGeo")
+                .get("roomGeo")
                 .unwrap()
                 .borrow()
                 .draw_args
-                .get("grid")
+                .get("wall")
                 .unwrap()
                 .index_count,
             start_index_location: geometries
-                .get("waterGeo")
+                .get("roomGeo")
                 .unwrap()
                 .borrow()
                 .draw_args
-                .get("grid")
+                .get("wall")
                 .unwrap()
                 .start_index_location,
             base_vertex_location: geometries
-                .get("waterGeo")
+                .get("roomGeo")
                 .unwrap()
                 .borrow()
                 .draw_args
-                .get("grid")
+                .get("wall")
                 .unwrap()
                 .base_vertex_location,
         });
 
-        let ri_box = Rc::new(RenderItem {
-            world: Mat4::from_scale(vec3(5.0, 5.0, 5.0))
-                * Mat4::from_translation(vec3(3.0, 2.0, -9.0)),
+        let ri_skull = Rc::new(RenderItem {
+            world: RefCell::new(Mat4::IDENTITY),
             num_frames_dirty: Cell::new(Self::FRAME_COUNT),
             obj_cb_index: 2,
-            geo: Rc::clone(geometries.get("boxGeo").unwrap()),
-            material: Rc::clone(materials.get("fence").unwrap()),
+            geo: Rc::clone(geometries.get("skullGeo").unwrap()),
+            material: Rc::clone(materials.get("skull").unwrap()),
             primitive_type: PrimitiveTopology::Triangle,
             index_count: geometries
-                .get("boxGeo")
+                .get("skullGeo")
                 .unwrap()
                 .borrow()
                 .draw_args
-                .get("box")
+                .get("skull")
                 .unwrap()
                 .index_count,
             start_index_location: geometries
-                .get("boxGeo")
+                .get("skullGeo")
                 .unwrap()
                 .borrow()
                 .draw_args
-                .get("box")
+                .get("skull")
                 .unwrap()
                 .start_index_location,
             base_vertex_location: geometries
-                .get("boxGeo")
+                .get("skullGeo")
                 .unwrap()
                 .borrow()
                 .draw_args
-                .get("box")
+                .get("skull")
+                .unwrap()
+                .base_vertex_location,
+        });
+
+        let ri_skull_reflected = Rc::new(RenderItem {
+            obj_cb_index: 3,
+            ..(*ri_skull).clone()
+        });
+
+        let ri_skull_shadow = Rc::new(RenderItem {
+            obj_cb_index: 4,
+            material: Rc::clone(materials.get("shadow").unwrap()),
+            ..(*ri_skull).clone()
+        });
+
+        let ri_mirror = Rc::new(RenderItem {
+            world: RefCell::new(Mat4::IDENTITY),
+            num_frames_dirty: Cell::new(Self::FRAME_COUNT),
+            obj_cb_index: 5,
+            geo: Rc::clone(geometries.get("roomGeo").unwrap()),
+            material: Rc::clone(materials.get("icemirror").unwrap()),
+            primitive_type: PrimitiveTopology::Triangle,
+            index_count: geometries
+                .get("roomGeo")
+                .unwrap()
+                .borrow()
+                .draw_args
+                .get("mirror")
+                .unwrap()
+                .index_count,
+            start_index_location: geometries
+                .get("roomGeo")
+                .unwrap()
+                .borrow()
+                .draw_args
+                .get("mirror")
+                .unwrap()
+                .start_index_location,
+            base_vertex_location: geometries
+                .get("roomGeo")
+                .unwrap()
+                .borrow()
+                .draw_args
+                .get("mirror")
                 .unwrap()
                 .base_vertex_location,
         });
 
         let ritems_by_layer = HashMap::from_iter([
-            (RenderLayer::Opaque, vec![Rc::clone(&ri_land)]),
-            (RenderLayer::Transparent, vec![Rc::clone(&ri_water)]),
-            (RenderLayer::AlphaTested, vec![Rc::clone(&ri_box)]),
+            (
+                RenderLayer::Opaque,
+                vec![
+                    Rc::clone(&ri_floor),
+                    Rc::clone(&ri_walls),
+                    Rc::clone(&ri_skull),
+                ],
+            ),
+            (RenderLayer::Reflected, vec![Rc::clone(&ri_skull_reflected)]),
+            (RenderLayer::Shadow, vec![Rc::clone(&ri_skull_shadow)]),
+            (RenderLayer::Mirrors, vec![Rc::clone(&ri_mirror)]),
+            (RenderLayer::Transparent, vec![Rc::clone(&ri_mirror)]),
         ]);
 
-        let all_ritems = vec![ri_land, ri_water, ri_box];
+        let all_ritems = vec![
+            ri_floor,
+            ri_walls,
+            Rc::clone(&ri_skull),
+            Rc::clone(&ri_skull_reflected),
+            Rc::clone(&ri_skull_shadow),
+            ri_mirror,
+        ];
 
         let frame_resources = std::array::from_fn(|_| {
-            FrameResource::new(
-                &base.device,
-                1,
-                all_ritems.len(),
-                waves.vertex_count as usize,
-                materials.len(),
-            )
+            FrameResource::new(&base.device, 2, all_ritems.len(), materials.len())
         });
 
-        let pso_desc = GraphicsPipelineDesc::new(shaders.get("standardVS").unwrap())
+        let pso_desc_opaque = GraphicsPipelineDesc::new(shaders.get("standardVS").unwrap())
             .with_ps(shaders.get("opaquePS").unwrap())
             .with_input_layout(&input_layout)
             .with_root_signature(&root_signature)
@@ -398,14 +477,18 @@ impl DxSample for LandAndWavesSample {
                 base.depth_stencil_format,
             );
 
-        let pso_opaque = base.device.create_graphics_pipeline(&pso_desc).unwrap();
+        let pso_opaque = base
+            .device
+            .create_graphics_pipeline(&pso_desc_opaque)
+            .unwrap();
 
-        let pso_desc = pso_desc
+        let pso_desc = pso_desc_opaque
+            .clone()
             .with_rasterizer_state(RasterizerDesc::default().with_fill_mode(FillMode::Wireframe));
 
         let pso_wireframe = base.device.create_graphics_pipeline(&pso_desc).unwrap();
 
-        let pso_desc = GraphicsPipelineDesc::new(shaders.get("standardVS").unwrap())
+        let pso_desc_transparent = GraphicsPipelineDesc::new(shaders.get("standardVS").unwrap())
             .with_ps(shaders.get("opaquePS").unwrap())
             .with_input_layout(&input_layout)
             .with_root_signature(&root_signature)
@@ -440,34 +523,105 @@ impl DxSample for LandAndWavesSample {
                 base.depth_stencil_format,
             );
 
-        let pso_transparent = base.device.create_graphics_pipeline(&pso_desc).unwrap();
+        let pso_transparent = base
+            .device
+            .create_graphics_pipeline(&pso_desc_transparent)
+            .unwrap();
 
-        let pso_desc = GraphicsPipelineDesc::new(shaders.get("standardVS").unwrap())
-            .with_ps(shaders.get("alphaTestedPS").unwrap())
-            .with_input_layout(&input_layout)
-            .with_root_signature(&root_signature)
-            .with_rasterizer_state(RasterizerDesc::default().with_cull_mode(CullMode::None))
-            .with_depth_stencil(DepthStencilDesc::default(), base.depth_stencil_format)
-            .with_sample_mask(u32::MAX)
-            .with_primitive_topology(PipelinePrimitiveTopology::Triangle)
-            .with_render_targets([base.back_buffer_format])
-            .with_sample_desc(if base.msaa_state {
-                SampleDesc::new(4, base.msaa_4x_quality)
-            } else {
-                SampleDesc::new(1, 0)
-            })
+        let pso_desc = pso_desc_opaque
+            .clone()
+            .with_blend_desc(BlendDesc::default().with_render_targets([
+                RenderTargetBlendDesc::default().with_write_mask(ColorWriteEnable::empty()),
+            ]))
             .with_depth_stencil(
-                DepthStencilDesc::default().enable_depth(ComparisonFunc::Less),
-                base.depth_stencil_format,
+                DepthStencilDesc::default()
+                    .enable_depth(ComparisonFunc::Less)
+                    .with_depth_write_mask(DepthWriteMask::empty())
+                    .enable_stencil(0xFF, 0xFF)
+                    .with_front_face(
+                        DepthStencilOpDesc::default()
+                            .with_stencil_fail_op(StencilOp::Keep)
+                            .with_stencil_depth_fail_op(StencilOp::Keep)
+                            .with_stencil_pass_op(StencilOp::Replace)
+                            .with_stencil_func(ComparisonFunc::Always),
+                    )
+                    .with_back_face(
+                        DepthStencilOpDesc::default()
+                            .with_stencil_fail_op(StencilOp::Keep)
+                            .with_stencil_depth_fail_op(StencilOp::Keep)
+                            .with_stencil_pass_op(StencilOp::Replace)
+                            .with_stencil_func(ComparisonFunc::Always),
+                    ),
+                Format::D24UnormS8Uint,
             );
 
-        let pso_alpha_tested = base.device.create_graphics_pipeline(&pso_desc).unwrap();
+        let pso_mark_mirror = base.device.create_graphics_pipeline(&pso_desc).unwrap();
+
+        let pso_desc = pso_desc_opaque
+            .clone()
+            .with_blend_desc(BlendDesc::default().with_render_targets([
+                RenderTargetBlendDesc::default().with_write_mask(ColorWriteEnable::empty()),
+            ]))
+            .with_depth_stencil(
+                DepthStencilDesc::default()
+                    .enable_depth(ComparisonFunc::Less)
+                    .with_depth_write_mask(DepthWriteMask::All)
+                    .enable_stencil(0xFF, 0xFF)
+                    .with_front_face(
+                        DepthStencilOpDesc::default()
+                            .with_stencil_fail_op(StencilOp::Keep)
+                            .with_stencil_depth_fail_op(StencilOp::Keep)
+                            .with_stencil_pass_op(StencilOp::Keep)
+                            .with_stencil_func(ComparisonFunc::Equal),
+                    )
+                    .with_back_face(
+                        DepthStencilOpDesc::default()
+                            .with_stencil_fail_op(StencilOp::Keep)
+                            .with_stencil_depth_fail_op(StencilOp::Keep)
+                            .with_stencil_pass_op(StencilOp::Keep)
+                            .with_stencil_func(ComparisonFunc::Equal),
+                    ),
+                Format::D24UnormS8Uint,
+            )
+            .with_rasterizer_state(
+                RasterizerDesc::default()
+                    .with_cull_mode(CullMode::Back)
+                    .enable_front_counter_clockwise(),
+            );
+
+        let pso_reflection = base.device.create_graphics_pipeline(&pso_desc).unwrap();
+
+        let pso_desc = pso_desc_transparent.with_depth_stencil(
+            DepthStencilDesc::default()
+                .enable_depth(ComparisonFunc::Less)
+                .with_depth_write_mask(DepthWriteMask::All)
+                .enable_stencil(0xFF, 0xFF)
+                .with_front_face(
+                    DepthStencilOpDesc::default()
+                        .with_stencil_fail_op(StencilOp::Keep)
+                        .with_stencil_depth_fail_op(StencilOp::Keep)
+                        .with_stencil_pass_op(StencilOp::Incr)
+                        .with_stencil_func(ComparisonFunc::Equal),
+                )
+                .with_back_face(
+                    DepthStencilOpDesc::default()
+                        .with_stencil_fail_op(StencilOp::Keep)
+                        .with_stencil_depth_fail_op(StencilOp::Keep)
+                        .with_stencil_pass_op(StencilOp::Incr)
+                        .with_stencil_func(ComparisonFunc::Equal),
+                ),
+            Format::D24UnormS8Uint,
+        );
+
+        let pso_shadow = base.device.create_graphics_pipeline(&pso_desc).unwrap();
 
         let pso = HashMap::from_iter([
             ("opaque".to_string(), pso_opaque),
             ("opaque_wireframe".to_string(), pso_wireframe),
             ("transparent".to_string(), pso_transparent),
-            ("alphaTested".to_string(), pso_alpha_tested),
+            ("mark_mirror".to_string(), pso_mark_mirror),
+            ("reflection".to_string(), pso_reflection),
+            ("shadow".to_string(), pso_shadow),
         ]);
 
         base.cmd_list.close().unwrap();
@@ -489,20 +643,21 @@ impl DxSample for LandAndWavesSample {
             radius: 200.0,
             is_lmb_pressed: false,
             is_rmb_pressed: false,
-            waves_ritem: Rc::clone(&all_ritems[1]),
-            waves,
             all_ritems,
             ritems_by_layer,
             geometries,
             shaders,
             materials,
             main_pass_cb: ConstantBufferData(PassConstants::default()),
+            reflected_pass_cb: ConstantBufferData(PassConstants::default()),
             is_wireframe: false,
-            sun_theta: 1.25 * PI,
-            sun_phi: FRAC_PI_4,
             cbv_srv_descriptor_size,
             textures,
             srv_descriptor_heap: descriptor_heap,
+            skull_ritem: ri_skull,
+            skull_reflected: ri_skull_reflected,
+            skull_shadow: ri_skull_shadow,
+            skull_translation: vec3(0.0, 1.0, -5.0),
         }
     }
 
@@ -530,10 +685,9 @@ impl DxSample for LandAndWavesSample {
             event.close().unwrap();
         }
 
-        self.animate_materials(base);
         self.update_object_cb(base);
         self.update_pass_cb(base);
-        self.update_waves(base);
+        self.update_reflected_pass_cb(base);
         self.update_material_cb(base);
     }
 
@@ -603,18 +757,40 @@ impl DxSample for LandAndWavesSample {
             self.ritems_by_layer.get(&RenderLayer::Opaque).unwrap(),
         );
 
+        base.cmd_list.om_set_stencil_ref(1);
         base.cmd_list
-            .set_pipeline_state(self.pso.get("alphaTested").unwrap());
+            .set_pipeline_state(self.pso.get("mark_mirror").unwrap());
         self.draw_render_items(
             &base.cmd_list,
-            self.ritems_by_layer.get(&RenderLayer::AlphaTested).unwrap(),
+            self.ritems_by_layer.get(&RenderLayer::Mirrors).unwrap(),
         );
 
+        base.cmd_list.set_graphics_root_constant_buffer_view(
+            3,
+            pass_cb.get_gpu_virtual_address() + size_of_val(&self.reflected_pass_cb) as u64,
+        );
+        base.cmd_list
+            .set_pipeline_state(self.pso.get("reflection").unwrap());
+        self.draw_render_items(
+            &base.cmd_list,
+            self.ritems_by_layer.get(&RenderLayer::Reflected).unwrap(),
+        );
+
+        base.cmd_list
+            .set_graphics_root_constant_buffer_view(3, pass_cb.get_gpu_virtual_address());
+        base.cmd_list.om_set_stencil_ref(0);
         base.cmd_list
             .set_pipeline_state(self.pso.get("transparent").unwrap());
         self.draw_render_items(
             &base.cmd_list,
             self.ritems_by_layer.get(&RenderLayer::Transparent).unwrap(),
+        );
+
+        base.cmd_list
+            .set_pipeline_state(self.pso.get("shadow").unwrap());
+        self.draw_render_items(
+            &base.cmd_list,
+            self.ritems_by_layer.get(&RenderLayer::Shadow).unwrap(),
         );
 
         base.cmd_list
@@ -648,14 +824,43 @@ impl DxSample for LandAndWavesSample {
         );
     }
 
-    fn on_key_down(&mut self, _: &common::app::Base, key: winit::keyboard::KeyCode, _: bool) {
+    fn on_key_down(&mut self, base: &common::app::Base, key: winit::keyboard::KeyCode, _: bool) {
         match key {
-            KeyCode::KeyW => self.sun_theta += 0.1,
-            KeyCode::KeyS => self.sun_theta -= 0.1,
-            KeyCode::KeyD => self.sun_phi += 0.1,
-            KeyCode::KeyA => self.sun_phi -= 0.1,
+            KeyCode::KeyW => self.skull_translation.y += 0.1 * base.timer.delta_time(),
+            KeyCode::KeyS => self.skull_translation.y -= 0.1 * base.timer.delta_time(),
+            KeyCode::KeyD => self.skull_translation.x += 0.1 * base.timer.delta_time(),
+            KeyCode::KeyA => self.skull_translation.x -= 0.1 * base.timer.delta_time(),
             _ => {}
         }
+
+        self.skull_translation.y = self.skull_translation.y.max(0.0);
+
+        let skull_rotate = Mat4::from_rotation_y(0.5 * PI);
+        let skull_scale = Mat4::from_scale(vec3(0.45, 0.45, 0.45));
+        let skull_offset = Mat4::from_translation(self.skull_translation);
+
+        let skull_world = skull_rotate * skull_scale * skull_offset;
+
+        *self.skull_ritem.world.borrow_mut() = skull_world;
+
+        let mirror_plane = vec4(0.0, 0.0, 1.0, 0.0);
+        let r = Mat4::reflect(mirror_plane);
+
+        *self.skull_reflected.world.borrow_mut() = skull_world * r;
+
+        let shadow_plane = vec4(0.0, 1.0, 0.0, 0.0);
+        let to_main_light = -self.main_pass_cb.lights[0].direction;
+        let s = Mat4::shadow(
+            shadow_plane,
+            vec4(to_main_light.x, to_main_light.y, to_main_light.z, 1.0),
+        );
+        let shadow_offset_y = Mat4::from_translation(vec3(0.0, 0.001, 0.0));
+
+        *self.skull_shadow.world.borrow_mut() = skull_world * s * shadow_offset_y;
+
+        self.skull_ritem.num_frames_dirty.set(Self::FRAME_COUNT);
+        self.skull_reflected.num_frames_dirty.set(Self::FRAME_COUNT);
+        self.skull_shadow.num_frames_dirty.set(Self::FRAME_COUNT);
     }
 
     fn on_key_up(&mut self, key: winit::keyboard::KeyCode) {
@@ -745,16 +950,22 @@ impl LandAndWavesSample {
     fn load_textures(device: &Device, cmd_list: &GraphicsCommandList) -> HashMap<String, Texture> {
         HashMap::from_iter([
             (
-                "grass".to_string(),
-                load_texture_from_file(device, cmd_list, "grass", "textures/grass.png").unwrap(),
+                "bricks".to_string(),
+                load_texture_from_file(device, cmd_list, "bricks", "textures/bricks.png").unwrap(),
             ),
             (
-                "water".to_string(),
-                load_texture_from_file(device, cmd_list, "water", "textures/water.png").unwrap(),
+                "checkboard".to_string(),
+                load_texture_from_file(device, cmd_list, "checkboard", "textures/checkboard.png")
+                    .unwrap(),
             ),
             (
-                "fence".to_string(),
-                load_texture_from_file(device, cmd_list, "fence", "textures/fence.png").unwrap(),
+                "ice".to_string(),
+                load_texture_from_file(device, cmd_list, "ice", "textures/ice.png").unwrap(),
+            ),
+            (
+                "white1x1".to_string(),
+                load_texture_from_file(device, cmd_list, "white1x1", "textures/white1x1.png")
+                    .unwrap(),
             ),
         ])
     }
@@ -768,7 +979,7 @@ impl LandAndWavesSample {
                 curr_obj_cb.copy_data(
                     e.obj_cb_index,
                     ConstantBufferData(ObjectConstants {
-                        world: e.world,
+                        world: *e.world.borrow(),
                         tex_transform: Mat4::IDENTITY,
                     }),
                 );
@@ -786,7 +997,7 @@ impl LandAndWavesSample {
         let inv_proj = proj.inverse();
         let inv_view_proj = view_proj.inverse();
 
-        let mut pass_const = PassConstants {
+        self.main_pass_cb.0 = PassConstants {
             view,
             inv_view,
             proj,
@@ -812,51 +1023,36 @@ impl LandAndWavesSample {
             lights: Default::default(),
         };
 
-        pass_const.lights[0].direction = spherical_to_cartesian(1.0, self.sun_theta, self.sun_phi);
-        pass_const.lights[0].strength = vec3(1.0, 1.0, 0.9);
+        self.main_pass_cb.0.lights[0].direction = vec3(0.57735, -0.57735, 0.57735);
+        self.main_pass_cb.0.lights[0].strength = vec3(0.6, 0.6, 0.6);
+
+        self.main_pass_cb.0.lights[1].direction = vec3(-0.57735, -0.57735, 0.57735);
+        self.main_pass_cb.0.lights[1].strength = vec3(0.3, 0.3, 0.3);
+
+        self.main_pass_cb.0.lights[2].direction = vec3(0.0, -0.707, -0.707);
+        self.main_pass_cb.0.lights[2].strength = vec3(0.15, 0.15, 0.15);
 
         self.frame_resources[self.curr_frame_resource]
             .pass_cb
-            .copy_data(0, ConstantBufferData(pass_const));
+            .copy_data(0, self.main_pass_cb);
     }
 
-    fn update_waves(&mut self, base: &common::app::Base) {
-        thread_local! {
-            static T: RefCell<f32> = Default::default();
+    fn update_reflected_pass_cb(&mut self, _: &common::app::Base) {
+        self.reflected_pass_cb = self.main_pass_cb;
+
+        let mirror_plane = vec4(0.0, 0.0, 1.0, 0.0);
+
+        let r = Mat4::reflect(mirror_plane);
+
+        for i in 0..3 {
+            let light_dir = self.main_pass_cb.0.lights[i].direction;
+            let reflected_light_dir = r.transform_vector3(light_dir).normalize();
+            self.reflected_pass_cb.0.lights[i].direction = reflected_light_dir;
         }
 
-        T.with_borrow_mut(|t_base| {
-            if base.timer.total_time() - *t_base >= 0.25 {
-                *t_base += 0.25;
-
-                let i = rand::thread_rng().gen_range(4..(self.waves.rows - 5));
-                let j = rand::thread_rng().gen_range(4..(self.waves.cols - 5));
-
-                let r = rand::thread_rng().gen_range(0.2..0.5) as f32;
-
-                self.waves.disturb(i, j, r);
-            }
-
-            self.waves.update(base.timer.delta_time());
-
-            let curr_waves_vb = &self.frame_resources[self.curr_frame_resource].wave_cb;
-            for i in 0..self.waves.vertex_count {
-                let pos = self.waves.curr_solution[i as usize];
-                let v = Vertex {
-                    pos,
-                    normal: self.waves.normals[i as usize],
-                    uv: vec2(
-                        0.5 + pos.x / self.waves.width(),
-                        0.5 + pos.z / self.waves.depth(),
-                    ),
-                };
-
-                curr_waves_vb.copy_data(i as usize, v);
-            }
-
-            self.waves_ritem.geo.borrow_mut().vertex_buffer_gpu =
-                Some(curr_waves_vb.resource().clone());
-        });
+        self.frame_resources[self.curr_frame_resource]
+            .pass_cb
+            .copy_data(1, self.reflected_pass_cb);
     }
 
     fn update_material_cb(&mut self, _: &common::app::Base) {
@@ -879,45 +1075,40 @@ impl LandAndWavesSample {
         }
     }
 
-    fn animate_materials(&mut self, base: &common::app::Base) {
-        let mut material = self.materials.get_mut("water").unwrap().borrow_mut();
-        let mut tu = material.transform.w_axis.x;
-        let mut tv = material.transform.w_axis.y;
-        tu += 0.01 * base.timer.delta_time() / 1000.0;
-        tv += 0.2 * base.timer.delta_time() / 1000.0;
+    fn build_room_geometry(device: &Device, cmd_list: &GraphicsCommandList) -> MeshGeometry {
+        let vertices = [
+            Vertex::new(-3.5, 0.0, -10.0, 0.0, 1.0, 0.0, 0.0, 4.0), // 0
+            Vertex::new(-3.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0),
+            Vertex::new(7.5, 0.0, 0.0, 0.0, 1.0, 0.0, 4.0, 0.0),
+            Vertex::new(7.5, 0.0, -10.0, 0.0, 1.0, 0.0, 4.0, 4.0),
+            // Wall: Observe we tile texture coordinates, and that we
+            // leave a gap in the middle for the mirror.
+            Vertex::new(-3.5, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 2.0), // 4
+            Vertex::new(-3.5, 4.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0),
+            Vertex::new(-2.5, 4.0, 0.0, 0.0, 0.0, -1.0, 0.5, 0.0),
+            Vertex::new(-2.5, 0.0, 0.0, 0.0, 0.0, -1.0, 0.5, 2.0),
+            Vertex::new(2.5, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 2.0), // 8
+            Vertex::new(2.5, 4.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0),
+            Vertex::new(7.5, 4.0, 0.0, 0.0, 0.0, -1.0, 2.0, 0.0),
+            Vertex::new(7.5, 0.0, 0.0, 0.0, 0.0, -1.0, 2.0, 2.0),
+            Vertex::new(-3.5, 4.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.0), // 12
+            Vertex::new(-3.5, 6.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0),
+            Vertex::new(7.5, 6.0, 0.0, 0.0, 0.0, -1.0, 6.0, 0.0),
+            Vertex::new(7.5, 4.0, 0.0, 0.0, 0.0, -1.0, 6.0, 1.0),
+            // Mirror
+            Vertex::new(-2.5, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.0), // 16
+            Vertex::new(-2.5, 4.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0),
+            Vertex::new(2.5, 4.0, 0.0, 0.0, 0.0, -1.0, 1.0, 0.0),
+            Vertex::new(2.5, 0.0, 0.0, 0.0, 0.0, -1.0, 1.0, 1.0),
+        ];
 
-        if tu >= 1.0 {
-            tu -= 1.0;
-        }
-
-        if tv >= 1.0 {
-            tv -= 1.0;
-        }
-
-        material.transform.w_axis.x = tu;
-        material.transform.w_axis.y = tv;
-
-        material.num_frames_dirty = Self::FRAME_COUNT;
-    }
-
-    fn build_land_geometry(device: &Device, cmd_list: &GraphicsCommandList) -> MeshGeometry {
-        let mut grid = GeometryGenerator::create_grid(160.0, 160.0, 50, 50);
-
-        let mut vertices = Vec::with_capacity(grid.vertices.len());
-        for v in grid.vertices.iter_mut() {
-            let x = v.pos.x;
-            let z = v.pos.z;
-            let y = Self::get_hills_height(x, z);
-
-            vertices.push(Vertex {
-                pos: vec3(x, y, z),
-                normal: Self::get_hills_normal(x, z),
-                uv: v.uv,
-            });
-        }
+        let indices = [
+            0u16, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16,
+            17, 18, 16, 18, 19,
+        ];
 
         let vertex_buffer_cpu = Blob::create_blob(size_of_val(vertices.as_slice())).unwrap();
-        let index_buffer_cpu = Blob::create_blob(size_of_val(grid.indices16().as_slice())).unwrap();
+        let index_buffer_cpu = Blob::create_blob(size_of_val(indices.as_slice())).unwrap();
 
         unsafe {
             std::ptr::copy_nonoverlapping(
@@ -926,21 +1117,19 @@ impl LandAndWavesSample {
                 vertices.len(),
             );
             std::ptr::copy_nonoverlapping(
-                grid.indices16().as_ptr(),
+                indices.as_ptr(),
                 index_buffer_cpu.get_buffer_ptr::<u16>().as_mut(),
-                grid.indices32.len(),
+                indices.len(),
             );
         }
 
         let (vertex_buffer_gpu, vertex_buffer_uploader) =
             create_default_buffer(device, cmd_list, &vertices);
         let (index_buffer_gpu, index_buffer_uploader) =
-            create_default_buffer(device, cmd_list, grid.indices16().as_slice());
-
-        let index_buffer_byte_size = size_of_val(grid.indices16().as_slice()) as u32;
+            create_default_buffer(device, cmd_list, &indices);
 
         MeshGeometry {
-            name: "landGeo".to_string(),
+            name: "roomGeo".to_string(),
             vertex_buffer_cpu,
             index_buffer_cpu,
             vertex_buffer_gpu: Some(vertex_buffer_gpu),
@@ -950,72 +1139,141 @@ impl LandAndWavesSample {
             vertex_byte_stride: size_of::<Vertex>() as u32,
             vertex_byte_size: size_of_val(vertices.as_slice()) as u32,
             index_format: Format::R16Uint,
-            index_buffer_byte_size,
-            draw_args: HashMap::from_iter([(
-                "grid".to_string(),
-                SubmeshGeometry {
-                    index_count: grid.indices32.len() as u32,
-                    start_index_location: 0,
-                    base_vertex_location: 0,
-                    bounds: BoundingBox::default(),
-                },
-            )]),
+            index_buffer_byte_size: size_of_val(indices.as_slice()) as u32,
+            draw_args: HashMap::from_iter([
+                (
+                    "floor".to_string(),
+                    SubmeshGeometry {
+                        index_count: 6,
+                        start_index_location: 0,
+                        base_vertex_location: 0,
+                        bounds: BoundingBox::default(),
+                    },
+                ),
+                (
+                    "wall".to_string(),
+                    SubmeshGeometry {
+                        index_count: 18,
+                        start_index_location: 6,
+                        base_vertex_location: 0,
+                        bounds: BoundingBox::default(),
+                    },
+                ),
+                (
+                    "mirror".to_string(),
+                    SubmeshGeometry {
+                        index_count: 6,
+                        start_index_location: 24,
+                        base_vertex_location: 0,
+                        bounds: BoundingBox::default(),
+                    },
+                ),
+            ]),
         }
     }
 
-    fn build_waves_geometry(
-        device: &Device,
-        cmd_list: &GraphicsCommandList,
-        waves: &Waves,
-    ) -> MeshGeometry {
-        let mut indices = Vec::with_capacity(3 * waves.triangle_count as usize);
+    fn build_skull_geometry(device: &Device, cmd_list: &GraphicsCommandList) -> MeshGeometry {
+        let file = std::fs::File::open("models/skull.txt").unwrap();
+        let reader = BufReader::new(file);
+        let mut lines = reader.lines();
 
-        let m = waves.rows;
-        let n = waves.cols;
+        let mut vcount = 0;
+        let mut tcount = 0;
 
-        for i in 0..(m - 1) {
-            for j in 0..(n - 1) {
-                indices.push((i * n + j) as u16);
-                indices.push((i * n + j + 1) as u16);
-                indices.push(((i + 1) * n + j) as u16);
+        lines
+            .next()
+            .unwrap()
+            .unwrap()
+            .split_whitespace()
+            .nth(1)
+            .unwrap()
+            .parse::<u32>()
+            .map(|v| vcount = v)
+            .unwrap();
+        lines
+            .next()
+            .unwrap()
+            .unwrap()
+            .split_whitespace()
+            .nth(1)
+            .unwrap()
+            .parse::<u32>()
+            .map(|t| tcount = t)
+            .unwrap();
 
-                indices.push(((i + 1) * n + j) as u16);
-                indices.push((i * n + j + 1) as u16);
-                indices.push(((i + 1) * n + j + 1) as u16);
-            }
+        for _ in 0..2 {
+            lines.next();
         }
 
-        let vertex_buffer_cpu =
-            Blob::create_blob(waves.vertex_count as usize * size_of::<Vertex>()).unwrap();
+        let mut vertices = vec![];
+        let mut indices = vec![];
+
+        for _ in 0..vcount {
+            let line = lines.next().unwrap().unwrap();
+            let mut parts = line.split_whitespace();
+
+            vertices.push(Vertex {
+                pos: vec3(
+                    parts.next().and_then(|s| s.parse::<f32>().ok()).unwrap(),
+                    parts.next().and_then(|s| s.parse::<f32>().ok()).unwrap(),
+                    parts.next().and_then(|s| s.parse::<f32>().ok()).unwrap(),
+                ),
+                normal: vec3(
+                    parts.next().and_then(|s| s.parse::<f32>().ok()).unwrap(),
+                    parts.next().and_then(|s| s.parse::<f32>().ok()).unwrap(),
+                    parts.next().and_then(|s| s.parse::<f32>().ok()).unwrap(),
+                ),
+                uv: Vec2::ZERO,
+            });
+        }
+
+        for _ in 0..2 {
+            lines.next();
+        }
+
+        for _ in 0..tcount {
+            let line = lines.next().unwrap().unwrap();
+            let mut parts = line.split_whitespace();
+            indices.push(parts.next().and_then(|s| s.parse::<u32>().ok()).unwrap());
+            indices.push(parts.next().and_then(|s| s.parse::<u32>().ok()).unwrap());
+            indices.push(parts.next().and_then(|s| s.parse::<u32>().ok()).unwrap());
+        }
+
+        let vertex_buffer_cpu = Blob::create_blob(size_of_val(vertices.as_slice())).unwrap();
         let index_buffer_cpu = Blob::create_blob(size_of_val(indices.as_slice())).unwrap();
 
         unsafe {
             std::ptr::copy_nonoverlapping(
+                vertices.as_ptr(),
+                vertex_buffer_cpu.get_buffer_ptr::<Vertex>().as_mut(),
+                vertices.len(),
+            );
+            std::ptr::copy_nonoverlapping(
                 indices.as_ptr(),
-                index_buffer_cpu.get_buffer_ptr::<u16>().as_mut(),
+                index_buffer_cpu.get_buffer_ptr::<u32>().as_mut(),
                 indices.len(),
             );
         }
 
+        let (vertex_buffer_gpu, vertex_buffer_uploader) =
+            create_default_buffer(device, cmd_list, &vertices);
         let (index_buffer_gpu, index_buffer_uploader) =
-            create_default_buffer(device, cmd_list, indices.as_slice());
-
-        let index_buffer_byte_size = size_of_val(indices.as_slice()) as u32;
+            create_default_buffer(device, cmd_list, &indices);
 
         MeshGeometry {
-            name: "waterGeo".to_string(),
+            name: "skullGeo".to_string(),
             vertex_buffer_cpu,
             index_buffer_cpu,
-            vertex_buffer_gpu: None,
+            vertex_buffer_gpu: Some(vertex_buffer_gpu),
             index_buffer_gpu: Some(index_buffer_gpu),
-            vertex_buffer_uploader: None,
+            vertex_buffer_uploader: Some(vertex_buffer_uploader),
             index_buffer_uploader: Some(index_buffer_uploader),
             vertex_byte_stride: size_of::<Vertex>() as u32,
-            vertex_byte_size: waves.vertex_count * size_of::<Vertex>() as u32,
-            index_format: Format::R16Uint,
-            index_buffer_byte_size,
+            vertex_byte_size: size_of_val(vertices.as_slice()) as u32,
+            index_format: Format::R32Uint,
+            index_buffer_byte_size: size_of_val(indices.as_slice()) as u32,
             draw_args: HashMap::from_iter([(
-                "grid".to_string(),
+                "skull".to_string(),
                 SubmeshGeometry {
                     index_count: indices.len() as u32,
                     start_index_location: 0,
@@ -1024,78 +1282,6 @@ impl LandAndWavesSample {
                 },
             )]),
         }
-    }
-
-    fn build_box_geometry(device: &Device, cmd_list: &GraphicsCommandList) -> MeshGeometry {
-        let mut r#box = GeometryGenerator::create_box(8.0, 8.0, 8.0, 3);
-
-        let mut vertices = Vec::with_capacity(r#box.vertices.len());
-        for v in r#box.vertices.iter_mut() {
-            vertices.push(Vertex {
-                pos: v.pos,
-                normal: v.normal,
-                uv: v.uv,
-            });
-        }
-
-        let vertex_buffer_cpu = Blob::create_blob(size_of_val(vertices.as_slice())).unwrap();
-        let index_buffer_cpu =
-            Blob::create_blob(size_of_val(r#box.indices16().as_slice())).unwrap();
-
-        unsafe {
-            std::ptr::copy_nonoverlapping(
-                vertices.as_ptr(),
-                vertex_buffer_cpu.get_buffer_ptr::<Vertex>().as_mut(),
-                vertices.len(),
-            );
-            std::ptr::copy_nonoverlapping(
-                r#box.indices16().as_ptr(),
-                index_buffer_cpu.get_buffer_ptr::<u16>().as_mut(),
-                r#box.indices32.len(),
-            );
-        }
-
-        let (vertex_buffer_gpu, vertex_buffer_uploader) =
-            create_default_buffer(device, cmd_list, &vertices);
-        let (index_buffer_gpu, index_buffer_uploader) =
-            create_default_buffer(device, cmd_list, r#box.indices16().as_slice());
-
-        let index_buffer_byte_size = size_of_val(r#box.indices16().as_slice()) as u32;
-
-        MeshGeometry {
-            name: "boxGeo".to_string(),
-            vertex_buffer_cpu,
-            index_buffer_cpu,
-            vertex_buffer_gpu: Some(vertex_buffer_gpu),
-            index_buffer_gpu: Some(index_buffer_gpu),
-            vertex_buffer_uploader: Some(vertex_buffer_uploader),
-            index_buffer_uploader: Some(index_buffer_uploader),
-            vertex_byte_stride: size_of::<Vertex>() as u32,
-            vertex_byte_size: size_of_val(vertices.as_slice()) as u32,
-            index_format: Format::R16Uint,
-            index_buffer_byte_size,
-            draw_args: HashMap::from_iter([(
-                "box".to_string(),
-                SubmeshGeometry {
-                    index_count: r#box.indices32.len() as u32,
-                    start_index_location: 0,
-                    base_vertex_location: 0,
-                    bounds: BoundingBox::default(),
-                },
-            )]),
-        }
-    }
-
-    fn get_hills_height(x: f32, z: f32) -> f32 {
-        0.3 * (z * (0.1 * x).sin()) + x * (0.1 * z).cos()
-    }
-
-    fn get_hills_normal(x: f32, z: f32) -> Vec3 {
-        vec3(
-            -0.03 * z * (0.1 * x).cos() - 0.3 * (0.1 * z).cos(),
-            1.0,
-            -0.3 * (0.1 * x).sin() + 0.03 * x * (0.1 * z).sin(),
-        )
     }
 
     fn draw_render_items(&self, cmd_list: &GraphicsCommandList, ritems: &[Rc<RenderItem>]) {

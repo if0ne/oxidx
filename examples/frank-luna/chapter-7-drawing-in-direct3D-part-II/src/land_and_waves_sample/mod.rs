@@ -382,7 +382,7 @@ impl DxSample for LandAndWavesSample {
         );
     }
 
-    fn on_key_down(&mut self, _: winit::keyboard::KeyCode, _: bool) {}
+    fn on_key_down(&mut self, _: &common::app::Base, _: winit::keyboard::KeyCode, _: bool) {}
 
     fn on_key_up(&mut self, key: winit::keyboard::KeyCode) {
         match key {

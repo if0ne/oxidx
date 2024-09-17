@@ -430,7 +430,7 @@ impl DxSample for LandAndWavesSample {
         );
     }
 
-    fn on_key_down(&mut self, key: winit::keyboard::KeyCode, _: bool) {
+    fn on_key_down(&mut self, _: &common::app::Base, key: winit::keyboard::KeyCode, _: bool) {
         match key {
             KeyCode::KeyW => self.sun_theta += 0.1,
             KeyCode::KeyS => self.sun_theta -= 0.1,

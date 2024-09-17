@@ -495,7 +495,7 @@ pub trait DxSample {
     fn render(&mut self, base: &mut Base);
     fn on_resize(&mut self, base: &mut Base, width: u32, height: u32);
 
-    fn on_key_down(&mut self, key: KeyCode, repeat: bool);
+    fn on_key_down(&mut self, base: &Base, key: KeyCode, repeat: bool);
     fn on_key_up(&mut self, key: KeyCode);
 
     fn on_mouse_down(&mut self, btn: MouseButton);
@@ -545,7 +545,7 @@ impl<S: DxSample> ApplicationHandler for SampleRunner<S> {
             WindowEvent::KeyboardInput { event, .. } => match event.state {
                 winit::event::ElementState::Pressed => {
                     if let PhysicalKey::Code(code) = event.physical_key {
-                        self.sample.on_key_down(code, event.repeat);
+                        self.sample.on_key_down(&self.base, code, event.repeat);
                     }
                 }
                 winit::event::ElementState::Released => {
