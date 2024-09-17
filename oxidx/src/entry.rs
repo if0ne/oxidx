@@ -13,7 +13,7 @@ use crate::types::{FactoryCreationFlags, FeatureLevel};
 /// For more information: [`CreateDXGIFactory2 function`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_3/nf-dxgi1_3-createdxgifactory2)
 pub fn create_factory<F: IFactory4>(flags: FactoryCreationFlags) -> Result<F, DxError> {
     unsafe {
-        let inner: F::Raw = CreateDXGIFactory2(flags.bits()).map_err(DxError::from)?;
+        let inner: F::Raw = CreateDXGIFactory2(flags.as_raw()).map_err(DxError::from)?;
 
         Ok(F::new(inner))
     }

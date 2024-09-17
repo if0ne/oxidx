@@ -103,11 +103,11 @@ impl_trait! {
 
             let swapchain = if let Some(o) = o {
                 self.0
-                    .CreateSwapChainForHwnd(cq, HWND(hwnd.get()), &desc, fullscreen_desc, o)
+                    .CreateSwapChainForHwnd(cq, HWND(hwnd.get() as *mut _), &desc, fullscreen_desc, o)
                     .map_err(DxError::from)?
             } else {
                 self.0
-                    .CreateSwapChainForHwnd(cq, HWND(hwnd.get()), &desc, fullscreen_desc, None)
+                    .CreateSwapChainForHwnd(cq, HWND(hwnd.get() as *mut _), &desc, fullscreen_desc, None)
                     .map_err(DxError::from)?
             };
 
@@ -174,7 +174,7 @@ impl_trait! {
 
     fn make_window_association(&self, hwnd: NonZeroIsize, flags: WindowAssociationFlags) -> Result<(), DxError> {
         unsafe {
-            self.0.MakeWindowAssociation(HWND(hwnd.get()), flags.bits()).map_err(DxError::from)?;
+            self.0.MakeWindowAssociation(HWND(hwnd.get() as *mut _), flags.as_raw()).map_err(DxError::from)?;
 
             Ok(())
         }

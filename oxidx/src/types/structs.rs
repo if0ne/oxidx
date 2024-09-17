@@ -1169,7 +1169,7 @@ impl IndirectArgumentDesc {
         Self(D3D12_INDIRECT_ARGUMENT_DESC {
             Type: D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,
             Anonymous: D3D12_INDIRECT_ARGUMENT_DESC_0 {
-                VertexBuffer: D3D12_INDIRECT_ARGUMENT_DESC_0_4 { Slot: slot },
+                VertexBuffer: D3D12_INDIRECT_ARGUMENT_DESC_0_5 { Slot: slot },
             },
         })
     }
@@ -1217,7 +1217,7 @@ impl IndirectArgumentDesc {
         Self(D3D12_INDIRECT_ARGUMENT_DESC {
             Type: D3D12_INDIRECT_ARGUMENT_TYPE_SHADER_RESOURCE_VIEW,
             Anonymous: D3D12_INDIRECT_ARGUMENT_DESC_0 {
-                ShaderResourceView: D3D12_INDIRECT_ARGUMENT_DESC_0_2 {
+                ShaderResourceView: D3D12_INDIRECT_ARGUMENT_DESC_0_3 {
                     RootParameterIndex: root_parameter_index,
                 },
             },
@@ -1229,7 +1229,7 @@ impl IndirectArgumentDesc {
         Self(D3D12_INDIRECT_ARGUMENT_DESC {
             Type: D3D12_INDIRECT_ARGUMENT_TYPE_UNORDERED_ACCESS_VIEW,
             Anonymous: D3D12_INDIRECT_ARGUMENT_DESC_0 {
-                UnorderedAccessView: D3D12_INDIRECT_ARGUMENT_DESC_0_3 {
+                UnorderedAccessView: D3D12_INDIRECT_ARGUMENT_DESC_0_4 {
                     RootParameterIndex: root_parameter_index,
                 },
             },
@@ -1434,8 +1434,8 @@ impl OutputDesc {
     }
 
     #[inline]
-    pub fn monitor(&self) -> isize {
-        self.0.Monitor.0
+    pub fn monitor(&self) -> std::ptr::NonNull<()> {
+        std::ptr::NonNull::new(self.0.Monitor.0 as *mut ()).unwrap()
     }
 }
 

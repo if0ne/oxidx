@@ -48,11 +48,9 @@ impl_trait! {
 
     fn get_desc1(&self) -> Result<AdapterDesc1, DxError> {
         unsafe {
-            let mut desc = Default::default();
-
-            self.0.GetDesc1(&mut desc).map_err(DxError::from)?;
-
-            Ok(AdapterDesc1(desc))
+            self.0.GetDesc1()
+                .map(|d| AdapterDesc1(d))
+                .map_err(DxError::from)
         }
     }
 }

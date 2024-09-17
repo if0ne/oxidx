@@ -173,18 +173,18 @@ bitflags::bitflags! {
     #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct EnumModeFlags: u32 {
         /// Include interlaced modes.
-        const Interlaced = DXGI_ENUM_MODES_INTERLACED;
+        const Interlaced = DXGI_ENUM_MODES_INTERLACED.0;
 
         /// Include stretched-scaling modes.
-        const Scaling = DXGI_ENUM_MODES_SCALING;
+        const Scaling = DXGI_ENUM_MODES_SCALING.0;
 
         /// Include stereo modes.
-        const Stereo = DXGI_ENUM_MODES_STEREO;
+        const Stereo = DXGI_ENUM_MODES_STEREO.0;
 
         /// Include stereo modes that are hidden because the user has disabled stereo.
         /// Control panel applications can use this option to show stereo capabilities that have been disabled as part of a user interface
         /// that enables and disables stereo.
-        const DisabledStereo = DXGI_ENUM_MODES_DISABLED_STEREO;
+        const DisabledStereo = DXGI_ENUM_MODES_DISABLED_STEREO.0;
     }
 }
 
@@ -238,7 +238,7 @@ bitflags::bitflags! {
     #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct FactoryCreationFlags: u32 {
         /// Request DXGIDebug.dll; the DLL will be loaded if it is present on the system.
-        const Debug = DXGI_CREATE_FACTORY_DEBUG;
+        const Debug = DXGI_CREATE_FACTORY_DEBUG.0;
     }
 }
 
@@ -549,31 +549,31 @@ bitflags::bitflags! {
     pub struct PresentFlags: u32 {
         /// Present a frame from the current buffer to the output.
         /// Use this flag so that the presentation can use vertical-blank synchronization instead of sequencing buffers in the chain in the usual manner.
-        const DoNotSequence = DXGI_PRESENT_DO_NOT_SEQUENCE;
+        const DoNotSequence = DXGI_PRESENT_DO_NOT_SEQUENCE.0;
 
         /// Do not present the frame to the output.
-        const Test = DXGI_PRESENT_TEST;
+        const Test = DXGI_PRESENT_TEST.0;
 
         /// Specifies that the runtime will discard outstanding queued presents.
-        const Restart = DXGI_PRESENT_RESTART;
+        const Restart = DXGI_PRESENT_RESTART.0;
 
         /// Specifies that the runtime will fail the presentation with the error code if the calling thread is blocked.
-        const DoNotWait = DXGI_PRESENT_DO_NOT_WAIT;
+        const DoNotWait = DXGI_PRESENT_DO_NOT_WAIT.0;
 
         /// Indicates that presentation content will be shown only on the particular output. The content will not be visible on other outputs.
-        const RestrictToOutput = DXGI_PRESENT_RESTRICT_TO_OUTPUT;
+        const RestrictToOutput = DXGI_PRESENT_RESTRICT_TO_OUTPUT.0;
 
         /// Indicates that if the stereo present must be reduced to mono, right-eye viewing is used rather than left-eye viewing.
-        const StereoPreferRight = DXGI_PRESENT_STEREO_PREFER_RIGHT;
+        const StereoPreferRight = DXGI_PRESENT_STEREO_PREFER_RIGHT.0;
 
         /// Indicates that the presentation should use the left buffer as a mono buffer.
-        const StereoTemporaryMono = DXGI_PRESENT_STEREO_TEMPORARY_MONO;
+        const StereoTemporaryMono = DXGI_PRESENT_STEREO_TEMPORARY_MONO.0;
 
         /// This flag must be set by media apps that are currently using a custom present duration (custom refresh rate).
-        const UseDuration = DXGI_PRESENT_USE_DURATION;
+        const UseDuration = DXGI_PRESENT_USE_DURATION.0;
 
         /// Allowing tearing is a requirement of variable refresh rate displays.
-        const AllowTearing = DXGI_PRESENT_ALLOW_TEARING;
+        const AllowTearing = DXGI_PRESENT_ALLOW_TEARING.0;
     }
 }
 
@@ -874,12 +874,12 @@ bitflags::bitflags! {
     #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
     pub struct WindowAssociationFlags: u32 {
         /// revent DXGI from monitoring an applications message queue; this makes DXGI unable to respond to mode changes.
-        const NoWindowChanges = DXGI_MWA_NO_WINDOW_CHANGES;
+        const NoWindowChanges = DXGI_MWA_NO_WINDOW_CHANGES.0;
 
         /// Prevent DXGI from responding to an alt-enter sequence.
-        const NoAltEnter = DXGI_MWA_NO_ALT_ENTER;
+        const NoAltEnter = DXGI_MWA_NO_ALT_ENTER.0;
 
         /// Prevent DXGI from responding to a print-screen key.
-        const NoPrintScreen = DXGI_MWA_NO_PRINT_SCREEN;
+        const NoPrintScreen = DXGI_MWA_NO_PRINT_SCREEN.0;
     }
 }

@@ -86,7 +86,7 @@ impl_trait! {
 
     fn present(&self, interval: u32, flags: PresentFlags) -> Result<(), DxError> {
         unsafe {
-            self.0.Present(interval, flags.bits()).ok().map_err(DxError::from)
+            self.0.Present(interval, flags.as_raw()).ok().map_err(DxError::from)
         }
     }
 
@@ -104,7 +104,7 @@ impl_trait! {
                 width,
                 height,
                 new_format.as_raw(),
-                flags.bits() as u32
+                flags.as_raw()
             ).map_err(DxError::from)
         }
     }
@@ -159,9 +159,9 @@ impl_trait! {
 
     fn get_desc(&self) -> Result<OutputDesc, DxError> {
         unsafe {
-            let mut desc = std::mem::zeroed();
-            self.0.GetDesc(&mut desc).map_err(DxError::from)?;
-            Ok(OutputDesc(desc))
+            self.0.GetDesc()
+                .map(|d| OutputDesc(d))
+                .map_err(DxError::from)
         }
     }
 
@@ -170,7 +170,7 @@ impl_trait! {
             let mut count = 0;
             self.0.GetDisplayModeList1(
                 format.as_raw(),
-                flags.bits(),
+                flags.as_raw(),
                 &mut count,
                 None
             ).map_err(DxError::from)?;
@@ -180,7 +180,7 @@ impl_trait! {
 
             self.0.GetDisplayModeList1(
                 format.as_raw(),
-                flags.bits(),
+                flags.as_raw(),
                 &mut count,
                 Some(vec.as_mut_ptr() as *mut _)
             ).map_err(DxError::from)?;
