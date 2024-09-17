@@ -840,7 +840,7 @@ impl DxSample for LandAndWavesSample {
         let skull_scale = Mat4::from_scale(vec3(0.45, 0.45, 0.45));
         let skull_offset = Mat4::from_translation(self.skull_translation);
 
-        let skull_world = skull_rotate * skull_scale * skull_offset;
+        let skull_world =  skull_scale * skull_rotate * skull_offset;
 
         *self.skull_ritem.world.borrow_mut() = skull_world;
 
@@ -857,7 +857,7 @@ impl DxSample for LandAndWavesSample {
         );
         let shadow_offset_y = Mat4::from_translation(vec3(0.0, 0.001, 0.0));
 
-        *self.skull_shadow.world.borrow_mut() = skull_world * s * shadow_offset_y;
+        *self.skull_shadow.world.borrow_mut() = skull_world * s *shadow_offset_y ;
 
         self.skull_ritem.num_frames_dirty.set(Self::FRAME_COUNT);
         self.skull_reflected.num_frames_dirty.set(Self::FRAME_COUNT);
