@@ -276,7 +276,7 @@ impl DxSample for LandAndWavesSample {
                 Rc::new(RefCell::new(Material {
                     name: "shadowMat".to_string(),
                     cb_index: 4,
-                    diffuse_srv_heap_index: Some(4),
+                    diffuse_srv_heap_index: Some(3),
                     num_frames_dirty: Self::FRAME_COUNT,
                     diffuse_albedo: vec4(0.0, 0.0, 0.0, 1.0),
                     fresnel_r0: vec3(0.001, 0.001, 0.001),
@@ -357,7 +357,7 @@ impl DxSample for LandAndWavesSample {
             num_frames_dirty: Cell::new(Self::FRAME_COUNT),
             obj_cb_index: 2,
             geo: Rc::clone(geometries.get("skullGeo").unwrap()),
-            material: Rc::clone(materials.get("skull").unwrap()),
+            material: Rc::clone(materials.get("skullMat").unwrap()),
             primitive_type: PrimitiveTopology::Triangle,
             index_count: geometries
                 .get("skullGeo")
@@ -392,7 +392,7 @@ impl DxSample for LandAndWavesSample {
 
         let ri_skull_shadow = Rc::new(RenderItem {
             obj_cb_index: 4,
-            material: Rc::clone(materials.get("shadow").unwrap()),
+            material: Rc::clone(materials.get("shadowMat").unwrap()),
             ..(*ri_skull).clone()
         });
 
@@ -764,11 +764,12 @@ impl DxSample for LandAndWavesSample {
             &base.cmd_list,
             self.ritems_by_layer.get(&RenderLayer::Mirrors).unwrap(),
         );
-
+        
         base.cmd_list.set_graphics_root_constant_buffer_view(
             3,
             pass_cb.get_gpu_virtual_address() + size_of_val(&self.reflected_pass_cb) as u64,
         );
+
         base.cmd_list
             .set_pipeline_state(self.pso.get("reflection").unwrap());
         self.draw_render_items(
@@ -1227,7 +1228,7 @@ impl LandAndWavesSample {
             });
         }
 
-        for _ in 0..2 {
+        for _ in 0..3 {
             lines.next();
         }
 

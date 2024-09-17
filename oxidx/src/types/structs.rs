@@ -506,7 +506,7 @@ impl DepthStencilOpDesc {
 
     #[inline]
     pub fn with_stencil_pass_op(mut self, stencil_pass_op: StencilOp) -> Self {
-        self.0.StencilDepthFailOp = stencil_pass_op.as_raw();
+        self.0.StencilPassOp = stencil_pass_op.as_raw();
         self
     }
 
