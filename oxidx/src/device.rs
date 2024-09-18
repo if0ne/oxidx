@@ -251,7 +251,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// For more information: [`ID3D12Device::CreateSharedHandle method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createsharedhandle)
     fn create_shared_handle(
         &self,
-        shareable: &DeviceChild,
+        shareable: &impl IDeviceChild,
         name: Option<&CStr>,
     ) -> Result<SharedHandle, DxError>;
 
@@ -800,7 +800,7 @@ impl_trait! {
 
     fn create_shared_handle(
         &self,
-        shareable: &DeviceChild,
+        shareable: &impl IDeviceChild,
         name: Option<&CStr>,
     ) -> Result<SharedHandle, DxError> {
         unsafe {

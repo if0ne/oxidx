@@ -957,9 +957,9 @@ pub struct HeapDesc(pub(crate) D3D12_HEAP_DESC);
 
 impl HeapDesc {
     #[inline]
-    pub fn new(size: u64, props: HeapProperties) -> Self {
+    pub fn new(size: usize, props: HeapProperties) -> Self {
         Self(D3D12_HEAP_DESC {
-            SizeInBytes: size,
+            SizeInBytes: size as u64,
             Properties: props.0,
             ..Default::default()
         })
