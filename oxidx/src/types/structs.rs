@@ -2021,6 +2021,7 @@ impl ResourceDesc {
             Width: width,
             Height: 1,
             DepthOrArraySize: 1,
+            MipLevels: 1,
             SampleDesc: DXGI_SAMPLE_DESC {
                 Count: 1,
                 Quality: 0,
@@ -2036,6 +2037,7 @@ impl ResourceDesc {
             Width: width,
             Height: height,
             DepthOrArraySize: 1,
+            MipLevels: 1,
             SampleDesc: DXGI_SAMPLE_DESC {
                 Count: 1,
                 Quality: 0,
@@ -2051,6 +2053,7 @@ impl ResourceDesc {
             Width: width,
             Height: height,
             DepthOrArraySize: depth,
+            MipLevels: 1,
             SampleDesc: DXGI_SAMPLE_DESC {
                 Count: 1,
                 Quality: 0,
