@@ -183,7 +183,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     fn create_placed_resource<R: IResource>(
         &self,
         heap: &impl IHeap,
-        heap_offset: u64,
+        heap_offset: usize,
         desc: &ResourceDesc,
         initial_state: ResourceStates,
         optimized_clear_value: Option<&ClearValue>,
@@ -649,7 +649,7 @@ impl_trait! {
     fn create_placed_resource<R: IResource>(
         &self,
         heap: &impl IHeap,
-        heap_offset: u64,
+        heap_offset: usize,
         desc: &ResourceDesc,
         initial_state: ResourceStates,
         optimized_clear_value: Option<&ClearValue>,
@@ -661,7 +661,7 @@ impl_trait! {
 
             self.0.CreatePlacedResource(
                 heap.as_raw_ref(),
-                heap_offset,
+                heap_offset as u64,
                 &desc.0,
                 initial_state.as_raw(),
                 clear_value,
