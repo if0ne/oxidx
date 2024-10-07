@@ -1929,6 +1929,7 @@ impl<'a> ResourceBarrier<'a> {
         resource: &'a Resource,
         before: ResourceStates,
         after: ResourceStates,
+        subresource: Option<u32>
     ) -> Self {
         Self(
             D3D12_RESOURCE_BARRIER {
@@ -1937,7 +1938,7 @@ impl<'a> ResourceBarrier<'a> {
                 Anonymous: D3D12_RESOURCE_BARRIER_0 {
                     Transition: ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
                         pResource: unsafe { std::mem::transmute_copy(resource.as_raw()) },
-                        Subresource: BARRIER_ALL_SUBRESOURCES,
+                        Subresource: subresource.unwrap_or(BARRIER_ALL_SUBRESOURCES),
                         StateBefore: before.as_raw(),
                         StateAfter: after.as_raw(),
                     }),
@@ -2015,10 +2016,10 @@ impl ResourceDesc {
     }
 
     #[inline]
-    pub fn texture_1d(width: u64) -> Self {
+    pub fn texture_1d(width: u32) -> Self {
         Self(D3D12_RESOURCE_DESC {
             Dimension: D3D12_RESOURCE_DIMENSION_TEXTURE1D,
-            Width: width,
+            Width: width as u64,
             Height: 1,
             DepthOrArraySize: 1,
             MipLevels: 1,
@@ -2031,10 +2032,10 @@ impl ResourceDesc {
     }
 
     #[inline]
-    pub fn texture_2d(width: u64, height: u32) -> Self {
+    pub fn texture_2d(width: u32, height: u32) -> Self {
         Self(D3D12_RESOURCE_DESC {
             Dimension: D3D12_RESOURCE_DIMENSION_TEXTURE2D,
-            Width: width,
+            Width: width as u64,
             Height: height,
             DepthOrArraySize: 1,
             MipLevels: 1,
@@ -2047,10 +2048,10 @@ impl ResourceDesc {
     }
 
     #[inline]
-    pub fn texture_3d(width: u64, height: u32, depth: u16) -> Self {
+    pub fn texture_3d(width: u32, height: u32, depth: u16) -> Self {
         Self(D3D12_RESOURCE_DESC {
             Dimension: D3D12_RESOURCE_DIMENSION_TEXTURE2D,
-            Width: width,
+            Width: width as u64,
             Height: height,
             DepthOrArraySize: depth,
             MipLevels: 1,
