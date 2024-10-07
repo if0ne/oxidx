@@ -593,23 +593,23 @@ impl MeshGeometrySplitted {
     pub fn vertex_buffer_position_view(&self) -> VertexBufferView {
         VertexBufferView::new(
             self.vertex_buffer_pos_gpu.get_gpu_virtual_address(),
-            self.vertex_pos_byte_stride,
-            self.vertex_pos_byte_size,
+            self.vertex_pos_byte_stride as usize,
+            self.vertex_pos_byte_size as usize,
         )
     }
 
     pub fn vertex_buffer_color_view(&self) -> VertexBufferView {
         VertexBufferView::new(
             self.vertex_buffer_color_gpu.get_gpu_virtual_address(),
-            self.vertex_color_byte_stride,
-            self.vertex_color_byte_size,
+            self.vertex_color_byte_stride as usize,
+            self.vertex_color_byte_size as usize,
         )
     }
 
     pub fn index_buffer_view(&self) -> IndexBufferView {
         IndexBufferView::new(
             self.index_buffer_gpu.get_gpu_virtual_address(),
-            self.index_buffer_byte_size,
+            self.index_buffer_byte_size as usize,
             self.index_format,
         )
     }

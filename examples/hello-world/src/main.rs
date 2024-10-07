@@ -459,8 +459,8 @@ fn create_vertex_buffer(device: &Device, aspect_ratio: f32) -> (Resource, Vertex
 
     let vbv = VertexBufferView::new(
         vertex_buffer.get_gpu_virtual_address(),
-        std::mem::size_of::<Vertex>() as u32,
-        std::mem::size_of_val(&vertices) as u32,
+        std::mem::size_of::<Vertex>(),
+        std::mem::size_of_val(&vertices)
     );
 
     (vertex_buffer, vbv)

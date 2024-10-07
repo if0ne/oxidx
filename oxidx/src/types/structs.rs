@@ -1123,10 +1123,10 @@ pub struct IndexBufferView(pub(crate) D3D12_INDEX_BUFFER_VIEW);
 
 impl IndexBufferView {
     #[inline]
-    pub fn new(buffer_location: GpuVirtualAddress, size: u32, format: Format) -> Self {
+    pub fn new(buffer_location: GpuVirtualAddress, size: usize, format: Format) -> Self {
         Self(D3D12_INDEX_BUFFER_VIEW {
             BufferLocation: buffer_location,
-            SizeInBytes: size,
+            SizeInBytes: size as u32,
             Format: format.as_raw(),
         })
     }
@@ -3342,11 +3342,11 @@ pub struct VertexBufferView(pub(crate) D3D12_VERTEX_BUFFER_VIEW);
 
 impl VertexBufferView {
     #[inline]
-    pub fn new(buffer_location: GpuVirtualAddress, stride: u32, size: u32) -> Self {
+    pub fn new(buffer_location: GpuVirtualAddress, stride: usize, size: usize) -> Self {
         Self(D3D12_VERTEX_BUFFER_VIEW {
             BufferLocation: buffer_location,
-            StrideInBytes: stride,
-            SizeInBytes: size,
+            StrideInBytes: stride as u32,
+            SizeInBytes: size as u32,
         })
     }
 }

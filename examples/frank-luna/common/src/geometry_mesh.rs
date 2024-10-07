@@ -44,8 +44,8 @@ impl MeshGeometry {
                 .as_ref()
                 .expect("Vertex buffer should be set")
                 .get_gpu_virtual_address(),
-            self.vertex_byte_stride,
-            self.vertex_byte_size,
+            self.vertex_byte_stride as usize,
+            self.vertex_byte_size as usize,
         )
     }
 
@@ -55,7 +55,7 @@ impl MeshGeometry {
                 .as_ref()
                 .expect("Index buffer should be set")
                 .get_gpu_virtual_address(),
-            self.index_buffer_byte_size,
+            self.index_buffer_byte_size as usize,
             self.index_format,
         )
     }
