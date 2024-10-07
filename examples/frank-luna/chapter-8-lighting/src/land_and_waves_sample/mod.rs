@@ -365,6 +365,7 @@ impl DxSample for LandAndWavesSample {
                 context.current_back_buffer(),
                 ResourceStates::Present,
                 ResourceStates::RenderTarget,
+                None,
             )]);
 
         base.cmd_list.rs_set_viewports(&[context.viewport]);
@@ -404,6 +405,7 @@ impl DxSample for LandAndWavesSample {
                 context.current_back_buffer(),
                 ResourceStates::RenderTarget,
                 ResourceStates::Present,
+                None,
             )]);
 
         base.cmd_list.close().unwrap();

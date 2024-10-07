@@ -192,7 +192,7 @@ impl Base {
             .create_committed_resource(
                 &HeapProperties::default(),
                 HeapFlags::empty(),
-                &ResourceDesc::texture_2d(self.client_width as u64, self.client_height)
+                &ResourceDesc::texture_2d(self.client_width, self.client_height)
                     .with_format(self.depth_stencil_format)
                     .with_sample_desc(if self.msaa_state {
                         SampleDesc::new(4, self.msaa_4x_quality)
@@ -220,6 +220,7 @@ impl Base {
                 &depth_buffer,
                 ResourceStates::Common,
                 ResourceStates::DepthWrite,
+                None,
             )]);
 
         self.cmd_list.close().unwrap();
@@ -293,7 +294,7 @@ impl Base {
             .create_committed_resource(
                 &HeapProperties::default(),
                 HeapFlags::empty(),
-                &ResourceDesc::texture_2d(self.client_width as u64, self.client_height)
+                &ResourceDesc::texture_2d(self.client_width, self.client_height)
                     .with_format(Format::R24G8Typeless)
                     .with_sample_desc(if self.msaa_state {
                         SampleDesc::new(4, self.msaa_4x_quality)
@@ -320,6 +321,7 @@ impl Base {
                 &depth_buffer,
                 ResourceStates::Common,
                 ResourceStates::DepthWrite,
+                None,
             )]);
 
         self.cmd_list.close().unwrap();

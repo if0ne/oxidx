@@ -322,7 +322,7 @@ fn transition_barrier(
     state_before: ResourceStates,
     state_after: ResourceStates,
 ) -> ResourceBarrier {
-    ResourceBarrier::transition(resource, state_before, state_after)
+    ResourceBarrier::transition(resource, state_before, state_after, None)
 }
 
 fn create_device_inner(command_line: &SampleCommandLine) -> (Factory4, Device) {

@@ -16,7 +16,7 @@ use crate::{
     command_signature::ICommandSignature,
     create_type,
     descriptor_heap::IDescriptorHeap,
-    device_child::{DeviceChild, IDeviceChild},
+    device_child::IDeviceChild,
     dx::{IRootSignatureExt, InfoQueue1},
     error::DxError,
     heap::IHeap,

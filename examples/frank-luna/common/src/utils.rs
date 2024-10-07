@@ -52,6 +52,7 @@ pub fn create_default_buffer<T: Copy>(
         &default_buffer,
         ResourceStates::Common,
         ResourceStates::CopyDest,
+        None,
     )]);
 
     assert!(
@@ -68,6 +69,7 @@ pub fn create_default_buffer<T: Copy>(
         &default_buffer,
         ResourceStates::CopyDest,
         ResourceStates::GenericRead,
+        None,
     )]);
 
     (default_buffer, upload_buffer)
@@ -106,7 +108,7 @@ pub fn load_texture_from_file(
     let texture_bytes = img.as_raw();
 
     let desc =
-        ResourceDesc::texture_2d(img.width() as u64, img.height()).with_format(Format::Rgba8Unorm);
+        ResourceDesc::texture_2d(img.width(), img.height()).with_format(Format::Rgba8Unorm);
 
     let resource = device.create_committed_resource(
         &HeapProperties::default(),
@@ -149,6 +151,7 @@ pub fn load_texture_from_file(
         &resource,
         ResourceStates::CopyDest,
         ResourceStates::PixelShaderResource,
+        None,
     )]);
 
     Ok(Texture {
