@@ -4,6 +4,7 @@ use windows::Win32::Graphics::Dxgi::CreateDXGIFactory2;
 use crate::adapter::IAdapter3;
 use crate::debug::IDebug;
 use crate::device::IDevice;
+use crate::dx::{Debug, Device, Factory4};
 use crate::error::DxError;
 use crate::factory::IFactory4;
 use crate::types::{FactoryCreationFlags, FeatureLevel};
@@ -11,23 +12,23 @@ use crate::types::{FactoryCreationFlags, FeatureLevel};
 /// Creates a DXGI 1.3 factory that you can use to generate other DXGI objects.
 ///
 /// For more information: [`CreateDXGIFactory2 function`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_3/nf-dxgi1_3-createdxgifactory2)
-pub fn create_factory<F: IFactory4>(flags: FactoryCreationFlags) -> Result<F, DxError> {
+pub fn create_factory4(flags: FactoryCreationFlags) -> Result<Factory4, DxError> {
     unsafe {
-        let inner: F::Raw = CreateDXGIFactory2(flags.as_raw()).map_err(DxError::from)?;
+        let inner = CreateDXGIFactory2(flags.as_raw()).map_err(DxError::from)?;
 
-        Ok(F::new(inner))
+        Ok(Factory4::new(inner))
     }
 }
 
 /// Creates a device that represents the display adapter.
 ///
 /// For more information: [`D3D12CreateDevice function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-d3d12createdevice)
-pub fn create_device<D: IDevice>(
+pub fn create_device(
     adapter: Option<&impl IAdapter3>,
     feature_level: FeatureLevel,
-) -> Result<D, DxError> {
+) -> Result<Device, DxError> {
     unsafe {
-        let mut inner: Option<D::Raw> = None;
+        let mut inner = None;
 
         if let Some(adapter) = adapter {
             D3D12CreateDevice(adapter.as_raw_ref(), feature_level.as_raw(), &mut inner)
@@ -38,21 +39,21 @@ pub fn create_device<D: IDevice>(
 
         let inner = inner.unwrap();
 
-        Ok(D::new(inner))
+        Ok(Device::new(inner))
     }
 }
 
 /// Gets a debug interface.
 ///
 /// For more information: [`D3D12GetDebugInterface function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-d3d12getdebuginterface)
-pub fn create_debug<D: IDebug>() -> Result<D, DxError> {
+pub fn create_debug() -> Result<Debug, DxError> {
     unsafe {
-        let mut inner: Option<D::Raw> = None;
+        let mut inner = None;
 
         D3D12GetDebugInterface(&mut inner).map_err(DxError::from)?;
         let inner = inner.unwrap();
 
-        Ok(D::new(inner))
+        Ok(Debug::new(inner))
     }
 }
 

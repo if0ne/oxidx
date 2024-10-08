@@ -17,7 +17,7 @@ use crate::{
     create_type,
     descriptor_heap::IDescriptorHeap,
     device_child::IDeviceChild,
-    dx::{IRootSignatureExt, InfoQueue1},
+    dx::{CommandAllocator, CommandQueue, CommandSignature, GraphicsCommandList, Heap, IRootSignatureExt, InfoQueue1, PipelineState, QueryHeap, Resource, RootSignature},
     error::DxError,
     heap::IHeap,
     impl_trait,
@@ -76,58 +76,58 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// Creates a command allocator object.
     ///
     /// For more information: [`ID3D12Device::CreateCommandAllocator method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommandallocator)
-    fn create_command_allocator<CA: ICommandAllocator>(
+    fn create_command_allocator(
         &self,
         r#type: CommandListType,
-    ) -> Result<CA, DxError>;
+    ) -> Result<CommandAllocator, DxError>;
 
     /// Creates a command list.
     ///
     /// For more information: [`ID3D12Device::CreateCommandList method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommandlist)
-    fn create_command_list<CL: ICommandList>(
+    fn create_command_list(
         &self,
         node_mask: u32,
         r#type: CommandListType,
         command_allocator: &impl ICommandAllocator,
         pso: Option<&impl IPipelineState>,
-    ) -> Result<CL, DxError>;
+    ) -> Result<GraphicsCommandList, DxError>;
 
     /// Creates a command queue.
     ///
     /// For more information: [`ID3D12Device::CreateCommandQueue method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommandqueue)
-    fn create_command_queue<CQ: ICommandQueue>(
+    fn create_command_queue(
         &self,
         desc: &CommandQueueDesc,
-    ) -> Result<CQ, DxError>;
+    ) -> Result<CommandQueue, DxError>;
 
     /// Creates a command queue.
     ///
     /// For more information: [`ID3D12Device::CreateCommandSignature method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommandsignature)
-    fn create_command_signature<CS: ICommandSignature>(
+    fn create_command_signature(
         &self,
         desc: &CommandSignatureDesc<'_>,
         root_signature: Option<&impl IRootSignature>,
-    ) -> Result<CS, DxError>;
+    ) -> Result<CommandSignature, DxError>;
 
     /// Creates both a resource and an implicit heap, such that the heap is big enough to contain the entire resource, and the resource is mapped to the heap.
     ///
     /// For more information: [`ID3D12Device::CreateCommittedResource method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommittedresource)
-    fn create_committed_resource<R: IResource>(
+    fn create_committed_resource(
         &self,
         heap_properties: &HeapProperties,
         heap_flags: HeapFlags,
         desc: &ResourceDesc,
         initial_state: ResourceStates,
         optimized_clear_value: Option<&ClearValue>,
-    ) -> Result<R, DxError>;
+    ) -> Result<Resource, DxError>;
 
     /// Creates a compute pipeline state object.
     ///
     /// For more information: [`ID3D12Device::CreateComputePipelineState method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcomputepipelinestate)
-    fn create_compute_pipeline_state<CPS: IPipelineState>(
+    fn create_compute_pipeline_state(
         &self,
         desc: &ComputePipelineStateDesc<'_>,
-    ) -> Result<CPS, DxError>;
+    ) -> Result<PipelineState, DxError>;
 
     /// Creates a constant-buffer view for accessing resource data.
     ///
@@ -151,28 +151,28 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// Creates a descriptor heap object.
     ///
     /// For more information: [`ID3D12Device::CreateDescriptorHeap method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createdescriptorheap)
-    fn create_descriptor_heap<H: IDescriptorHeap>(
+    fn create_descriptor_heap(
         &self,
         desc: &DescriptorHeapDesc,
-    ) -> Result<H, DxError>;
+    ) -> Result<DescriptorHeap, DxError>;
 
     /// Creates a fence object.
     ///
     /// For more information: [`ID3D12Device::CreateFence method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createfence)
-    fn create_fence<F: IFence>(&self, initial_value: u64, flags: FenceFlags) -> Result<F, DxError>;
+    fn create_fence(&self, initial_value: u64, flags: FenceFlags) -> Result<Fence, DxError>;
 
     /// Creates a graphics pipeline state object.
     ///
     /// For more information: [`ID3D12Device::CreateGraphicsPipelineState method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-creategraphicspipelinestate)
-    fn create_graphics_pipeline<G: IPipelineState>(
+    fn create_graphics_pipeline(
         &self,
         desc: &GraphicsPipelineDesc<'_>,
-    ) -> Result<G, DxError>;
+    ) -> Result<PipelineState, DxError>;
 
     /// Creates a heap that can be used with placed resources and reserved resources.
     ///
     /// For more information: [`ID3D12Device::CreateHeap method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createheap)
-    fn create_heap<H: IHeap>(&self, desc: &HeapDesc) -> Result<H, DxError>;
+    fn create_heap(&self, desc: &HeapDesc) -> Result<Heap, DxError>;
 
     /// Creates a info queue.
     fn create_info_queue1(&self) -> Result<InfoQueue1, DxError>;
@@ -180,19 +180,19 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// Creates a resource that is placed in a specific heap. Placed resources are the lightest weight resource objects available, and are the fastest to create and destroy.
     ///
     /// For more information: [`ID3D12Device::CreatePlacedResource method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createplacedresource)
-    fn create_placed_resource<R: IResource>(
+    fn create_placed_resource(
         &self,
         heap: &impl IHeap,
         heap_offset: usize,
         desc: &ResourceDesc,
         initial_state: ResourceStates,
         optimized_clear_value: Option<&ClearValue>,
-    ) -> Result<R, DxError>;
+    ) -> Result<Resource, DxError>;
 
     /// Describes the purpose of a query heap. A query heap contains an array of individual queries.
     ///
     /// For more information: [`ID3D12Device::CreateQueryHeap method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createqueryheap)
-    fn create_query_heap<Q: IQueryHeap>(&self, desc: &QueryHeapDesc) -> Result<Q, DxError>;
+    fn create_query_heap(&self, desc: &QueryHeapDesc) -> Result<QueryHeap, DxError>;
 
     /// Creates a render-target view for accessing resource data.
     ///
@@ -207,29 +207,29 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// Creates a resource that is reserved, and not yet mapped to any pages in a heap.
     ///
     /// For more information: [`ID3D12Device::CreateReservedResource method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createreservedresource)
-    fn create_reserved_resource<R: IResource>(
+    fn create_reserved_resource(
         &self,
         desc: &ResourceDesc,
         initial_state: ResourceStates,
         optimized_clear_value: Option<&ClearValue>,
-    ) -> Result<R, DxError>;
+    ) -> Result<Resource, DxError>;
 
     /// Creates a root signature layout.
     ///
     /// For more information: [`ID3D12Device::CreateRootSignature method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createrootsignature)
-    fn create_root_signature<RS: IRootSignature>(
+    fn create_root_signature(
         &self,
         node_mask: u32,
         blob: &[u8],
-    ) -> Result<RS, DxError>;
+    ) -> Result<RootSignature, DxError>;
 
     /// Serializes and creates a root signature layout.
-    fn serialize_and_create_root_signature<RS: IRootSignature + IRootSignatureExt>(
+    fn serialize_and_create_root_signature(
         &self,
         desc: &RootSignatureDesc<'_>,
         version: RootSignatureVersion,
         node_mask: u32,
-    ) -> Result<RS, DxError>;
+    ) -> Result<RootSignature, DxError>;
 
     /// Create a sampler object that encapsulates sampling information for a texture.
     ///
@@ -433,35 +433,35 @@ impl_trait! {
         }
     }
 
-    fn create_command_allocator<CA: ICommandAllocator>(
+    fn create_command_allocator(
         &self,
         r#type: CommandListType
-    ) -> Result<CA, DxError> {
+    ) -> Result<CommandAllocator, DxError> {
         unsafe {
-            let res: CA::Raw = self.0.CreateCommandAllocator(r#type.as_raw()).map_err(DxError::from)?;
+            let res = self.0.CreateCommandAllocator(r#type.as_raw()).map_err(DxError::from)?;
 
-            Ok(CA::new(res))
+            Ok(CommandAllocator::new(res))
         }
     }
 
-    fn create_command_queue<CQ: ICommandQueue>(
+    fn create_command_queue(
         &self,
         desc: &CommandQueueDesc,
-    ) -> Result<CQ, DxError> {
+    ) -> Result<CommandQueue, DxError> {
         unsafe {
-            let res: CQ::Raw = self.0.CreateCommandQueue(&desc.0).map_err(DxError::from)?;
+            let res = self.0.CreateCommandQueue(&desc.0).map_err(DxError::from)?;
 
-            Ok(CQ::new(res))
+            Ok(CommandQueue::new(res))
         }
     }
 
-    fn create_command_signature<CS: ICommandSignature>(
+    fn create_command_signature(
         &self,
         desc: &CommandSignatureDesc<'_>,
         root_signature: Option<&impl IRootSignature>,
-    ) -> Result<CS, DxError> {
+    ) -> Result<CommandSignature, DxError> {
         unsafe {
-            let mut res: Option<CS::Raw> = None;
+            let mut res = None;
 
             if let Some(root_signature) = root_signature {
                 self.0.CreateCommandSignature(
@@ -479,18 +479,18 @@ impl_trait! {
 
             let res = res.unwrap_unchecked();
 
-            Ok(CS::new(res))
+            Ok(CommandSignature::new(res))
         }
     }
 
-    fn create_committed_resource<R: IResource>(
+    fn create_committed_resource(
         &self,
         heap_properties: &HeapProperties,
         heap_flags: HeapFlags,
         desc: &ResourceDesc,
         initial_state: ResourceStates,
         optimized_clear_value: Option<&ClearValue>,
-    ) -> Result<R, DxError> {
+    ) -> Result<Resource, DxError> {
         unsafe {
             let clear_value = optimized_clear_value.as_ref().map(|c| &c.0 as *const _);
 
@@ -507,17 +507,17 @@ impl_trait! {
 
             let resource = resource.unwrap_unchecked();
 
-            Ok(R::new(resource))
+            Ok(Resource::new(resource))
         }
     }
 
-    fn create_command_list<CL: ICommandList>(
+    fn create_command_list(
         &self,
         node_mask: u32,
         r#type: CommandListType,
         command_allocator: &impl ICommandAllocator,
         pso: Option<&impl IPipelineState>,
-    ) -> Result<CL, DxError> {
+    ) -> Result<CommandList, DxError> {
         unsafe {
             let res: CL::Raw = if let Some(pso) = pso {
                 self.0.CreateCommandList(
@@ -535,18 +535,18 @@ impl_trait! {
                 ).map_err(DxError::from)?
             };
 
-            Ok(CL::new(res))
+            Ok(CommandList::new(res))
         }
     }
 
-    fn create_compute_pipeline_state<CPS: IPipelineState>(
+    fn create_compute_pipeline_state(
         &self,
         desc: &ComputePipelineStateDesc<'_>,
-    ) -> Result<CPS, DxError> {
+    ) -> Result<PipelineState, DxError> {
         unsafe {
-            let res: CPS::Raw = self.0.CreateComputePipelineState(&desc.0).map_err(DxError::from)?;
+            let res = self.0.CreateComputePipelineState(&desc.0).map_err(DxError::from)?;
 
-            Ok(CPS::new(res))
+            Ok(PipelineState::new(res))
         }
     }
 
@@ -591,47 +591,47 @@ impl_trait! {
         }
     }
 
-    fn create_descriptor_heap<H: IDescriptorHeap>(
+    fn create_descriptor_heap(
         &self,
         desc: &DescriptorHeapDesc,
-    ) -> Result<H, DxError> {
+    ) -> Result<DescriptorHeap, DxError> {
         unsafe {
-            let res: H::Raw  = self.0.CreateDescriptorHeap(&desc.0).map_err(DxError::from)?;
+            let res = self.0.CreateDescriptorHeap(&desc.0).map_err(DxError::from)?;
 
-            Ok(H::new(res))
+            Ok(DescriptorHeap::new(res))
         }
     }
 
-    fn create_fence<F: IFence>(
+    fn create_fence(
         &self,
         initial_value: u64,
         flags: FenceFlags,
-    ) -> Result<F, DxError> {
+    ) -> Result<Fence, DxError> {
         unsafe {
-            let res: F::Raw = self.0.CreateFence(initial_value, flags.as_raw()).map_err(DxError::from)?;
+            let res = self.0.CreateFence(initial_value, flags.as_raw()).map_err(DxError::from)?;
 
-            Ok(F::new(res))
+            Ok(Fence::new(res))
         }
     }
 
-    fn create_graphics_pipeline<G: IPipelineState>(
+    fn create_graphics_pipeline(
         &self,
         desc: &GraphicsPipelineDesc<'_>,
-    ) -> Result<G, DxError> {
+    ) -> Result<PipelineState, DxError> {
         unsafe {
-            let res: G::Raw = self.0.CreateGraphicsPipelineState(&desc.0).map_err(DxError::from)?;
+            let res = self.0.CreateGraphicsPipelineState(&desc.0).map_err(DxError::from)?;
 
-            Ok(G::new(res))
+            Ok(PipelineState::new(res))
         }
     }
 
-    fn create_heap<H: IHeap>(&self, desc: &HeapDesc) -> Result<H, DxError> {
+    fn create_heap<(&self, desc: &HeapDesc) -> Result<Heap, DxError> {
         unsafe {
             let mut res = None;
             self.0.CreateHeap(&desc.0, &mut res).map_err(DxError::from)?;
             let res = res.unwrap_unchecked();
 
-            Ok(H::new(res))
+            Ok(Heap::new(res))
         }
     }
 
@@ -646,14 +646,14 @@ impl_trait! {
         }
     }
 
-    fn create_placed_resource<R: IResource>(
+    fn create_placed_resource(
         &self,
         heap: &impl IHeap,
         heap_offset: usize,
         desc: &ResourceDesc,
         initial_state: ResourceStates,
         optimized_clear_value: Option<&ClearValue>,
-    ) -> Result<R, DxError> {
+    ) -> Result<Resource, DxError> {
         unsafe {
             let clear_value = optimized_clear_value.as_ref().map(|c| &c.0 as *const _);
 
@@ -670,19 +670,19 @@ impl_trait! {
 
             let resource = resource.unwrap_unchecked();
 
-            Ok(R::new(resource))
+            Ok(Resource::new(resource))
         }
     }
 
-    fn create_query_heap<Q: IQueryHeap>(
+    fn create_query_heap(
         &self,
         desc: &QueryHeapDesc,
-    ) -> Result<Q, DxError> {
+    ) -> Result<QueryHeap, DxError> {
         unsafe {
             let mut res = None;
             self.0.CreateQueryHeap(&desc.0, &mut res).map_err(DxError::from)?;
             let res = res.unwrap_unchecked();
-            Ok(Q::new(res))
+            Ok(QueryHeap::new(res))
         }
     }
 
@@ -711,12 +711,12 @@ impl_trait! {
         }
     }
 
-    fn create_reserved_resource<R: IResource>(
+    fn create_reserved_resource(
         &self,
         desc: &ResourceDesc,
         initial_state: ResourceStates,
         optimized_clear_value: Option<&ClearValue>,
-    ) -> Result<R, DxError> {
+    ) -> Result<Resource, DxError> {
         unsafe {
             let clear_value = optimized_clear_value.as_ref().map(|c| &c.0 as *const _);
 
@@ -731,30 +731,30 @@ impl_trait! {
 
             let resource = resource.unwrap_unchecked();
 
-            Ok(R::new(resource))
+            Ok(Resource::new(resource))
         }
     }
 
-    fn create_root_signature<RS: IRootSignature>(
+    fn create_root_signature(
         &self,
         node_mask: u32,
         blob: &[u8],
-    ) -> Result<RS, DxError> {
+    ) -> Result<RootSignature, DxError> {
         unsafe {
-            let res: RS::Raw = self.0.CreateRootSignature(node_mask, blob).map_err(DxError::from)?;
+            let res = self.0.CreateRootSignature(node_mask, blob).map_err(DxError::from)?;
 
-            Ok(RS::new(res))
+            Ok(RootSignature::new(res))
         }
     }
 
-    fn serialize_and_create_root_signature<RS: IRootSignature + IRootSignatureExt>(
+    fn serialize_and_create_root_signature(
         &self,
         desc: &RootSignatureDesc<'_>,
         version: RootSignatureVersion,
         node_mask: u32,
-    ) -> Result<RS, DxError> {
+    ) -> Result<RootSignature, DxError> {
         unsafe {
-            let blob = RS::serialize(desc, version)?;
+            let blob = RootSignature::serialize(desc, version)?;
 
             self.create_root_signature(
                 node_mask,
