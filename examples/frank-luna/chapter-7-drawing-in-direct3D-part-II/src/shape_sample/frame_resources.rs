@@ -13,7 +13,7 @@ pub struct FrameResource {
 impl FrameResource {
     pub fn new(device: &Device, pass_count: usize, object_count: usize) -> Self {
         let cmd_list_alloc = device
-            .create_command_allocator::<CommandAllocator>(CommandListType::Direct)
+            .create_command_allocator(CommandListType::Direct)
             .unwrap();
         let pass_cb = UploadBuffer::new(device, pass_count);
         let object_cb = UploadBuffer::new(device, object_count);

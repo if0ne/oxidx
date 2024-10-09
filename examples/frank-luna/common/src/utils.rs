@@ -107,8 +107,7 @@ pub fn load_texture_from_file(
 
     let texture_bytes = img.as_raw();
 
-    let desc =
-        ResourceDesc::texture_2d(img.width(), img.height()).with_format(Format::Rgba8Unorm);
+    let desc = ResourceDesc::texture_2d(img.width(), img.height()).with_format(Format::Rgba8Unorm);
 
     let resource = device.create_committed_resource(
         &HeapProperties::default(),

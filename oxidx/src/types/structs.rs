@@ -1929,7 +1929,7 @@ impl<'a> ResourceBarrier<'a> {
         resource: &'a Resource,
         before: ResourceStates,
         after: ResourceStates,
-        subresource: Option<u32>
+        subresource: Option<u32>,
     ) -> Self {
         Self(
             D3D12_RESOURCE_BARRIER {

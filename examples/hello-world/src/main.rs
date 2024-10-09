@@ -335,7 +335,7 @@ fn create_device_inner(command_line: &SampleCommandLine) -> (Factory4, Device) {
         FactoryCreationFlags::empty()
     };
 
-    let dxgi_factory: Factory4 = create_factory(dxgi_factory_flags).unwrap();
+    let dxgi_factory: Factory4 = create_factory4(dxgi_factory_flags).unwrap();
 
     let adapter = if command_line.use_warp_device {
         dxgi_factory.enum_warp_adapters().unwrap()
@@ -358,7 +358,7 @@ fn get_hardware_adapter(factory: &Factory4) -> Adapter3 {
             continue;
         }
 
-        if create_device::<Device>(Some(&adapter), FeatureLevel::Level11).is_ok() {
+        if create_device(Some(&adapter), FeatureLevel::Level11).is_ok() {
             return adapter;
         }
     }
@@ -460,7 +460,7 @@ fn create_vertex_buffer(device: &Device, aspect_ratio: f32) -> (Resource, Vertex
     let vbv = VertexBufferView::new(
         vertex_buffer.get_gpu_virtual_address(),
         std::mem::size_of::<Vertex>(),
-        std::mem::size_of_val(&vertices)
+        std::mem::size_of_val(&vertices),
     );
 
     (vertex_buffer, vbv)

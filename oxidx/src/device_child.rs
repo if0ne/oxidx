@@ -7,7 +7,7 @@ use windows::{
 
 use crate::{
     create_type,
-    dx::{Device, DxError, IDevice},
+    dx::{Device, DxError},
     heap::Heap,
     impl_trait, impl_up_down_cast,
     resources::Resource,

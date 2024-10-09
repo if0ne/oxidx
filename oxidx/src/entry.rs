@@ -2,12 +2,10 @@ use windows::Win32::Graphics::Direct3D12::{D3D12CreateDevice, D3D12GetDebugInter
 use windows::Win32::Graphics::Dxgi::CreateDXGIFactory2;
 
 use crate::adapter::IAdapter3;
-use crate::debug::IDebug;
-use crate::device::IDevice;
 use crate::dx::{Debug, Device, Factory4};
 use crate::error::DxError;
-use crate::factory::IFactory4;
 use crate::types::{FactoryCreationFlags, FeatureLevel};
+use crate::HasInterface;
 
 /// Creates a DXGI 1.3 factory that you can use to generate other DXGI objects.
 ///
@@ -59,34 +57,20 @@ pub fn create_debug() -> Result<Debug, DxError> {
 
 #[cfg(test)]
 mod test {
-    use crate::{device::Device, dx::ADAPTER_NONE, factory::*, types::FactoryCreationFlags};
+    use crate::{dx::ADAPTER_NONE, types::FactoryCreationFlags};
 
     use super::*;
 
     #[test]
     fn create_factory4_test() {
-        let factory = create_factory::<Factory4>(FactoryCreationFlags::Debug);
-
-        assert!(factory.is_ok())
-    }
-
-    #[test]
-    fn create_factory6_test() {
-        let factory = create_factory::<Factory6>(FactoryCreationFlags::Debug);
-
-        assert!(factory.is_ok())
-    }
-
-    #[test]
-    fn create_factory7_test() {
-        let factory = create_factory::<Factory7>(FactoryCreationFlags::Debug);
+        let factory = create_factory4(FactoryCreationFlags::Debug);
 
         assert!(factory.is_ok())
     }
 
     #[test]
     fn create_device_test() {
-        let device = create_device::<Device>(ADAPTER_NONE, FeatureLevel::Level11);
+        let device = create_device(ADAPTER_NONE, FeatureLevel::Level11);
         assert!(device.is_ok());
     }
 }

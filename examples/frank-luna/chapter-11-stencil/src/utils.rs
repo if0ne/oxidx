@@ -24,7 +24,7 @@ pub trait MatrixExt {
         const SELECT0001: [u32; 4] = [0, 0, 0, u32::MAX];
 
         let p = shadow_plane.normalize_plane();
-        let dot: u32 = unsafe { std::mem::transmute(p.dot(light_pos)) };
+        let dot: u32 = p.dot(light_pos).to_bits();
         let p = -p;
 
         let a = vec4(p.x, p.x, p.x, p.x);
@@ -32,14 +32,12 @@ pub trait MatrixExt {
         let c = vec4(p.z, p.z, p.z, p.z);
         let d = vec4(p.w, p.w, p.w, p.w);
 
-        let dot = unsafe {
-            vec4(
-                std::mem::transmute(SELECT0001[0] & !SELECT0001[0] | dot & SELECT0001[0]),
-                std::mem::transmute(SELECT0001[1] & !SELECT0001[1] | dot & SELECT0001[1]),
-                std::mem::transmute(SELECT0001[2] & !SELECT0001[2] | dot & SELECT0001[2]),
-                std::mem::transmute(SELECT0001[3] & !SELECT0001[3] | dot & SELECT0001[3]),
-            )
-        };
+        let dot = vec4(
+            f32::from_bits(SELECT0001[0] & !SELECT0001[0] | dot & SELECT0001[0]),
+            f32::from_bits(SELECT0001[1] & !SELECT0001[1] | dot & SELECT0001[1]),
+            f32::from_bits(SELECT0001[2] & !SELECT0001[2] | dot & SELECT0001[2]),
+            f32::from_bits(SELECT0001[3] & !SELECT0001[3] | dot & SELECT0001[3]),
+        );
 
         Mat4 {
             x_axis: a.mul_add(light_pos, dot),

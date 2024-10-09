@@ -25,7 +25,7 @@ impl FrameResource {
         material_count: usize,
     ) -> Self {
         let cmd_list_alloc = device
-            .create_command_allocator::<CommandAllocator>(CommandListType::Direct)
+            .create_command_allocator(CommandListType::Direct)
             .unwrap();
         let pass_cb = UploadBuffer::new(device, pass_count);
         let object_cb = UploadBuffer::new(device, object_count);

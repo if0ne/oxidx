@@ -85,7 +85,7 @@ impl Base {
             flags = FactoryCreationFlags::Debug;
         }
 
-        let factory: Factory4 = create_factory(flags).unwrap();
+        let factory: Factory4 = create_factory4(flags).unwrap();
 
         let device: Device = if let Ok(device) = create_device(ADAPTER_NONE, FeatureLevel::Level11)
         {

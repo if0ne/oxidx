@@ -9,24 +9,22 @@ use windows::{
 };
 
 use crate::{
-    blob::IBlob,
     command_allocator::ICommandAllocator,
-    command_list::ICommandList,
-    command_queue::ICommandQueue,
-    command_signature::ICommandSignature,
     create_type,
-    descriptor_heap::IDescriptorHeap,
     device_child::IDeviceChild,
-    dx::{CommandAllocator, CommandQueue, CommandSignature, GraphicsCommandList, Heap, IRootSignatureExt, InfoQueue1, PipelineState, QueryHeap, Resource, RootSignature},
+    dx::{
+        CommandAllocator, CommandQueue, CommandSignature, DescriptorHeap, GraphicsCommandList,
+        Heap, IBlob, IRootSignatureExt, InfoQueue1, PipelineState, QueryHeap, Resource,
+        RootSignature,
+    },
     error::DxError,
     heap::IHeap,
     impl_trait,
     pageable::Pageable,
     pso::IPipelineState,
-    query_heap::IQueryHeap,
     resources::IResource,
     root_signature::IRootSignature,
-    sync::IFence,
+    sync::Fence,
     types::*,
     FeatureObject, HasInterface,
 };
@@ -95,10 +93,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// Creates a command queue.
     ///
     /// For more information: [`ID3D12Device::CreateCommandQueue method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createcommandqueue)
-    fn create_command_queue(
-        &self,
-        desc: &CommandQueueDesc,
-    ) -> Result<CommandQueue, DxError>;
+    fn create_command_queue(&self, desc: &CommandQueueDesc) -> Result<CommandQueue, DxError>;
 
     /// Creates a command queue.
     ///
@@ -151,10 +146,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// Creates a descriptor heap object.
     ///
     /// For more information: [`ID3D12Device::CreateDescriptorHeap method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createdescriptorheap)
-    fn create_descriptor_heap(
-        &self,
-        desc: &DescriptorHeapDesc,
-    ) -> Result<DescriptorHeap, DxError>;
+    fn create_descriptor_heap(&self, desc: &DescriptorHeapDesc) -> Result<DescriptorHeap, DxError>;
 
     /// Creates a fence object.
     ///
@@ -217,11 +209,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// Creates a root signature layout.
     ///
     /// For more information: [`ID3D12Device::CreateRootSignature method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createrootsignature)
-    fn create_root_signature(
-        &self,
-        node_mask: u32,
-        blob: &[u8],
-    ) -> Result<RootSignature, DxError>;
+    fn create_root_signature(&self, node_mask: u32, blob: &[u8]) -> Result<RootSignature, DxError>;
 
     /// Serializes and creates a root signature layout.
     fn serialize_and_create_root_signature(
@@ -517,9 +505,9 @@ impl_trait! {
         r#type: CommandListType,
         command_allocator: &impl ICommandAllocator,
         pso: Option<&impl IPipelineState>,
-    ) -> Result<CommandList, DxError> {
+    ) -> Result<GraphicsCommandList, DxError> {
         unsafe {
-            let res: CL::Raw = if let Some(pso) = pso {
+            let res = if let Some(pso) = pso {
                 self.0.CreateCommandList(
                     node_mask,
                     r#type.as_raw(),
@@ -535,7 +523,7 @@ impl_trait! {
                 ).map_err(DxError::from)?
             };
 
-            Ok(CommandList::new(res))
+            Ok(GraphicsCommandList::new(res))
         }
     }
 
@@ -625,7 +613,7 @@ impl_trait! {
         }
     }
 
-    fn create_heap<(&self, desc: &HeapDesc) -> Result<Heap, DxError> {
+    fn create_heap(&self, desc: &HeapDesc) -> Result<Heap, DxError> {
         unsafe {
             let mut res = None;
             self.0.CreateHeap(&desc.0, &mut res).map_err(DxError::from)?;

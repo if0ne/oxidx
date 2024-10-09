@@ -83,10 +83,7 @@ impl DxSample for LandAndWavesSample {
         let heap_desc =
             DescriptorHeapDesc::cbr_srv_uav(3).with_flags(DescriptorHeapFlags::ShaderVisible);
 
-        let descriptor_heap = base
-            .device
-            .create_descriptor_heap::<DescriptorHeap>(&heap_desc)
-            .unwrap();
+        let descriptor_heap = base.device.create_descriptor_heap(&heap_desc).unwrap();
 
         let srv_desc = ShaderResourceViewDesc::texture_2d(Format::Rgba8Unorm, 0, u32::MAX, 0.0, 0);
 
