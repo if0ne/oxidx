@@ -449,7 +449,7 @@ pub trait IGraphicsCommandList:
 }
 
 pub trait IGraphicsCommandListExt: IGraphicsCommandList {
-    fn update_subresources_raw<T: Copy>(
+    fn update_subresources_raw<T: Clone>(
         &self,
         dst_resource: &impl IResource,
         intermediate: &impl IResource,
@@ -463,7 +463,7 @@ pub trait IGraphicsCommandListExt: IGraphicsCommandList {
 
     fn update_subresources_fixed<
         const MAX_SUBRESOURCES: usize,
-        T: Copy,
+        T: Clone,
         R: IResource + IDeviceChild,
     >(
         &self,
@@ -474,7 +474,7 @@ pub trait IGraphicsCommandListExt: IGraphicsCommandList {
         src_data: &[SubresourceData<'_, T>],
     ) -> usize;
 
-    fn update_subresources<T: Copy, R: IResource + IDeviceChild>(
+    fn update_subresources<T: Clone, R: IResource + IDeviceChild>(
         &self,
         dst_resource: &R,
         intermediate: &R,
@@ -1237,7 +1237,7 @@ impl_trait! {
     impl IGraphicsCommandListExt =>
     GraphicsCommandList;
 
-    fn update_subresources_raw<T: Copy>(
+    fn update_subresources_raw<T: Clone>(
         &self,
         dst_resource: &impl IResource,
         intermediate: &impl IResource,
@@ -1318,7 +1318,7 @@ impl_trait! {
         required_size
     }
 
-    fn update_subresources_fixed<const MAX_SUBRESOURCES: usize, T: Copy, R: IResource + IDeviceChild>(
+    fn update_subresources_fixed<const MAX_SUBRESOURCES: usize, T: Clone, R: IResource + IDeviceChild>(
         &self,
         dst_resource: &R,
         intermediate: &R,
@@ -1354,7 +1354,7 @@ impl_trait! {
         )
     }
 
-    fn update_subresources<T: Copy, R: IResource + IDeviceChild>(
+    fn update_subresources<T: Clone, R: IResource + IDeviceChild>(
         &self,
         dst_resource: &R,
         intermediate: &R,

@@ -342,7 +342,7 @@ impl Base {
 
     fn create_swapchain(&self, hwnd: NonZero<isize>) -> Swapchain1 {
         let swapchain_desc = SwapchainDesc1::new(self.client_width, self.client_height)
-            .with_buffer_count(SwapchainContext::BUFFER_COUNT as u32)
+            .with_buffer_count(SwapchainContext::BUFFER_COUNT)
             .with_usage(FrameBufferUsage::RenderTargetOutput)
             .with_sample_desc(if self.msaa_state {
                 SampleDesc::new(4, self.msaa_4x_quality)

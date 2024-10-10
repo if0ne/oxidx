@@ -1929,7 +1929,7 @@ impl<'a> ResourceBarrier<'a> {
         resource: &'a Resource,
         before: ResourceStates,
         after: ResourceStates,
-        subresource: Option<u32>,
+        subresource: Option<usize>,
     ) -> Self {
         Self(
             D3D12_RESOURCE_BARRIER {
@@ -1938,7 +1938,9 @@ impl<'a> ResourceBarrier<'a> {
                 Anonymous: D3D12_RESOURCE_BARRIER_0 {
                     Transition: ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
                         pResource: unsafe { std::mem::transmute_copy(resource.as_raw()) },
-                        Subresource: subresource.unwrap_or(BARRIER_ALL_SUBRESOURCES),
+                        Subresource: subresource
+                            .map(|s| s as u32)
+                            .unwrap_or(BARRIER_ALL_SUBRESOURCES),
                         StateBefore: before.as_raw(),
                         StateAfter: after.as_raw(),
                     }),
@@ -2887,20 +2889,20 @@ impl SubresourceFootprint {
     }
 
     #[inline]
-    pub fn with_width(mut self, width: u32) -> Self {
-        self.0.Width = width;
+    pub fn with_width(mut self, width: usize) -> Self {
+        self.0.Width = width as u32;
         self
     }
 
     #[inline]
-    pub fn with_height(mut self, height: u32) -> Self {
-        self.0.Height = height;
+    pub fn with_height(mut self, height: usize) -> Self {
+        self.0.Height = height as u32;
         self
     }
 
     #[inline]
-    pub fn with_depth(mut self, depth: u32) -> Self {
-        self.0.Depth = depth;
+    pub fn with_depth(mut self, depth: usize) -> Self {
+        self.0.Depth = depth as u32;
         self
     }
 
@@ -3014,8 +3016,8 @@ impl SwapchainDesc1 {
     }
 
     #[inline]
-    pub fn with_buffer_count(mut self, buffer_count: u32) -> Self {
-        self.0.BufferCount = buffer_count;
+    pub fn with_buffer_count(mut self, buffer_count: usize) -> Self {
+        self.0.BufferCount = buffer_count as u32;
         self
     }
 

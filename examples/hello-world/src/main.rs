@@ -148,7 +148,7 @@ impl DXSample for Sample {
         let (width, height) = self.window_size();
 
         let swap_chain_desc = SwapchainDesc1::new(width as u32, height as u32)
-            .with_buffer_count(FRAME_COUNT as u32)
+            .with_buffer_count(FRAME_COUNT)
             .with_format(Format::Bgra8Unorm)
             .with_usage(FrameBufferUsage::RenderTargetOutput)
             .with_swap_effect(SwapEffect::FlipDiscard);

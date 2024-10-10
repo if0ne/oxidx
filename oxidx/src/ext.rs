@@ -1,6 +1,6 @@
 use crate::dx::*;
 
-pub fn memcpy_subresource<T: Copy>(
+pub fn memcpy_subresource<T: Clone>(
     dst: &mut MemcpyDest<'_, T>,
     src: &SubresourceData<'_, T>,
     row_size: usize,
@@ -21,7 +21,7 @@ pub fn memcpy_subresource<T: Copy>(
             let dst_slice = &mut dst_slice[..row_size];
             let src_slice = &src_slice[..row_size];
 
-            dst_slice.copy_from_slice(src_slice);
+            dst_slice.clone_from_slice(src_slice);
         }
     }
 }
