@@ -266,7 +266,7 @@ pub trait IGraphicsCommandList:
         r#type: QueryType,
         range: Range<usize>,
         dst_buffer: &impl IResource,
-        aligned_dst_buffer_offset: u64,
+        aligned_dst_buffer_offset: usize,
     );
 
     /// Copy a multi-sampled resource into a non-multi-sampled resource.
@@ -904,7 +904,7 @@ impl_trait! {
         r#type: QueryType,
         range: Range<usize>,
         dst_buffer: &impl IResource,
-        aligned_dst_buffer_offset: u64,
+        aligned_dst_buffer_offset: usize,
     ) {
         unsafe {
             self.0.ResolveQueryData(
@@ -913,7 +913,7 @@ impl_trait! {
                 range.start as u32,
                 range.count() as u32,
                 dst_buffer.as_raw_ref(),
-                aligned_dst_buffer_offset
+                aligned_dst_buffer_offset as u64
             );
         }
     }
