@@ -48,7 +48,7 @@ pub trait IGraphicsCommandList:
     /// Starts a query running.
     ///
     /// For more information: [`ID3D12GraphicsCommandList::BeginQuery method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-beginquery)
-    fn begin_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: u32);
+    fn begin_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: usize);
 
     /// Clears the depth-stencil resource.
     ///
@@ -193,7 +193,7 @@ pub trait IGraphicsCommandList:
     /// Ends a running query.
     ///
     /// For more information: [`ID3D12GraphicsCommandList::EndQuery method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-endquery)
-    fn end_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: u32);
+    fn end_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: usize);
 
     /// Executes a bundle.
     ///
@@ -264,8 +264,7 @@ pub trait IGraphicsCommandList:
         &self,
         query_heap: &impl IQueryHeap,
         r#type: QueryType,
-        start_index: u32,
-        num_queries: u32,
+        range: Range<usize>,
         dst_buffer: &impl IResource,
         aligned_dst_buffer_offset: u64,
     );
@@ -510,12 +509,12 @@ impl_trait! {
         }
     }
 
-    fn begin_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: u32) {
+    fn begin_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: usize) {
         unsafe {
             self.0.BeginQuery(
                 query_heap.as_raw_ref(),
                 r#type.as_raw(),
-                index
+                index as u32
             )
         }
     }
@@ -757,12 +756,12 @@ impl_trait! {
         }
     }
 
-    fn end_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: u32) {
+    fn end_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: usize) {
         unsafe {
             self.0.EndQuery(
                 query_heap.as_raw_ref(),
                 r#type.as_raw(),
-                index
+                index as u32
             )
         }
     }
@@ -903,8 +902,7 @@ impl_trait! {
         &self,
         query_heap: &impl IQueryHeap,
         r#type: QueryType,
-        start_index: u32,
-        num_queries: u32,
+        range: Range<usize>,
         dst_buffer: &impl IResource,
         aligned_dst_buffer_offset: u64,
     ) {
@@ -912,8 +910,8 @@ impl_trait! {
             self.0.ResolveQueryData(
                 query_heap.as_raw_ref(),
                 r#type.as_raw(),
-                start_index,
-                num_queries,
+                range.start as u32,
+                range.count() as u32,
                 dst_buffer.as_raw_ref(),
                 aligned_dst_buffer_offset
             );
@@ -1271,7 +1269,7 @@ impl_trait! {
 
             let num_slices = layouts[i].footprint().depth();
             let slice_pitch = layouts[i].footprint().row_pitch() * num_rows[i] as usize;
-            let total_size = num_slices * slice_pitch;
+            let total_size = num_slices as usize * slice_pitch;
 
             let mut count = total_size / size_of::<T>();
 
@@ -1292,7 +1290,7 @@ impl_trait! {
                 &src_data[i],
                 row_sizes[i] as usize / size_of::<T>(),
                 num_rows[i] as usize,
-                num_slices,
+                num_slices as usize,
             );
         }
 
@@ -1304,7 +1302,7 @@ impl_trait! {
                 0,
                 intermediate,
                 layouts[0].offset(),
-                layouts[0].footprint().width()
+                layouts[0].footprint().width() as usize
             );
         } else {
             for (i, layout) in layouts.iter().enumerate().take(num).skip(start) {

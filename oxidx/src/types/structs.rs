@@ -1504,64 +1504,64 @@ pub struct QueryHeapDesc(pub(crate) D3D12_QUERY_HEAP_DESC);
 
 impl QueryHeapDesc {
     #[inline]
-    pub fn occlusion(count: u32) -> Self {
+    pub fn occlusion(count: usize) -> Self {
         Self(D3D12_QUERY_HEAP_DESC {
             Type: D3D12_QUERY_HEAP_TYPE_OCCLUSION,
-            Count: count,
+            Count: count as u32,
             NodeMask: 0,
         })
     }
 
     #[inline]
-    pub fn timestamp(count: u32) -> Self {
+    pub fn timestamp(count: usize) -> Self {
         Self(D3D12_QUERY_HEAP_DESC {
             Type: D3D12_QUERY_HEAP_TYPE_TIMESTAMP,
-            Count: count,
+            Count: count as u32,
             NodeMask: 0,
         })
     }
 
     #[inline]
-    pub fn pipeline_statistics(count: u32) -> Self {
+    pub fn pipeline_statistics(count: usize) -> Self {
         Self(D3D12_QUERY_HEAP_DESC {
             Type: D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS,
-            Count: count,
+            Count: count as u32,
             NodeMask: 0,
         })
     }
 
     #[inline]
-    pub fn so_statistics(count: u32) -> Self {
+    pub fn so_statistics(count: usize) -> Self {
         Self(D3D12_QUERY_HEAP_DESC {
             Type: D3D12_QUERY_HEAP_TYPE_SO_STATISTICS,
-            Count: count,
+            Count: count as u32,
             NodeMask: 0,
         })
     }
 
     #[inline]
-    pub fn video_decode_statistics(count: u32) -> Self {
+    pub fn video_decode_statistics(count: usize) -> Self {
         Self(D3D12_QUERY_HEAP_DESC {
             Type: D3D12_QUERY_HEAP_TYPE_VIDEO_DECODE_STATISTICS,
-            Count: count,
+            Count: count as u32,
             NodeMask: 0,
         })
     }
 
     #[inline]
-    pub fn copy_queue_timestamp(count: u32) -> Self {
+    pub fn copy_queue_timestamp(count: usize) -> Self {
         Self(D3D12_QUERY_HEAP_DESC {
             Type: D3D12_QUERY_HEAP_TYPE_COPY_QUEUE_TIMESTAMP,
-            Count: count,
+            Count: count as u32,
             NodeMask: 0,
         })
     }
 
     #[inline]
-    pub fn pipeline_statistics1(count: u32) -> Self {
+    pub fn pipeline_statistics1(count: usize) -> Self {
         Self(D3D12_QUERY_HEAP_DESC {
             Type: D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1,
-            Count: count,
+            Count: count as u32,
             NodeMask: 0,
         })
     }
@@ -2889,26 +2889,26 @@ impl SubresourceFootprint {
     }
 
     #[inline]
-    pub fn with_width(mut self, width: usize) -> Self {
-        self.0.Width = width as u32;
+    pub fn with_width(mut self, width: u32) -> Self {
+        self.0.Width = width;
         self
     }
 
     #[inline]
-    pub fn with_height(mut self, height: usize) -> Self {
-        self.0.Height = height as u32;
+    pub fn with_height(mut self, height: u32) -> Self {
+        self.0.Height = height;
         self
     }
 
     #[inline]
-    pub fn with_depth(mut self, depth: usize) -> Self {
-        self.0.Depth = depth as u32;
+    pub fn with_depth(mut self, depth: u32) -> Self {
+        self.0.Depth = depth;
         self
     }
 
     #[inline]
-    pub fn with_row_pitch(mut self, row_pitch: u32) -> Self {
-        self.0.RowPitch = row_pitch;
+    pub fn with_row_pitch(mut self, row_pitch: usize) -> Self {
+        self.0.RowPitch = row_pitch as u32;
         self
     }
 
@@ -2918,18 +2918,18 @@ impl SubresourceFootprint {
     }
 
     #[inline]
-    pub fn width(&self) -> usize {
-        self.0.Width as usize
+    pub fn width(&self) -> u32 {
+        self.0.Width
     }
 
     #[inline]
-    pub fn height(&self) -> usize {
-        self.0.Height as usize
+    pub fn height(&self) -> u32 {
+        self.0.Height
     }
 
     #[inline]
-    pub fn depth(&self) -> usize {
-        self.0.Depth as usize
+    pub fn depth(&self) -> u32 {
+        self.0.Depth
     }
 
     #[inline]
