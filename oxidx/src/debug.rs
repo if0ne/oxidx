@@ -1,6 +1,12 @@
+use std::sync::Mutex;
+
 use windows::{core::Interface, Win32::Graphics::Direct3D12::*};
 
-use crate::{create_type, impl_trait, types::GpuBasedValidationFlags, HasInterface};
+use crate::{
+    create_type, dx::CallbackData, impl_trait, types::GpuBasedValidationFlags, HasInterface,
+};
+
+static CALLBACK_HANDLER: Mutex<Option<CallbackData>> = Mutex::new(None);
 
 /// An interface used to turn on the debug layer.
 ///
@@ -10,6 +16,11 @@ pub trait IDebug: HasInterface<Raw: Interface> {
     ///
     /// For more information: [`ID3D12Debug::EnableDebugLayer method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug-enabledebuglayer)
     fn enable_debug_layer(&self);
+}
+
+pub trait IDebugExt: IDebug {
+    fn set_callback(&self, callback: CallbackData);
+    fn take_callback(&self);
 }
 
 /// Adds GPU-Based Validation and Dependent Command Queue Synchronization to the debug layer.
@@ -194,4 +205,46 @@ impl_trait! {
             self.0.SetForceLegacyBarrierValidation(enable);
         }
     }
+}
+
+impl_trait! {
+    impl IDebugExt =>
+    Debug,
+    Debug1,
+    Debug3,
+    Debug4,
+    Debug5,
+    Debug6;
+
+    fn set_callback(&self, callback: CallbackData) {
+        let mut guard = CALLBACK_HANDLER.lock().unwrap();
+
+        if guard.is_some() {
+            return;
+        }
+
+        AddVectoredExceptionHandler(0, Some(debug_callback));
+        std::mem::replace(&mut *guard, Some(callback));
+    }
+
+    fn take_callback(&self) {
+        let mut guard = CALLBACK_HANDLER.lock().unwrap();
+        std::mem::take(&mut *guard);
+    }
+}
+
+unsafe extern "system" fn dx_callback(
+    category: D3D12_MESSAGE_CATEGORY,
+    severity: D3D12_MESSAGE_SEVERITY,
+    id: D3D12_MESSAGE_ID,
+    pdescription: PCSTR,
+    pcontext: *mut core::ffi::c_void,
+) {
+    let message = str::from_utf8(pdescription.as_bytes()).unwrap();
+    let callback = pcontext.cast::<CallbackData>();
+    (*callback)(category.into(), severity.into(), id.into(), message);
+}
+
+unsafe extern "system" fn debug_callback(exception_info: *mut EXCEPTION_POINTERS) -> i32 {
+    Debug::EXCEPTION_CONTINUE_EXECUTION
 }
