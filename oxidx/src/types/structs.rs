@@ -2434,8 +2434,8 @@ impl ShaderResourceViewDesc {
     #[inline]
     pub fn buffer(
         format: Format,
-        elements: Range<u64>,
-        structure_byte_stride: u32,
+        elements: Range<usize>,
+        structure_byte_stride: usize,
         flags: BufferSrvFlags,
     ) -> Self {
         Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
@@ -2443,9 +2443,9 @@ impl ShaderResourceViewDesc {
             ViewDimension: D3D12_SRV_DIMENSION_BUFFER,
             Anonymous: D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
                 Buffer: D3D12_BUFFER_SRV {
-                    FirstElement: elements.start,
+                    FirstElement: elements.start as u64,
                     NumElements: elements.count() as u32,
-                    StructureByteStride: structure_byte_stride,
+                    StructureByteStride: structure_byte_stride as u32,
                     Flags: flags.as_raw(),
                 },
             },
@@ -3211,9 +3211,9 @@ impl UnorderedAccessViewDesc {
     #[inline]
     pub fn buffer(
         format: Format,
-        elements: Range<u64>,
-        structure_byte_stride: u32,
-        counter_offset: u64,
+        elements: Range<usize>,
+        structure_byte_stride: usize,
+        counter_offset: usize,
         flags: BufferUavFlags,
     ) -> Self {
         Self(D3D12_UNORDERED_ACCESS_VIEW_DESC {
@@ -3221,10 +3221,10 @@ impl UnorderedAccessViewDesc {
             ViewDimension: D3D12_UAV_DIMENSION_BUFFER,
             Anonymous: D3D12_UNORDERED_ACCESS_VIEW_DESC_0 {
                 Buffer: D3D12_BUFFER_UAV {
-                    FirstElement: elements.start,
+                    FirstElement: elements.start as u64,
                     NumElements: elements.count() as u32,
-                    StructureByteStride: structure_byte_stride,
-                    CounterOffsetInBytes: counter_offset,
+                    StructureByteStride: structure_byte_stride as u32,
+                    CounterOffsetInBytes: counter_offset as u64,
                     Flags: flags.as_raw(),
                 },
             },
