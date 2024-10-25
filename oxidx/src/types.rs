@@ -35,5 +35,5 @@ pub const PSO_NONE: Option<&PipelineState> = None;
 pub const OUTPUT_NONE: Option<&Output1> = None;
 
 pub type GpuVirtualAddress = u64;
-pub type CallbackData<'a> =
-    std::boxed::Box<dyn Fn(MessageCategory, MessageSeverity, MessageId, &'a str) + Send + Sync>;
+pub type CallbackData =
+    std::boxed::Box<dyn Fn(MessageCategory, MessageSeverity, MessageId, &'_ str) + Send + Sync>;

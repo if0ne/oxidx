@@ -972,7 +972,7 @@ impl_trait! {
         src_data: T,
         dest_offset_in_32bit_values: u32,
     ) {
-        const { assert_eq!(size_of::<T>(), 4) }
+        const { assert!(size_of::<T>() == 4) }
 
         let bits = unsafe {
             std::mem::transmute_copy(&src_data)
@@ -993,7 +993,7 @@ impl_trait! {
         src_data: &[T],
         dest_offset_in_32bit_values: u32,
     ) {
-        const { assert_eq!(size_of::<T>(), 4) }
+        const { assert!(size_of::<T>() == 4) }
 
         unsafe {
             self.0.SetComputeRoot32BitConstants(
@@ -1086,7 +1086,7 @@ impl_trait! {
         src_data: T,
         dest_offset_in_32bit_values: u32,
     ) {
-        const { assert_eq!(size_of::<T>(), 4) }
+        const { assert!(size_of::<T>() == 4) }
 
         let bits = unsafe {
             std::mem::transmute_copy(&src_data)
@@ -1107,7 +1107,7 @@ impl_trait! {
         src_data: &[T],
         dest_offset_in_32bit_values: u32,
     ) {
-        const { assert_eq!(size_of::<T>(), 4) }
+        const { assert!(size_of::<T>() == 4) }
 
         unsafe {
             self.0.SetGraphicsRoot32BitConstants(
