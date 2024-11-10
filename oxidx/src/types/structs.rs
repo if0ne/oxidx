@@ -201,6 +201,14 @@ pub struct CommandQueueDesc(pub(crate) D3D12_COMMAND_QUEUE_DESC);
 
 impl CommandQueueDesc {
     #[inline]
+    pub fn new(ty: CommandListType) -> Self {
+        Self(D3D12_COMMAND_QUEUE_DESC {
+            Type: ty.as_raw(),
+            ..Default::default()
+        })
+    }
+
+    #[inline]
     pub fn direct() -> Self {
         Self(D3D12_COMMAND_QUEUE_DESC {
             Type: D3D12_COMMAND_LIST_TYPE_DIRECT,
@@ -621,6 +629,15 @@ impl DepthStencilViewDesc {
 pub struct DescriptorHeapDesc(pub(crate) D3D12_DESCRIPTOR_HEAP_DESC);
 
 impl DescriptorHeapDesc {
+    #[inline]
+    pub fn new(ty: DescriptorHeapType, num: usize) -> Self {
+        Self(D3D12_DESCRIPTOR_HEAP_DESC {
+            Type: ty.as_raw(),
+            NumDescriptors: num as u32,
+            ..Default::default()
+        })
+    }
+
     #[inline]
     pub fn rtv(num: usize) -> Self {
         Self(D3D12_DESCRIPTOR_HEAP_DESC {
@@ -2084,8 +2101,8 @@ impl ResourceDesc {
     }
 
     #[inline]
-    pub fn with_mip_levels(mut self, mip_levels: u16) -> Self {
-        self.0.MipLevels = mip_levels;
+    pub fn with_mip_levels(mut self, mip_levels: u32) -> Self {
+        self.0.MipLevels = mip_levels as u16;
         self
     }
 
@@ -2138,8 +2155,8 @@ impl ResourceDesc {
     }
 
     #[inline]
-    pub fn mip_levels(&self) -> u16 {
-        self.0.MipLevels
+    pub fn mip_levels(&self) -> u32 {
+        self.0.MipLevels as u32
     }
 
     #[inline]
