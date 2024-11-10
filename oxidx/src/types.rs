@@ -16,7 +16,7 @@ use windows::Win32::Graphics::{
     Dxgi::{Common::*, *},
 };
 
-use crate::dx::{Adapter3, Output1, PipelineState};
+use crate::dx::{Adapter3, Output1, PipelineState, Resource};
 
 pub const MIN_DEPTH: f32 = D3D12_MIN_DEPTH;
 pub const MAX_DEPTH: f32 = D3D12_MAX_DEPTH;
@@ -33,6 +33,7 @@ pub const DESCRIPTOR_RANGE_OFFSET_APPEND: u32 = D3D12_DESCRIPTOR_RANGE_OFFSET_AP
 pub const ADAPTER_NONE: Option<&Adapter3> = None;
 pub const PSO_NONE: Option<&PipelineState> = None;
 pub const OUTPUT_NONE: Option<&Output1> = None;
+pub const RES_NONE: Option<&Resource> = None;
 
 pub type GpuVirtualAddress = u64;
 pub type CallbackData =
