@@ -201,6 +201,14 @@ pub struct CommandQueueDesc(pub(crate) D3D12_COMMAND_QUEUE_DESC);
 
 impl CommandQueueDesc {
     #[inline]
+    pub fn new(ty: CommandListType) -> Self {
+        Self(D3D12_COMMAND_QUEUE_DESC {
+            Type: ty.as_raw(),
+            ..Default::default()
+        })
+    }
+
+    #[inline]
     pub fn direct() -> Self {
         Self(D3D12_COMMAND_QUEUE_DESC {
             Type: D3D12_COMMAND_LIST_TYPE_DIRECT,
@@ -621,6 +629,15 @@ impl DepthStencilViewDesc {
 pub struct DescriptorHeapDesc(pub(crate) D3D12_DESCRIPTOR_HEAP_DESC);
 
 impl DescriptorHeapDesc {
+    #[inline]
+    pub fn new(ty: DescriptorHeapType, num: usize) -> Self {
+        Self(D3D12_DESCRIPTOR_HEAP_DESC {
+            Type: ty.as_raw(),
+            NumDescriptors: num as u32,
+            ..Default::default()
+        })
+    }
+
     #[inline]
     pub fn rtv(num: usize) -> Self {
         Self(D3D12_DESCRIPTOR_HEAP_DESC {
@@ -2084,8 +2101,8 @@ impl ResourceDesc {
     }
 
     #[inline]
-    pub fn with_mip_levels(mut self, mip_levels: u16) -> Self {
-        self.0.MipLevels = mip_levels;
+    pub fn with_mip_levels(mut self, mip_levels: u32) -> Self {
+        self.0.MipLevels = mip_levels as u16;
         self
     }
 
@@ -2138,8 +2155,8 @@ impl ResourceDesc {
     }
 
     #[inline]
-    pub fn mip_levels(&self) -> u16 {
-        self.0.MipLevels
+    pub fn mip_levels(&self) -> u32 {
+        self.0.MipLevels as u32
     }
 
     #[inline]
@@ -2434,8 +2451,8 @@ impl ShaderResourceViewDesc {
     #[inline]
     pub fn buffer(
         format: Format,
-        elements: Range<u64>,
-        structure_byte_stride: u32,
+        elements: Range<usize>,
+        structure_byte_stride: usize,
         flags: BufferSrvFlags,
     ) -> Self {
         Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
@@ -2443,9 +2460,9 @@ impl ShaderResourceViewDesc {
             ViewDimension: D3D12_SRV_DIMENSION_BUFFER,
             Anonymous: D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
                 Buffer: D3D12_BUFFER_SRV {
-                    FirstElement: elements.start,
+                    FirstElement: elements.start as u64,
                     NumElements: elements.count() as u32,
-                    StructureByteStride: structure_byte_stride,
+                    StructureByteStride: structure_byte_stride as u32,
                     Flags: flags.as_raw(),
                 },
             },
@@ -3211,9 +3228,9 @@ impl UnorderedAccessViewDesc {
     #[inline]
     pub fn buffer(
         format: Format,
-        elements: Range<u64>,
-        structure_byte_stride: u32,
-        counter_offset: u64,
+        elements: Range<usize>,
+        structure_byte_stride: usize,
+        counter_offset: usize,
         flags: BufferUavFlags,
     ) -> Self {
         Self(D3D12_UNORDERED_ACCESS_VIEW_DESC {
@@ -3221,10 +3238,10 @@ impl UnorderedAccessViewDesc {
             ViewDimension: D3D12_UAV_DIMENSION_BUFFER,
             Anonymous: D3D12_UNORDERED_ACCESS_VIEW_DESC_0 {
                 Buffer: D3D12_BUFFER_UAV {
-                    FirstElement: elements.start,
+                    FirstElement: elements.start as u64,
                     NumElements: elements.count() as u32,
-                    StructureByteStride: structure_byte_stride,
-                    CounterOffsetInBytes: counter_offset,
+                    StructureByteStride: structure_byte_stride as u32,
+                    CounterOffsetInBytes: counter_offset as u64,
                     Flags: flags.as_raw(),
                 },
             },

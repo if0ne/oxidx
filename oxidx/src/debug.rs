@@ -1,10 +1,29 @@
-use std::sync::Mutex;
+use core::str;
+use std::{borrow::Cow, sync::Mutex};
 
-use windows::{core::Interface, Win32::Graphics::Direct3D12::*};
+use windows::{
+    core::{Interface, PCSTR},
+    Win32::{
+        Foundation,
+        Graphics::Direct3D12::*,
+        System::Diagnostics::Debug::{
+            AddVectoredExceptionHandler, EXCEPTION_CONTINUE_EXECUTION, EXCEPTION_CONTINUE_SEARCH,
+            EXCEPTION_POINTERS,
+        },
+    },
+};
 
 use crate::{
-    create_type, dx::CallbackData, impl_trait, types::GpuBasedValidationFlags, HasInterface,
+    create_type, dx::{CallbackData, MessageCategory, MessageId, MessageSeverity}, impl_trait, types::GpuBasedValidationFlags, HasInterface,
 };
+
+const MESSAGE_PREFIXES: &[(&str, MessageSeverity)] = &[
+    ("CORRUPTION", MessageSeverity::Corruption),
+    ("ERROR", MessageSeverity::Error),
+    ("WARNING", MessageSeverity::Warning),
+    ("INFO", MessageSeverity::Info),
+    ("MESSAGE", MessageSeverity::Message),
+];
 
 static CALLBACK_HANDLER: Mutex<Option<CallbackData>> = Mutex::new(None);
 
@@ -217,19 +236,24 @@ impl_trait! {
     Debug6;
 
     fn set_callback(&self, callback: CallbackData) {
-        let mut guard = CALLBACK_HANDLER.lock().unwrap();
+        unsafe {
+            let mut guard = CALLBACK_HANDLER.lock().unwrap();
 
-        if guard.is_some() {
-            return;
+            if guard.is_some() {
+                return;
+            }
+
+            AddVectoredExceptionHandler(0, Some(debug_callback));
+            *guard = Some(callback);
         }
-
-        AddVectoredExceptionHandler(0, Some(debug_callback));
-        std::mem::replace(&mut *guard, Some(callback));
     }
 
     fn take_callback(&self) {
-        let mut guard = CALLBACK_HANDLER.lock().unwrap();
-        std::mem::take(&mut *guard);
+        unsafe {
+            let mut guard = CALLBACK_HANDLER.lock().unwrap();
+            AddVectoredExceptionHandler(0, None);
+            std::mem::take(&mut *guard);
+        }
     }
 }
 
@@ -246,5 +270,45 @@ unsafe extern "system" fn dx_callback(
 }
 
 unsafe extern "system" fn debug_callback(exception_info: *mut EXCEPTION_POINTERS) -> i32 {
-    Debug::EXCEPTION_CONTINUE_EXECUTION
+    // See https://stackoverflow.com/a/41480827
+    let record = unsafe { &*(*exception_info).ExceptionRecord };
+    if record.NumberParameters != 2 {
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+    let message = match record.ExceptionCode {
+        Foundation::DBG_PRINTEXCEPTION_C => String::from_utf8_lossy(unsafe {
+            std::slice::from_raw_parts(
+                record.ExceptionInformation[1] as *const u8,
+                record.ExceptionInformation[0],
+            )
+        }),
+        Foundation::DBG_PRINTEXCEPTION_WIDE_C => Cow::Owned(String::from_utf16_lossy(unsafe {
+            std::slice::from_raw_parts(
+                record.ExceptionInformation[1] as *const u16,
+                record.ExceptionInformation[0],
+            )
+        })),
+        _ => return EXCEPTION_CONTINUE_SEARCH,
+    };
+
+    let message = match message.strip_prefix("D3D12 ") {
+        Some(msg) => msg
+            .trim_end_matches("\n\0")
+            .trim_end_matches("[ STATE_CREATION WARNING #0: UNKNOWN]"),
+        None => return EXCEPTION_CONTINUE_SEARCH,
+    };
+
+    let (message, level) = match MESSAGE_PREFIXES
+        .iter()
+        .find(|&&(prefix, _)| message.starts_with(prefix))
+    {
+        Some(&(prefix, level)) => (&message[prefix.len() + 2..], level),
+        None => (message, MessageSeverity::Message),
+    };
+
+    if let Some(callback) = &*CALLBACK_HANDLER.lock().unwrap() {
+        callback(MessageCategory::Execution, level, MessageId::Unknown, message);
+    }
+
+    EXCEPTION_CONTINUE_EXECUTION
 }

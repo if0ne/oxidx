@@ -275,7 +275,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
         layouts: &mut [PlacedSubresourceFootprint],
         num_rows: &mut [u32],
         row_sizes: &mut [u64],
-    ) -> u64;
+    ) -> usize;
 
     /// Gets a resource layout that can be copied. Helps the app fill-in [`PlacedSubresourceFootprint`] and [`SubresourceFootprint`] when suballocating space in upload heaps.
     ///
@@ -875,7 +875,7 @@ impl_trait! {
         layouts: &mut [PlacedSubresourceFootprint],
         num_rows: &mut [u32],
         row_sizes: &mut [u64],
-    ) -> u64 {
+    ) -> usize {
         unsafe {
             let mut total_bytes = 0;
 
@@ -890,7 +890,7 @@ impl_trait! {
                 Some(&mut total_bytes)
             );
 
-            total_bytes
+            total_bytes as usize
         }
     }
 
