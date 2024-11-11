@@ -2417,6 +2417,208 @@ impl SamplerDesc {
     }
 }
 
+/// Describes a shader.
+///
+/// For more information: [`D3D12_SHADER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/ns-d3d12shader-d3d12_shader_desc)
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct ShaderDesc(pub(crate) D3D12_SHADER_DESC);
+
+impl ShaderDesc {
+    #[inline]
+    pub fn get_version(&self) -> u32 {
+        self.0.Version
+    }
+
+    #[inline]
+    pub fn get_creator(&self) -> &CStr {
+        unsafe {
+            CStr::from_ptr(self.0.Creator.as_ptr() as *const _)
+        }
+    }
+
+    #[inline]
+    pub fn get_flags(&self) -> u32 {
+        self.0.Flags
+    }
+
+    #[inline]
+    pub fn get_constant_buffers(&self) -> u32 {
+        self.0.ConstantBuffers
+    }
+
+    #[inline]
+    pub fn get_bound_resources(&self) -> u32 {
+        self.0.BoundResources
+    }
+
+    #[inline]
+    pub fn get_input_parameters(&self) -> u32 {
+        self.0.InputParameters
+    }
+
+    #[inline]
+    pub fn get_output_parameters(&self) -> u32 {
+        self.0.OutputParameters
+    }
+
+    #[inline]
+    pub fn get_instruction_count(&self) -> u32 {
+        self.0.InstructionCount
+    }
+
+    #[inline]
+    pub fn get_temp_register_count(&self) -> u32 {
+        self.0.TempRegisterCount
+    }
+
+    #[inline]
+    pub fn get_temp_array_count(&self) -> u32 {
+        self.0.TempArrayCount
+    }
+
+    #[inline]
+    pub fn get_def_count(&self) -> u32 {
+        self.0.DefCount
+    }
+
+    #[inline]
+    pub fn get_dcl_count(&self) -> u32 {
+        self.0.DclCount
+    }
+
+    #[inline]
+    pub fn get_texture_normal_instructions(&self) -> u32 {
+        self.0.TextureNormalInstructions
+    }
+
+    #[inline]
+    pub fn get_texture_load_instructions(&self) -> u32 {
+        self.0.TextureLoadInstructions
+    }
+
+    #[inline]
+    pub fn get_texture_comp_instructions(&self) -> u32 {
+        self.0.TextureCompInstructions
+    }
+
+    #[inline]
+    pub fn get_texture_bias_instructions(&self) -> u32 {
+        self.0.TextureBiasInstructions
+    }
+
+    #[inline]
+    pub fn get_texture_gradient_instructions(&self) -> u32 {
+        self.0.TextureGradientInstructions
+    }
+
+    #[inline]
+    pub fn get_float_instruction_count(&self) -> u32 {
+        self.0.FloatInstructionCount
+    }
+
+    #[inline]
+    pub fn get_int_instruction_count(&self) -> u32 {
+        self.0.IntInstructionCount
+    }
+
+    #[inline]
+    pub fn get_uint_instruction_count(&self) -> u32 {
+        self.0.UintInstructionCount
+    }
+
+    #[inline]
+    pub fn get_static_flow_control_count(&self) -> u32 {
+        self.0.StaticFlowControlCount
+    }
+
+    #[inline]
+    pub fn get_dynamic_flow_control_count(&self) -> u32 {
+        self.0.DynamicFlowControlCount
+    }
+
+    #[inline]
+    pub fn get_macro_instruction_count(&self) -> u32 {
+        self.0.MacroInstructionCount
+    }
+
+    #[inline]
+    pub fn get_array_instruction_count(&self) -> u32 {
+        self.0.ArrayInstructionCount
+    }
+
+    #[inline]
+    pub fn get_cut_instruction_count(&self) -> u32 {
+        self.0.CutInstructionCount
+    }
+
+    #[inline]
+    pub fn get_emit_instruction_count(&self) -> u32 {
+        self.0.EmitInstructionCount
+    }
+
+    #[inline]
+    pub fn get_gs_output_topology(&self) -> super::Direct3D::D3D_PRIMITIVE_TOPOLOGY {
+        self.0.GSOutputTopology
+    }
+
+    #[inline]
+    pub fn get_gs_max_output_vertex_count(&self) -> u32 {
+        self.0.GSMaxOutputVertexCount
+    }
+
+    #[inline]
+    pub fn get_input_primitive(&self) -> super::Direct3D::D3D_PRIMITIVE {
+        self.0.InputPrimitive
+    }
+
+    #[inline]
+    pub fn get_patch_constant_parameters(&self) -> u32 {
+        self.0.PatchConstantParameters
+    }
+
+    #[inline]
+    pub fn get_cgs_instance_count(&self) -> u32 {
+        self.0.cGSInstanceCount
+    }
+
+    #[inline]
+    pub fn get_c_control_points(&self) -> u32 {
+        self.0.cControlPoints
+    }
+
+    #[inline]
+    pub fn get_hs_output_primitive(&self) -> super::Direct3D::D3D_T ESSELLATOR_OUTPUT_PRIMITIVE {
+        self.0.HSOutputPrimitive
+    }
+
+    #[inline]
+    pub fn get_hs_partitioning(&self) -> super::Direct3D::D3D_TESSELLATOR_PARTITIONING {
+        self.0.HSPartitioning
+    }
+
+    #[inline]
+    pub fn get_tessellator_domain(&self) -> super::Direct3D::D3D_TESSELLATOR_DOMAIN {
+        self.0.TessellatorDomain
+    }
+
+    #[inline]
+    pub fn get_c_barrier_instructions(&self) -> u32 {
+        self.0.cBarrierInstructions
+    }
+
+    #[inline]
+    pub fn get_c_interlocked_instructions(&self) -> u32 {
+        self.0.cInterlockedInstructions
+    }
+
+    #[inline]
+    pub fn get_c_texture_store_instructions(&self) -> u32 {
+        self.0.cTextureStoreInstructions
+    }
+
+}
+
 /// Defines a shader macro.
 ///
 /// For more information: [`D3D_SHADER_MACRO structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ns-d3dcommon-d3d_shader_macro)

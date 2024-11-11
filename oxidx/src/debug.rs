@@ -14,7 +14,11 @@ use windows::{
 };
 
 use crate::{
-    create_type, dx::{CallbackData, MessageCategory, MessageId, MessageSeverity}, impl_trait, types::GpuBasedValidationFlags, HasInterface,
+    create_type,
+    dx::{CallbackData, MessageCategory, MessageId, MessageSeverity},
+    impl_trait,
+    types::GpuBasedValidationFlags,
+    HasInterface,
 };
 
 const MESSAGE_PREFIXES: &[(&str, MessageSeverity)] = &[
@@ -307,7 +311,12 @@ unsafe extern "system" fn debug_callback(exception_info: *mut EXCEPTION_POINTERS
     };
 
     if let Some(callback) = &*CALLBACK_HANDLER.lock().unwrap() {
-        callback(MessageCategory::Execution, level, MessageId::Unknown, message);
+        callback(
+            MessageCategory::Execution,
+            level,
+            MessageId::Unknown,
+            message,
+        );
     }
 
     EXCEPTION_CONTINUE_EXECUTION

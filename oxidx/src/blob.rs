@@ -4,14 +4,14 @@ use windows::{
     core::{Interface, HSTRING, PCSTR},
     Win32::Graphics::{
         Direct3D::{
-            Fxc::{D3DCompileFromFile, D3DCreateBlob},
+            Fxc::{D3DCompileFromFile, D3DCreateBlob, D3DReflect},
             ID3DBlob, ID3DInclude,
         },
-        Direct3D12::{D3D12_CACHED_PIPELINE_STATE, D3D12_SHADER_BYTECODE},
+        Direct3D12::{ID3D12ShaderReflection, D3D12_CACHED_PIPELINE_STATE, D3D12_SHADER_BYTECODE},
     },
 };
 
-use crate::{create_type, error::DxError, impl_trait, types::*, HasInterface};
+use crate::{create_type, error::DxError, impl_trait, types::*, HasInterface, reflection::ShaderReflection};
 
 /// This interface is used to return data of arbitrary length.
 ///
@@ -171,9 +171,9 @@ impl_trait! {
 
     fn reflect(&self) -> Result<ShaderReflection, DxError> {
         unsafe {
-            let mut interface: *mut c_void = std::ptr::null_mut();
+            let mut interface = std::ptr::null_mut();
             D3DReflect(
-                self.get_buffer_ptr(),
+                self.get_buffer_ptr().as_ptr(),
                 self.get_buffer_size(),
                 &ID3D12ShaderReflection::IID,
                 &mut interface
@@ -184,21 +184,4 @@ impl_trait! {
             Ok(ShaderReflection::new(shader_reflection))
         }
     }
-}
-
-/// A shader-reflection interface accesses shader information.
-///
-/// For more information: [`ID3D12ShaderReflection interface`](hhttps://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nn-d3d12shader-id3d12shaderreflection)
-pub trait IShaderReflection: HasInterface {
-    /// Gets the number of bitwise instructions.
-    ///
-    /// For more information: [`ID3D12ShaderReflection::GetBitwiseInstructionCount function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflection-getbitwiseinstructioncount)
-    fn get_bitwise_instruction_count(&self) -> u32;
-}
-
-create_type! {
-    /// A shader-reflection interface accesses shader information.
-    ///
-    /// For more information: [`ID3D12ShaderReflection interface`](hhttps://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nn-d3d12shader-id3d12shaderreflection)
-    ShaderReflection wrap ID3D12ShaderReflection
 }

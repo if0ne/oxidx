@@ -28,6 +28,7 @@ pub mod root_signature;
 pub mod swapchain;
 pub mod sync;
 pub mod types;
+pub mod reflection;
 
 pub(crate) mod pix;
 

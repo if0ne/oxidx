@@ -16,6 +16,7 @@ pub use crate::info_queue::*;
 pub use crate::pageable::*;
 pub use crate::pso::*;
 pub use crate::query_heap::*;
+pub use crate::reflection::*;
 pub use crate::resources::*;
 pub use crate::root_signature::*;
 pub use crate::swapchain::*;
