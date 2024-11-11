@@ -50,6 +50,11 @@ pub trait IBlobExt: IBlob {
     fn create_blob(size: usize) -> Result<Self, DxError>
     where
         Self: Sized;
+
+    /// Gets a pointer to a reflection interface.
+    ///
+    /// For more information: [`D3DReflect function`]https://learn.microsoft.com/en-us/windows/win32/api/d3dcompiler/nf-d3dcompiler-d3dreflect
+    fn reflect(&self) -> Result<ShaderReflection, DxError>;
 }
 
 create_type! {
@@ -163,4 +168,37 @@ impl_trait! {
                 .map_err(DxError::from)
         }
     }
+
+    fn reflect(&self) -> Result<ShaderReflection, DxError> {
+        unsafe {
+            let mut interface: *mut c_void = std::ptr::null_mut();
+            D3DReflect(
+                self.get_buffer_ptr(),
+                self.get_buffer_size(),
+                &ID3D12ShaderReflection::IID,
+                &mut interface
+            )?;
+
+            let shader_reflection = ID3D12ShaderReflection::from_raw(interface);
+
+            Ok(ShaderReflection::new(shader_reflection))
+        }
+    }
+}
+
+/// A shader-reflection interface accesses shader information.
+///
+/// For more information: [`ID3D12ShaderReflection interface`](hhttps://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nn-d3d12shader-id3d12shaderreflection)
+pub trait IShaderReflection: HasInterface {
+    /// Gets the number of bitwise instructions.
+    ///
+    /// For more information: [`ID3D12ShaderReflection::GetBitwiseInstructionCount function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflection-getbitwiseinstructioncount)
+    fn get_bitwise_instruction_count(&self) -> u32;
+}
+
+create_type! {
+    /// A shader-reflection interface accesses shader information.
+    ///
+    /// For more information: [`ID3D12ShaderReflection interface`](hhttps://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nn-d3d12shader-id3d12shaderreflection)
+    ShaderReflection wrap ID3D12ShaderReflection
 }
