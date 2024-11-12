@@ -2616,6 +2616,40 @@ impl ShaderDesc {
     }
 }
 
+/// Describes a shader constant-buffer.
+///
+/// For more information: [`D3D12_SHADER_BUFFER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/ns-d3d12shader-d3d12_shader_buffer_desc)
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct ShaderBufferDesc(pub(crate) D3D12_SHADER_BUFFER_DESC);
+
+impl ShaderBufferDesc {
+    #[inline]
+    pub fn name(&self) -> &CStr {
+        unsafe { CStr::from_ptr(self.0.Name.as_ptr() as *const _) }
+    }
+
+    #[inline]
+    pub fn ty(&self) -> CbufferType {
+        self.0.Type.into()
+    }
+
+    #[inline]
+    pub fn variable(&self) -> u32 {
+        self.0.Variables
+    }
+
+    #[inline]
+    pub fn size(&self) -> u32 {
+        self.0.Size
+    }
+
+    #[inline]
+    pub fn flags(&self) -> CbufferFlags {
+        self.0.uFlags.into()
+    }
+}
+
 /// Defines a shader macro.
 ///
 /// For more information: [`D3D_SHADER_MACRO structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ns-d3dcommon-d3d_shader_macro)

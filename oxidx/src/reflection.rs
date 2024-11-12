@@ -1,8 +1,12 @@
 use std::ffi::CStr;
 
-use windows::{core::PCSTR, Win32::Graphics::Direct3D12::{
-    ID3D12ShaderReflection, ID3D12ShaderReflectionConstantBuffer, ID3D12ShaderReflectionVariable,
-}};
+use windows::{
+    core::PCSTR,
+    Win32::Graphics::Direct3D12::{
+        ID3D12ShaderReflection, ID3D12ShaderReflectionConstantBuffer,
+        ID3D12ShaderReflectionVariable,
+    },
+};
 
 use crate::{create_type, error::DxError, impl_trait, types::*, HasInterface};
 
@@ -107,10 +111,7 @@ pub trait IShaderReflection: HasInterface {
     /// Gets a variable by name.
     ///
     /// For more information: [`ID3D12ShaderReflection::GetVariableByName function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflection-getvariablebyname)
-    fn get_variable_by_name(
-        &self,
-        name: impl AsRef<CStr>,
-    ) -> Option<ShaderReflectionVariable>;
+    fn get_variable_by_name(&self, name: impl AsRef<CStr>) -> Option<ShaderReflectionVariable>;
 
     /// Indicates whether a shader is a sample frequency shader.
     ///
@@ -140,7 +141,7 @@ impl_trait! {
     fn get_constant_buffer_by_index(&self, index: usize) -> Option<ShaderReflectionConstantBuffer> {
         unsafe {
             self.0.GetConstantBufferByIndex(index as u32)
-                .map(|v| ShaderReflectionConstantBuffer::new(v))
+                .map(ShaderReflectionConstantBuffer::new)
         }
     }
 
@@ -150,7 +151,7 @@ impl_trait! {
             let name = PCSTR::from_raw(name.as_ref().as_ptr() as *const _);
 
             self.0.GetConstantBufferByName(name)
-                .map(|v| ShaderReflectionConstantBuffer::new(v))
+                .map(ShaderReflectionConstantBuffer::new)
         }
     }
 
@@ -284,7 +285,7 @@ impl_trait! {
             let name = PCSTR::from_raw(name.as_ref().as_ptr() as *const _);
 
             self.0.GetVariableByName(name)
-                .map(|v| ShaderReflectionVariable::new(v))
+                .map(ShaderReflectionVariable::new)
         }
     }
 
@@ -299,7 +300,22 @@ impl_trait! {
 /// This shader-reflection interface provides access to a constant buffer.
 ///
 /// For more information: [`ID3D12ShaderReflectionConstantBuffer interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nn-d3d12shader-id3d12shaderreflectionconstantbuffer)
-pub trait IShaderReflectionConstantBuffer: HasInterface {}
+pub trait IShaderReflectionConstantBuffer: HasInterface {
+    /// Gets a constant-buffer description.
+    ///
+    /// For more information: [`ID3D12ShaderReflectionConstantBuffer::GetDesc function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflectionconstantbuffer-getdesc)
+    fn get_desc(&self) -> Result<ShaderBufferDesc, DxError>;
+
+    /// Gets a shader-reflection variable by index.
+    ///
+    /// For more information: [`ID3D12ShaderReflectionConstantBuffer::GetVariableByIndex function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflectionconstantbuffer-getvariablebyindex)
+    fn get_variable_by_index(&self, index: usize) -> Option<ShaderReflectionVariable>;
+
+    /// Gets a shader-reflection variable by name.
+    ///
+    /// For more information: [`ID3D12ShaderReflectionConstantBuffer::GetVariableByName function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflectionconstantbuffer-getvariablebyname)
+    fn get_variable_by_name(&self, name: impl AsRef<CStr>) -> Option<ShaderReflectionVariable>;
+}
 
 create_type! {
     /// This shader-reflection interface provides access to a constant buffer.
@@ -311,6 +327,26 @@ create_type! {
 impl_trait! {
     impl IShaderReflectionConstantBuffer =>
     ShaderReflectionConstantBuffer;
+
+    fn get_desc(&self) -> Result<ShaderBufferDesc, DxError> {
+        todo!()
+    }
+
+    fn get_variable_by_index(&self, index: usize) -> Option<ShaderReflectionVariable> {
+        unsafe {
+            self.0.GetVariableByIndex(index as u32)
+                .map(ShaderReflectionVariable::new)
+        }
+    }
+
+    fn get_variable_by_name(&self, name: impl AsRef<CStr>) -> Option<ShaderReflectionVariable> {
+        unsafe {
+            let name = PCSTR::from_raw(name.as_ref().as_ptr() as *const _);
+
+            self.0.GetVariableByName(name)
+                .map(ShaderReflectionVariable::new)
+        }
+    }
 }
 
 /// This shader-reflection interface provides access to a variable.

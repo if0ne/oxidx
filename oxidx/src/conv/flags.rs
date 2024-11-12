@@ -36,6 +36,20 @@ conv_flags!(TileCopyFlags to D3D12_TILE_COPY_FLAGS);
 conv_flags!(TileRangeFlags to D3D12_TILE_RANGE_FLAGS);
 conv_flags!(WindowAssociationFlags to DXGI_MWA_FLAGS);
 
+impl CbufferFlags {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> u32 {
+        self.bits()
+    }
+}
+
+impl From<u32> for CbufferFlags {
+    #[inline]
+    fn from(value: u32) -> Self {
+        Self::from_bits(value).unwrap_or_else(|| unreachable!())
+    }
+}
+
 impl ShaderRequirements {
     #[inline]
     pub(crate) fn as_raw(&self) -> u64 {

@@ -89,6 +89,17 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Values that identify the intended use of a constant-data buffer.
+    ///
+    /// For more information: [`D3D_SHADER_CBUFFER_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_shader_cbuffer_flags)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct CbufferFlags: u32 {
+        const UsePacked = 1;
+        const ForceDword = 0x7fffffff;
+    }
+}
+
+bitflags::bitflags! {
     /// Specifies what to clear from the depth stencil view.
     ///
     /// For more information: [`D3D12_CLEAR_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_clear_flags)

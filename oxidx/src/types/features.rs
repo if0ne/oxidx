@@ -160,9 +160,9 @@ impl<'a> FeatureLevelsFeature<'a> {
     }
 }
 
-impl<'a> __Sealed for FeatureLevelsFeature<'a> {}
+impl __Sealed for FeatureLevelsFeature<'_> {}
 
-impl<'a> FeatureObject for FeatureLevelsFeature<'a> {
+impl FeatureObject for FeatureLevelsFeature<'_> {
     const TYPE: FeatureType = FeatureType::FeatureLevels;
 }
 
@@ -845,9 +845,9 @@ impl<'a> ProtectedResourceSessionTypesFeature<'a> {
     }
 }
 
-impl<'a> __Sealed for ProtectedResourceSessionTypesFeature<'a> {}
+impl __Sealed for ProtectedResourceSessionTypesFeature<'_> {}
 
-impl<'a> FeatureObject for ProtectedResourceSessionTypesFeature<'a> {
+impl FeatureObject for ProtectedResourceSessionTypesFeature<'_> {
     const TYPE: FeatureType = FeatureType::ProtectedResourceSessionTypes;
 }
 

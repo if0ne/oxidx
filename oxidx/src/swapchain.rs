@@ -160,7 +160,7 @@ impl_trait! {
     fn get_desc(&self) -> Result<OutputDesc, DxError> {
         unsafe {
             self.0.GetDesc()
-                .map(|d| OutputDesc(d))
+                .map(OutputDesc)
                 .map_err(DxError::from)
         }
     }

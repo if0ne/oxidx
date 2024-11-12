@@ -49,7 +49,7 @@ impl_trait! {
     fn get_desc1(&self) -> Result<AdapterDesc1, DxError> {
         unsafe {
             self.0.GetDesc1()
-                .map(|d| AdapterDesc1(d))
+                .map(AdapterDesc1)
                 .map_err(DxError::from)
         }
     }

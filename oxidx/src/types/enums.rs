@@ -164,6 +164,18 @@ pub enum BorderColor {
     OpaqueWhiteUint = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE_UINT.0,
 }
 
+/// Values that identify the intended use of constant-buffer data.
+///
+/// For more information: [`D3D_CBUFFER_TYPE  enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_cbuffer_type)
+#[derive(Clone, Copy, Debug, FromRepr, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum CbufferType {
+    Cbuffer = D3D_CT_CBUFFER.0,
+    Tbuffer = D3D_CT_TBUFFER.0,
+    InterfacePointers = D3D_CT_INTERFACE_POINTERS.0,
+    BindInfo = D3D_CT_RESOURCE_BIND_INFO.0,
+}
+
 /// Specifies the type of a command list.
 ///
 /// For more information: [`D3D12_COMMAND_LIST_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_command_list_type)

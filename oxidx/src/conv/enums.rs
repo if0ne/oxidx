@@ -9,6 +9,7 @@ conv_enum!(AlphaMode to DXGI_ALPHA_MODE);
 conv_enum!(Blend to D3D12_BLEND);
 conv_enum!(BlendOp to D3D12_BLEND_OP);
 conv_enum!(BorderColor to D3D12_STATIC_BORDER_COLOR);
+conv_enum!(CbufferType to D3D_CBUFFER_TYPE);
 conv_enum!(CommandListType to D3D12_COMMAND_LIST_TYPE);
 conv_enum!(ComparisonFunc to D3D12_COMPARISON_FUNC);
 conv_enum!(ConservativeRaster to D3D12_CONSERVATIVE_RASTERIZATION_MODE);
