@@ -11,7 +11,9 @@ use windows::{
     },
 };
 
-use crate::{create_type, error::DxError, impl_trait, types::*, HasInterface, reflection::ShaderReflection};
+use crate::{
+    create_type, error::DxError, impl_trait, reflection::ShaderReflection, types::*, HasInterface,
+};
 
 /// This interface is used to return data of arbitrary length.
 ///

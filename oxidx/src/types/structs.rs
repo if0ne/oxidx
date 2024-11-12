@@ -2432,9 +2432,7 @@ impl ShaderDesc {
 
     #[inline]
     pub fn get_creator(&self) -> &CStr {
-        unsafe {
-            CStr::from_ptr(self.0.Creator.as_ptr() as *const _)
-        }
+        unsafe { CStr::from_ptr(self.0.Creator.as_ptr() as *const _) }
     }
 
     #[inline]
@@ -2558,8 +2556,8 @@ impl ShaderDesc {
     }
 
     #[inline]
-    pub fn get_gs_output_topology(&self) -> super::Direct3D::D3D_PRIMITIVE_TOPOLOGY {
-        self.0.GSOutputTopology
+    pub fn get_gs_output_topology(&self) -> PrimitiveTopology {
+        self.0.GSOutputTopology.into()
     }
 
     #[inline]
@@ -2568,8 +2566,8 @@ impl ShaderDesc {
     }
 
     #[inline]
-    pub fn get_input_primitive(&self) -> super::Direct3D::D3D_PRIMITIVE {
-        self.0.InputPrimitive
+    pub fn get_input_primitive(&self) -> Primitive {
+        self.0.InputPrimitive.into()
     }
 
     #[inline]
@@ -2588,18 +2586,18 @@ impl ShaderDesc {
     }
 
     #[inline]
-    pub fn get_hs_output_primitive(&self) -> super::Direct3D::D3D_T ESSELLATOR_OUTPUT_PRIMITIVE {
-        self.0.HSOutputPrimitive
+    pub fn get_hs_output_primitive(&self) -> TessellatorOutputPrimitive {
+        self.0.HSOutputPrimitive.into()
     }
 
     #[inline]
-    pub fn get_hs_partitioning(&self) -> super::Direct3D::D3D_TESSELLATOR_PARTITIONING {
-        self.0.HSPartitioning
+    pub fn get_hs_partitioning(&self) -> TessellatorPartitioning {
+        self.0.HSPartitioning.into()
     }
 
     #[inline]
-    pub fn get_tessellator_domain(&self) -> super::Direct3D::D3D_TESSELLATOR_DOMAIN {
-        self.0.TessellatorDomain
+    pub fn get_tessellator_domain(&self) -> TessellatorDomain {
+        self.0.TessellatorDomain.into()
     }
 
     #[inline]
@@ -2616,7 +2614,6 @@ impl ShaderDesc {
     pub fn get_c_texture_store_instructions(&self) -> u32 {
         self.0.cTextureStoreInstructions
     }
-
 }
 
 /// Defines a shader macro.
@@ -2639,6 +2636,65 @@ impl<'a> ShaderMacro<'a> {
             },
             Default::default(),
         )
+    }
+}
+
+/// Describes how a shader resource is bound to a shader input.
+///
+/// For more information: [`D3D12_SHADER_INPUT_BIND_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/ns-d3d12shader-d3d12_shader_input_bind_desc)
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[repr(transparent)]
+pub struct ShaderInputBindDesc(pub(crate) D3D12_SHADER_INPUT_BIND_DESC);
+
+impl ShaderInputBindDesc {
+    #[inline]
+    pub fn name(&self) -> &CStr {
+        unsafe { CStr::from_ptr(self.0.Name.as_ptr() as *const _) }
+    }
+
+    #[inline]
+    pub fn input_type(&self) -> ShaderInputType {
+        self.0.Type.into()
+    }
+
+    #[inline]
+    pub fn bind_point(&self) -> u32 {
+        self.0.BindPoint
+    }
+
+    #[inline]
+    pub fn bind_count(&self) -> u32 {
+        self.0.BindCount
+    }
+
+    #[inline]
+    pub fn flags(&self) -> u32 {
+        self.0.uFlags
+    }
+
+    #[inline]
+    pub fn return_type(&self) -> ResourceReturnType {
+        self.0.ReturnType.into()
+    }
+
+    #[inline]
+    pub fn dimension(&self) -> SrvDimension {
+        self.0.Dimension.into()
+    }
+
+    #[inline]
+    pub fn num_samples(&self) -> u32 {
+        self.0.NumSamples
+    }
+
+    #[inline]
+    pub fn space(&self) -> u32 {
+        self.0.Space
+    }
+
+    #[inline]
+    pub fn id(&self) -> u32 {
+        self.0.uID
     }
 }
 
@@ -2882,6 +2938,60 @@ pub struct SharedHandle(pub(crate) HANDLE);
 impl SharedHandle {
     pub fn close(self) -> Result<(), DxError> {
         unsafe { CloseHandle(self.0).map_err(DxError::from) }
+    }
+}
+
+/// Describes a shader signature.
+///
+/// For more information: [`D3D12_SIGNATURE_PARAMETER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/ns-d3d12shader-d3d12_signature_parameter_desc)
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[repr(transparent)]
+pub struct SignatureParameterDesc(pub(crate) D3D12_SIGNATURE_PARAMETER_DESC);
+
+impl SignatureParameterDesc {
+    #[inline]
+    pub fn semantic_name(&self) -> &CStr {
+        unsafe { CStr::from_ptr(self.0.SemanticName.as_ptr() as *const _) }
+    }
+
+    #[inline]
+    pub fn semantic_index(&self) -> u32 {
+        self.0.SemanticIndex
+    }
+
+    #[inline]
+    pub fn register(&self) -> u32 {
+        self.0.Register
+    }
+
+    #[inline]
+    pub fn system_value_type(&self) -> ShaderVarName {
+        self.0.SystemValueType.into()
+    }
+
+    #[inline]
+    pub fn component_type(&self) -> RegisterComponentType {
+        self.0.ComponentType.into()
+    }
+
+    #[inline]
+    pub fn mask(&self) -> u8 {
+        self.0.Mask
+    }
+
+    #[inline]
+    pub fn read_write_mask(&self) -> u8 {
+        self.0.ReadWriteMask
+    }
+
+    #[inline]
+    pub fn stream(&self) -> u32 {
+        self.0.Stream
+    }
+
+    #[inline]
+    pub fn min_precision(&self) -> MinPrecision {
+        self.0.MinPrecision.into()
     }
 }
 

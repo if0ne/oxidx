@@ -23,12 +23,12 @@ pub mod info_queue;
 pub mod pageable;
 pub mod pso;
 pub mod query_heap;
+pub mod reflection;
 pub mod resources;
 pub mod root_signature;
 pub mod swapchain;
 pub mod sync;
 pub mod types;
-pub mod reflection;
 
 pub(crate) mod pix;
 

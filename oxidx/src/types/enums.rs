@@ -2567,6 +2567,38 @@ pub enum MessageSeverity {
     Message = D3D12_MESSAGE_SEVERITY_MESSAGE.0,
 }
 
+/// Values that represent the minimum precision for shader variables.
+///
+/// For more information: [`D3D_MIN_PRECISION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_min_precision)
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum MinPrecision {
+    /// Default minimum precision.
+    #[default]
+    Default = D3D_MIN_PRECISION_DEFAULT,
+
+    /// Minimum precision of 16-bit floating point.
+    Float16 = D3D_MIN_PRECISION_FLOAT_16,
+
+    /// Minimum precision of 2.8-bit floating point.
+    Float28 = D3D_MIN_PRECISION_FLOAT_2_8,
+
+    /// Reserved minimum precision.
+    Reserved = D3D_MIN_PRECISION_RESERVED,
+
+    /// Minimum precision of 16-bit signed integer.
+    Sint16 = D3D_MIN_PRECISION_SINT_16,
+
+    /// Minimum precision of 16-bit unsigned integer.
+    Uint16 = D3D_MIN_PRECISION_UINT_16,
+
+    /// Minimum precision of any 16-bit type.
+    Any16 = D3D_MIN_PRECISION_ANY_16,
+
+    /// Minimum precision of any 10-bit type.
+    Any10 = D3D_MIN_PRECISION_ANY_10,
+}
+
 /// Describes minimum precision support options for shaders in the current graphics driver.
 ///
 /// For more information: [`D3D12_SHADER_MIN_PRECISION_SUPPORT enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_shader_min_precision_support)
@@ -2618,6 +2650,260 @@ pub enum PredicationOp {
 
     /// Enables predication if at least one of the 64-bits are not zero.
     NotEqualZero = D3D12_PREDICATION_OP_NOT_EQUAL_ZERO.0,
+}
+
+/// Values that represent various primitive types for rendering in the pipeline.
+///
+/// For more information: [`D3D_PRIMITIVE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_primitive)
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum Primitive {
+    /// The primitive type is not defined.
+    #[default]
+    Undefined = D3D_PRIMITIVE_UNDEFINED,
+
+    /// Interpret the vertex data as a list of points.
+    Point = D3D_PRIMITIVE_POINT,
+
+    /// Interpret the vertex data as a list of lines.
+    Line = D3D_PRIMITIVE_LINE,
+
+    /// Interpret the vertex data as a list of triangles.
+    Triangle = D3D_PRIMITIVE_TRIANGLE,
+
+    /// Interpret the vertex data as a list of lines with adjacency information.
+    LineAdj = D3D_PRIMITIVE_LINE_ADJ,
+
+    /// Interpret the vertex data as a list of triangles with adjacency information.
+    TriangleAdj = D3D_PRIMITIVE_TRIANGLE_ADJ,
+
+    /// Interpret the vertex data as a patch with 1 control point.
+    ControlPoint1 = D3D_PRIMITIVE_1_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 2 control points.
+    ControlPoint2 = D3D_PRIMITIVE_2_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 3 control points.
+    ControlPoint3 = D3D_PRIMITIVE_3_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 4 control points.
+    ControlPoint4 = D3D_PRIMITIVE_4_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 5 control points.
+    ControlPoint5 = D3D_PRIMITIVE_5_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 6 control points.
+    ControlPoint6 = D3D_PRIMITIVE_6_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 7 control points.
+    ControlPoint7 = D3D_PRIMITIVE_7_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 8 control points.
+    ControlPoint8 = D3D_PRIMITIVE_8_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 9 control points.
+    ControlPoint9 = D3D_PRIMITIVE_9_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 10 control points.
+    ControlPoint10 = D3D_PRIMITIVE_10_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 11 control points.
+    ControlPoint11 = D3D_PRIMITIVE_11_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 12 control points.
+    ControlPoint12 = D3D_PRIMITIVE_12_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 13 control points.
+    ControlPoint13 = D3D_PRIMITIVE_13_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 14 control points.
+    ControlPoint14 = D3D_PRIMITIVE_14_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 15 control points.
+    ControlPoint15 = D3D_PRIMITIVE_15_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 16 control points.
+    ControlPoint16 = D3D_PRIMITIVE_16_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 17 control points.
+    ControlPoint17 = D3D_PRIMITIVE_17_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 18 control points.
+    ControlPoint18 = D3D_PRIMITIVE_18_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 19 control points.
+    ControlPoint19 = D3D_PRIMITIVE_19_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 20 control points.
+    ControlPoint20 = D3D_PRIMITIVE_20_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 21 control points.
+    ControlPoint21 = D3D_PRIMITIVE_21_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 22 control points.
+    ControlPoint22 = D3D_PRIMITIVE_22_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 23 control points.
+    ControlPoint23 = D3D_PRIMITIVE_23_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 24 control points.
+    ControlPoint24 = D3D_PRIMITIVE_24_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 25 control points.
+    ControlPoint25 = D3D_PRIMITIVE_25_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 26 control points.
+    ControlPoint26 = D3D_PRIMITIVE_26_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 27 control points.
+    ControlPoint27 = D3D_PRIMITIVE_27_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 28 control points.
+    ControlPoint28 = D3D_PRIMITIVE_28_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 29 control points.
+    ControlPoint29 = D3D_PRIMITIVE_29_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 30 control points.
+    ControlPoint30 = D3D_PRIMITIVE_30_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 31 control points.
+    ControlPoint31 = D3D_PRIMITIVE_31_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 32 control points.
+    ControlPoint32 = D3D_PRIMITIVE_32_CONTROL_POINT_PATCH,
+
+    /// The primitive type is not defined in D3D10.
+    D3D10Undefined = D3D10_PRIMITIVE_UNDEFINED,
+
+    /// Interpret the vertex data as a point in D3D10.
+    D3D10Point = D3D10_PRIMITIVE_POINT,
+
+    /// Interpret the vertex data as a line in D3D10.
+    D3D10Line = D3D10_PRIMITIVE_LINE,
+
+    /// Interpret the vertex data as a triangle in D3D10.
+    D3D10Triangle = D3D10_PRIMITIVE_TRIANGLE,
+
+    /// Interpret the vertex data as a line with adjacency information in D3D10.
+    D3D10LineAdj = D3D10_PRIMITIVE_LINE_ADJ,
+
+    /// Interpret the vertex data as a triangle with adjacency information in D3D10.
+    D3D10TriangleAdj = D3D10_PRIMITIVE_TRIANGLE_ADJ,
+
+    /// The primitive type is not defined in D3D11.
+    D3D11Undefined = D3D11_PRIMITIVE_UNDEFINED,
+
+    /// Interpret the vertex data as a point in D3D11.
+    D3D11Point = D3D11_PRIMITIVE_POINT,
+
+    /// Interpret the vertex data as a line in D3D11.
+    D3D11Line = D3D11_PRIMITIVE_LINE,
+
+    /// Interpret the vertex data as a triangle in D3D11.
+    D3D11Triangle = D3D11_PRIMITIVE_TRIANGLE,
+
+    /// Interpret the vertex data as a line with adjacency information in D3D11.
+    D3D11LineAdj = D3D11_PRIMITIVE_LINE_ADJ,
+
+    /// Interpret the vertex data as a triangle with adjacency information in D3D11.
+    D3D11TriangleAdj = D3D11_PRIMITIVE_TRIANGLE_ADJ,
+
+    /// Interpret the vertex data as a patch with 1 control point in D3D11.
+    D3D11ControlPoint1 = D3D11_PRIMITIVE_1_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 2 control points in D3D11.
+    D3D11ControlPoint2 = D3D11_PRIMITIVE_2_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 3 control points in D3D11.
+    D3D11ControlPoint3 = D3D11_PRIMITIVE_3_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 4 control points in D3D11.
+    D3D11ControlPoint4 = D3D11_PRIMITIVE_4_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 5 control points in D3D11.
+    D3D11ControlPoint5 = D3D11_PRIMITIVE_5_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 6 control points in D3D11.
+    D3D11ControlPoint6 = D3D11_PRIMITIVE_6_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 7 control points in D3D11.
+    D3D11ControlPoint7 = D3D11_PRIMITIVE_7_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 8 control points in D3D11.
+    D3D11ControlPoint8 = D3D11_PRIMITIVE_8_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 9 control points in D3D11.
+    D3D11ControlPoint9 = D3D11_PRIMITIVE_9_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 10 control points in D3D11.
+    D3D11ControlPoint10 = D3D11_PRIMITIVE_10_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 11 control points in D3D11.
+    D3D11ControlPoint11 = D3D11_PRIMITIVE_11_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 12 control points in D3D11.
+    D3D11ControlPoint12 = D3D11_PRIMITIVE_12_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 13 control points in D3D11.
+    D3D11ControlPoint13 = D3D11_PRIMITIVE_13_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 14 control points in D3D11.
+    D3D11ControlPoint14 = D3D11_PRIMITIVE_14_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 15 control points in D3D11.
+    D3D11ControlPoint15 = D3D11_PRIMITIVE_15_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 16 control points in D3D11.
+    D3D11ControlPoint16 = D3D11_PRIMITIVE_16_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 17 control points in D3D11.
+    D3D11ControlPoint17 = D3D11_PRIMITIVE_17_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 18 control points in D3D11.
+    D3D11ControlPoint18 = D3D11_PRIMITIVE_18_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 19 control points in D3D11.
+    D3D11ControlPoint19 = D3D11_PRIMITIVE_19_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 20 control points in D3D11.
+    D3D11ControlPoint20 = D3D11_PRIMITIVE_20_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 21 control points in D3D11.
+    D3D11ControlPoint21 = D3D11_PRIMITIVE_21_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 22 control points in D3D11.
+    D3D11ControlPoint22 = D3D11_PRIMITIVE_22_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 23 control points in D3D11.
+    D3D11ControlPoint23 = D3D11_PRIMITIVE_23_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 24 control points in D3D11.
+    D3D11ControlPoint24 = D3D11_PRIMITIVE_24_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 25 control points in D3D11.
+    D3D11ControlPoint25 = D3D11_PRIMITIVE_25_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 26 control points in D3D11.
+    D3D11ControlPoint26 = D3D11_PRIMITIVE_26_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 27 control points in D3D11.
+    D3D11ControlPoint27 = D3D11_PRIMITIVE_27_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 28 control points in D3D11.
+    D3D11ControlPoint28 = D3D11_PRIMITIVE_28_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 29 control points in D3D11.
+    D3D11ControlPoint29 = D3D11_PRIMITIVE_29_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 30 control points in D3D11.
+    D3D11ControlPoint30 = D3D11_PRIMITIVE_30_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 31 control points in D3D11.
+    D3D11ControlPoint31 = D3D11_PRIMITIVE_31_CONTROL_POINT_PATCH,
+
+    /// Interpret the vertex data as a patch with 32 control points in D3D11.
+    D3D11ControlPoint32 = D3D11_PRIMITIVE_32_CONTROL_POINT_PATCH,
 }
 
 /// Values that indicate how the pipeline interprets vertex data that is bound to the input-assembler stage. These primitive topology values determine how the vertex data is rendered on screen.
@@ -2750,6 +3036,74 @@ pub enum RaytracingTier {
     Tier1_1 = D3D12_RAYTRACING_TIER_1_1.0,
 }
 
+/// Values that represent the component types for registers in Direct3D.
+///
+/// For more information: [`D3D_REGISTER_COMPONENT_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_register_component_type)
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum RegisterComponentType {
+    /// The component type is unknown.
+    #[default]
+    Unknown = D3D_REGISTER_COMPONENT_UNKNOWN,
+
+    /// The component type is a 32-bit unsigned integer.
+    Uint32 = D3D_REGISTER_COMPONENT_UINT32,
+
+    /// The component type is a 32-bit signed integer.
+    Sint32 = D3D_REGISTER_COMPONENT_SINT32,
+
+    /// The component type is a 32-bit floating point.
+    Float32 = D3D_REGISTER_COMPONENT_FLOAT32,
+
+    /// The component type is a 16-bit unsigned integer.
+    Uint16 = D3D_REGISTER_COMPONENT_UINT16,
+
+    /// The component type is a 16-bit signed integer.
+    Sint16 = D3D_REGISTER_COMPONENT_SINT16,
+
+    /// The component type is a 16-bit floating point.
+    Float16 = D3D_REGISTER_COMPONENT_FLOAT16,
+
+    /// The component type is a 64-bit unsigned integer.
+    Uint64 = D3D_REGISTER_COMPONENT_UINT64,
+
+    /// The component type is a 64-bit signed integer.
+    Sint64 = D3D_REGISTER_COMPONENT_SINT64,
+
+    /// The component type is a 64-bit floating point.
+    Float64 = D3D_REGISTER_COMPONENT_FLOAT64,
+
+    /// The component type is unknown in D3D10.
+    D3D10Unknown = D3D10_REGISTER_COMPONENT_UNKNOWN,
+
+    /// The component type is a 32-bit unsigned integer in D3D10.
+    D3D10Uint32 = D3D10_REGISTER_COMPONENT_UINT32,
+
+    /// The component type is a 32-bit signed integer in D3D10.
+    D3D10Sint32 = D3D10_REGISTER_COMPONENT_SINT32,
+
+    /// The component type is a 32-bit floating point in D3D10.
+    D3D10Float32 = D3D10_REGISTER_COMPONENT_FLOAT32,
+
+    /// The component type is a 16-bit unsigned integer in D3D10.
+    D3D10Uint16 = D3D10_REGISTER_COMPONENT_UINT16,
+
+    /// The component type is a 16-bit signed integer in D3D10.
+    D3D10Sint16 = D3D10_REGISTER_COMPONENT_SINT16,
+
+    /// The component type is a 16-bit floating point in D3D10.
+    D3D10Float16 = D3D10_REGISTER_COMPONENT_FLOAT16,
+
+    /// The component type is a 64-bit unsigned integer in D3D10.
+    D3D10Uint64 = D3D10_REGISTER_COMPONENT_UINT64,
+
+    /// The component type is a 64-bit signed integer in D3D10.
+    D3D10Sint64 = D3D10_REGISTER_COMPONENT_SINT64,
+
+    /// The component type is a 64-bit floating point in D3D10.
+    D3D10Float64 = D3D10_REGISTER_COMPONENT_FLOAT64,
+}
+
 /// Specifies the level of support for render passes on a graphics device.
 ///
 /// For more information: [`D3D12_RENDER_PASS_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_render_pass_tier)
@@ -2823,6 +3177,36 @@ pub enum ResourceHeapTier {
 
     /// Indicates that heaps can support resources from all three categories.
     Tier2 = D3D12_RESOURCE_HEAP_TIER_2.0,
+}
+
+/// Specifies the version of root signature layout.
+///
+/// For more information: [`D3D_RESOURCE_RETURN_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_resource_return_type)
+#[derive(Clone, Copy, Debug, FromRepr, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum ResourceReturnType {
+    Unorm = D3D_RETURN_TYPE_UNORM,
+    Snorm = D3D_RETURN_TYPE_SNORM,
+    Sint = D3D_RETURN_TYPE_SINT,
+    Uint = D3D_RETURN_TYPE_UINT,
+    Float = D3D_RETURN_TYPE_FLOAT,
+    Mixed = D3D_RETURN_TYPE_MIXED,
+    Double = D3D_RETURN_TYPE_DOUBLE,
+    Continued = D3D_RETURN_TYPE_CONTINUED,
+    D10Unorm = D3D10_RETURN_TYPE_UNORM,
+    D10Snorm = D3D10_RETURN_TYPE_SNORM,
+    D10Sint = D3D10_RETURN_TYPE_SINT,
+    D10Uint = D3D10_RETURN_TYPE_UINT,
+    D10Float = D3D10_RETURN_TYPE_FLOAT,
+    D10Mixed = D3D10_RETURN_TYPE_MIXED,
+    D11Unorm = D3D11_RETURN_TYPE_UNORM,
+    D11Snorm = D3D11_RETURN_TYPE_SNORM,
+    D11Sint = D3D11_RETURN_TYPE_SINT,
+    D11Uint = D3D11_RETURN_TYPE_UINT,
+    D11Float = D3D11_RETURN_TYPE_FLOAT,
+    D11Mixed = D3D11_RETURN_TYPE_MIXED,
+    D11Double = D3D11_RETURN_TYPE_DOUBLE,
+    D11Continued = D3D11_RETURN_TYPE_CONTINUED,
 }
 
 /// Specifies the version of root signature layout.
@@ -3050,6 +3434,210 @@ pub enum ShaderModel {
     Model6_8 = D3D_SHADER_MODEL_6_8.0,
 }
 
+/// Values that identify resource types that can be bound to a shader and that are reflected as part of the resource description for the shader.
+///
+/// For more information: [`D3D_SHADER_INPUT_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_shader_input_type)
+#[derive(Clone, Copy, Debug, FromRepr, Hash, PartialEq, Eq)]
+#[repr(u32)]
+pub enum ShaderInputType {
+    CBuffer = D3D_SIT_CBUFFER,
+    TBuffer = D3D_SIT_TBUFFER,
+    Texture = D3D_SIT_TEXTURE,
+    Sampler = D3D_SIT_SAMPLER,
+    UavRWTyped = D3D_SIT_UAV_RWTYPED,
+    Structured = D3D_SIT_STRUCTURED,
+    UavRWStructured = D3D_SIT_UAV_RWSTRUCTURED,
+    ByteAddress = D3D_SIT_BYTEADDRESS,
+    UavRwByteAddress = D3D_SIT_UAV_RWBYTEADDRESS,
+    UavAppendStructured = D3D_SIT_UAV_APPEND_STRUCTURED,
+    UavConsumeStructured = D3D_SIT_UAV_CONSUME_STRUCTURED,
+    UavRwstructuredWithCounter = D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER,
+    RTAccelerationStructure = D3D_SIT_RTACCELERATIONSTRUCTURE,
+    UavFeedbackTexture = D3D_SIT_UAV_FEEDBACKTEXTURE,
+    D10Cbuffer = D3D10_SIT_CBUFFER,
+    D10Tbuffer = D3D10_SIT_TBUFFER,
+    D10Texture = D3D10_SIT_TEXTURE,
+    D10Sampler = D3D10_SIT_SAMPLER,
+    D11UavRwtyped = D3D11_SIT_UAV_RWTYPED,
+    D11Structured = D3D11_SIT_STRUCTURED,
+    D11UavRwstructured = D3D11_SIT_UAV_RWSTRUCTURED,
+    D11ByteAddress = D3D11_SIT_BYTEADDRESS,
+    D11UavRwbyteAddress = D3D11_SIT_UAV_RWBYTEADDRESS,
+    D11UavAppendStructured = D3D11_SIT_UAV_APPEND_STRUCTURED,
+    D11UavConsumeStructured = D3D11_SIT_UAV_CONSUME_STRUCTURED,
+    D11UavRwstructuredWithCounter = D3D11_SIT_UAV_RWSTRUCTURED_WITH_COUNTER,
+}
+
+/// Values that represent the names of shader inputs and outputs in Direct3D.
+///
+/// For more information: [`D3D_NAME enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_name)
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum ShaderVarName {
+    /// Undefined name.
+    #[default]
+    Undefined = D3D_NAME_UNDEFINED,
+
+    /// Position name.
+    Position = D3D_NAME_POSITION,
+
+    /// Clip distance name.
+    ClipDistance = D3D_NAME_CLIP_DISTANCE,
+
+    /// Cull distance name.
+    CullDistance = D3D_NAME_CULL_DISTANCE,
+
+    /// Render target array index name.
+    RenderTargetArrayIndex = D3D_NAME_RENDER_TARGET_ARRAY_INDEX,
+
+    /// Viewport array index name.
+    ViewportArrayIndex = D3D_NAME_VIEWPORT_ARRAY_INDEX,
+
+    /// Vertex ID name.
+    VertexId = D3D_NAME_VERTEX_ID,
+
+    /// Primitive ID name.
+    PrimitiveId = D3D_NAME_PRIMITIVE_ID,
+
+    /// Instance ID name.
+    InstanceId = D3D_NAME_INSTANCE_ID,
+
+    /// Is front face name.
+    IsFrontFace = D3D_NAME_IS_FRONT_FACE,
+
+    /// Sample index name.
+    SampleIndex = D3D_NAME_SAMPLE_INDEX,
+
+    /// Final quad edge tessellation factor name.
+    FinalQuadEdgeTessFactor = D3D_NAME_FINAL_QUAD_EDGE_TESSFACTOR,
+
+    /// Final quad inside tessellation factor name.
+    FinalQuadInsideTessFactor = D3D_NAME_FINAL_QUAD_INSIDE_TESSFACTOR,
+
+    /// Final triangle edge tessellation factor name.
+    FinalTriEdgeTessFactor = D3D_NAME_FINAL_TRI_EDGE_TESSFACTOR,
+
+    /// Final triangle inside tessellation factor name.
+    FinalTriInsideTessFactor = D3D_NAME_FINAL_TRI_INSIDE_TESSFACTOR,
+
+    /// Final line detail tessellation factor name.
+    FinalLineDetailTessFactor = D3D_NAME_FINAL_LINE_DETAIL_TESSFACTOR,
+
+    /// Final line density tessellation factor name.
+    FinalLineDensityTessFactor = D3D_NAME_FINAL_LINE_DENSITY_TESSFACTOR,
+
+    /// Barycentrics name.
+    Barycentrics = 23,
+
+    /// Shading rate name.
+    ShadingRate,
+
+    /// Cull primitive name.
+    CullPrimitive,
+
+    /// Target name.
+    Target = 64,
+
+    /// Depth name.
+    Depth = 65,
+
+    /// Coverage name.
+    Coverage = 66,
+
+    /// Depth greater than or equal name.
+    DepthGreaterEqual = 67,
+
+    /// Depth less than or equal name.
+    DepthLessEqual = 68,
+
+    /// Stencil reference name.
+    StencilRef = 69,
+
+    /// Inner coverage name.
+    InnerCoverage = 70,
+
+    /// Undefined name in D3D10.
+    D10Undefined = D3D10Undefined,
+
+    /// Position name in D3D10.
+    D10Position = D3D10Position,
+
+    /// Clip distance name in D3D10.
+    D10ClipDistance = D3D10ClipDistance,
+
+    /// Cull distance name in D3D10.
+    D10CullDistance = D3D10CullDistance,
+
+    /// Render target array index name in D3D10.
+    D10RenderTargetArrayIndex = D3D10RenderTargetArrayIndex,
+
+    /// Viewport array index name in D3D10.
+    D10ViewportArrayIndex = D3D10ViewportArrayIndex,
+
+    /// Vertex ID name in D3D10.
+    D10VertexId = D3D10VertexId,
+
+    /// Primitive ID name in D3D10.
+    D10PrimitiveId = D3D10PrimitiveId,
+
+    /// Instance ID name in D3D10.
+    D10InstanceId = D3D10InstanceId,
+
+    /// Is front face name in D3D10.
+    D10IsFrontFace = D3D10IsFrontFace,
+
+    /// Sample index name in D3D10.
+    D10SampleIndex = D3D10SampleIndex,
+
+    /// Target name in D3D10.
+    D10Target = D3D10Target,
+
+    /// Depth name in D3D10.
+    D3D10Depth,
+
+    /// Coverage name in D3D10.
+    D10Coverage = D3D10Coverage,
+
+    /// Final quad edge tessellation factor name in D3D11.
+    D11FinalQuadEdgeTessFactor = D3D11FinalQuadEdgeTessFactor,
+
+    /// Final quad inside tessellation factor name in D3D11.
+    D11FinalQuadInsideTessFactor = D3D11FinalQuadInsideTessFactor,
+
+    /// Final triangle edge tessellation factor name in D3D11.
+    D11FinalTriEdgeTessFactor = D3D11FinalTriEdgeTessFactor,
+
+    /// Final triangle inside tessellation factor name in D3D11.
+    D11FinalTriInsideTessFactor = D3D11FinalTriInsideTessFactor,
+
+    /// Final line detail tessellation factor name in D3D11.
+    D11FinalLineDetailTessFactor = D3D11FinalLineDetailTessFactor,
+
+    /// Final line density tessellation factor name in D3D11.
+    D11FinalLineDensityTessFactor = D3D11FinalLineDensityTessFactor,
+
+    /// Depth greater than or equal name in D3D11.
+    D11DepthGreaterEqual = D3D11DepthGreaterEqual,
+
+    /// Depth less than or equal name in D3D11.
+    D11DepthLessEqual = D3D11DepthLessEqual,
+
+    /// Stencil reference name in D3D11.
+    D11StencilRef = D3D11StencilRef,
+
+    /// Inner coverage name in D3D11.
+    D11InnerCoverage = D3D11InnerCoverage,
+
+    /// Barycentrics name in D3D12.
+    D12Barycentrics = D3D12Barycentrics,
+
+    /// Shading rate name in D3D12.
+    D12ShadingRate = D3D12ShadingRate,
+
+    /// Cull primitive name in D3D12.
+    D12CullPrimitive = D3D12CullPrimitive,
+}
+
 /// Specifies the shaders that can access the contents of a given root signature slot.
 ///
 /// For more information: [`D3D12_SHADER_VISIBILITY enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_shader_visibility)
@@ -3097,6 +3685,59 @@ pub enum SharedResourceCompatibilityTier {
 
     /// Specifies that cross-API sharing functionality of [`SharedResourceCompatibilityTier::Tier1`] is supported, plus the other formats.
     Tier2 = D3D12_SHARED_RESOURCE_COMPATIBILITY_TIER_2.0,
+}
+
+/// Values that identify the type of resource to be viewed as a shader resource.
+///
+/// For more information: [`D3D_SRV_DIMENSION enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_srv_dimension)
+#[derive(Clone, Copy, Debug, FromRepr, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum SrvDimension {
+    Unknown = D3D_SRV_DIMENSION_UNKNOWN,
+    Buffer = D3D_SRV_DIMENSION_BUFFER,
+    Texture1D = D3D_SRV_DIMENSION_TEXTURE1D,
+    Texture1DArray = D3D_SRV_DIMENSION_TEXTURE1DARRAY,
+    Texture2D = D3D_SRV_DIMENSION_TEXTURE2D,
+    Texture2DArray = D3D_SRV_DIMENSION_TEXTURE2DARRAY,
+    Texture2DMS = D3D_SRV_DIMENSION_TEXTURE2DMS,
+    Texture2DMSArray = D3D_SRV_DIMENSION_TEXTURE2DMSARRAY,
+    Texture3D = D3D_SRV_DIMENSION_TEXTURE3D,
+    TextureCube = D3D_SRV_DIMENSION_TEXTURECUBE,
+    TextureCubeArray = D3D_SRV_DIMENSION_TEXTURECUBEARRAY,
+    BufferEx = D3D_SRV_DIMENSION_BUFFEREX,
+    D10Unknown = D3D10_SRV_DIMENSION_UNKNOWN,
+    D10Buffer = D3D10_SRV_DIMENSION_BUFFER,
+    D10Texture1D = D3D10_SRV_DIMENSION_TEXTURE1D,
+    D10Texture1DArray = D3D10_SRV_DIMENSION_TEXTURE1DARRAY,
+    D10Texture2D = D3D10_SRV_DIMENSION_TEXTURE2D,
+    D10Texture2DArray = D3D10_SRV_DIMENSION_TEXTURE2DARRAY,
+    D10Texture2DMS = D3D10_SRV_DIMENSION_TEXTURE2DMS,
+    D10Texture2DMSArray = D3D10_SRV_DIMENSION_TEXTURE2DMSARRAY,
+    D10Texture3D = D3D10_SRV_DIMENSION_TEXTURE3D,
+    D10TextureCube = D3D10_SRV_DIMENSION_TEXTURECUBE,
+    D101Unknown = D3D10_1_SRV_DIMENSION_UNKNOWN,
+    D101Buffer = D3D10_1_SRV_DIMENSION_BUFFER,
+    D101Texture1D = D3D10_1_SRV_DIMENSION_TEXTURE1D,
+    D101Texture1DArray = D3D10_1_SRV_DIMENSION_TEXTURE1DARRAY,
+    D101Texture2D = D3D10_1_SRV_DIMENSION_TEXTURE2D,
+    D101Texture2DArray = D3D10_1_SRV_DIMENSION_TEXTURE2DARRAY,
+    D101Texture2DMS = D3D10_1_SRV_DIMENSION_TEXTURE2DMS,
+    D101Texture2DMSArray = D3D10_1_SRV_DIMENSION_TEXTURE2DMSARRAY,
+    D101Texture3D = D3D10_1_SRV_DIMENSION_TEXTURE3D,
+    D101TextureCube = D3D10_1_SRV_DIMENSION_TEXTURECUBE,
+    D101TextureCubeArray = D3D10_1_SRV_DIMENSION_TEXTURECUBEARRAY,
+    D11Unknown = D3D11_SRV_DIMENSION_UNKNOWN,
+    D11Buffer = D3D11_SRV_DIMENSION_BUFFER,
+    D11Texture1D = D3D11_SRV_DIMENSION_TEXTURE1D,
+    D11Texture1DArray = D3D11_SRV_DIMENSION_TEXTURE1DARRAY,
+    D11Texture2D = D3D11_SRV_DIMENSION_TEXTURE2D,
+    D11Texture2DArray = D3D11_SRV_DIMENSION_TEXTURE2DARRAY,
+    D11Texture2DMS = D3D11_SRV_DIMENSION_TEXTURE2DMS,
+    D11Texture2DMSArray = D3D11_SRV_DIMENSION_TEXTURE2DMSARRAY,
+    D11Texture3D = D3D11_SRV_DIMENSION_TEXTURE3D,
+    D11TextureCube = D3D11_SRV_DIMENSION_TEXTURECUBE,
+    D11TextureCubeArray = D3D11_SRV_DIMENSION_TEXTURECUBEARRAY,
+    D11BufferEx = D3D11_SRV_DIMENSION_BUFFEREX,
 }
 
 /// Identifies the stencil operations that can be performed during depth-stencil testing.
@@ -3149,6 +3790,114 @@ pub enum SwapEffect {
 
     /// Use this flag to specify the flip presentation model and to specify that DXGI discard the contents of the back buffer after.
     FlipDiscard = DXGI_SWAP_EFFECT_FLIP_DISCARD.0,
+}
+
+/// Values that represent various domains for the tessellator stage in the pipeline.
+///
+/// For more information: [`D3D_TESSELLATOR_DOMAIN enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_tessellator_domain)
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum TessellatorDomain {
+    /// The tessellator domain is not defined.
+    #[default]
+    Undefined = D3D_TESSELLATOR_DOMAIN_UNDEFINED.0,
+
+    /// The domain is an isoline.
+    Isoline = D3D_TESSELLATOR_DOMAIN_ISOLINE.0,
+
+    /// The domain is a triangle.
+    Triangle = D3D_TESSELLATOR_DOMAIN_TRI.0,
+
+    /// The domain is a quadrilateral.
+    Quad = D3D_TESSELLATOR_DOMAIN_QUAD.0,
+
+    /// The tessellator domain is not defined in D3D11.
+    D3D11Undefined = D3D11_TESSELLATOR_DOMAIN_UNDEFINED.0,
+
+    /// The domain is an isoline in D3D11.
+    D3D11Isoline = D3D11_TESSELLATOR_DOMAIN_ISOLINE.0,
+
+    /// The domain is a triangle in D3D11.
+    D3D11Triangle = D3D11_TESSELLATOR_DOMAIN_TRI.0,
+
+    /// The domain is a quadrilateral in D3D11.
+    D3D11Quad = D3D11_TESSELLATOR_DOMAIN_QUAD.0,
+}
+
+/// Values that represent various output primitives for the tessellator stage in the pipeline.
+///
+/// For more information: [`D3D_TESSELLATOR_OUTPUT_PRIMITIVE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_tessellator_output_primitive)
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum TessellatorOutputPrimitive {
+    /// The tessellator output primitive is not defined.
+    #[default]
+    Undefined = D3D_TESSELLATOR_OUTPUT_UNDEFINED.0,
+
+    /// Output a point primitive.
+    Point = D3D_TESSELLATOR_OUTPUT_POINT.0,
+
+    /// Output a line primitive.
+    Line = D3D_TESSELLATOR_OUTPUT_LINE.0,
+
+    /// Output a triangle primitive with clockwise winding.
+    TriangleCW = D3D_TESSELLATOR_OUTPUT_TRIANGLE_CW.0,
+
+    /// Output a triangle primitive with counter-clockwise winding.
+    TriangleCCW = D3D_TESSELLATOR_OUTPUT_TRIANGLE_CCW.0,
+
+    /// The tessellator output primitive is not defined in D3D11.
+    D3D11Undefined = D3D11_TESSELLATOR_OUTPUT_UNDEFINED.0,
+
+    /// Output a point primitive in D3D11.
+    D3D11Point = D3D11_TESSELLATOR_OUTPUT_POINT.0,
+
+    /// Output a line primitive in D3D11.
+    D3D11Line = D3D11_TESSELLATOR_OUTPUT_LINE.0,
+
+    /// Output a triangle primitive with clockwise winding in D3D11.
+    D3D11TriangleCW = D3D11_TESSELLATOR_OUTPUT_TRIANGLE_CW.0,
+
+    /// Output a triangle primitive with counter-clockwise winding in D3D11.
+    D3D11TriangleCCW = D3D11_TESSELLATOR_OUTPUT_TRIANGLE_CCW.0,
+}
+
+/// Values that represent various partitioning methods for the tessellator stage in the pipeline.
+///
+/// For more information: [`D3D_TESSELLATOR_PARTITIONING enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_tessellator_partitioning)
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum TessellatorPartitioning {
+    /// The tessellator partitioning method is not defined.
+    #[default]
+    Undefined = D3D_TESSELLATOR_PARTITIONING_UNDEFINED,
+
+    /// Use integer partitioning.
+    Integer = D3D_TESSELLATOR_PARTITIONING_INTEGER,
+
+    /// Use power-of-two partitioning.
+    Pow2 = D3D_TESSELLATOR_PARTITIONING_POW2,
+
+    /// Use fractional odd partitioning.
+    FractionalOdd = D3D_TESSELLATOR_PARTITIONING_FRACTIONAL_ODD,
+
+    /// Use fractional even partitioning.
+    FractionalEven = D3D_TESSELLATOR_PARTITIONING_FRACTIONAL_EVEN,
+
+    /// The tessellator partitioning method is not defined in D3D11.
+    D3D11Undefined = D3D11_TESSELLATOR_PARTITIONING_UNDEFINED,
+
+    /// Use integer partitioning in D3D11.
+    D3D11Integer = D3D11_TESSELLATOR_PARTITIONING_INTEGER,
+
+    /// Use power-of-two partitioning in D3D11.
+    D3D11Pow2 = D3D11_TESSELLATOR_PARTITIONING_POW2,
+
+    /// Use fractional odd partitioning in D3D11.
+    D3D11FractionalOdd = D3D11_TESSELLATOR_PARTITIONING_FRACTIONAL_ODD,
+
+    /// Use fractional even partitioning in D3D11.
+    D3D11FractionalEven = D3D11_TESSELLATOR_PARTITIONING_FRACTIONAL_EVEN,
 }
 
 /// Specifies texture layout options.
