@@ -1,8 +1,8 @@
 use std::ffi::CStr;
 
-use windows::Win32::Graphics::Direct3D12::{
-    ID3D12ShaderReflection, ID3D12ShaderReflectionConstantBuffer,
-};
+use windows::{core::PCSTR, Win32::Graphics::Direct3D12::{
+    ID3D12ShaderReflection, ID3D12ShaderReflectionConstantBuffer, ID3D12ShaderReflectionVariable,
+}};
 
 use crate::{create_type, error::DxError, impl_trait, types::*, HasInterface};
 
@@ -18,13 +18,15 @@ pub trait IShaderReflection: HasInterface {
     /// Gets a constant buffer by index.
     ///
     /// For more information: [`ID3D12ShaderReflection::GetConstantBufferByIndex function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflection-getconstantbufferbyindex)
-    fn get_constant_buffer_by_index(&self, index: usize) -> ShaderReflectionConstantBuffer;
+    fn get_constant_buffer_by_index(&self, index: usize) -> Option<ShaderReflectionConstantBuffer>;
 
     /// Gets a constant buffer by name.
     ///
     /// For more information: [`ID3D12ShaderReflection::GetConstantBufferByName function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflection-getconstantbufferbyname)
-    fn get_constant_buffer_by_name(&self, name: impl AsRef<CStr>)
-        -> ShaderReflectionConstantBuffer;
+    fn get_constant_buffer_by_name(
+        &self,
+        name: impl AsRef<CStr>,
+    ) -> Option<ShaderReflectionConstantBuffer>;
 
     /// Gets the number of conversion instructions.
     ///
@@ -49,7 +51,7 @@ pub trait IShaderReflection: HasInterface {
     /// Gets the minimum feature level.
     ///
     /// For more information: [`ID3D12ShaderReflection::GetMinFeatureLevel function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflection-getminfeaturelevel)
-    fn get_min_feature_level(&self, index: usize) -> Result<FeatureLevel, DxError>;
+    fn get_min_feature_level(&self) -> Result<FeatureLevel, DxError>;
 
     /// Gets the number of Movc instructions.
     ///
@@ -82,7 +84,7 @@ pub trait IShaderReflection: HasInterface {
     /// Retrieves a group of flags that indicate the requirements of a shader.
     ///
     /// For more information: [`ID3D12ShaderReflection::GetRequiresFlags function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflection-getrequiresflags)
-    fn get_requires_flags(&self, index: usize) -> ShaderRequirements;
+    fn get_requires_flags(&self) -> ShaderRequirements;
 
     /// Gets a description of how a resource is bound to a shader.
     ///
@@ -108,7 +110,7 @@ pub trait IShaderReflection: HasInterface {
     fn get_variable_by_name(
         &self,
         name: impl AsRef<CStr>,
-    ) -> Result<ShaderReflectionVariable, DxError>;
+    ) -> Option<ShaderReflectionVariable>;
 
     /// Indicates whether a shader is a sample frequency shader.
     ///
@@ -127,84 +129,170 @@ impl_trait! {
     impl IShaderReflection =>
     ShaderReflection;
 
+    #[inline]
     fn get_bitwise_instruction_count(&self) -> u32 {
         unsafe {
             self.0.GetBitwiseInstructionCount()
         }
     }
 
-    fn get_constant_buffer_by_index(&self, index: usize) -> ShaderReflectionConstantBuffer {
-        todo!()
+    #[inline]
+    fn get_constant_buffer_by_index(&self, index: usize) -> Option<ShaderReflectionConstantBuffer> {
+        unsafe {
+            self.0.GetConstantBufferByIndex(index as u32)
+                .map(|v| ShaderReflectionConstantBuffer::new(v))
+        }
     }
 
-    fn get_constant_buffer_by_name(&self, name: impl AsRef<CStr>) -> ShaderReflectionConstantBuffer {
-        todo!()
+    #[inline]
+    fn get_constant_buffer_by_name(&self, name: impl AsRef<CStr>) -> Option<ShaderReflectionConstantBuffer> {
+        unsafe {
+            let name = PCSTR::from_raw(name.as_ref().as_ptr() as *const _);
+
+            self.0.GetConstantBufferByName(name)
+                .map(|v| ShaderReflectionConstantBuffer::new(v))
+        }
     }
 
+    #[inline]
     fn get_conversion_instruction_count(&self) -> u32 {
         unsafe {
             self.0.GetConversionInstructionCount()
         }
     }
 
+    #[inline]
     fn get_desc(&self) -> Result<ShaderDesc, DxError> {
-        todo!()
+        unsafe {
+            let mut raw = Default::default();
+            self.0.GetDesc(&mut raw).map_err(DxError::from)?;
+
+            Ok(ShaderDesc(raw))
+        }
     }
 
+    #[inline]
     fn get_gs_input_primitive(&self) -> Primitive {
-        todo!()
+        unsafe {
+            self.0.GetGSInputPrimitive().into()
+        }
     }
 
+    #[inline]
     fn get_input_parameter_desc(&self, index: usize) -> Result<SignatureParameterDesc, DxError> {
-        todo!()
+        unsafe {
+            let mut raw = Default::default();
+            self.0.GetInputParameterDesc(index as u32, &mut raw).map_err(DxError::from)?;
+
+            Ok(SignatureParameterDesc(raw))
+        }
     }
 
-    fn get_min_feature_level(&self, index: usize) -> Result<FeatureLevel, DxError> {
-        todo!()
+    #[inline]
+    fn get_min_feature_level(&self) -> Result<FeatureLevel, DxError> {
+        unsafe {
+            self.0.GetMinFeatureLevel()
+                .map(|v| v.into())
+                .map_err(DxError::from)
+        }
     }
 
+    #[inline]
     fn get_movc_instruction_count(&self) -> u32 {
-        todo!()
+        unsafe {
+            self.0.GetMovcInstructionCount()
+        }
     }
 
+    #[inline]
     fn get_mov_instruction_count(&self) -> u32 {
-        todo!()
+        unsafe {
+            self.0.GetMovInstructionCount()
+        }
     }
 
+    #[inline]
     fn get_num_interface_slots(&self) -> u32 {
-        todo!()
+        unsafe {
+            self.0.GetNumInterfaceSlots()
+        }
     }
 
+    #[inline]
     fn get_output_parameter_desc(&self, index: usize) -> Result<SignatureParameterDesc, DxError> {
-        todo!()
+        unsafe {
+            let mut raw = Default::default();
+            self.0.GetOutputParameterDesc(index as u32, &mut raw).map_err(DxError::from)?;
+
+            Ok(SignatureParameterDesc(raw))
+        }
     }
 
+    #[inline]
     fn get_patch_constant_parameter_desc(&self, index: usize) -> Result<SignatureParameterDesc, DxError> {
-        todo!()
+        unsafe {
+            let mut raw = Default::default();
+            self.0.GetPatchConstantParameterDesc(index as u32, &mut raw).map_err(DxError::from)?;
+
+            Ok(SignatureParameterDesc(raw))
+        }
     }
 
-    fn get_requires_flags(&self, index: usize) -> ShaderRequirements {
-        todo!()
+    #[inline]
+    fn get_requires_flags(&self) -> ShaderRequirements {
+        unsafe {
+            self.0.GetRequiresFlags().into()
+        }
     }
 
+    #[inline]
     fn get_resource_binding_desc(&self, index: usize) -> Result<ShaderInputBindDesc, DxError> {
-        todo!()
+        unsafe {
+            let mut raw = Default::default();
+            self.0.GetResourceBindingDesc(index as u32, &mut raw).map_err(DxError::from)?;
+
+            Ok(ShaderInputBindDesc(raw))
+        }
     }
 
+    #[inline]
     fn get_resource_binding_desc_by_name(&self, name: impl AsRef<CStr>) -> Result<ShaderInputBindDesc, DxError> {
-        todo!()
+        unsafe {
+            let name = PCSTR::from_raw(name.as_ref().as_ptr() as *const _);
+            let mut raw = Default::default();
+
+            self.0.GetResourceBindingDescByName(name, &mut raw).map_err(DxError::from)?;
+            Ok(ShaderInputBindDesc(raw))
+        }
     }
 
+    #[inline]
     fn get_thread_group_size(&self) -> (u32, u32, u32, u32) {
-        todo!()
+        unsafe {
+            let mut x = 0;
+            let mut y = 0;
+            let mut z = 0;
+            let total = self.0.GetThreadGroupSize(Some(&mut x), Some(&mut y), Some(&mut z));
+
+            (x, y, z, total)
+        }
     }
 
-    fn get_variable_by_name(&self, name: impl AsRef<CStr>) -> Result<ShaderReflectionVariable, DxError> {
-        todo!()
+    #[inline]
+    fn get_variable_by_name(&self, name: impl AsRef<CStr>) -> Option<ShaderReflectionVariable> {
+        unsafe {
+            let name = PCSTR::from_raw(name.as_ref().as_ptr() as *const _);
+
+            self.0.GetVariableByName(name)
+                .map(|v| ShaderReflectionVariable::new(v))
+        }
     }
 
+    #[inline]
     fn is_sample_frequency_shader(&self) -> bool {
-        todo!()
+        unsafe {
+            self.0.IsSampleFrequencyShader().into()
+        }
     }
 }
 

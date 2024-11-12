@@ -825,93 +825,93 @@ bitflags::bitflags! {
     ///
     /// For more information, refer to the Direct3D documentation.
     #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-    pub struct ShaderRequirements: u32 {
+    pub struct ShaderRequirements: u64 {
         /// Shader requires that the graphics driver and hardware support the double data type.
-        const RequiresDoubles = D3D_SHADER_REQUIRES_DOUBLES.0;
+        const RequiresDoubles = 0x00000001;
 
         /// Shader requires an early depth stencil.
-        const RequiresEarlyDepthStencil = D3D_SHADER_REQUIRES_EARLY_DEPTH_STENCIL.0;
+        const RequiresEarlyDepthStencil = 0x00000002;
 
         /// Shader requires unordered access views (UAVs) at every pipeline stage.
-        const RequiresUAVsAtEveryStage = D3D_SHADER_REQUIRES_UAVS_AT_EVERY_STAGE.0;
+        const RequiresUAVsAtEveryStage = 0x00000004;
 
         /// Shader requires 64 UAVs.
-        const Requires64UAVs = D3D_SHADER_REQUIRES_64_UAVS.0;
+        const Requires64UAVs = 0x00000008;
 
         /// Shader requires the graphics driver and hardware to support minimum precision.
-        const RequiresMinimumPrecision = D3D_SHADER_REQUIRES_MINIMUM_PRECISION.0;
+        const RequiresMinimumPrecision = 0x00000010;
 
         /// Shader requires that the graphics driver and hardware support extended doubles instructions.
-        const Requires11_1DoubleExtensions = D3D_SHADER_REQUIRES_11_1_DOUBLE_EXTENSIONS.0;
+        const Requires11_1DoubleExtensions = 0x00000020;
 
         /// Shader requires that the graphics driver and hardware support the msad4 intrinsic function in shaders.
-        const Requires11_1ShaderExtensions = D3D_SHADER_REQUIRES_11_1_SHADER_EXTENSIONS.0;
+        const Requires11_1ShaderExtensions = 0x00000040;
 
         /// Shader requires that the graphics driver and hardware support Direct3D 9 shadow support.
-        const RequiresLevel9ComparisonFiltering = D3D_SHADER_REQUIRES_LEVEL_9_COMPARISON_FILTERING.0;
+        const RequiresLevel9ComparisonFiltering = 0x00000080;
 
         /// Shader requires that the graphics driver and hardware support tiled resources.
-        const RequiresTiledResources = D3D_SHADER_REQUIRES_TILED_RESOURCES.0;
+        const RequiresTiledResources = 0x00000100;
 
         /// Shader requires a reference value for depth stencil tests.
-        const RequiresStencilRef = D3D_SHADER_REQUIRES_STENCIL_REF.0;
+        const RequiresStencilRef = D3D_SHADER_REQUIRES_STENCIL_REF as u64;
 
         /// Shader requires that the graphics driver and hardware support inner coverage.
-        const RequiresInnerCoverage = D3D_SHADER_REQUIRES_INNER_COVERAGE.0;
+        const RequiresInnerCoverage = D3D_SHADER_REQUIRES_INNER_COVERAGE as u64;
 
         /// Shader requires that the graphics driver and hardware support the loading of additional formats for typed UAVs.
-        const RequiresTypedUAVLoadAdditionalFormats = D3D_SHADER_REQUIRES_TYPED_UAV_LOAD_ADDITIONAL_FORMATS.0;
+        const RequiresTypedUAVLoadAdditionalFormats = D3D_SHADER_REQUIRES_TYPED_UAV_LOAD_ADDITIONAL_FORMATS as u64;
 
         /// Shader requires that the graphics driver and hardware support rasterizer ordered views (ROVs).
-        const RequiresROVs = D3D_SHADER_REQUIRES_ROVS.0;
+        const RequiresROVs = D3D_SHADER_REQUIRES_ROVS as u64;
 
         /// Shader requires that the graphics driver and hardware support viewport and render target array index values from any shader-feeding rasterizer.
-        const RequiresViewportAndRTArrayIndexFromAnyShaderFeedingRasterizer = D3D_SHADER_REQUIRES_VIEWPORT_AND_RT_ARRAY_INDEX_FROM_ANY_SHADER_FEEDING_RASTERIZER.0;
+        const RequiresViewportAndRTArrayIndexFromAnyShaderFeedingRasterizer = D3D_SHADER_REQUIRES_VIEWPORT_AND_RT_ARRAY_INDEX_FROM_ANY_SHADER_FEEDING_RASTERIZER as u64;
 
         /// Shader requires that the graphics driver and hardware support wave ops.
-        const RequiresWaveOps = D3D_SHADER_REQUIRES_WAVE_OPS.0;
+        const RequiresWaveOps = D3D_SHADER_REQUIRES_WAVE_OPS as u64;
 
         /// Shader requires that the graphics driver and hardware support 64-bit integer ops.
-        const RequiresInt64Ops = D3D_SHADER_REQUIRES_INT64_OPS.0;
+        const RequiresInt64Ops = D3D_SHADER_REQUIRES_INT64_OPS as u64;
 
         /// Shader requires that the graphics driver and hardware support view instancing using SV_ViewID.
-        const RequiresViewId = D3D_SHADER_REQUIRES_VIEW_ID.0;
+        const RequiresViewId = D3D_SHADER_REQUIRES_VIEW_ID as u64;
 
         /// Shader requires that the graphics driver and hardware support barycentrics using SV_Barycentrics.
-        const RequiresBarycentrics = D3D_SHADER_REQUIRES_BARYCENTRICS.0;
+        const RequiresBarycentrics = D3D_SHADER_REQUIRES_BARYCENTRICS as u64;
 
         /// Shader requires that the graphics driver and hardware support native 16-bit ops.
-        const RequiresNative16BitOps = D3D_SHADER_REQUIRES_NATIVE_16BIT_OPS.0;
+        const RequiresNative16BitOps = D3D_SHADER_REQUIRES_NATIVE_16BIT_OPS as u64;
 
         /// Shader requires that the graphics driver and hardware support the Variable Shading Rate (VRS) feature.
-        const RequiresShadingRate = D3D_SHADER_REQUIRES_SHADING_RATE.0;
+        const RequiresShadingRate = D3D_SHADER_REQUIRES_SHADING_RATE as u64;
 
         /// Shader requires that the graphics driver and hardware support DXR tier 1.1.
-        const RequiresRaytracingTier1_1 = D3D_SHADER_REQUIRES_RAYTRACING_TIER_1_1.0;
+        const RequiresRaytracingTier1_1 = D3D_SHADER_REQUIRES_RAYTRACING_TIER_1_1 as u64;
 
         /// Shader requires that the graphics driver and hardware support Sampler Feedback.
-        const RequiresSamplerFeedback = D3D_SHADER_REQUIRES_SAMPLER_FEEDBACK.0;
+        const RequiresSamplerFeedback = D3D_SHADER_REQUIRES_SAMPLER_FEEDBACK as u64;
 
         /// Shader requires that the graphics driver and hardware support int64 atomics on typed resources.
-        const RequiresAtomicInt64OnTypedResource = D3D_SHADER_REQUIRES_ATOMIC_INT64_ON_TYPED_RESOURCE.0;
+        const RequiresAtomicInt64OnTypedResource = D3D_SHADER_REQUIRES_ATOMIC_INT64_ON_TYPED_RESOURCE as u64;
 
         /// Shader requires that the graphics driver and hardware support int64 atomics on groupshared memory.
-        const RequiresAtomicInt64OnGroupShared = D3D_SHADER_REQUIRES_ATOMIC_INT64_ON_GROUP_SHARED.0;
+        const RequiresAtomicInt64OnGroupShared = D3D_SHADER_REQUIRES_ATOMIC_INT64_ON_GROUP_SHARED as u64;
 
         /// Shader requires that the graphics driver and hardware support derivatives in mesh and amplification shaders.
-        const RequiresDerivativesInMeshAndAmplificationShaders = D3D_SHADER_REQUIRES_DERIVATIVES_IN_MESH_AND_AMPLIFICATION_SHADERS.0;
+        const RequiresDerivativesInMeshAndAmplificationShaders = D3D_SHADER_REQUIRES_DERIVATIVES_IN_MESH_AND_AMPLIFICATION_SHADERS as u64;
 
         /// Shader requires that the graphics driver and hardware support Dynamic Resources and the ResourceDescriptorHeap.
-        const RequiresResourceDescriptorHeapIndexing = D3D_SHADER_REQUIRES_RESOURCE_DESCRIPTOR_HEAP_INDEXING.0;
+        const RequiresResourceDescriptorHeapIndexing = D3D_SHADER_REQUIRES_RESOURCE_DESCRIPTOR_HEAP_INDEXING as u64;
 
         /// Shader requires that the graphics driver and hardware support Dynamic Resources and the SamplerDescriptorHeap.
-        const RequiresSamplerDescriptorHeapIndexing = D3D_SHADER_REQUIRES_SAMPLER_DESCRIPTOR_HEAP_INDEXING.0;
+        const RequiresSamplerDescriptorHeapIndexing = D3D_SHADER_REQUIRES_SAMPLER_DESCRIPTOR_HEAP_INDEXING as u64;
 
         /// Shader requires that the graphics driver and hardware support Wave MMA.
-        const RequiresWaveMMA = D3D_SHADER_REQUIRES_WAVE_MMA.0;
+        const RequiresWaveMMA = D3D_SHADER_REQUIRES_WAVE_MMA as u64;
 
         /// Shader requires that the graphics driver and hardware support int64 atomics on descriptor heap resources.
-        const RequiresAtomicInt64OnDescriptorHeapResource = D3D_SHADER_REQUIRES_ATOMIC_INT64_ON_DESCRIPTOR_HEAP_RESOURCE.0;
+        const RequiresAtomicInt64OnDescriptorHeapResource = D3D_SHADER_REQUIRES_ATOMIC_INT64_ON_DESCRIPTOR_HEAP_RESOURCE as u64;
     }
 }
 

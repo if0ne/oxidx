@@ -35,3 +35,17 @@ conv_flags!(SwapchainFlags to DXGI_SWAP_CHAIN_FLAG);
 conv_flags!(TileCopyFlags to D3D12_TILE_COPY_FLAGS);
 conv_flags!(TileRangeFlags to D3D12_TILE_RANGE_FLAGS);
 conv_flags!(WindowAssociationFlags to DXGI_MWA_FLAGS);
+
+impl ShaderRequirements {
+    #[inline]
+    pub(crate) fn as_raw(&self) -> u64 {
+        self.bits()
+    }
+}
+
+impl From<u64> for ShaderRequirements {
+    #[inline]
+    fn from(value: u64) -> Self {
+        Self::from_bits(value).unwrap_or_else(|| unreachable!())
+    }
+}
