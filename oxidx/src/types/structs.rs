@@ -760,6 +760,12 @@ impl DescriptorRange {
     }
 
     #[inline]
+    pub fn with_base_shader_register(mut self, base_shader_register: u32) -> Self {
+        self.0.BaseShaderRegister = base_shader_register;
+        self
+    }
+
+    #[inline]
     pub fn with_register_space(mut self, register_space: u32) -> Self {
         self.0.RegisterSpace = register_space;
         self
