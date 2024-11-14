@@ -1263,6 +1263,21 @@ pub struct InputElementDesc(pub(crate) D3D12_INPUT_ELEMENT_DESC);
 
 impl InputElementDesc {
     #[inline]
+    pub fn from_raw_per_vertex(semantic_name: &CStr, semantic_index: u32, format: Format, input_slot: u32) -> Self {
+        let semantic_name = PCSTR::from_raw(semantic_name.as_ptr() as *const _);
+
+        Self(D3D12_INPUT_ELEMENT_DESC {
+            SemanticName: semantic_name,
+            SemanticIndex: semantic_index,
+            Format: format.as_raw(),
+            InputSlot: input_slot,
+            AlignedByteOffset: APPEND_ALIGNED_ELEMENT,
+            InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+            InstanceDataStepRate: 0,
+        })
+    }
+
+    #[inline]
     pub fn per_vertex(semantic: SemanticName, format: Format, input_slot: u32) -> Self {
         let semantic_name = PCSTR::from_raw(semantic.name().as_ptr() as *const _);
 
