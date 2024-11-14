@@ -378,10 +378,10 @@ pub struct ConstantBufferViewDesc(pub(crate) D3D12_CONSTANT_BUFFER_VIEW_DESC);
 
 impl ConstantBufferViewDesc {
     #[inline]
-    pub fn new(buffer_location: u64, size: u32) -> Self {
+    pub fn new(buffer_location: u64, size: usize) -> Self {
         Self(D3D12_CONSTANT_BUFFER_VIEW_DESC {
             BufferLocation: buffer_location,
-            SizeInBytes: size,
+            SizeInBytes: size as u32,
         })
     }
 }
@@ -710,6 +710,15 @@ impl DescriptorHeapDesc {
 pub struct DescriptorRange(pub(crate) D3D12_DESCRIPTOR_RANGE);
 
 impl DescriptorRange {
+    #[inline]
+    pub fn new(ty: DescriptorRangeType, num: u32) -> Self {
+        Self(D3D12_DESCRIPTOR_RANGE {
+            RangeType: ty.as_raw(),
+            NumDescriptors: num,
+            ..Default::default()
+        })
+    }
+
     #[inline]
     pub fn cbv(num: u32, base_shader_register: u32) -> Self {
         Self(D3D12_DESCRIPTOR_RANGE {
@@ -1263,7 +1272,12 @@ pub struct InputElementDesc(pub(crate) D3D12_INPUT_ELEMENT_DESC);
 
 impl InputElementDesc {
     #[inline]
-    pub fn from_raw_per_vertex(semantic_name: &CStr, semantic_index: u32, format: Format, input_slot: u32) -> Self {
+    pub fn from_raw_per_vertex(
+        semantic_name: &CStr,
+        semantic_index: u32,
+        format: Format,
+        input_slot: u32,
+    ) -> Self {
         let semantic_name = PCSTR::from_raw(semantic_name.as_ptr() as *const _);
 
         Self(D3D12_INPUT_ELEMENT_DESC {
@@ -1961,7 +1975,7 @@ impl<'a> ResourceBarrier<'a> {
         resource: &'a Resource,
         before: ResourceStates,
         after: ResourceStates,
-        subresource: Option<usize>,
+        subresource: Option<u32>,
     ) -> Self {
         Self(
             D3D12_RESOURCE_BARRIER {
@@ -1970,9 +1984,7 @@ impl<'a> ResourceBarrier<'a> {
                 Anonymous: D3D12_RESOURCE_BARRIER_0 {
                     Transition: ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
                         pResource: unsafe { std::mem::transmute_copy(resource.as_raw()) },
-                        Subresource: subresource
-                            .map(|s| s as u32)
-                            .unwrap_or(BARRIER_ALL_SUBRESOURCES),
+                        Subresource: subresource.unwrap_or(BARRIER_ALL_SUBRESOURCES),
                         StateBefore: before.as_raw(),
                         StateAfter: after.as_raw(),
                     }),
@@ -2361,6 +2373,11 @@ impl Default for SampleDesc {
 pub struct SamplerDesc(pub(crate) D3D12_SAMPLER_DESC);
 
 impl SamplerDesc {
+    #[inline]
+    pub fn new(filter: Filter) -> Self {
+        Self::default().with_filter(filter)
+    }
+
     #[inline]
     pub fn point() -> Self {
         Self::default().with_filter(Filter::Point)

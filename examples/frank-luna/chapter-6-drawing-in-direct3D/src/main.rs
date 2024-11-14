@@ -64,14 +64,14 @@ impl DxSample for BoxSample {
         let address = object_cb.resource().get_gpu_virtual_address();
 
         base.device.create_constant_buffer_view(
-            Some(&ConstantBufferViewDesc::new(address, object_size as u32)),
+            Some(&ConstantBufferViewDesc::new(address, object_size as usize)),
             cbv_heap.get_cpu_descriptor_handle_for_heap_start(),
         );
 
         base.device.create_constant_buffer_view(
             Some(&ConstantBufferViewDesc::new(
                 address + object_size,
-                object_size as u32,
+                object_size as usize,
             )),
             cbv_heap
                 .get_cpu_descriptor_handle_for_heap_start()

@@ -647,7 +647,7 @@ impl ShapesSample {
                 let handle = handle.advance(heap_idx, handle_size);
 
                 device.create_constant_buffer_view(
-                    Some(&ConstantBufferViewDesc::new(addr, obj_size as u32)),
+                    Some(&ConstantBufferViewDesc::new(addr, obj_size as usize)),
                     handle,
                 );
             }
@@ -665,7 +665,7 @@ impl ShapesSample {
             let handle = handle.advance(heap_idx, handle_size);
 
             device.create_constant_buffer_view(
-                Some(&ConstantBufferViewDesc::new(addr, pass_size as u32)),
+                Some(&ConstantBufferViewDesc::new(addr, pass_size as usize)),
                 handle,
             );
         }
