@@ -2975,6 +2975,104 @@ impl SharedHandle {
     }
 }
 
+/// Describes a shader-variable type.
+///
+/// For more information: [`D3D12_SHADER_TYPE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/ns-d3d12shader-d3d12_shader_type_desc)
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct ShaderTypeDesc(pub(crate) D3D12_SHADER_TYPE_DESC);
+
+impl ShaderTypeDesc {
+    #[inline]
+    pub fn class(&self) -> ShaderVariableClass {
+        self.0.Class.into()
+    }
+
+    #[inline]
+    pub fn ty(&self) -> ShaderVariableType {
+        self.0.Type.into()
+    }
+
+    #[inline]
+    pub fn rows(&self) -> u32 {
+        self.0.Rows
+    }
+
+    #[inline]
+    pub fn columns(&self) -> u32 {
+        self.0.Columns
+    }
+
+    #[inline]
+    pub fn elements(&self) -> u32 {
+        self.0.Elements
+    }
+
+    #[inline]
+    pub fn members(&self) -> u32 {
+        self.0.Members
+    }
+
+    #[inline]
+    pub fn offset(&self) -> u32 {
+        self.0.Offset
+    }
+
+    #[inline]
+    pub fn name(&self) -> &CStr {
+        unsafe { CStr::from_ptr(self.0.Name.as_ptr() as *const _) }
+    }
+}
+
+/// Describes a shader variable.
+///
+/// For more information: [`D3D12_SHADER_VARIABLE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/ns-d3d12shader-d3d12_shader_variable_desc)
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct ShaderVariableDesc(pub(crate) D3D12_SHADER_VARIABLE_DESC);
+
+impl ShaderVariableDesc {
+    #[inline]
+    pub fn name(&self) -> &CStr {
+        unsafe { CStr::from_ptr(self.0.Name.as_ptr() as *const _) }
+    }
+
+    #[inline]
+    pub fn size(&self) -> u32 {
+        self.0.Size
+    }
+
+    #[inline]
+    pub fn flags(&self) -> ShaderVariableFlags {
+        windows::Win32::Graphics::Direct3D::D3D_SHADER_VARIABLE_FLAGS(self.0.uFlags as i32).into()
+    }
+
+    #[inline]
+    pub unsafe fn default_value<T>(&self) -> &T {
+        &*(self.0.DefaultValue as *const _)
+    }
+
+    #[inline]
+    pub fn start_texture(&self) -> u32 {
+        self.0.StartTexture
+    }
+
+    #[inline]
+    pub fn texture_size(&self) -> u32 {
+        self.0.TextureSize
+    }
+
+    #[inline]
+    pub fn start_sampler(&self) -> u32 {
+        self.0.StartSampler
+    }
+
+    #[inline]
+    pub fn sampler_size(&self) -> u32 {
+        self.0.SamplerSize
+    }
+}
+
 /// Describes a shader signature.
 ///
 /// For more information: [`D3D12_SIGNATURE_PARAMETER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/ns-d3d12shader-d3d12_signature_parameter_desc)

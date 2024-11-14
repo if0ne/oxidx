@@ -1,4 +1,9 @@
-use windows::Win32::Graphics::Direct3D12::*;
+use windows::Win32::Graphics::{
+    Direct3D::{
+        D3D_SVF_INTERFACE_PARAMETER, D3D_SVF_INTERFACE_POINTER, D3D_SVF_USED, D3D_SVF_USERPACKED,
+    },
+    Direct3D12::*,
+};
 
 #[allow(unused_imports)]
 use super::*;
@@ -923,6 +928,19 @@ bitflags::bitflags! {
 
         /// Shader requires that the graphics driver and hardware support int64 atomics on descriptor heap resources.
         const RequiresAtomicInt64OnDescriptorHeapResource = D3D_SHADER_REQUIRES_ATOMIC_INT64_ON_DESCRIPTOR_HEAP_RESOURCE as u64;
+    }
+}
+
+bitflags::bitflags! {
+    /// Values that identify information about a shader variable.
+    ///
+    /// For more information: [`D3D_SHADER_VARIABLE_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_shader_variable_flags)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct ShaderVariableFlags: i32 {
+        const UserPacked = D3D_SVF_USERPACKED.0;
+        const Used = D3D_SVF_USED.0;
+        const InterfacePointer = D3D_SVF_INTERFACE_POINTER.0;
+        const InterfaceParameter = D3D_SVF_INTERFACE_PARAMETER.0;
     }
 }
 

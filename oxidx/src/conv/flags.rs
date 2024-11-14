@@ -31,6 +31,7 @@ conv_flags!(ResourceBarrierFlags to D3D12_RESOURCE_BARRIER_FLAGS);
 conv_flags!(ResourceFlags to D3D12_RESOURCE_FLAGS);
 conv_flags!(ResourceStates to D3D12_RESOURCE_STATES);
 conv_flags!(RootSignatureFlags to D3D12_ROOT_SIGNATURE_FLAGS);
+conv_flags!(ShaderVariableFlags to D3D_SHADER_VARIABLE_FLAGS);
 conv_flags!(SwapchainFlags to DXGI_SWAP_CHAIN_FLAG);
 conv_flags!(TileCopyFlags to D3D12_TILE_COPY_FLAGS);
 conv_flags!(TileRangeFlags to D3D12_TILE_RANGE_FLAGS);

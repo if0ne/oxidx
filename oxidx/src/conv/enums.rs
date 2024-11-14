@@ -58,6 +58,8 @@ conv_enum!(ScalingMode to DXGI_MODE_SCALING);
 conv_enum!(ScanlineOrdering to DXGI_MODE_SCANLINE_ORDER);
 conv_enum!(ShaderInputType to D3D_SHADER_INPUT_TYPE);
 conv_enum!(ShaderModel to D3D_SHADER_MODEL);
+conv_enum!(ShaderVariableClass to D3D_SHADER_VARIABLE_CLASS);
+conv_enum!(ShaderVariableType to D3D_SHADER_VARIABLE_TYPE);
 conv_enum!(ShaderVarName to D3D_NAME);
 conv_enum!(ShaderVisibility to D3D12_SHADER_VISIBILITY);
 conv_enum!(SharedResourceCompatibilityTier to D3D12_SHARED_RESOURCE_COMPATIBILITY_TIER);

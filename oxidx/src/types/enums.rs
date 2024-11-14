@@ -3292,6 +3292,87 @@ pub enum ShaderInputType {
     UavFeedbackTexture = D3D_SIT_UAV_FEEDBACKTEXTURE.0,
 }
 
+/// Values that identify the class of a shader variable.
+///
+/// For more information: [`D3D_SHADER_VARIABLE_CLASS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_shader_variable_class)
+#[derive(Clone, Copy, Debug, FromRepr, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum ShaderVariableClass {
+    Scalar = D3D_SVC_SCALAR.0,
+    Vector = D3D_SVC_VECTOR.0,
+    MatrixRows = D3D_SVC_MATRIX_ROWS.0,
+    MatrixColumns = D3D_SVC_MATRIX_COLUMNS.0,
+    Object = D3D_SVC_OBJECT.0,
+    Struct = D3D_SVC_STRUCT.0,
+    InterfaceClass = D3D_SVC_INTERFACE_CLASS.0,
+    InterfacePointer = D3D_SVC_INTERFACE_POINTER.0,
+}
+
+/// Values that identify various data, texture, and buffer types that can be assigned to a shader variable.
+///
+/// For more information: [`D3D_SHADER_VARIABLE_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_shader_variable_type)
+#[derive(Clone, Copy, Debug, FromRepr, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum ShaderVariableType {
+    Void = D3D_SVT_VOID.0,
+    Bool = D3D_SVT_BOOL.0,
+    Int = D3D_SVT_INT.0,
+    Float = D3D_SVT_FLOAT.0,
+    String = D3D_SVT_STRING.0,
+    Texture = D3D_SVT_TEXTURE.0,
+    Texture1D = D3D_SVT_TEXTURE1D.0,
+    Texture2D = D3D_SVT_TEXTURE2D.0,
+    Texture3D = D3D_SVT_TEXTURE3D.0,
+    TextureCube = D3D_SVT_TEXTURECUBE.0,
+    Sampler = D3D_SVT_SAMPLER.0,
+    Sampler1D = D3D_SVT_SAMPLER1D.0,
+    Sampler2D = D3D_SVT_SAMPLER2D.0,
+    Sampler3D = D3D_SVT_SAMPLER3D.0,
+    SamplerCube = D3D_SVT_SAMPLERCUBE.0,
+    PixelShader = D3D_SVT_PIXELSHADER.0,
+    VertexShader = D3D_SVT_VERTEXSHADER.0,
+    PixelFragment = D3D_SVT_PIXELFRAGMENT.0,
+    VertexFragment = D3D_SVT_VERTEXFRAGMENT.0,
+    UInt = D3D_SVT_UINT.0,
+    UInt8 = D3D_SVT_UINT8.0,
+    GeometryShader = D3D_SVT_GEOMETRYSHADER.0,
+    Rasterizer = D3D_SVT_RASTERIZER.0,
+    DepthStencil = D3D_SVT_DEPTHSTENCIL.0,
+    Blend = D3D_SVT_BLEND.0,
+    Buffer = D3D_SVT_BUFFER.0,
+    CBuffer = D3D_SVT_CBUFFER.0,
+    TBuffer = D3D_SVT_TBUFFER.0,
+    Texture1DArray = D3D_SVT_TEXTURE1DARRAY.0,
+    Texture2DArray = D3D_SVT_TEXTURE2DARRAY.0,
+    RenderTargetView = D3D_SVT_RENDERTARGETVIEW.0,
+    DepthStencilView = D3D_SVT_DEPTHSTENCILVIEW.0,
+    Texture2DMS = D3D_SVT_TEXTURE2DMS.0,
+    Texture2DMSArray = D3D_SVT_TEXTURE2DMSARRAY.0,
+    TextureCubeArray = D3D_SVT_TEXTURECUBEARRAY.0,
+    HullShader = D3D_SVT_HULLSHADER.0,
+    DomainShader = D3D_SVT_DOMAINSHADER.0,
+    InterfacePointer = D3D_SVT_INTERFACE_POINTER.0,
+    ComputeShader = D3D_SVT_COMPUTESHADER.0,
+    Double = D3D_SVT_DOUBLE.0,
+    RWTexture1D = D3D_SVT_RWTEXTURE1D.0,
+    RWTexture1DArray = D3D_SVT_RWTEXTURE1DARRAY.0,
+    RWTexture2D = D3D_SVT_RWTEXTURE2D.0,
+    RWTexture2DArray = D3D_SVT_RWTEXTURE2DARRAY.0,
+    RWTexture3D = D3D_SVT_RWTEXTURE3D.0,
+    RWBuffer = D3D_SVT_RWBUFFER.0,
+    ByteAddressBuffer = D3D_SVT_BYTEADDRESS_BUFFER.0,
+    RWByteAddressBuffer = D3D_SVT_RWBYTEADDRESS_BUFFER.0,
+    StructuredBuffer = D3D_SVT_STRUCTURED_BUFFER.0,
+    RWStructuredBuffer = D3D_SVT_RWSTRUCTURED_BUFFER.0,
+    AppendStructuredBuffer = D3D_SVT_APPEND_STRUCTURED_BUFFER.0,
+    ConsumeStructuredBuffer = D3D_SVT_CONSUME_STRUCTURED_BUFFER.0,
+    Min8Float = D3D_SVT_MIN8FLOAT.0,
+    Min10Float = D3D_SVT_MIN10FLOAT.0,
+    Min16Float = D3D_SVT_MIN16FLOAT.0,
+    Min12Int = D3D_SVT_MIN12INT.0,
+    Min16Int = D3D_SVT_MIN16INT.0,
+}
+
 /// Values that represent the names of shader inputs and outputs in Direct3D.
 ///
 /// For more information: [`D3D_NAME enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ne-d3dcommon-d3d_name)

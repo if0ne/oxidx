@@ -3,7 +3,7 @@ use std::ffi::CStr;
 use windows::{
     core::PCSTR,
     Win32::Graphics::Direct3D12::{
-        ID3D12ShaderReflection, ID3D12ShaderReflectionConstantBuffer,
+        ID3D12ShaderReflection, ID3D12ShaderReflectionConstantBuffer, ID3D12ShaderReflectionType,
         ID3D12ShaderReflectionVariable,
     },
 };
@@ -329,7 +329,12 @@ impl_trait! {
     ShaderReflectionConstantBuffer;
 
     fn get_desc(&self) -> Result<ShaderBufferDesc, DxError> {
-        todo!()
+        unsafe {
+            let mut raw = Default::default();
+            self.0.GetDesc(&mut raw).map_err(DxError::from)?;
+
+            Ok(ShaderBufferDesc(raw))
+        }
     }
 
     fn get_variable_by_index(&self, index: usize) -> Option<ShaderReflectionVariable> {
@@ -352,7 +357,27 @@ impl_trait! {
 /// This shader-reflection interface provides access to a variable.
 ///
 /// For more information: [`ID3D12ShaderReflectionVariable interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nn-d3d12shader-id3d12shaderreflectionvariable)
-pub trait IShaderReflectionVariable: HasInterface {}
+pub trait IShaderReflectionVariable: HasInterface {
+    /// Returns the [`ShaderReflectionConstantBuffer`] of the present [`ShaderReflectionVariable`].
+    ///
+    /// For more information: [`ID3D12ShaderReflectionVariable::GetBuffer function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflectionvariable-getbuffer)
+    fn get_buffer(&self) -> Option<ShaderReflectionConstantBuffer>;
+
+    /// Gets a shader-variable description.
+    ///
+    /// For more information: [`ID3D12ShaderReflectionVariable::GetDesc function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflectionvariable-getdesc)
+    fn get_desc(&self) -> Result<ShaderVariableDesc, DxError>;
+
+    /// Gets the corresponding interface slot for a variable that represents an interface pointer.
+    ///
+    /// For more information: [`ID3D12ShaderReflectionVariable::GetInterfaceSlot function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflectionvariable-getinterfaceslot)
+    fn get_interface_slot(&self, index: u32) -> u32;
+
+    /// Gets a shader-variable type.
+    ///
+    /// For more information: [`ID3D12ShaderReflectionVariable::GetType function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflectionvariable-gettype)
+    fn get_type(&self) -> Option<ShaderReflectionType>;
+}
 
 create_type! {
     /// This shader-reflection interface provides access to a variable.
@@ -364,4 +389,182 @@ create_type! {
 impl_trait! {
     impl IShaderReflectionVariable =>
     ShaderReflectionVariable;
+
+    fn get_buffer(&self) -> Option<ShaderReflectionConstantBuffer> {
+        unsafe {
+            self.0.GetBuffer()
+                .map(ShaderReflectionConstantBuffer)
+        }
+    }
+
+    fn get_desc(&self) -> Result<ShaderVariableDesc, DxError> {
+        unsafe {
+            let mut raw = Default::default();
+            self.0.GetDesc(&mut raw).map_err(DxError::from)?;
+
+            Ok(ShaderVariableDesc(raw))
+        }
+    }
+
+    fn get_interface_slot(&self, index: u32) -> u32 {
+        unsafe {
+            self.0.GetInterfaceSlot(index)
+        }
+    }
+
+    fn get_type(&self) -> Option<ShaderReflectionType> {
+        unsafe {
+            self.0.GetType()
+                .map(ShaderReflectionType)
+        }
+    }
+}
+
+/// This shader-reflection interface provides access to variable type.
+///
+/// For more information: [`ID3D12ShaderReflectionType interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nn-d3d12shader-id3d12shaderreflectiontype)
+pub trait IShaderReflectionType: HasInterface {
+    /// Gets an [`IShaderReflectionType`] Interface interface containing the variable base class type.
+    ///
+    /// For more information: [`ID3D12ShaderReflectionType::GetBaseClass function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflectiontype-getbaseclass)
+    fn get_base_class(&self) -> Option<ShaderReflectionType>;
+
+    /// Gets the description of a shader-reflection-variable type.
+    ///
+    /// For more information: [`ID3D12ShaderReflectionType::GetDesc function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflectiontype-getdesc)
+    fn get_desc(&self) -> Result<(), DxError>;
+
+    /// Gets an interface by index.
+    ///
+    /// For more information: [`ID3D12ShaderReflectionType::GetInterfaceByIndex function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflectiontype-getinterfacebyindex)
+    fn get_interface_by_index(&self, index: u32) -> Option<ShaderReflectionType>;
+
+    /// Gets a shader-reflection-variable type by index.
+    ///
+    /// For more information: [`ID3D12ShaderReflectionType::GetMemberTypeByIndex function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflectiontype-getmembertypebyindex)
+    fn get_member_type_by_index(&self, index: u32) -> Option<ShaderReflectionType>;
+
+    /// Gets a shader-reflection-variable type by name.
+    ///
+    /// For more information: [`ID3D12ShaderReflectionType::GetMemberTypeByName function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflectiontype-getmembertypebyname)
+    fn get_member_type_by_name(&self, name: impl AsRef<CStr>) -> Option<ShaderReflectionType>;
+
+    /// Gets a shader-reflection-variable type.
+    ///
+    /// For more information: [`ID3D12ShaderReflectionType::GetMemberTypeName function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflectiontype-getmembertypename)
+    fn get_member_type_name(&self, index: u32) -> Option<&CStr>;
+
+    /// Gets the number of interfaces.
+    ///
+    /// For more information: [`ID3D12ShaderReflectionType::GetNumInterfaces function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflectiontype-getnuminterfaces)
+    fn get_num_interfaces(&self) -> u32;
+
+    /// Gets the base class of a class.
+    ///
+    /// For more information: [`ID3D12ShaderReflectionType::GetSubType function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflectiontype-getsubtype)
+    fn get_sub_type(&self) -> Option<ShaderReflectionType>;
+
+    /// Indicates whether a class type implements an interface.
+    ///
+    /// For more information: [`ID3D12ShaderReflectionType::ImplementsInterface function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflectiontype-implementsinterface)
+    fn implements_interface(&self, base: &ShaderReflectionType) -> bool;
+
+    /// Indicates whether two [`ShaderReflectionType`] Interface pointers have the same underlying type.
+    ///
+    /// For more information: [`ID3D12ShaderReflectionType::IsEqual function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflectiontype-isequal)
+    fn is_equal(&self, ty: &ShaderReflectionType) -> bool;
+
+    /// Indicates whether a variable is of the specified type.
+    ///
+    /// For more information: [`ID3D12ShaderReflectionType::IsOfType function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflectiontype-isoftype)
+    fn is_of_type(&self, ty: &ShaderReflectionType) -> bool;
+}
+
+create_type! {
+    /// This shader-reflection interface provides access to variable type.
+    ///
+    /// For more information: [`ID3D12ShaderReflectionType interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nn-d3d12shader-id3d12shaderreflectiontype)
+    ShaderReflectionType wrap ID3D12ShaderReflectionType
+}
+
+impl_trait! {
+    impl IShaderReflectionType =>
+    ShaderReflectionType;
+
+    fn get_base_class(&self) -> Option<ShaderReflectionType> {
+        unsafe {
+            self.0.GetBaseClass()
+                .map(ShaderReflectionType)
+        }
+    }
+
+    fn get_desc(&self) -> Result<(), DxError> {
+        todo!()
+    }
+
+    fn get_interface_by_index(&self, index: u32) -> Option<ShaderReflectionType> {
+        unsafe {
+            self.0.GetInterfaceByIndex(index)
+                .map(ShaderReflectionType)
+        }
+    }
+
+    fn get_member_type_by_index(&self, index: u32) -> Option<ShaderReflectionType> {
+        unsafe {
+            self.0.GetMemberTypeByIndex(index)
+                .map(ShaderReflectionType)
+        }
+    }
+
+    fn get_member_type_by_name(&self, name: impl AsRef<CStr>) -> Option<ShaderReflectionType> {
+        unsafe {
+            let name = PCSTR::from_raw(name.as_ref().as_ptr() as *const _);
+
+            self.0.GetMemberTypeByName(name)
+                .map(ShaderReflectionType)
+        }
+    }
+
+    fn get_member_type_name(&self, index: u32) -> Option<&CStr> {
+        unsafe {
+            let name = self.0.GetMemberTypeName(index);
+
+            if name.is_null() {
+                return None;
+            }
+
+            Some(CStr::from_ptr(name.as_ptr() as *const _))
+        }
+    }
+
+    fn get_num_interfaces(&self) -> u32 {
+        unsafe {
+            self.0.GetNumInterfaces()
+        }
+    }
+
+    fn get_sub_type(&self) -> Option<ShaderReflectionType> {
+        unsafe {
+            self.0.GetSubType()
+                .map(ShaderReflectionType)
+        }
+    }
+
+    fn implements_interface(&self, base: &ShaderReflectionType) -> bool {
+        unsafe {
+            self.0.ImplementsInterface(&base.0).is_ok()
+        }
+    }
+
+    fn is_equal(&self, ty: &ShaderReflectionType) -> bool {
+        unsafe {
+            self.0.IsEqual(&ty.0).is_ok()
+        }
+    }
+
+    fn is_of_type(&self, ty: &ShaderReflectionType) -> bool {
+        unsafe {
+            self.0.IsOfType(&ty.0).is_ok()
+        }
+    }
 }
