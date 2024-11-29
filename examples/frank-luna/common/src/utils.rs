@@ -117,12 +117,7 @@ pub fn load_texture_from_file(
         None,
     )?;
 
-    let mut layouts = [Default::default(); 1];
-    let mut num_rows = [Default::default(); 1];
-    let mut row_sizes = [Default::default(); 1];
-
-    let total_size =
-        device.get_copyable_footprints(&desc, 0..1, 0, &mut layouts, &mut num_rows, &mut row_sizes);
+    let total_size = device.get_copyable_footprints(&desc, 0..1, 0, None, None, None);
 
     let upload_buffer = device.create_committed_resource(
         &HeapProperties::upload(),

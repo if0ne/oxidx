@@ -272,9 +272,9 @@ pub trait IDevice: HasInterface<Raw: Interface> {
         resource_desc: &ResourceDesc,
         subresources: Range<u32>,
         base_offset: u64,
-        layouts: &mut [PlacedSubresourceFootprint],
-        num_rows: &mut [u32],
-        row_sizes: &mut [u64],
+        layouts: Option<&mut [PlacedSubresourceFootprint]>,
+        num_rows: Option<&mut [u32]>,
+        row_sizes: Option<&mut [u64]>,
     ) -> usize;
 
     /// Gets a resource layout that can be copied. Helps the app fill-in [`PlacedSubresourceFootprint`] and [`SubresourceFootprint`] when suballocating space in upload heaps.
@@ -872,9 +872,9 @@ impl_trait! {
         resource_desc: &ResourceDesc,
         subresources: Range<u32>,
         base_offset: u64,
-        layouts: &mut [PlacedSubresourceFootprint],
-        num_rows: &mut [u32],
-        row_sizes: &mut [u64],
+        layouts: Option<&mut [PlacedSubresourceFootprint]>,
+        num_rows: Option<&mut [u32]>,
+        row_sizes: Option<&mut [u64]>,
     ) -> usize {
         unsafe {
             let mut total_bytes = 0;
@@ -884,9 +884,9 @@ impl_trait! {
                 subresources.start,
                 subresources.count() as u32,
                 base_offset,
-                Some(layouts.as_mut_ptr() as *mut _),
-                Some(num_rows.as_mut_ptr() as *mut _),
-                Some(row_sizes.as_mut_ptr() as *mut _),
+                layouts.map(|layouts| layouts.as_mut_ptr() as *mut _),
+                num_rows.map(|num_rows| num_rows.as_mut_ptr() as *mut _),
+                row_sizes.map(|row_sizes| row_sizes.as_mut_ptr() as *mut _),
                 Some(&mut total_bytes)
             );
 
