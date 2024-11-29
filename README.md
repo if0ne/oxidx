@@ -19,15 +19,11 @@ oxidx's MSRV is 1.80.
 ### Device creation
 
 ```rust
-let entry = Entry;
-
-let factory: Factory4 = entry.create_factory(FactoryCreationFlags::empty())?;
+let factory = create_factory4(FactoryCreationFlags::empty())?;
 
 let adapter = factory.enum_adapters(0)?;
 
-let device: Device = entry
-    .create_device(&adapter, FeatureLevel::Level11)
-    .unwrap();
+let device = create_device(&adapter, FeatureLevel::Level11)?;
 ```
 
 ### Feature fetching
