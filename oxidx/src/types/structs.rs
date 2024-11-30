@@ -1406,8 +1406,11 @@ impl ModeDesc1 {
 ///
 /// For more information: [`D3D12_MEMCPY_DEST structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_memcpy_dest)
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-#[repr(transparent)]
-pub struct MemcpyDest<'a, T>(pub(crate) D3D12_MEMCPY_DEST, PhantomData<&'a mut T>);
+pub struct MemcpyDest<'a, T>(
+    pub(crate) D3D12_MEMCPY_DEST,
+    pub(crate) usize,
+    PhantomData<&'a mut T>,
+);
 
 impl<'a, T> MemcpyDest<'a, T> {
     #[inline]
@@ -1418,6 +1421,7 @@ impl<'a, T> MemcpyDest<'a, T> {
                 RowPitch: size_of_val(data),
                 SlicePitch: size_of_val(data),
             },
+            data.len(),
             Default::default(),
         )
     }
@@ -1445,15 +1449,8 @@ impl<'a, T> MemcpyDest<'a, T> {
     }
 
     #[inline]
-    pub fn as_slice_mut(&mut self, num_slices: usize) -> &'a mut [T] {
-        let bytes = self.0.SlicePitch * num_slices;
-        let mut count = bytes / size_of::<T>();
-
-        if bytes % size_of::<T>() > 0 {
-            count += 1;
-        }
-
-        unsafe { std::slice::from_raw_parts_mut(self.0.pData as *mut _, count) }
+    pub fn as_slice_mut(&mut self) -> &'a mut [T] {
+        unsafe { std::slice::from_raw_parts_mut(self.0.pData as *mut _, self.1) }
     }
 }
 
@@ -3322,8 +3319,11 @@ impl<'a> StreamOutputDesc<'a> {
 ///
 /// For more information: [`D3D12_SUBRESOURCE_DATA structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_subresource_data)
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-#[repr(transparent)]
-pub struct SubresourceData<'a, T>(pub(crate) D3D12_SUBRESOURCE_DATA, PhantomData<&'a T>);
+pub struct SubresourceData<'a, T>(
+    pub(crate) D3D12_SUBRESOURCE_DATA,
+    pub(crate) usize,
+    PhantomData<&'a T>,
+);
 
 impl<'a, T> SubresourceData<'a, T> {
     #[inline]
@@ -3334,6 +3334,7 @@ impl<'a, T> SubresourceData<'a, T> {
                 RowPitch: size_of_val(data) as isize,
                 SlicePitch: size_of_val(data) as isize,
             },
+            data.len(),
             Default::default(),
         )
     }
@@ -3361,15 +3362,8 @@ impl<'a, T> SubresourceData<'a, T> {
     }
 
     #[inline]
-    pub fn as_slice(&self, num_slices: usize) -> &'a [T] {
-        let bytes = self.0.SlicePitch as usize * num_slices;
-        let mut count = bytes / size_of::<T>();
-
-        if bytes % size_of::<T>() > 0 {
-            count += 1;
-        }
-
-        unsafe { std::slice::from_raw_parts(self.0.pData as *const _, count) }
+    pub fn as_slice(&self) -> &'a [T] {
+        unsafe { std::slice::from_raw_parts(self.0.pData as *const _, self.1) }
     }
 }
 

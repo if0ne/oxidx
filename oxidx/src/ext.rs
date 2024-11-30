@@ -7,8 +7,8 @@ pub fn memcpy_subresource<T: Clone>(
     num_rows: usize,
     num_slices: usize,
 ) {
-    let dst_slice = dst.as_slice_mut(num_slices);
-    let src_slice = src.as_slice(num_slices);
+    let dst_slice = dst.as_slice_mut();
+    let src_slice = src.as_slice();
 
     for z in 0..num_slices {
         let dst_slice = &mut dst_slice[(z * dst.slice_pitch())..((z + 1) * dst.slice_pitch())];

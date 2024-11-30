@@ -1267,10 +1267,6 @@ impl_trait! {
         };
 
         for i in 0..num {
-            if row_sizes[i] > usize::MAX as u64 {
-                return 0;
-            }
-
             let num_slices = layouts[i].footprint().depth();
             let slice_pitch = layouts[i].footprint().row_pitch() * num_rows[i] as usize;
             let total_size = num_slices as usize * slice_pitch;
