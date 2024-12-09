@@ -8,7 +8,7 @@ macro_rules! create_type {
         $(#[$attr])*
         #[derive(Clone, Debug, PartialEq, Eq)]
         #[repr(transparent)]
-        pub struct $name(pub(crate) $raw_type);
+        pub struct $name(pub $raw_type);
 
         impl $crate::HasInterface for $name {
             type Raw = $raw_type;
