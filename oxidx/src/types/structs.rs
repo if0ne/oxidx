@@ -1679,6 +1679,12 @@ impl RasterizerDesc {
     }
 
     #[inline]
+    pub fn enable_depth_clip(mut self) -> Self {
+        self.0.DepthClipEnable = true.into();
+        self
+    }
+
+    #[inline]
     pub fn with_forced_sample_count(mut self, forced_sample_count: u32) -> Self {
         self.0.ForcedSampleCount = forced_sample_count;
         self
