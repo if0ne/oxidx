@@ -434,6 +434,11 @@ impl Architecture1Feature {
     }
 
     #[inline]
+    pub fn cache_coherent_uma(&self) -> bool {
+        self.0.CacheCoherentUMA.into()
+    }
+
+    #[inline]
     pub fn uma(&self) -> bool {
         self.0.UMA.into()
     }
