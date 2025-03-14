@@ -53,6 +53,11 @@ pub trait IBlobExt: IBlob {
     where
         Self: Sized;
 
+    /// Create blob from bytes
+    fn from_bytes(bytes: &[u8]) -> Result<Self, DxError>
+    where
+        Self: Sized;
+
     /// Gets a pointer to a reflection interface.
     ///
     /// For more information: [`D3DReflect function`]https://learn.microsoft.com/en-us/windows/win32/api/d3dcompiler/nf-d3dcompiler-d3dreflect
@@ -169,6 +174,21 @@ impl_trait! {
                 .map(Self::new)
                 .map_err(DxError::from)
         }
+    }
+
+    fn from_bytes(bytes: &[u8]) -> Result<Self, DxError>
+    where
+        Self: Sized
+    {
+        let blob = Self::create_blob(bytes.len())?;
+
+        let slice = unsafe {
+            std::slice::from_raw_parts_mut(blob.get_buffer_ptr().as_ptr(), blob.get_buffer_size())
+        };
+
+        slice.clone_from_slice(bytes);
+
+        Ok(blob)
     }
 
     fn reflect(&self) -> Result<ShaderReflection, DxError> {
