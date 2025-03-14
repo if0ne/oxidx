@@ -147,7 +147,7 @@ impl_trait! {
             )
             .map_err(DxError::from);
 
-            if res.is_err() {
+            if let Err(err) = res {
                 if let Some(error_msg) = error_msg {
                     let pointer = error_msg.GetBufferPointer() as *mut u8;
                     let size = error_msg.GetBufferSize();
@@ -159,6 +159,8 @@ impl_trait! {
                             .unwrap_or_default()
                             .to_string())
                     );
+                } else {
+                    return Err(DxError::ShaderCompilationError(err.to_string()));
                 }
             }
         }
