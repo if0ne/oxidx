@@ -148,17 +148,18 @@ impl_trait! {
             .map_err(DxError::from);
 
             if res.is_err() {
-                let error_msg = error_msg.unwrap();
-                let pointer = error_msg.GetBufferPointer() as *mut u8;
-                let size = error_msg.GetBufferSize();
+                if let Some(error_msg) = error_msg {
+                    let pointer = error_msg.GetBufferPointer() as *mut u8;
+                    let size = error_msg.GetBufferSize();
 
-                let slice = std::slice::from_raw_parts(pointer, size);
+                    let slice = std::slice::from_raw_parts(pointer, size);
 
-                return Err(DxError::ShaderCompilationError(
-                    std::str::from_utf8(slice)
-                        .unwrap_or_default()
-                        .to_string())
-                );
+                    return Err(DxError::ShaderCompilationError(
+                        std::str::from_utf8(slice)
+                            .unwrap_or_default()
+                            .to_string())
+                    );
+                }
             }
         }
 
