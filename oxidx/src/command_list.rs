@@ -48,7 +48,7 @@ pub trait IGraphicsCommandList:
     /// Starts a query running.
     ///
     /// For more information: [`ID3D12GraphicsCommandList::BeginQuery method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-beginquery)
-    fn begin_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: usize);
+    fn begin_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: u32);
 
     /// Clears the depth-stencil resource.
     ///
@@ -112,10 +112,10 @@ pub trait IGraphicsCommandList:
     fn copy_buffer_region(
         &self,
         dst_buffer: &impl IResource,
-        dst_offset: usize,
+        dst_offset: u64,
         src_buffer: &impl IResource,
-        src_offset: usize,
-        num_bytes: usize,
+        src_offset: u64,
+        num_bytes: u64,
     );
 
     /// Copies the entire contents of the source resource to the destination resource.
@@ -193,7 +193,7 @@ pub trait IGraphicsCommandList:
     /// Ends a running query.
     ///
     /// For more information: [`ID3D12GraphicsCommandList::EndQuery method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-endquery)
-    fn end_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: usize);
+    fn end_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: u32);
 
     /// Executes a bundle.
     ///
@@ -264,9 +264,9 @@ pub trait IGraphicsCommandList:
         &self,
         query_heap: &impl IQueryHeap,
         r#type: QueryType,
-        range: Range<usize>,
+        range: Range<u32>,
         dst_buffer: &impl IResource,
-        aligned_dst_buffer_offset: usize,
+        aligned_dst_buffer_offset: u64,
     );
 
     /// Copy a multi-sampled resource into a non-multi-sampled resource.
@@ -509,12 +509,12 @@ impl_trait! {
         }
     }
 
-    fn begin_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: usize) {
+    fn begin_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: u32) {
         unsafe {
             self.0.BeginQuery(
                 query_heap.as_raw_ref(),
                 r#type.as_raw(),
-                index as u32
+                index
             )
         }
     }
@@ -622,18 +622,18 @@ impl_trait! {
     fn copy_buffer_region(
         &self,
         dst_buffer: &impl IResource,
-        dst_offset: usize,
+        dst_offset: u64,
         src_buffer: &impl IResource,
-        src_offset: usize,
-        num_bytes: usize,
+        src_offset: u64,
+        num_bytes: u64,
     ) {
         unsafe {
             self.0.CopyBufferRegion(
                 dst_buffer.as_raw_ref(),
-                dst_offset as u64,
+                dst_offset,
                 src_buffer.as_raw_ref(),
-                src_offset as u64,
-                num_bytes as u64
+                src_offset,
+                num_bytes
             );
         }
     }
@@ -756,12 +756,12 @@ impl_trait! {
         }
     }
 
-    fn end_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: usize) {
+    fn end_query(&self, query_heap: &impl IQueryHeap, r#type: QueryType, index: u32) {
         unsafe {
             self.0.EndQuery(
                 query_heap.as_raw_ref(),
                 r#type.as_raw(),
-                index as u32
+                index
             )
         }
     }
@@ -902,18 +902,18 @@ impl_trait! {
         &self,
         query_heap: &impl IQueryHeap,
         r#type: QueryType,
-        range: Range<usize>,
+        range: Range<u32>,
         dst_buffer: &impl IResource,
-        aligned_dst_buffer_offset: usize,
+        aligned_dst_buffer_offset: u64,
     ) {
         unsafe {
             self.0.ResolveQueryData(
                 query_heap.as_raw_ref(),
                 r#type.as_raw(),
-                range.start as u32,
+                range.start,
                 range.count() as u32,
                 dst_buffer.as_raw_ref(),
-                aligned_dst_buffer_offset as u64
+                aligned_dst_buffer_offset
             );
         }
     }
@@ -1257,7 +1257,7 @@ impl_trait! {
         let dst_desc = dst_resource.get_desc();
 
         if intermediate_desc.dimension() != ResourceDimension::Buffer
-            || (intermediate_desc.width() as usize) < (required_size + layouts[0].offset())
+            || (intermediate_desc.width() as usize) < (required_size + layouts[0].offset() as usize)
             || (dst_desc.dimension() == ResourceDimension::Buffer && (start != 0 && num != 1)) {
                 return 0;
             }
@@ -1268,22 +1268,22 @@ impl_trait! {
 
         for i in 0..num {
             let num_slices = layouts[i].footprint().depth();
-            let slice_pitch = layouts[i].footprint().row_pitch() * num_rows[i] as usize;
-            let total_size = num_slices as usize * slice_pitch;
+            let slice_pitch = layouts[i].footprint().row_pitch() * num_rows[i];
+            let total_size = num_slices * slice_pitch;
 
-            let mut count = total_size / size_of::<T>();
+            let mut count = total_size as usize / size_of::<T>();
 
-            if total_size % size_of::<T>() > 0 {
+            if total_size as usize % size_of::<T>() > 0 {
                 count += 1;
             }
 
             let data = unsafe {
-                std::slice::from_raw_parts_mut(data.add(layouts[i].offset()).as_mut(), count)
+                std::slice::from_raw_parts_mut(data.add(layouts[i].offset() as usize).as_mut(), count)
             };
 
             let mut dst_data = MemcpyDest::new(data)
-                .with_row_pitch(layouts[i].footprint().row_pitch())
-                .with_slice_pitch(slice_pitch);
+                .with_row_pitch(layouts[i].footprint().row_pitch() as usize)
+                .with_slice_pitch(slice_pitch as usize);
 
             memcpy_subresource(
                 &mut dst_data,
@@ -1302,7 +1302,7 @@ impl_trait! {
                 0,
                 intermediate,
                 layouts[0].offset(),
-                layouts[0].footprint().width() as usize
+                layouts[0].footprint().width() as u64
             );
         } else {
             for (i, layout) in layouts.iter().enumerate().take(num).skip(start) {

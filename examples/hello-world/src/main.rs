@@ -148,7 +148,7 @@ impl DXSample for Sample {
         let (width, height) = self.window_size();
 
         let swap_chain_desc = SwapchainDesc1::new(width as u32, height as u32)
-            .with_buffer_count(FRAME_COUNT)
+            .with_buffer_count(FRAME_COUNT as _)
             .with_format(Format::Bgra8Unorm)
             .with_usage(FrameBufferUsage::RenderTargetOutput)
             .with_swap_effect(SwapEffect::FlipDiscard);
@@ -174,7 +174,7 @@ impl DXSample for Sample {
 
         let rtv_heap: DescriptorHeap = self
             .device
-            .create_descriptor_heap(&DescriptorHeapDesc::rtv(FRAME_COUNT))
+            .create_descriptor_heap(&DescriptorHeapDesc::rtv(FRAME_COUNT as _))
             .unwrap();
 
         let rtv_descriptor_size = self
@@ -183,11 +183,11 @@ impl DXSample for Sample {
         let rtv_handle = rtv_heap.get_cpu_descriptor_handle_for_heap_start();
 
         let render_targets: [Resource; FRAME_COUNT] = std::array::from_fn(|i| {
-            let render_target: Resource = swap_chain.get_buffer(i).unwrap();
+            let render_target: Resource = swap_chain.get_buffer(i as _).unwrap();
             self.device.create_render_target_view(
                 Some(&render_target),
                 None,
-                rtv_handle.offset(i * rtv_descriptor_size),
+                rtv_handle.offset(i * rtv_descriptor_size as usize),
             );
 
             render_target
@@ -228,7 +228,7 @@ impl DXSample for Sample {
             frame_index,
             render_targets,
             rtv_heap,
-            rtv_descriptor_size,
+            rtv_descriptor_size: rtv_descriptor_size as usize,
             viewport,
             scissor_rect,
             command_allocator,
@@ -445,7 +445,7 @@ fn create_vertex_buffer(device: &Device, aspect_ratio: f32) -> (Resource, Vertex
         .create_committed_resource(
             &HeapProperties::upload(),
             HeapFlags::empty(),
-            &ResourceDesc::buffer(std::mem::size_of_val(&vertices)),
+            &ResourceDesc::buffer(std::mem::size_of_val(&vertices) as _),
             ResourceStates::GenericRead,
             None,
         )
@@ -459,8 +459,8 @@ fn create_vertex_buffer(device: &Device, aspect_ratio: f32) -> (Resource, Vertex
 
     let vbv = VertexBufferView::new(
         vertex_buffer.get_gpu_virtual_address(),
-        std::mem::size_of::<Vertex>(),
-        std::mem::size_of_val(&vertices),
+        std::mem::size_of::<Vertex>() as _,
+        std::mem::size_of_val(&vertices) as _,
     );
 
     (vertex_buffer, vbv)

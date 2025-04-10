@@ -16,7 +16,7 @@ pub trait ISwapchain1: HasInterface {
     /// Accesses one of the swap-chain's back buffers.
     ///
     /// For more information: [`IDXGISwapChain::GetBuffer method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgiswapchain-getbuffer)
-    fn get_buffer<R: IResource>(&self, buffer: usize) -> Result<R, DxError>;
+    fn get_buffer<R: IResource>(&self, buffer: u32) -> Result<R, DxError>;
 
     /// Presents a rendered image to the user.
     ///
@@ -28,7 +28,7 @@ pub trait ISwapchain1: HasInterface {
     /// For more information: [`IDXGISwapChain::ResizeBuffers method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgiswapchain-resizebuffers)
     fn resize_buffers(
         &self,
-        buffer_count: usize,
+        buffer_count: u32,
         width: u32,
         height: u32,
         new_format: Format,
@@ -76,9 +76,9 @@ impl_trait! {
     Swapchain2,
     Swapchain3;
 
-    fn get_buffer<R: IResource>(&self, buffer: usize) -> Result<R, DxError> {
+    fn get_buffer<R: IResource>(&self, buffer: u32) -> Result<R, DxError> {
         unsafe {
-            let buffer: R::Raw = self.0.GetBuffer(buffer as u32).map_err(DxError::from)?;
+            let buffer: R::Raw = self.0.GetBuffer(buffer).map_err(DxError::from)?;
 
             Ok(R::new(buffer))
         }
@@ -92,7 +92,7 @@ impl_trait! {
 
     fn resize_buffers(
         &self,
-        buffer_count: usize,
+        buffer_count: u32,
         width: u32,
         height: u32,
         new_format: Format,
@@ -100,7 +100,7 @@ impl_trait! {
     ) -> Result<(), DxError> {
         unsafe {
             self.0.ResizeBuffers(
-                buffer_count as u32,
+                buffer_count,
                 width,
                 height,
                 new_format.as_raw(),

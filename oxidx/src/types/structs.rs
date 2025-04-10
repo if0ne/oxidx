@@ -378,10 +378,10 @@ pub struct ConstantBufferViewDesc(pub(crate) D3D12_CONSTANT_BUFFER_VIEW_DESC);
 
 impl ConstantBufferViewDesc {
     #[inline]
-    pub fn new(buffer_location: u64, size: usize) -> Self {
+    pub fn new(buffer_location: u64, size: u32) -> Self {
         Self(D3D12_CONSTANT_BUFFER_VIEW_DESC {
             BufferLocation: buffer_location,
-            SizeInBytes: size as u32,
+            SizeInBytes: size,
         })
     }
 }
@@ -630,46 +630,46 @@ pub struct DescriptorHeapDesc(pub(crate) D3D12_DESCRIPTOR_HEAP_DESC);
 
 impl DescriptorHeapDesc {
     #[inline]
-    pub fn new(ty: DescriptorHeapType, num: usize) -> Self {
+    pub fn new(ty: DescriptorHeapType, num: u32) -> Self {
         Self(D3D12_DESCRIPTOR_HEAP_DESC {
             Type: ty.as_raw(),
-            NumDescriptors: num as u32,
+            NumDescriptors: num,
             ..Default::default()
         })
     }
 
     #[inline]
-    pub fn rtv(num: usize) -> Self {
+    pub fn rtv(num: u32) -> Self {
         Self(D3D12_DESCRIPTOR_HEAP_DESC {
             Type: D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-            NumDescriptors: num as u32,
+            NumDescriptors: num,
             ..Default::default()
         })
     }
 
     #[inline]
-    pub fn dsv(num: usize) -> Self {
+    pub fn dsv(num: u32) -> Self {
         Self(D3D12_DESCRIPTOR_HEAP_DESC {
             Type: D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
-            NumDescriptors: num as u32,
+            NumDescriptors: num,
             ..Default::default()
         })
     }
 
     #[inline]
-    pub fn cbr_srv_uav(num: usize) -> Self {
+    pub fn cbr_srv_uav(num: u32) -> Self {
         Self(D3D12_DESCRIPTOR_HEAP_DESC {
             Type: D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-            NumDescriptors: num as u32,
+            NumDescriptors: num,
             ..Default::default()
         })
     }
 
     #[inline]
-    pub fn sampler(num: usize) -> Self {
+    pub fn sampler(num: u32) -> Self {
         Self(D3D12_DESCRIPTOR_HEAP_DESC {
             Type: D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER,
-            NumDescriptors: num as u32,
+            NumDescriptors: num,
             ..Default::default()
         })
     }
@@ -989,9 +989,9 @@ pub struct HeapDesc(pub(crate) D3D12_HEAP_DESC);
 
 impl HeapDesc {
     #[inline]
-    pub fn new(size: usize, props: HeapProperties) -> Self {
+    pub fn new(size: u64, props: HeapProperties) -> Self {
         Self(D3D12_HEAP_DESC {
-            SizeInBytes: size as u64,
+            SizeInBytes: size,
             Properties: props.0,
             ..Default::default()
         })
@@ -1010,8 +1010,8 @@ impl HeapDesc {
     }
 
     #[inline]
-    pub fn size(&self) -> usize {
-        self.0.SizeInBytes as usize
+    pub fn size(&self) -> u64 {
+        self.0.SizeInBytes
     }
 
     #[inline]
@@ -1155,10 +1155,10 @@ pub struct IndexBufferView(pub(crate) D3D12_INDEX_BUFFER_VIEW);
 
 impl IndexBufferView {
     #[inline]
-    pub fn new(buffer_location: GpuVirtualAddress, size: usize, format: Format) -> Self {
+    pub fn new(buffer_location: GpuVirtualAddress, size: u32, format: Format) -> Self {
         Self(D3D12_INDEX_BUFFER_VIEW {
             BufferLocation: buffer_location,
-            SizeInBytes: size as u32,
+            SizeInBytes: size,
             Format: format.as_raw(),
         })
     }
@@ -1274,42 +1274,48 @@ impl IndirectArgumentDesc {
 /// For more information: [`D3D12_INPUT_ELEMENT_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_input_element_desc)
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(transparent)]
-pub struct InputElementDesc(pub(crate) D3D12_INPUT_ELEMENT_DESC);
+pub struct InputElementDesc<'a>(pub(crate) D3D12_INPUT_ELEMENT_DESC, PhantomData<&'a ()>);
 
-impl InputElementDesc {
+impl<'a> InputElementDesc<'a> {
     #[inline]
     pub fn from_raw_per_vertex(
-        semantic_name: &CStr,
+        semantic_name: &'a CStr,
         semantic_index: u32,
         format: Format,
         input_slot: u32,
     ) -> Self {
         let semantic_name = PCSTR::from_raw(semantic_name.as_ptr() as *const _);
 
-        Self(D3D12_INPUT_ELEMENT_DESC {
-            SemanticName: semantic_name,
-            SemanticIndex: semantic_index,
-            Format: format.as_raw(),
-            InputSlot: input_slot,
-            AlignedByteOffset: APPEND_ALIGNED_ELEMENT,
-            InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-            InstanceDataStepRate: 0,
-        })
+        Self(
+            D3D12_INPUT_ELEMENT_DESC {
+                SemanticName: semantic_name,
+                SemanticIndex: semantic_index,
+                Format: format.as_raw(),
+                InputSlot: input_slot,
+                AlignedByteOffset: APPEND_ALIGNED_ELEMENT,
+                InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+                InstanceDataStepRate: 0,
+            },
+            PhantomData,
+        )
     }
 
     #[inline]
     pub fn per_vertex(semantic: SemanticName, format: Format, input_slot: u32) -> Self {
         let semantic_name = PCSTR::from_raw(semantic.name().as_ptr() as *const _);
 
-        Self(D3D12_INPUT_ELEMENT_DESC {
-            SemanticName: semantic_name,
-            SemanticIndex: semantic.index() as u32,
-            Format: format.as_raw(),
-            InputSlot: input_slot,
-            AlignedByteOffset: APPEND_ALIGNED_ELEMENT,
-            InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-            InstanceDataStepRate: 0,
-        })
+        Self(
+            D3D12_INPUT_ELEMENT_DESC {
+                SemanticName: semantic_name,
+                SemanticIndex: semantic.index() as u32,
+                Format: format.as_raw(),
+                InputSlot: input_slot,
+                AlignedByteOffset: APPEND_ALIGNED_ELEMENT,
+                InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+                InstanceDataStepRate: 0,
+            },
+            PhantomData::<&'static ()>,
+        )
     }
 
     #[inline]
@@ -1321,20 +1327,23 @@ impl InputElementDesc {
     ) -> Self {
         let semantic_name = PCSTR::from_raw(semantic.name().as_ptr() as *const _);
 
-        Self(D3D12_INPUT_ELEMENT_DESC {
-            SemanticName: semantic_name,
-            SemanticIndex: semantic.index() as u32,
-            Format: format.as_raw(),
-            InputSlot: input_slot,
-            AlignedByteOffset: APPEND_ALIGNED_ELEMENT,
-            InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA,
-            InstanceDataStepRate: instance_data_step_rate,
-        })
+        Self(
+            D3D12_INPUT_ELEMENT_DESC {
+                SemanticName: semantic_name,
+                SemanticIndex: semantic.index() as u32,
+                Format: format.as_raw(),
+                InputSlot: input_slot,
+                AlignedByteOffset: APPEND_ALIGNED_ELEMENT,
+                InputSlotClass: D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA,
+                InstanceDataStepRate: instance_data_step_rate,
+            },
+            PhantomData::<&'static ()>,
+        )
     }
 
     #[inline]
-    pub fn with_offset(mut self, offset: usize) -> Self {
-        self.0.AlignedByteOffset = offset as u32;
+    pub fn with_offset(mut self, offset: u32) -> Self {
+        self.0.AlignedByteOffset = offset;
         self
     }
 }
@@ -1534,8 +1543,8 @@ impl PlacedSubresourceFootprint {
     }
 
     #[inline]
-    pub fn offset(&self) -> usize {
-        self.0.Offset as usize
+    pub fn offset(&self) -> u64 {
+        self.0.Offset
     }
 
     #[inline]
@@ -1553,64 +1562,64 @@ pub struct QueryHeapDesc(pub(crate) D3D12_QUERY_HEAP_DESC);
 
 impl QueryHeapDesc {
     #[inline]
-    pub fn occlusion(count: usize) -> Self {
+    pub fn occlusion(count: u32) -> Self {
         Self(D3D12_QUERY_HEAP_DESC {
             Type: D3D12_QUERY_HEAP_TYPE_OCCLUSION,
-            Count: count as u32,
+            Count: count,
             NodeMask: 0,
         })
     }
 
     #[inline]
-    pub fn timestamp(count: usize) -> Self {
+    pub fn timestamp(count: u32) -> Self {
         Self(D3D12_QUERY_HEAP_DESC {
             Type: D3D12_QUERY_HEAP_TYPE_TIMESTAMP,
-            Count: count as u32,
+            Count: count,
             NodeMask: 0,
         })
     }
 
     #[inline]
-    pub fn pipeline_statistics(count: usize) -> Self {
+    pub fn pipeline_statistics(count: u32) -> Self {
         Self(D3D12_QUERY_HEAP_DESC {
             Type: D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS,
-            Count: count as u32,
+            Count: count,
             NodeMask: 0,
         })
     }
 
     #[inline]
-    pub fn so_statistics(count: usize) -> Self {
+    pub fn so_statistics(count: u32) -> Self {
         Self(D3D12_QUERY_HEAP_DESC {
             Type: D3D12_QUERY_HEAP_TYPE_SO_STATISTICS,
-            Count: count as u32,
+            Count: count,
             NodeMask: 0,
         })
     }
 
     #[inline]
-    pub fn video_decode_statistics(count: usize) -> Self {
+    pub fn video_decode_statistics(count: u32) -> Self {
         Self(D3D12_QUERY_HEAP_DESC {
             Type: D3D12_QUERY_HEAP_TYPE_VIDEO_DECODE_STATISTICS,
-            Count: count as u32,
+            Count: count,
             NodeMask: 0,
         })
     }
 
     #[inline]
-    pub fn copy_queue_timestamp(count: usize) -> Self {
+    pub fn copy_queue_timestamp(count: u32) -> Self {
         Self(D3D12_QUERY_HEAP_DESC {
             Type: D3D12_QUERY_HEAP_TYPE_COPY_QUEUE_TIMESTAMP,
-            Count: count as u32,
+            Count: count,
             NodeMask: 0,
         })
     }
 
     #[inline]
-    pub fn pipeline_statistics1(count: usize) -> Self {
+    pub fn pipeline_statistics1(count: u32) -> Self {
         Self(D3D12_QUERY_HEAP_DESC {
             Type: D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1,
-            Count: count as u32,
+            Count: count,
             NodeMask: 0,
         })
     }
@@ -2052,10 +2061,10 @@ pub struct ResourceDesc(pub(crate) D3D12_RESOURCE_DESC);
 
 impl ResourceDesc {
     #[inline]
-    pub fn buffer(size: usize) -> Self {
+    pub fn buffer(size: u64) -> Self {
         Self(D3D12_RESOURCE_DESC {
             Dimension: D3D12_RESOURCE_DIMENSION_BUFFER,
-            Width: size as u64,
+            Width: size,
             Height: 1,
             DepthOrArraySize: 1,
             MipLevels: 1,
@@ -2071,10 +2080,10 @@ impl ResourceDesc {
     }
 
     #[inline]
-    pub fn texture_1d(width: u32) -> Self {
+    pub fn texture_1d(width: u64) -> Self {
         Self(D3D12_RESOURCE_DESC {
             Dimension: D3D12_RESOURCE_DIMENSION_TEXTURE1D,
-            Width: width as u64,
+            Width: width,
             Height: 1,
             DepthOrArraySize: 1,
             MipLevels: 1,
@@ -2087,10 +2096,10 @@ impl ResourceDesc {
     }
 
     #[inline]
-    pub fn texture_2d(width: u32, height: u32) -> Self {
+    pub fn texture_2d(width: u64, height: u32) -> Self {
         Self(D3D12_RESOURCE_DESC {
             Dimension: D3D12_RESOURCE_DIMENSION_TEXTURE2D,
-            Width: width as u64,
+            Width: width,
             Height: height,
             DepthOrArraySize: 1,
             MipLevels: 1,
@@ -2103,10 +2112,10 @@ impl ResourceDesc {
     }
 
     #[inline]
-    pub fn texture_3d(width: u32, height: u32, depth: u16) -> Self {
+    pub fn texture_3d(width: u64, height: u32, depth: u16) -> Self {
         Self(D3D12_RESOURCE_DESC {
             Dimension: D3D12_RESOURCE_DIMENSION_TEXTURE2D,
-            Width: width as u64,
+            Width: width,
             Height: height,
             DepthOrArraySize: depth,
             MipLevels: 1,
@@ -2137,8 +2146,8 @@ impl ResourceDesc {
     }
 
     #[inline]
-    pub fn with_mip_levels(mut self, mip_levels: u32) -> Self {
-        self.0.MipLevels = mip_levels as u16;
+    pub fn with_mip_levels(mut self, mip_levels: u16) -> Self {
+        self.0.MipLevels = mip_levels;
         self
     }
 
@@ -2191,8 +2200,8 @@ impl ResourceDesc {
     }
 
     #[inline]
-    pub fn mip_levels(&self) -> u32 {
-        self.0.MipLevels as u32
+    pub fn mip_levels(&self) -> u16 {
+        self.0.MipLevels
     }
 
     #[inline]
@@ -2784,8 +2793,8 @@ impl ShaderResourceViewDesc {
     #[inline]
     pub fn buffer(
         format: Format,
-        elements: Range<usize>,
-        structure_byte_stride: usize,
+        elements: Range<u64>,
+        structure_byte_stride: u32,
         flags: BufferSrvFlags,
     ) -> Self {
         Self(D3D12_SHADER_RESOURCE_VIEW_DESC {
@@ -2793,9 +2802,9 @@ impl ShaderResourceViewDesc {
             ViewDimension: D3D12_SRV_DIMENSION_BUFFER,
             Anonymous: D3D12_SHADER_RESOURCE_VIEW_DESC_0 {
                 Buffer: D3D12_BUFFER_SRV {
-                    FirstElement: elements.start as u64,
+                    FirstElement: elements.start,
                     NumElements: elements.count() as u32,
-                    StructureByteStride: structure_byte_stride as u32,
+                    StructureByteStride: structure_byte_stride,
                     Flags: flags.as_raw(),
                 },
             },
@@ -3276,12 +3285,12 @@ impl StreamOutputBufferView {
     #[inline]
     pub fn new(
         buffer_location: GpuVirtualAddress,
-        size: usize,
+        size: u64,
         buffer_filled_size_location: u64,
     ) -> Self {
         Self(D3D12_STREAM_OUTPUT_BUFFER_VIEW {
             BufferLocation: buffer_location,
-            SizeInBytes: size as u64,
+            SizeInBytes: size,
             BufferFilledSizeLocation: buffer_filled_size_location,
         })
     }
@@ -3346,14 +3355,14 @@ impl<'a, T> SubresourceData<'a, T> {
     }
 
     #[inline]
-    pub fn with_slice_pitch(mut self, slice_pitch: usize) -> Self {
-        self.0.SlicePitch = slice_pitch as isize;
+    pub fn with_slice_pitch(mut self, slice_pitch: isize) -> Self {
+        self.0.SlicePitch = slice_pitch;
         self
     }
 
     #[inline]
-    pub fn with_row_pitch(mut self, row_pitch: usize) -> Self {
-        self.0.RowPitch = row_pitch as isize;
+    pub fn with_row_pitch(mut self, row_pitch: isize) -> Self {
+        self.0.RowPitch = row_pitch;
         self
     }
 
@@ -3406,8 +3415,8 @@ impl SubresourceFootprint {
     }
 
     #[inline]
-    pub fn with_row_pitch(mut self, row_pitch: usize) -> Self {
-        self.0.RowPitch = row_pitch as u32;
+    pub fn with_row_pitch(mut self, row_pitch: u32) -> Self {
+        self.0.RowPitch = row_pitch;
         self
     }
 
@@ -3432,8 +3441,8 @@ impl SubresourceFootprint {
     }
 
     #[inline]
-    pub fn row_pitch(&self) -> usize {
-        self.0.RowPitch as usize
+    pub fn row_pitch(&self) -> u32 {
+        self.0.RowPitch
     }
 }
 
@@ -3515,8 +3524,8 @@ impl SwapchainDesc1 {
     }
 
     #[inline]
-    pub fn with_buffer_count(mut self, buffer_count: usize) -> Self {
-        self.0.BufferCount = buffer_count as u32;
+    pub fn with_buffer_count(mut self, buffer_count: u32) -> Self {
+        self.0.BufferCount = buffer_count;
         self
     }
 
@@ -3710,9 +3719,9 @@ impl UnorderedAccessViewDesc {
     #[inline]
     pub fn buffer(
         format: Format,
-        elements: Range<usize>,
-        structure_byte_stride: usize,
-        counter_offset: usize,
+        elements: Range<u64>,
+        structure_byte_stride: u32,
+        counter_offset: u64,
         flags: BufferUavFlags,
     ) -> Self {
         Self(D3D12_UNORDERED_ACCESS_VIEW_DESC {
@@ -3720,10 +3729,10 @@ impl UnorderedAccessViewDesc {
             ViewDimension: D3D12_UAV_DIMENSION_BUFFER,
             Anonymous: D3D12_UNORDERED_ACCESS_VIEW_DESC_0 {
                 Buffer: D3D12_BUFFER_UAV {
-                    FirstElement: elements.start as u64,
+                    FirstElement: elements.start,
                     NumElements: elements.count() as u32,
-                    StructureByteStride: structure_byte_stride as u32,
-                    CounterOffsetInBytes: counter_offset as u64,
+                    StructureByteStride: structure_byte_stride,
+                    CounterOffsetInBytes: counter_offset,
                     Flags: flags.as_raw(),
                 },
             },
@@ -3843,11 +3852,11 @@ pub struct VertexBufferView(pub(crate) D3D12_VERTEX_BUFFER_VIEW);
 
 impl VertexBufferView {
     #[inline]
-    pub fn new(buffer_location: GpuVirtualAddress, stride: usize, size: usize) -> Self {
+    pub fn new(buffer_location: GpuVirtualAddress, stride: u32, size: u32) -> Self {
         Self(D3D12_VERTEX_BUFFER_VIEW {
             BufferLocation: buffer_location,
-            StrideInBytes: stride as u32,
-            SizeInBytes: size as u32,
+            StrideInBytes: stride,
+            SizeInBytes: size,
         })
     }
 }

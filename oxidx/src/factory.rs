@@ -45,7 +45,7 @@ pub trait IFactory4: HasInterface<Raw: Interface> {
     /// Enumerates the adapters (video cards).
     ///
     /// For more information: [`IDXGIFactory::EnumAdapters method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgifactory-enumadapters)
-    fn enum_adapters(&self, index: usize) -> Result<Adapter3, DxError>;
+    fn enum_adapters(&self, index: u32) -> Result<Adapter3, DxError>;
 
     /// Provides an adapter which can be provided to D3D12CreateDevice to use the WARP renderer.
     ///
@@ -115,10 +115,10 @@ impl_trait! {
         }
     }
 
-    fn enum_adapters(&self, index: usize) -> Result<Adapter3, DxError> {
+    fn enum_adapters(&self, index: u32) -> Result<Adapter3, DxError> {
         unsafe {
             let adapter = self.0
-                .EnumAdapters1(index as u32)
+                .EnumAdapters1(index)
                 .map_err(DxError::from)?;
 
             let adapter = adapter

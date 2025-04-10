@@ -175,7 +175,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     fn create_placed_resource(
         &self,
         heap: &impl IHeap,
-        heap_offset: usize,
+        heap_offset: u64,
         desc: &ResourceDesc,
         initial_state: ResourceStates,
         optimized_clear_value: Option<&ClearValue>,
@@ -275,7 +275,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
         layouts: Option<&mut [PlacedSubresourceFootprint]>,
         num_rows: Option<&mut [u32]>,
         row_sizes: Option<&mut [u64]>,
-    ) -> usize;
+    ) -> u64;
 
     /// Gets a resource layout that can be copied. Helps the app fill-in [`PlacedSubresourceFootprint`] and [`SubresourceFootprint`] when suballocating space in upload heaps.
     ///
@@ -285,7 +285,7 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// Gets the size of the handle increment for the given type of descriptor heap. This value is typically used to increment a handle into a descriptor array by the correct amount.
     ///
     /// For more information: [`ID3D12Device::GetDescriptorHandleIncrementSize method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getdescriptorhandleincrementsize)
-    fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> usize;
+    fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32;
 
     /// Gets the reason that the device was removed, or [`Result::Ok`] if the device isn't removed.
     /// To be called back when a device is removed, consider using [`IFence::set_event_on_completion`] with a value of [`u64::MAX`].
@@ -637,7 +637,7 @@ impl_trait! {
     fn create_placed_resource(
         &self,
         heap: &impl IHeap,
-        heap_offset: usize,
+        heap_offset: u64,
         desc: &ResourceDesc,
         initial_state: ResourceStates,
         optimized_clear_value: Option<&ClearValue>,
@@ -649,7 +649,7 @@ impl_trait! {
 
             self.0.CreatePlacedResource(
                 heap.as_raw_ref(),
-                heap_offset as u64,
+                heap_offset,
                 &desc.0,
                 initial_state.as_raw(),
                 clear_value,
@@ -875,7 +875,7 @@ impl_trait! {
         layouts: Option<&mut [PlacedSubresourceFootprint]>,
         num_rows: Option<&mut [u32]>,
         row_sizes: Option<&mut [u64]>,
-    ) -> usize {
+    ) -> u64 {
         unsafe {
             let mut total_bytes = 0;
 
@@ -890,7 +890,7 @@ impl_trait! {
                 Some(&mut total_bytes)
             );
 
-            total_bytes as usize
+            total_bytes
         }
     }
 
@@ -904,9 +904,9 @@ impl_trait! {
         }
     }
 
-    fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> usize {
+    fn get_descriptor_handle_increment_size(&self, r#type: DescriptorHeapType) -> u32 {
         unsafe {
-            self.0.GetDescriptorHandleIncrementSize(r#type.as_raw()) as usize
+            self.0.GetDescriptorHandleIncrementSize(r#type.as_raw())
         }
     }
 
