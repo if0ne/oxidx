@@ -2,7 +2,7 @@ use std::{ffi::CStr, ops::Range};
 
 use windows::{
     core::{Interface, Param, PCSTR},
-    Win32::{Foundation::BOOL, Graphics::Direct3D12::*},
+    Win32::Graphics::Direct3D12::*,
 };
 
 use crate::{
@@ -59,7 +59,7 @@ pub trait IGraphicsCommandList:
         clear_flags: ClearFlags,
         depth: f32,
         stencil: u8,
-        rects: &[Rect],
+        rects: Option<&[Rect]>,
     );
 
     /// Sets all the elements in a render target to one value.
@@ -525,10 +525,10 @@ impl_trait! {
         clear_flags: ClearFlags,
         depth: f32,
         stencil: u8,
-        rects: &[Rect],
+        rects: Option<&[Rect]>,
     ) {
         unsafe {
-            let rects = std::slice::from_raw_parts(rects.as_ptr() as *const _, rects.len());
+            let rects = rects.map(|rects| std::slice::from_raw_parts(rects.as_ptr() as *const _, rects.len()));
 
             self.0.ClearDepthStencilView(
                 depth_stencil_view.0,
@@ -864,7 +864,7 @@ impl_trait! {
             self.0.OMSetRenderTargets(
                 render_targets.len() as u32,
                 render_targets_raw,
-                BOOL(rts_single_handle_to_descriptor_range as i32),
+                rts_single_handle_to_descriptor_range,
                 depth_stencil,
             );
         }

@@ -1,6 +1,6 @@
 [package]
 name = "oxidx"
-version = "0.7.0"
+version = "0.8.0"
 edition = "2021"
 authors = ["Pavel Agafonov <pavel.agafonov.al@gmail.com>"]
 description = """Low-level D3D12 wrapper for Rust."""
@@ -18,9 +18,6 @@ exclude = ["/extern"]
 [dependencies.bitflags]
 version = "2.5.0"
 
-[dependencies.compact_str]
-version = "0.8.0"
-
 [dependencies.strum]
 version = "0.26"
 features = ["derive"]
@@ -29,7 +26,7 @@ features = ["derive"]
 version = "1.0.61"
 
 [dependencies.windows]
-version = "0.58.0"
+version = "0.61.1"
 features = [
     "Win32_System_LibraryLoader",
 

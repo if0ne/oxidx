@@ -7,7 +7,7 @@ use super::*;
 /// Describes Direct3D 12 feature options in the current graphics driver.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct OptionsFeature(pub(crate) D3D12_FEATURE_DATA_D3D12_OPTIONS);
 
@@ -96,7 +96,7 @@ impl FeatureObject for OptionsFeature {
 /// Provides detail about the adapter architecture, so that your application can better optimize for certain adapter properties.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_ARCHITECTURE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_architecture)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct ArchitectureFeature(pub(crate) D3D12_FEATURE_DATA_ARCHITECTURE);
 
@@ -134,7 +134,7 @@ impl FeatureObject for ArchitectureFeature {
 /// Describes info about the [`FeatureLevels`] supported by the current graphics driver.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_FEATURE_LEVELS structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_feature_levels)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct FeatureLevelsFeature<'a>(
     pub(crate) D3D12_FEATURE_DATA_FEATURE_LEVELS,
@@ -169,7 +169,7 @@ impl FeatureObject for FeatureLevelsFeature<'_> {
 /// Describes which resources are supported by the current graphics driver for a given format.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_FORMAT_SUPPORT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_format_support)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct FormatSupportFeature(pub(crate) D3D12_FEATURE_DATA_FORMAT_SUPPORT);
 
@@ -202,7 +202,7 @@ impl FeatureObject for FormatSupportFeature {
 /// Describes the multi-sampling image quality levels for a given format and sample count.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_multisample_quality_levels)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct MultisampleQualityLevelsFeature(
     pub(crate) D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS,
@@ -266,7 +266,7 @@ impl FeatureObject for FormatInfoFeature {
 /// Details the adapter's GPU virtual address space limitations, including maximum address bits per resource and per process.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_GPU_VIRTUAL_ADDRESS_SUPPORT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_gpu_virtual_address_support)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct GpuVirtualAddressSupportFeature(
     pub(crate) D3D12_FEATURE_DATA_GPU_VIRTUAL_ADDRESS_SUPPORT,
@@ -293,7 +293,7 @@ impl FeatureObject for GpuVirtualAddressSupportFeature {
 /// Contains the supported shader model.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_SHADER_MODEL structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_shader_model)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct ShaderModelFeature(pub(crate) D3D12_FEATURE_DATA_SHADER_MODEL);
 
@@ -320,7 +320,7 @@ impl FeatureObject for ShaderModelFeature {
 /// Describes the level of support for HLSL 6.0 wave operations.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options1)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct Options1Feature(pub(crate) D3D12_FEATURE_DATA_D3D12_OPTIONS1);
 
@@ -365,7 +365,7 @@ impl FeatureObject for Options1Feature {
 /// Indicates the level of support for protected resource sessions.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_SUPPORT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_protected_resource_session_support)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct ProtectedResourceSessionSupportFeature(
     pub(crate) D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_SUPPORT,
@@ -395,7 +395,7 @@ impl FeatureObject for ProtectedResourceSessionSupportFeature {
 /// Indicates root signature version support.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_ROOT_SIGNATURE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_root_signature)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct RootSignatureFeature(pub(crate) D3D12_FEATURE_DATA_ROOT_SIGNATURE);
 
@@ -415,7 +415,7 @@ impl FeatureObject for RootSignatureFeature {
 /// Provides detail about each adapter's architectural details, so that your application can better optimize for certain adapter properties.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_ARCHITECTURE1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_architecture1)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct Architecture1Feature(pub(crate) D3D12_FEATURE_DATA_ARCHITECTURE1);
 
@@ -458,7 +458,7 @@ impl FeatureObject for Architecture1Feature {
 /// Indicates the level of support that the adapter provides for depth-bounds tests and programmable sample positions.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS2 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options2)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct Options2Feature(pub(crate) D3D12_FEATURE_DATA_D3D12_OPTIONS2);
 
@@ -483,7 +483,7 @@ impl FeatureObject for Options2Feature {
 /// Describes the level of shader caching supported in the current graphics driver.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_SHADER_CACHE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_shader_cache)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct ShaderCacheFeature(pub(crate) D3D12_FEATURE_DATA_SHADER_CACHE);
 
@@ -503,7 +503,7 @@ impl FeatureObject for ShaderCacheFeature {
 /// Details the adapter's support for prioritization of different command queue types.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_COMMAND_QUEUE_PRIORITY structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_command_queue_priority)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct CommandQueuePriorityFeature(pub(crate) D3D12_FEATURE_DATA_COMMAND_QUEUE_PRIORITY);
 
@@ -532,7 +532,7 @@ impl FeatureObject for CommandQueuePriorityFeature {
 /// Indicates the level of support that the adapter provides for timestamp queries, format-casting, immediate write, view instancing, and barycentrics.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS3 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options3)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct Options3Feature(pub(crate) D3D12_FEATURE_DATA_D3D12_OPTIONS3);
 
@@ -574,7 +574,7 @@ impl FeatureObject for Options3Feature {
 /// because they are guaranteed to persist even after the adapter faults or experiences a device-removal event.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_EXISTING_HEAPS structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_existing_heaps)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct ExistingHeapsFeature(pub(crate) D3D12_FEATURE_DATA_EXISTING_HEAPS);
 
@@ -594,7 +594,7 @@ impl FeatureObject for ExistingHeapsFeature {
 /// Indicates the level of support for 64KB-aligned MSAA textures, cross-API sharing, and native 16-bit shader operations.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS4 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options4)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct Options4Feature(pub(crate) D3D12_FEATURE_DATA_D3D12_OPTIONS4);
 
@@ -624,7 +624,7 @@ impl FeatureObject for Options4Feature {
 /// Indicates the level of support for heap serialization.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_SERIALIZATION structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_serialization)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct SerializationFeature(pub(crate) D3D12_FEATURE_DATA_SERIALIZATION);
 
@@ -652,7 +652,7 @@ impl FeatureObject for SerializationFeature {
 /// Indicates the level of support for the sharing of resources between different adapters—for example, multiple GPUs.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_CROSS_NODE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_cross_node)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct CrossNodeFeature(pub(crate) D3D12_FEATURE_DATA_CROSS_NODE);
 
@@ -677,7 +677,7 @@ impl FeatureObject for CrossNodeFeature {
 /// Indicates the level of support that the adapter provides for render passes, ray tracing, and shader-resource view tier 3 tiled resources.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS5 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options5)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct Options5Feature(pub(crate) D3D12_FEATURE_DATA_D3D12_OPTIONS5);
 
@@ -707,7 +707,7 @@ impl FeatureObject for Options5Feature {
 /// This feature is currently in preview.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_DISPLAYABLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_displayable)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct DisplayableFeature(pub(crate) D3D12_FEATURE_DATA_DISPLAYABLE);
 
@@ -732,7 +732,7 @@ impl FeatureObject for DisplayableFeature {
 /// Indicates the level of support that the adapter provides for variable-rate shading (VRS), and indicates whether or not background processing is supported.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS6 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options6)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct Options6Feature(pub(crate) D3D12_FEATURE_DATA_D3D12_OPTIONS6);
 
@@ -774,7 +774,7 @@ impl FeatureObject for Options6Feature {
 /// Indicates the level of support that the adapter provides for mesh and amplification shaders, and for sampler feedback.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS7 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options7)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct Options7Feature(pub(crate) D3D12_FEATURE_DATA_D3D12_OPTIONS7);
 
@@ -799,7 +799,7 @@ impl FeatureObject for Options7Feature {
 /// Indicates the level of support that the adapter provides for mesh and amplification shaders, and for sampler feedback.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPE_COUNT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_protected_resource_session_type_count)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct ProtectedResourceSessionTypeCountFeature(
     pub(crate) D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPE_COUNT,
@@ -829,7 +829,7 @@ impl FeatureObject for ProtectedResourceSessionTypeCountFeature {
 /// Indicates a list of protected resource session types.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPES structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_protected_resource_session_types)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct ProtectedResourceSessionTypesFeature<'a>(
     pub(crate) D3D12_FEATURE_DATA_PROTECTED_RESOURCE_SESSION_TYPES,
@@ -859,7 +859,7 @@ impl FeatureObject for ProtectedResourceSessionTypesFeature<'_> {
 /// Indicates whether or not unaligned block-compressed textures are supported.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS8 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options8)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct Options8Feature(pub(crate) D3D12_FEATURE_DATA_D3D12_OPTIONS8);
 
@@ -880,7 +880,7 @@ impl FeatureObject for Options8Feature {
 /// typed resource 64-bit integer atomics, derivative and derivative-dependent texture sample operations, and the level of support for WaveMMA (wave_matrix) operations.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS9 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options9)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct Options9Feature(pub(crate) D3D12_FEATURE_DATA_D3D12_OPTIONS9);
 
@@ -929,7 +929,7 @@ impl FeatureObject for Options9Feature {
 /// Indicates whether or not the SUM combiner can be used, and whether or not SV_ShadingRate can be set from a mesh shader.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS10 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options10)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct Options10Feature(pub(crate) D3D12_FEATURE_DATA_D3D12_OPTIONS10);
 
@@ -954,7 +954,7 @@ impl FeatureObject for Options10Feature {
 /// Indicates whether or not 64-bit integer atomics on resources in descriptor heaps are supported.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_D3D12_OPTIONS11 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_d3d12_options11)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct Options11Feature(pub(crate) D3D12_FEATURE_DATA_D3D12_OPTIONS11);
 

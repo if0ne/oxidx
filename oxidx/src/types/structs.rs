@@ -1,6 +1,5 @@
 use std::{ffi::CStr, marker::PhantomData, mem::ManuallyDrop, ops::Range};
 
-use compact_str::CompactString;
 use windows::{
     core::PCSTR,
     Win32::{
@@ -19,14 +18,14 @@ use super::*;
 /// Describes an adapter (or video card) using DXGI 1.1.
 ///
 /// For more information: [`DXGI_ADAPTER_DESC1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/ns-dxgi-dxgi_adapter_desc1)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct AdapterDesc1(pub(crate) DXGI_ADAPTER_DESC1);
 
 impl AdapterDesc1 {
     #[inline]
-    pub fn description(&self) -> CompactString {
-        CompactString::from_utf16_lossy(self.0.Description)
+    pub fn description(&self) -> String {
+        String::from_utf16_lossy(&self.0.Description)
     }
 
     #[inline]
@@ -73,7 +72,7 @@ impl AdapterDesc1 {
 /// Describes the blend state.
 ///
 /// For more information: [`D3D12_BLEND_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_blend_desc)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct BlendDesc(pub(crate) D3D12_BLEND_DESC);
 
@@ -118,7 +117,7 @@ impl Default for BlendDesc {
 /// Describes a 3D box.
 ///
 /// For more information: [`D3D12_BOX structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_box)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct DxBox(pub(crate) D3D12_BOX);
 
@@ -195,7 +194,7 @@ impl ClearValue {
 /// Describes a command queue.
 ///
 /// For more information: [`D3D12_COMMAND_QUEUE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_command_queue_desc)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct CommandQueueDesc(pub(crate) D3D12_COMMAND_QUEUE_DESC);
 
@@ -298,7 +297,7 @@ impl CommandQueueDesc {
 /// Describes the arguments (parameters) of a command signature.
 ///
 /// For more information: [`D3D12_COMMAND_SIGNATURE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_command_signature_desc)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct CommandSignatureDesc<'a>(pub(crate) D3D12_COMMAND_SIGNATURE_DESC, PhantomData<&'a ()>);
 
@@ -329,7 +328,7 @@ impl<'a> CommandSignatureDesc<'a> {
 /// Describes a compute pipeline state object.
 ///
 /// For more information: [`D3D12_COMPUTE_PIPELINE_STATE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_compute_pipeline_state_desc)
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct ComputePipelineStateDesc<'a>(
     pub(crate) D3D12_COMPUTE_PIPELINE_STATE_DESC,
@@ -372,7 +371,7 @@ impl<'a> ComputePipelineStateDesc<'a> {
 /// Describes a constant buffer to view.
 ///
 /// For more information: [`D3D12_CONSTANT_BUFFER_VIEW_DESC structure `](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_constant_buffer_view_desc)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct ConstantBufferViewDesc(pub(crate) D3D12_CONSTANT_BUFFER_VIEW_DESC);
 
@@ -389,7 +388,7 @@ impl ConstantBufferViewDesc {
 /// Describes a CPU descriptor handle.
 ///
 /// For more information: [`D3D12_CPU_DESCRIPTOR_HANDLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_cpu_descriptor_handle)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct CpuDescriptorHandle(pub(crate) D3D12_CPU_DESCRIPTOR_HANDLE);
 
@@ -416,7 +415,7 @@ impl CpuDescriptorHandle {
 /// Describes a vertex element in a vertex buffer in an output slot.
 ///
 /// For more information: [`D3D12_SO_DECLARATION_ENTRY structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_so_declaration_entry)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct DeclarationEntry(pub(crate) D3D12_SO_DECLARATION_ENTRY);
 
@@ -444,7 +443,7 @@ impl DeclarationEntry {
 /// Describes depth-stencil state.
 ///
 /// For more information: [`D3D12_DEPTH_STENCIL_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_depth_stencil_desc)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct DepthStencilDesc(pub(crate) D3D12_DEPTH_STENCIL_DESC);
 
@@ -495,7 +494,7 @@ impl Default for DepthStencilDesc {
 /// Describes stencil operations that can be performed based on the results of stencil test.
 ///
 /// For more information: [`D3D12_DEPTH_STENCILOP_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_depth_stencilop_desc)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct DepthStencilOpDesc(pub(crate) D3D12_DEPTH_STENCILOP_DESC);
 
@@ -624,7 +623,7 @@ impl DepthStencilViewDesc {
 /// Describes the descriptor heap.
 ///
 /// For more information: [`D3D12_DESCRIPTOR_HEAP_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_descriptor_heap_desc)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct DescriptorHeapDesc(pub(crate) D3D12_DESCRIPTOR_HEAP_DESC);
 
@@ -705,7 +704,7 @@ impl DescriptorHeapDesc {
 /// Describes a descriptor range.
 ///
 /// For more information: [`D3D12_DESCRIPTOR_RANGE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_descriptor_range)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct DescriptorRange(pub(crate) D3D12_DESCRIPTOR_RANGE);
 
@@ -784,7 +783,7 @@ impl DescriptorRange {
 /// Describes details for the discard-resource operation.
 ///
 /// For more information: [`D3D12_DISCARD_REGION structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_discard_region)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct DiscardRegion<'a>(pub(crate) D3D12_DISCARD_REGION, PhantomData<&'a ()>);
 
@@ -806,7 +805,7 @@ impl<'a> DiscardRegion<'a> {
 /// Describes a GPU descriptor handle.
 ///
 /// For more information: [`D3D12_GPU_DESCRIPTOR_HANDLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_gpu_descriptor_handle)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct GpuDescriptorHandle(pub(crate) D3D12_GPU_DESCRIPTOR_HANDLE);
 
@@ -983,7 +982,7 @@ impl<'a> GraphicsPipelineDesc<'a> {
 /// Describes a heap.
 ///
 /// For more information: [`D3D12_HEAP_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_heap_desc)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct HeapDesc(pub(crate) D3D12_HEAP_DESC);
 
@@ -1033,7 +1032,7 @@ impl HeapDesc {
 /// Describes heap properties.
 ///
 /// For more information: [`D3D12_HEAP_PROPERTIES structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_heap_properties)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct HeapProperties(pub(crate) D3D12_HEAP_PROPERTIES);
 
@@ -1149,7 +1148,7 @@ impl Default for HeapProperties {
 /// Describes the index buffer to view.
 ///
 /// For more information: [`D3D12_INDEX_BUFFER_VIEW structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_index_buffer_view)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct IndexBufferView(pub(crate) D3D12_INDEX_BUFFER_VIEW);
 
@@ -1201,7 +1200,7 @@ impl IndirectArgumentDesc {
         Self(D3D12_INDIRECT_ARGUMENT_DESC {
             Type: D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW,
             Anonymous: D3D12_INDIRECT_ARGUMENT_DESC_0 {
-                VertexBuffer: D3D12_INDIRECT_ARGUMENT_DESC_0_5 { Slot: slot },
+                VertexBuffer: D3D12_INDIRECT_ARGUMENT_DESC_0_0 { Slot: slot },
             },
         })
     }
@@ -1237,7 +1236,7 @@ impl IndirectArgumentDesc {
         Self(D3D12_INDIRECT_ARGUMENT_DESC {
             Type: D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW,
             Anonymous: D3D12_INDIRECT_ARGUMENT_DESC_0 {
-                ConstantBufferView: D3D12_INDIRECT_ARGUMENT_DESC_0_0 {
+                ConstantBufferView: D3D12_INDIRECT_ARGUMENT_DESC_0_2 {
                     RootParameterIndex: root_parameter_index,
                 },
             },
@@ -1272,7 +1271,7 @@ impl IndirectArgumentDesc {
 /// Describes a single element for the input-assembler stage of the graphics pipeline.
 ///
 /// For more information: [`D3D12_INPUT_ELEMENT_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_input_element_desc)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct InputElementDesc<'a>(pub(crate) D3D12_INPUT_ELEMENT_DESC, PhantomData<&'a ()>);
 
@@ -1351,7 +1350,7 @@ impl<'a> InputElementDesc<'a> {
 /// The LUID structure is an opaque structure that specifies an identifier that is guaranteed to be unique on the local machine.
 ///
 /// For more information: [`LUID structure`](https://learn.microsoft.com/en-us/windows/win32/api/ntdef/ns-ntdef-luid)
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct Luid(pub(crate) LUID);
 
@@ -1370,7 +1369,7 @@ impl Luid {
 /// Describes a display mode and whether the display mode supports stereo.
 ///
 /// For more information: [`DXGI_MODE_DESC1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/ns-dxgi1_2-dxgi_mode_desc1)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct ModeDesc1(pub(crate) DXGI_MODE_DESC1);
 
@@ -1414,7 +1413,7 @@ impl ModeDesc1 {
 /// Describes the destination of a memory copy operation.
 ///
 /// For more information: [`D3D12_MEMCPY_DEST structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_memcpy_dest)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct MemcpyDest<'a, T>(
     pub(crate) D3D12_MEMCPY_DEST,
     pub(crate) usize,
@@ -1466,14 +1465,14 @@ impl<'a, T> MemcpyDest<'a, T> {
 /// Describes an output or physical connection between the adapter (video card) and a device.
 ///
 /// For more information: [`DXGI_OUTPUT_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/ns-dxgi-dxgi_output_desc)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct OutputDesc(pub(crate) DXGI_OUTPUT_DESC);
 
 impl OutputDesc {
     #[inline]
-    pub fn device_name(&self) -> CompactString {
-        CompactString::from_utf16_lossy(self.0.DeviceName)
+    pub fn device_name(&self) -> String {
+        String::from_utf16_lossy(&self.0.DeviceName)
     }
 
     #[inline]
@@ -1500,7 +1499,7 @@ impl OutputDesc {
 /// Describes the tile structure of a tiled resource with mipmaps.
 ///
 /// For more information: [`D3D12_PACKED_MIP_INFO structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_packed_mip_info)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct PackedMipDesc(pub(crate) D3D12_PACKED_MIP_INFO);
 
@@ -1529,7 +1528,7 @@ impl PackedMipDesc {
 /// Describes the footprint of a placed subresource, including the offset and the [`SubresourceFootprint`].
 ///
 /// For more information: [`D3D12_PLACED_SUBRESOURCE_FOOTPRINT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_placed_subresource_footprint)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct PlacedSubresourceFootprint(pub(crate) D3D12_PLACED_SUBRESOURCE_FOOTPRINT);
 
@@ -1556,7 +1555,7 @@ impl PlacedSubresourceFootprint {
 /// Describes the purpose of a query heap. A query heap contains an array of individual queries.
 ///
 /// For more information: [`D3D12_QUERY_HEAP_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_query_heap_desc)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct QueryHeapDesc(pub(crate) D3D12_QUERY_HEAP_DESC);
 
@@ -1719,7 +1718,7 @@ impl Default for RasterizerDesc {
 /// Represents a rational number.
 ///
 /// For more information: [`DXGI_RATIONAL structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgicommon/ns-dxgicommon-dxgi_rational)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct Rational(pub(crate) DXGI_RATIONAL);
 
@@ -1736,7 +1735,7 @@ impl Rational {
 /// The RECT structure defines a rectangle by the coordinates of its upper-left and lower-right corners.
 ///
 /// For more information: [`RECT structure`](https://learn.microsoft.com/en-us/windows/win32/api/windef/ns-windef-rect)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Rect(pub(crate) RECT);
 
 impl Rect {
@@ -1764,7 +1763,7 @@ impl Rect {
 /// Describes the blend state for a render target.
 ///
 /// For more information: [`D3D12_RENDER_TARGET_BLEND_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_render_target_blend_desc)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct RenderTargetBlendDesc(pub(crate) D3D12_RENDER_TARGET_BLEND_DESC);
 
@@ -1964,7 +1963,7 @@ impl RenderTargetViewDesc {
 /// Describes parameters needed to allocate resources.
 ///
 /// For more information: [`D3D12_RESOURCE_ALLOCATION_INFO structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_allocation_info)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct ResourceAllocationInfo(pub(crate) D3D12_RESOURCE_ALLOCATION_INFO);
 
@@ -2055,7 +2054,7 @@ impl<'a> ResourceBarrier<'a> {
 /// Describes a resource, such as a texture. This structure is used extensively.
 ///
 /// For more information: [`D3D12_RESOURCE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_desc)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct ResourceDesc(pub(crate) D3D12_RESOURCE_DESC);
 
@@ -2328,7 +2327,7 @@ impl<'a> RootParameter<'a> {
 /// Describes the layout of a root signature version 1.0.
 ///
 /// For more information: [`D3D12_ROOT_SIGNATURE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_root_signature_desc)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct RootSignatureDesc<'a>(pub(crate) D3D12_ROOT_SIGNATURE_DESC, PhantomData<&'a ()>);
 
@@ -2363,7 +2362,7 @@ impl<'a> RootSignatureDesc<'a> {
 /// Describes multi-sampling parameters for a resource.
 ///
 /// For more information: [`DXGI_SAMPLE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgicommon/ns-dxgicommon-dxgi_sample_desc)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct SampleDesc(pub(crate) DXGI_SAMPLE_DESC);
 
@@ -2470,7 +2469,7 @@ impl SamplerDesc {
 /// Describes a shader.
 ///
 /// For more information: [`D3D12_SHADER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/ns-d3d12shader-d3d12_shader_desc)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct ShaderDesc(pub(crate) D3D12_SHADER_DESC);
 
@@ -2669,7 +2668,7 @@ impl ShaderDesc {
 /// Describes a shader constant-buffer.
 ///
 /// For more information: [`D3D12_SHADER_BUFFER_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/ns-d3d12shader-d3d12_shader_buffer_desc)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct ShaderBufferDesc(pub(crate) D3D12_SHADER_BUFFER_DESC);
 
@@ -2703,7 +2702,7 @@ impl ShaderBufferDesc {
 /// Defines a shader macro.
 ///
 /// For more information: [`D3D_SHADER_MACRO structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/ns-d3dcommon-d3d_shader_macro)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct ShaderMacro<'a>(pub(crate) D3D_SHADER_MACRO, PhantomData<&'a ()>);
 
@@ -3015,7 +3014,7 @@ impl ShaderResourceViewDesc {
 }
 
 /// A handle to the object of event.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct SharedHandle(pub(crate) HANDLE);
 
@@ -3028,7 +3027,7 @@ impl SharedHandle {
 /// Describes a shader-variable type.
 ///
 /// For more information: [`D3D12_SHADER_TYPE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/ns-d3d12shader-d3d12_shader_type_desc)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct ShaderTypeDesc(pub(crate) D3D12_SHADER_TYPE_DESC);
 
@@ -3077,7 +3076,7 @@ impl ShaderTypeDesc {
 /// Describes a shader variable.
 ///
 /// For more information: [`D3D12_SHADER_VARIABLE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/ns-d3d12shader-d3d12_shader_variable_desc)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct ShaderVariableDesc(pub(crate) D3D12_SHADER_VARIABLE_DESC);
 
@@ -3277,7 +3276,7 @@ impl StaticSamplerDesc {
 /// Describes a stream output buffer.
 ///
 /// For more information: [`D3D12_STREAM_OUTPUT_BUFFER_VIEW structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_stream_output_buffer_view)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct StreamOutputBufferView(pub(crate) D3D12_STREAM_OUTPUT_BUFFER_VIEW);
 
@@ -3299,7 +3298,7 @@ impl StreamOutputBufferView {
 /// Describes a streaming output buffer.
 ///
 /// For more information: [`D3D12_STREAM_OUTPUT_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_stream_output_desc)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct StreamOutputDesc<'a>(pub(crate) D3D12_STREAM_OUTPUT_DESC, PhantomData<&'a ()>);
 
@@ -3333,7 +3332,7 @@ impl<'a> StreamOutputDesc<'a> {
 /// Describes subresource data.
 ///
 /// For more information: [`D3D12_SUBRESOURCE_DATA structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_subresource_data)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct SubresourceData<'a, T>(
     pub(crate) D3D12_SUBRESOURCE_DATA,
     pub(crate) usize,
@@ -3385,7 +3384,7 @@ impl<'a, T> SubresourceData<'a, T> {
 /// Describes the format, width, height, depth, and row-pitch of the subresource into the parent resource.
 ///
 /// For more information: [`D3D12_SUBRESOURCE_FOOTPRINT structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_subresource_footprint)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct SubresourceFootprint(pub(crate) D3D12_SUBRESOURCE_FOOTPRINT);
 
@@ -3449,7 +3448,7 @@ impl SubresourceFootprint {
 /// Describes a tiled subresource volume.
 ///
 /// For more information: [`D3D12_SUBRESOURCE_TILING structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_subresource_tiling)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct SubresourceTiling(pub(crate) D3D12_SUBRESOURCE_TILING);
 
@@ -3478,7 +3477,7 @@ impl SubresourceTiling {
 /// Describes a swap chain.
 ///
 /// For more information: [`DXGI_SWAP_CHAIN_DESC1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/ns-dxgi1_2-dxgi_swap_chain_desc1)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct SwapchainDesc1(pub(crate) DXGI_SWAP_CHAIN_DESC1);
 
@@ -3557,7 +3556,7 @@ impl SwapchainDesc1 {
 /// Describes a swap chain.
 ///
 /// For more information: [`DXGI_SWAP_CHAIN_FULLSCREEN_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/ns-dxgi1_2-dxgi_swap_chain_fullscreen_desc)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct SwapchainFullscreenDesc(pub(crate) DXGI_SWAP_CHAIN_FULLSCREEN_DESC);
 
@@ -3630,7 +3629,7 @@ impl<'a> TextureCopyLocation<'a> {
 /// Describes the size of a tiled region.
 ///
 /// For more information: [`D3D12_TILE_REGION_SIZE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_tile_region_size)
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct TileRegionSize(pub(crate) D3D12_TILE_REGION_SIZE);
 
@@ -3669,7 +3668,7 @@ impl TileRegionSize {
 /// Describes the shape of a tile by specifying its dimensions.
 ///
 /// For more information: [`D3D12_TILE_SHAPE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_tile_shape)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct TileShape(pub(crate) D3D12_TILE_SHAPE);
 
@@ -3693,7 +3692,7 @@ impl TileShape {
 /// Describes the coordinates of a tiled resource.
 ///
 /// For more information: [`D3D12_TILED_RESOURCE_COORDINATE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_tiled_resource_coordinate)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct TiledResourceCoordinate(pub(crate) D3D12_TILED_RESOURCE_COORDINATE);
 
@@ -3846,7 +3845,7 @@ impl UnorderedAccessViewDesc {
 /// Describes a vertex buffer view.
 ///
 /// For more information: [`D3D12_VERTEX_BUFFER_VIEW structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_vertex_buffer_view)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct VertexBufferView(pub(crate) D3D12_VERTEX_BUFFER_VIEW);
 
