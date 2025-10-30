@@ -1,4 +1,5 @@
 use windows::core::{Interface, Param};
+use windows::Win32::Foundation::HANDLE;
 use windows::Win32::Graphics::Dxgi::{
     IDXGIOutput, IDXGIOutput1, IDXGISwapChain1, IDXGISwapChain2, IDXGISwapChain3,
 };
@@ -36,10 +37,48 @@ pub trait ISwapchain1: HasInterface {
     ) -> Result<(), DxError>;
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct WaitableObject(pub(crate) HANDLE);
+
 /// Extends [`ISwapchain1`] with methods to support swap back buffer scaling and lower-latency swap chains.
 ///
 /// For more information: [`IDXGISwapChain2 interface`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_3/nn-dxgi1_3-idxgiswapchain2)
-pub trait ISwapchain2: ISwapchain1 {}
+pub trait ISwapchain2: ISwapchain1 {
+    /// Returns a waitable handle that signals when the DXGI adapter has finished presenting a new frame.
+    ///
+    /// For more information: [`IDXGISwapChain2::GetFrameLatencyWaitableObject method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_3/nf-dxgi1_3-idxgiswapchain2-getframelatencywaitableobject)
+    fn get_frame_latency_waitable_object(&self) -> WaitableObject;
+
+    /// Gets the transform matrix that will be applied to a composition swap chain upon the next present.
+    ///
+    /// For more information: [`IDXGISwapChain2::GetMatrixTransform method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_3/nf-dxgi1_3-idxgiswapchain2-getmatrixtransform)
+    fn get_matirx_transform(&self) -> Result<[[f32; 2]; 3], DxError>;
+
+    /// Gets the number of frames that the swap chain is allowed to queue for rendering.
+    ///
+    /// For more information: [`IDXGISwapChain2::GetMaximumFrameLatency method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_3/nf-dxgi1_3-idxgiswapchain2-getmaximumframelatency)
+    fn get_maximum_frame_latency(&self) -> Result<u32, DxError>;
+
+    /// Gets the source region used for the swap chain.
+    ///
+    /// For more information: [`IDXGISwapChain2::GetSourceSize method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_3/nf-dxgi1_3-idxgiswapchain2-getsourcesize)
+    fn get_source_size(&self) -> Result<(u32, u32), DxError>;
+
+    /// Sets the transform matrix that will be applied to a composition swap chain upon the next present.
+    ///
+    /// For more information: [`IDXGISwapChain2::SetMatrixTransform method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_3/nf-dxgi1_3-idxgiswapchain2-setmatrixtransform)
+    fn set_matrix_transform(&self, matrix: impl Into<[[f32; 2]; 3]>) -> Result<(), DxError>;
+
+    /// Sets the number of frames that the swap chain is allowed to queue for rendering.
+    ///
+    /// For more information: [`IDXGISwapChain2::SetMaximumFrameLatency method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_3/nf-dxgi1_3-idxgiswapchain2-setmaximumframelatency)
+    fn set_maximum_frame_latency(&self, max_latency: u32) -> Result<(), DxError>;
+
+    /// Sets the source region to be used for the swap chain.
+    ///
+    /// For more information: [`IDXGISwapChain2::SetSourceSize method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_3/nf-dxgi1_3-idxgiswapchain2-setsourcesize)
+    fn set_source_size(&self, width: u32, height: u32) -> Result<(), DxError>;
+}
 
 /// Extends [`ISwapchain2`] with methods to support getting the index of the swap chain's current back buffer and support for color space.
 ///
@@ -114,6 +153,74 @@ impl_trait! {
     impl ISwapchain2 =>
     Swapchain2,
     Swapchain3;
+
+    fn get_frame_latency_waitable_object(&self) -> WaitableObject {
+        let handle = unsafe {
+            self.0.GetFrameLatencyWaitableObject()
+        };
+
+        WaitableObject(handle)
+    }
+
+    fn get_matirx_transform(&self) -> Result<[[f32; 2]; 3], DxError> {
+        let mut matrix = Default::default();
+        unsafe {
+            self.0.GetMatrixTransform(&mut matrix)?;
+        };
+
+        Ok([
+            [matrix._11, matrix._12],
+            [matrix._21, matrix._22],
+            [matrix._31, matrix._32]
+        ])
+    }
+
+    fn get_maximum_frame_latency(&self) -> Result<u32, DxError> {
+        unsafe { Ok(self.0.GetMaximumFrameLatency()?) }
+    }
+
+    fn get_source_size(&self) -> Result<(u32, u32), DxError> {
+        let mut width = 0;
+        let mut height = 0;
+
+        unsafe {
+            self.0.GetSourceSize(&mut width, &mut height)?;
+        }
+
+        Ok((width, height))
+    }
+
+    fn set_matrix_transform(&self, matrix: impl Into<[[f32; 2]; 3]>) -> Result<(), DxError> {
+        let matrix = matrix.into();
+        let matrix = windows::Win32::Graphics::Dxgi::DXGI_MATRIX_3X2_F {
+            _11: matrix[0][0],
+            _12: matrix[0][1],
+            _21: matrix[1][0],
+            _22: matrix[1][1],
+            _31: matrix[2][0],
+            _32: matrix[2][1]
+        };
+
+        unsafe {
+            self.0.SetMatrixTransform(&matrix)?;
+        }
+
+        Ok(())
+    }
+
+    fn set_maximum_frame_latency(&self, max_latency: u32) -> Result<(), DxError> {
+        unsafe {
+            self.0.SetMaximumFrameLatency(max_latency)?;
+        }
+
+        Ok(())
+    }
+
+    fn set_source_size(&self, width: u32, height: u32) -> Result<(), DxError> {
+        unsafe { self.0.SetSourceSize(width, height)?; }
+
+        Ok(())
+    }
 }
 
 impl_trait! {
