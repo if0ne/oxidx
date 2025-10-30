@@ -321,7 +321,7 @@ fn transition_barrier(
     resource: &Resource,
     state_before: ResourceStates,
     state_after: ResourceStates,
-) -> ResourceBarrier {
+) -> ResourceBarrier<'_> {
     ResourceBarrier::transition(resource, state_before, state_after, None)
 }
 

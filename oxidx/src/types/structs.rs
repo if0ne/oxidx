@@ -3096,8 +3096,12 @@ impl ShaderVariableDesc {
         windows::Win32::Graphics::Direct3D::D3D_SHADER_VARIABLE_FLAGS(self.0.uFlags as i32).into()
     }
 
+    /// # Safety
+    ///
+    /// The size of T must match the value of the Size field.
     #[inline]
-    pub unsafe fn default_value<T>(&self) -> &T {
+    pub unsafe fn default_value<T: Copy + 'static>(&self) -> &T {
+        debug_assert_eq!(size_of::<T>(), self.0.Size as usize);
         &*(self.0.DefaultValue as *const _)
     }
 

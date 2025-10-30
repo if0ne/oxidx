@@ -9,6 +9,15 @@ use crate::resources::IResource;
 use crate::types::*;
 use crate::{create_type, impl_trait, HasInterface};
 
+#[derive(Clone, Copy, Debug)]
+pub struct WaitableObject(pub(crate) HANDLE);
+
+impl WaitableObject {
+    pub fn wait(&self, ms: u32, alertable: bool) -> u32 {
+        unsafe { windows::Win32::System::Threading::WaitForSingleObjectEx(self.0, ms, alertable).0 }
+    }
+}
+
 /// Provides presentation capabilities that are enhanced from IDXGISwapChain.
 /// These presentation capabilities consist of specifying dirty rectangles and scroll rectangle to optimize the presentation.
 ///
@@ -36,9 +45,6 @@ pub trait ISwapchain1: HasInterface {
         flags: SwapchainFlags,
     ) -> Result<(), DxError>;
 }
-
-#[derive(Clone, Copy, Debug)]
-pub struct WaitableObject(pub(crate) HANDLE);
 
 /// Extends [`ISwapchain1`] with methods to support swap back buffer scaling and lower-latency swap chains.
 ///
