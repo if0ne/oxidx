@@ -13,7 +13,7 @@ categories = [
     "api-bindings",
 ]
 repository = "https://github.com/if0ne/oxidx"
-exclude = ["/extern"]
+exclude = ["/external"]
 
 [dependencies.bitflags]
 version = "2.5.0"
@@ -42,3 +42,8 @@ features = [
     "Win32_System_Diagnostics_Debug",
     "Win32_System_Kernel",
 ]
+
+[package.metadata.docs.rs]
+all-features = true
+
+default-target = "x86_64-pc-windows-msvc"
