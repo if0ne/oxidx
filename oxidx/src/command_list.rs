@@ -1,7 +1,7 @@
-use std::{ffi::CStr, ops::Range};
+use std::ops::Range;
 
 use windows::{
-    core::{Interface, Param, PCSTR},
+    core::{Interface, Param},
     Win32::Graphics::Direct3D12::*,
 };
 
@@ -14,7 +14,6 @@ use crate::{
     error::DxError,
     ext::memcpy_subresource,
     impl_trait,
-    pix::WIN_PIX_EVENT_RUNTIME,
     pso::IPipelineState,
     query_heap::IQueryHeap,
     resources::IResource,
@@ -43,7 +42,8 @@ pub trait IGraphicsCommandList:
     ICommandList + for<'a> HasInterface<RawRef<'a>: Param<ID3D12GraphicsCommandList>>
 {
     /// Marks the start of a user-defined region of work.
-    fn begin_event(&self, color: impl Into<u64>, label: impl AsRef<CStr>);
+    #[cfg(feature = "pix")]
+    fn begin_event(&self, color: impl Into<u64>, label: impl AsRef<std::ffi::CStr>);
 
     /// Starts a query running.
     ///
@@ -188,6 +188,7 @@ pub trait IGraphicsCommandList:
     );
 
     /// Marks the end of a user-defined region of work.
+    #[cfg(feature = "pix")]
     fn end_event(&self);
 
     /// Ends a running query.
@@ -424,7 +425,8 @@ pub trait IGraphicsCommandList:
     );
 
     /// Inserts a user-defined marker into timeline.
-    fn set_marker(&self, color: impl Into<u64>, label: impl AsRef<CStr>);
+    #[cfg(feature = "pix")]
+    fn set_marker(&self, color: impl Into<u64>, label: impl AsRef<std::ffi::CStr>);
 
     /// Sets all shaders and programs most of the fixed-function state of the graphics processing unit (GPU) pipeline.
     ///
@@ -500,12 +502,13 @@ impl_trait! {
     impl IGraphicsCommandList =>
     GraphicsCommandList;
 
-    fn begin_event(&self, color: impl Into<u64>, label: impl AsRef<CStr>) {
+    #[cfg(feature = "pix")]
+    fn begin_event(&self, color: impl Into<u64>, label: impl AsRef<std::ffi::CStr>) {
         unsafe {
             let color = color.into();
-            let label = PCSTR::from_raw(label.as_ref().as_ptr() as *const _);
+            let label = windows::core::PCSTR::from_raw(label.as_ref().as_ptr() as *const _);
 
-            (WIN_PIX_EVENT_RUNTIME.begin_event_cmd_list)(std::mem::transmute_copy(&self.0), color, label);
+            (crate::pix::WIN_PIX_EVENT_RUNTIME.begin_event_cmd_list)(std::mem::transmute_copy(&self.0), color, label);
         }
     }
 
@@ -750,9 +753,10 @@ impl_trait! {
         }
     }
 
+    #[cfg(feature = "pix")]
     fn end_event(&self) {
         unsafe {
-            (WIN_PIX_EVENT_RUNTIME.end_event_cmd_list)(std::mem::transmute_copy(&self.0));
+            (crate::pix::WIN_PIX_EVENT_RUNTIME.end_event_cmd_list)(std::mem::transmute_copy(&self.0));
         }
     }
 
@@ -1181,12 +1185,13 @@ impl_trait! {
         }
     }
 
-    fn set_marker(&self, color: impl Into<u64>, label: impl AsRef<CStr>) {
+    #[cfg(feature = "pix")]
+    fn set_marker(&self, color: impl Into<u64>, label: impl AsRef<std::ffi::CStr>) {
         unsafe {
             let color = color.into();
-            let label = PCSTR::from_raw(label.as_ref().as_ptr() as *const _);
+            let label = windows::core::PCSTR::from_raw(label.as_ref().as_ptr() as *const _);
 
-            (WIN_PIX_EVENT_RUNTIME.set_marker_cmd_list)(std::mem::transmute_copy(&self.0), color, label);
+            (crate::pix::WIN_PIX_EVENT_RUNTIME.set_marker_cmd_list)(std::mem::transmute_copy(&self.0), color, label);
         }
     }
 

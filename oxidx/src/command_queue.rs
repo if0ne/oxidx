@@ -1,7 +1,5 @@
-use std::ffi::CStr;
-
 use windows::{
-    core::{IUnknown, Interface, Param, PCSTR},
+    core::{IUnknown, Interface, Param},
     Win32::Graphics::Direct3D12::*,
 };
 
@@ -11,7 +9,6 @@ use crate::{
     error::DxError,
     heap::IHeap,
     impl_trait,
-    pix::WIN_PIX_EVENT_RUNTIME,
     resources::IResource,
     sync::IFence,
     types::{CommandQueueDesc, TileRangeFlags, TileRegionSize, TiledResourceCoordinate},
@@ -23,7 +20,8 @@ use crate::{
 /// For more information: [`ID3D12CommandQueue interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12commandqueue)
 pub trait ICommandQueue: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<IUnknown>> {
     /// Marks the start of a user-defined region of work.
-    fn begin_event(&self, color: impl Into<u64>, label: impl AsRef<CStr>);
+    #[cfg(feature = "pix")]
+    fn begin_event(&self, color: impl Into<u64>, label: impl AsRef<std::ffi::CStr>);
 
     /// Copies mappings from a source reserved resource to a destination reserved resource.
     ///
@@ -38,6 +36,7 @@ pub trait ICommandQueue: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<
     );
 
     /// Marks the end of a user-defined region of work.
+    #[cfg(feature = "pix")]
     fn end_event(&self);
 
     /// Submits an iterator of command lists for execution.
@@ -59,7 +58,8 @@ pub trait ICommandQueue: for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<
     fn get_timestamp_frequency(&self) -> Result<u64, DxError>;
 
     /// Inserts a user-defined marker into timeline.
-    fn set_marker(&self, color: impl Into<u64>, label: impl AsRef<CStr>);
+    #[cfg(feature = "pix")]
+    fn set_marker(&self, color: impl Into<u64>, label: impl AsRef<std::ffi::CStr>);
 
     /// Updates a fence to a specified value.
     ///
@@ -97,12 +97,13 @@ impl_trait! {
     impl ICommandQueue =>
     CommandQueue;
 
-    fn begin_event(&self, color: impl Into<u64>, label: impl AsRef<CStr>) {
+     #[cfg(feature = "pix")]
+    fn begin_event(&self, color: impl Into<u64>, label: impl AsRef<std::ffi::CStr>) {
         unsafe {
             let color = color.into();
-            let label = PCSTR::from_raw(label.as_ref().as_ptr() as *const _);
+            let label = windows::core::PCSTR::from_raw(label.as_ref().as_ptr() as *const _);
 
-            (WIN_PIX_EVENT_RUNTIME.begin_event_cmd_queue)(std::mem::transmute_copy(&self.0), color, label);
+            (crate::pix::WIN_PIX_EVENT_RUNTIME.begin_event_cmd_queue)(std::mem::transmute_copy(&self.0), color, label);
         }
     }
 
@@ -126,9 +127,10 @@ impl_trait! {
         }
     }
 
+     #[cfg(feature = "pix")]
     fn end_event(&self) {
         unsafe {
-            (WIN_PIX_EVENT_RUNTIME.end_event_cmd_queue)(std::mem::transmute_copy(&self.0));
+            (crate::pix::WIN_PIX_EVENT_RUNTIME.end_event_cmd_queue)(std::mem::transmute_copy(&self.0));
         }
     }
 
@@ -163,12 +165,13 @@ impl_trait! {
         unsafe { self.0.GetTimestampFrequency().map_err(DxError::from) }
     }
 
-    fn set_marker(&self, color: impl Into<u64>, label: impl AsRef<CStr>) {
+     #[cfg(feature = "pix")]
+    fn set_marker(&self, color: impl Into<u64>, label: impl AsRef<std::ffi::CStr>) {
         unsafe {
             let color = color.into();
-            let label = PCSTR::from_raw(label.as_ref().as_ptr() as *const _);
+            let label = windows::core::PCSTR::from_raw(label.as_ref().as_ptr() as *const _);
 
-            (WIN_PIX_EVENT_RUNTIME.set_marker_cmd_queue)(std::mem::transmute_copy(&self.0), color, label);
+            (crate::pix::WIN_PIX_EVENT_RUNTIME.set_marker_cmd_queue)(std::mem::transmute_copy(&self.0), color, label);
         }
     }
 

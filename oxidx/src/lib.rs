@@ -30,6 +30,7 @@ pub mod swapchain;
 pub mod sync;
 pub mod types;
 
+#[cfg(feature = "pix")]
 pub(crate) mod pix;
 
 mod conv;
