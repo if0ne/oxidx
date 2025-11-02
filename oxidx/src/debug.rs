@@ -1,24 +1,15 @@
 use core::str;
-use std::{borrow::Cow, sync::Mutex};
 
-use windows::{
-    core::{Interface, PCSTR},
-    Win32::{
-        Foundation,
-        Graphics::Direct3D12::*,
-        System::Diagnostics::Debug::{
-            AddVectoredExceptionHandler, EXCEPTION_CONTINUE_EXECUTION, EXCEPTION_CONTINUE_SEARCH,
-            EXCEPTION_POINTERS,
-        },
-    },
+use windows::{core::Interface, Win32::Graphics::Direct3D12::*};
+
+#[cfg(feature = "callback")]
+use windows::Win32::System::Diagnostics::Debug::{
+    AddVectoredExceptionHandler, EXCEPTION_CONTINUE_EXECUTION, EXCEPTION_CONTINUE_SEARCH,
+    EXCEPTION_POINTERS,
 };
 
 use crate::{
-    create_type,
-    dx::{CallbackData, MessageCategory, MessageId, MessageSeverity},
-    impl_trait,
-    types::GpuBasedValidationFlags,
-    HasInterface,
+    create_type, dx::MessageSeverity, impl_trait, types::GpuBasedValidationFlags, HasInterface,
 };
 
 const MESSAGE_PREFIXES: &[(&str, MessageSeverity)] = &[
@@ -29,7 +20,9 @@ const MESSAGE_PREFIXES: &[(&str, MessageSeverity)] = &[
     ("MESSAGE", MessageSeverity::Message),
 ];
 
-static CALLBACK_HANDLER: Mutex<Option<CallbackData>> = Mutex::new(None);
+#[cfg(feature = "callback")]
+static CALLBACK_HANDLER: std::sync::Mutex<Option<crate::types::CallbackData>> =
+    std::sync::Mutex::new(None);
 
 /// An interface used to turn on the debug layer.
 ///
@@ -41,8 +34,9 @@ pub trait IDebug: HasInterface<Raw: Interface> {
     fn enable_debug_layer(&self);
 }
 
+#[cfg(feature = "callback")]
 pub trait IDebugExt: IDebug {
-    fn set_callback(&self, callback: CallbackData);
+    fn set_callback(&self, callback: crate::types::CallbackData);
     fn take_callback(&self);
 }
 
@@ -230,6 +224,7 @@ impl_trait! {
     }
 }
 
+#[cfg(feature = "callback")]
 impl_trait! {
     impl IDebugExt =>
     Debug,
@@ -239,7 +234,7 @@ impl_trait! {
     Debug5,
     Debug6;
 
-    fn set_callback(&self, callback: CallbackData) {
+    fn set_callback(&self, callback: crate::types::CallbackData) {
         unsafe {
             let mut guard = CALLBACK_HANDLER.lock().unwrap();
 
@@ -261,18 +256,20 @@ impl_trait! {
     }
 }
 
+#[cfg(feature = "callback")]
 unsafe extern "system" fn dx_callback(
     category: D3D12_MESSAGE_CATEGORY,
     severity: D3D12_MESSAGE_SEVERITY,
     id: D3D12_MESSAGE_ID,
-    pdescription: PCSTR,
+    pdescription: windows::core::PCSTR,
     pcontext: *mut core::ffi::c_void,
 ) {
     let message = str::from_utf8(pdescription.as_bytes()).unwrap();
-    let callback = pcontext.cast::<CallbackData>();
+    let callback = pcontext.cast::<crate::types::CallbackData>();
     (*callback)(category.into(), severity.into(), id.into(), message);
 }
 
+#[cfg(feature = "callback")]
 unsafe extern "system" fn debug_callback(exception_info: *mut EXCEPTION_POINTERS) -> i32 {
     // See https://stackoverflow.com/a/41480827
     let record = unsafe { &*(*exception_info).ExceptionRecord };
@@ -280,18 +277,20 @@ unsafe extern "system" fn debug_callback(exception_info: *mut EXCEPTION_POINTERS
         return EXCEPTION_CONTINUE_SEARCH;
     }
     let message = match record.ExceptionCode {
-        Foundation::DBG_PRINTEXCEPTION_C => String::from_utf8_lossy(unsafe {
+        windows::Win32::Foundation::DBG_PRINTEXCEPTION_C => String::from_utf8_lossy(unsafe {
             std::slice::from_raw_parts(
                 record.ExceptionInformation[1] as *const u8,
                 record.ExceptionInformation[0],
             )
         }),
-        Foundation::DBG_PRINTEXCEPTION_WIDE_C => Cow::Owned(String::from_utf16_lossy(unsafe {
-            std::slice::from_raw_parts(
-                record.ExceptionInformation[1] as *const u16,
-                record.ExceptionInformation[0],
-            )
-        })),
+        windows::Win32::Foundation::DBG_PRINTEXCEPTION_WIDE_C => {
+            std::borrow::Cow::Owned(String::from_utf16_lossy(unsafe {
+                std::slice::from_raw_parts(
+                    record.ExceptionInformation[1] as *const u16,
+                    record.ExceptionInformation[0],
+                )
+            }))
+        }
         _ => return EXCEPTION_CONTINUE_SEARCH,
     };
 
@@ -312,9 +311,9 @@ unsafe extern "system" fn debug_callback(exception_info: *mut EXCEPTION_POINTERS
 
     if let Some(callback) = &*CALLBACK_HANDLER.lock().unwrap() {
         callback(
-            MessageCategory::Execution,
+            crate::types::MessageCategory::Execution,
             level,
-            MessageId::Unknown,
+            crate::types::MessageId::Unknown,
             message,
         );
     }

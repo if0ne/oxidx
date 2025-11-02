@@ -9,11 +9,12 @@ pub use flags::*;
 pub use structs::*;
 
 use windows::Win32::Graphics::{
-    Direct3D::Fxc::{
-        D3DCOMPILE_DEBUG, D3DCOMPILE_PACK_MATRIX_ROW_MAJOR, D3DCOMPILE_SKIP_OPTIMIZATION,
-    },
     Direct3D12::*,
     Dxgi::{Common::*, *},
+};
+
+use windows::Win32::Graphics::Direct3D::Fxc::{
+    D3DCOMPILE_DEBUG, D3DCOMPILE_PACK_MATRIX_ROW_MAJOR, D3DCOMPILE_SKIP_OPTIMIZATION,
 };
 
 use crate::dx::{Adapter3, Output1, PipelineState, Resource};
@@ -36,5 +37,7 @@ pub const OUTPUT_NONE: Option<&Output1> = None;
 pub const RES_NONE: Option<&Resource> = None;
 
 pub type GpuVirtualAddress = u64;
+
+#[cfg(feature = "callback")]
 pub type CallbackData =
     std::boxed::Box<dyn Fn(MessageCategory, MessageSeverity, MessageId, &'_ str) + Send + Sync>;

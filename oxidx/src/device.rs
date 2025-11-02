@@ -1,11 +1,8 @@
-use std::{
-    ffi::{c_void, CStr},
-    ops::Range,
-};
+use std::{ffi::CStr, ops::Range};
 
 use windows::{
     core::{Interface, PCWSTR},
-    Win32::Graphics::Direct3D12::{ID3D12Device, ID3D12InfoQueue1},
+    Win32::Graphics::Direct3D12::ID3D12Device,
 };
 
 use crate::{
@@ -14,8 +11,7 @@ use crate::{
     device_child::IDeviceChild,
     dx::{
         CommandAllocator, CommandQueue, CommandSignature, DescriptorHeap, GraphicsCommandList,
-        Heap, IBlob, IRootSignatureExt, InfoQueue1, PipelineState, QueryHeap, Resource,
-        RootSignature,
+        Heap, IBlob, IRootSignatureExt, PipelineState, QueryHeap, Resource, RootSignature,
     },
     error::DxError,
     heap::IHeap,
@@ -166,8 +162,9 @@ pub trait IDevice: HasInterface<Raw: Interface> {
     /// For more information: [`ID3D12Device::CreateHeap method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createheap)
     fn create_heap(&self, desc: &HeapDesc) -> Result<Heap, DxError>;
 
+    #[cfg(feature = "callback")]
     /// Creates a info queue.
-    fn create_info_queue1(&self) -> Result<InfoQueue1, DxError>;
+    fn create_info_queue1(&self) -> Result<crate::info_queue::InfoQueue1, DxError>;
 
     /// Creates a resource that is placed in a specific heap. Placed resources are the lightest weight resource objects available, and are the fastest to create and destroy.
     ///
@@ -623,14 +620,15 @@ impl_trait! {
         }
     }
 
-    fn create_info_queue1(&self) -> Result<InfoQueue1, DxError> {
+    #[cfg(feature = "callback")]
+    fn create_info_queue1(&self) -> Result<crate::info_queue::InfoQueue1, DxError> {
         unsafe {
-            let mut interface: *mut c_void = std::ptr::null_mut();
-            self.0.query(&ID3D12InfoQueue1::IID, &mut interface).ok().map_err(DxError::from)?;
+            let mut interface: *mut std::ffi::c_void = std::ptr::null_mut();
+            self.0.query(&windows::Win32::Graphics::Direct3D12::ID3D12InfoQueue1::IID, &mut interface).ok().map_err(DxError::from)?;
 
-            let info_queue = ID3D12InfoQueue1::from_raw(interface);
+            let info_queue = windows::Win32::Graphics::Direct3D12::ID3D12InfoQueue1::from_raw(interface);
 
-            Ok(InfoQueue1::new(info_queue))
+            Ok(crate::info_queue::InfoQueue1::new(info_queue))
         }
     }
 

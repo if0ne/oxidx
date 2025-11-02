@@ -19,7 +19,10 @@ pub mod error;
 pub mod ext;
 pub mod factory;
 pub mod heap;
+
+#[cfg(feature = "callback")]
 pub mod info_queue;
+
 pub mod pageable;
 pub mod pso;
 pub mod query_heap;
