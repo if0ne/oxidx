@@ -13,17 +13,12 @@ categories = [
     "api-bindings",
 ]
 repository = "https://github.com/if0ne/oxidx"
-exclude = ["/external"]
 
-[dependencies.bitflags]
-version = "2.10.0"
-
-[dependencies.strum]
-version = "0.27.2"
-features = ["derive"]
-
-[dependencies.thiserror]
-version = "2.0.17"
+[dependencies]
+bitflags = "2.10.0"
+bytes = "1.10.1"
+strum = { version = "0.27.2", features = ["derive"] }
+thiserror = "2.0.17"
 
 [dependencies.windows]
 version = "0.62.2"
