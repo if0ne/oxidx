@@ -361,8 +361,15 @@ impl_interface! {
     /// Gets the description of a shader-reflection-variable type.
     ///
     /// For more information: [`ID3D12ShaderReflectionType::GetDesc function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflectiontype-getdesc)
-    pub fn get_desc(&self) -> Result<(), DxError> {
-        todo!()
+    pub fn get_desc(&self) -> Result<ShaderTypeDesc, DxError> {
+        unsafe {
+            let mut desc = Default::default();
+
+            self.0.GetDesc(&mut desc)
+                .map_err(DxError::from)?;
+
+            Ok(ShaderTypeDesc(desc))
+        }
     }
 
     /// Gets an interface by index.
