@@ -8,10 +8,7 @@ use windows::{
     },
 };
 
-use crate::{
-    blob::Blob, dx::IResource, error::DxError, resources::Resource, root_signature::RootSignature,
-    HasInterface,
-};
+use crate::{blob::Blob, dx::Resource, error::DxError, root_signature::RootSignature};
 
 use super::*;
 
@@ -350,7 +347,7 @@ impl<'a> ComputePipelineStateDesc<'a> {
     #[inline]
     pub fn with_root_signature(mut self, root_signature: &'a RootSignature) -> Self {
         unsafe {
-            self.0.pRootSignature = std::mem::transmute_copy(root_signature.as_raw());
+            self.0.pRootSignature = std::mem::transmute_copy(&root_signature.0);
             self
         }
     }
@@ -855,7 +852,7 @@ impl<'a> GraphicsPipelineDesc<'a> {
     #[inline]
     pub fn with_root_signature(mut self, root_signature: &'a RootSignature) -> Self {
         unsafe {
-            self.0.pRootSignature = std::mem::transmute_copy(root_signature.as_raw());
+            self.0.pRootSignature = std::mem::transmute_copy(&root_signature.0);
             self
         }
     }
@@ -2000,7 +1997,7 @@ impl<'a> ResourceBarrier<'a> {
                 Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
                 Anonymous: D3D12_RESOURCE_BARRIER_0 {
                     Transition: ManuallyDrop::new(D3D12_RESOURCE_TRANSITION_BARRIER {
-                        pResource: unsafe { std::mem::transmute_copy(resource.as_raw()) },
+                        pResource: unsafe { std::mem::transmute_copy(&resource.0) },
                         Subresource: subresource.unwrap_or(BARRIER_ALL_SUBRESOURCES),
                         StateBefore: before.as_raw(),
                         StateAfter: after.as_raw(),
@@ -2019,8 +2016,8 @@ impl<'a> ResourceBarrier<'a> {
                 Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
                 Anonymous: D3D12_RESOURCE_BARRIER_0 {
                     Aliasing: ManuallyDrop::new(D3D12_RESOURCE_ALIASING_BARRIER {
-                        pResourceBefore: unsafe { std::mem::transmute_copy(before.as_raw()) },
-                        pResourceAfter: unsafe { std::mem::transmute_copy(after.as_raw()) },
+                        pResourceBefore: unsafe { std::mem::transmute_copy(&before.0) },
+                        pResourceAfter: unsafe { std::mem::transmute_copy(&after.0) },
                     }),
                 },
             },
@@ -2036,7 +2033,7 @@ impl<'a> ResourceBarrier<'a> {
                 Flags: D3D12_RESOURCE_BARRIER_FLAG_NONE,
                 Anonymous: D3D12_RESOURCE_BARRIER_0 {
                     UAV: ManuallyDrop::new(D3D12_RESOURCE_UAV_BARRIER {
-                        pResource: unsafe { std::mem::transmute_copy(resource.as_raw_ref()) },
+                        pResource: unsafe { std::mem::transmute_copy(&resource.0) },
                     }),
                 },
             },
@@ -3599,10 +3596,10 @@ pub struct TextureCopyLocation<'a>(pub(crate) D3D12_TEXTURE_COPY_LOCATION, Phant
 
 impl<'a> TextureCopyLocation<'a> {
     #[inline]
-    pub fn subresource(resource: &'a impl IResource, index: u32) -> Self {
+    pub fn subresource(resource: impl AsRef<Resource>, index: u32) -> Self {
         Self(
             D3D12_TEXTURE_COPY_LOCATION {
-                pResource: unsafe { std::mem::transmute_copy(resource.as_raw()) },
+                pResource: unsafe { std::mem::transmute_copy(&resource.as_ref().0) },
                 Type: D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
                 Anonymous: D3D12_TEXTURE_COPY_LOCATION_0 {
                     SubresourceIndex: index,
@@ -3614,12 +3611,12 @@ impl<'a> TextureCopyLocation<'a> {
 
     #[inline]
     pub fn placed_footprint(
-        resource: &'a impl IResource,
+        resource: impl AsRef<Resource>,
         footprint: PlacedSubresourceFootprint,
     ) -> Self {
         Self(
             D3D12_TEXTURE_COPY_LOCATION {
-                pResource: unsafe { std::mem::transmute_copy(resource.as_raw()) },
+                pResource: unsafe { std::mem::transmute_copy(&resource.as_ref().0) },
                 Type: D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,
                 Anonymous: D3D12_TEXTURE_COPY_LOCATION_0 {
                     PlacedFootprint: footprint.0,

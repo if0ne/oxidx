@@ -1,17 +1,6 @@
-use windows::{
-    core::{Interface, Param},
-    Win32::Graphics::Direct3D12::ID3D12QueryHeap,
-};
+use windows::Win32::Graphics::Direct3D12::ID3D12QueryHeap;
 
-use crate::{create_type, impl_trait, HasInterface};
-
-/// Manages a query heap. A query heap holds an array of queries, referenced by indexes.
-///
-/// For more information: [`ID3D12QueryHeap interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12queryheap)
-pub trait IQueryHeap:
-    for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12QueryHeap>>
-{
-}
+use crate::{create_type, impl_interface};
 
 create_type! {
     /// Manages a query heap. A query heap holds an array of queries, referenced by indexes.
@@ -20,7 +9,6 @@ create_type! {
     QueryHeap wrap ID3D12QueryHeap
 }
 
-impl_trait! {
-    impl IQueryHeap =>
+impl_interface! {
     QueryHeap;
 }

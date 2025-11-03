@@ -155,13 +155,7 @@ impl DXSample for Sample {
 
         let swap_chain: Swapchain3 = self
             .dxgi_factory
-            .create_swapchain_for_hwnd(
-                &command_queue,
-                hwnd,
-                &swap_chain_desc,
-                None,
-                None::<&Output1>,
-            )
+            .create_swapchain_for_hwnd(&command_queue, hwnd, &swap_chain_desc, None, None)
             .unwrap()
             .try_into()
             .unwrap();

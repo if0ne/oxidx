@@ -8,9 +8,7 @@ use windows::Win32::System::Diagnostics::Debug::{
     EXCEPTION_POINTERS,
 };
 
-use crate::{
-    create_type, dx::MessageSeverity, impl_trait, types::GpuBasedValidationFlags, HasInterface,
-};
+use crate::{create_type, dx::MessageSeverity, impl_interface, types::GpuBasedValidationFlags};
 
 const MESSAGE_PREFIXES: &[(&str, MessageSeverity)] = &[
     ("CORRUPTION", MessageSeverity::Corruption),
@@ -23,77 +21,6 @@ const MESSAGE_PREFIXES: &[(&str, MessageSeverity)] = &[
 #[cfg(feature = "callback")]
 static CALLBACK_HANDLER: std::sync::Mutex<Option<crate::types::CallbackData>> =
     std::sync::Mutex::new(None);
-
-/// An interface used to turn on the debug layer.
-///
-/// For more information: [`ID3D12Debug interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug)
-pub trait IDebug: HasInterface<Raw: Interface> {
-    /// Enables the debug layer.
-    ///
-    /// For more information: [`ID3D12Debug::EnableDebugLayer method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug-enabledebuglayer)
-    fn enable_debug_layer(&self);
-}
-
-#[cfg(feature = "callback")]
-pub trait IDebugExt: IDebug {
-    fn set_callback(&self, callback: crate::types::CallbackData);
-    fn take_callback(&self);
-}
-
-/// Adds GPU-Based Validation and Dependent Command Queue Synchronization to the debug layer.
-///
-/// For more information: [`ID3D12Debug1 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug1)
-pub trait IDebug1: IDebug {
-    /// This method enables or disables GPU-Based Validation (GBV) before creating a device with the debug layer enabled.
-    ///
-    /// For more information: [`ID3D12Debug1::SetEnableGPUBasedValidation method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug1-setenablegpubasedvalidation)
-    fn set_enable_gpu_based_validation(&self, enable: bool);
-
-    /// Enables or disables dependent command queue synchronization when using a D3D12 device with the debug layer enabled.
-    ///
-    /// For more information: [`ID3D12Debug1::SetEnableSynchronizedCommandQueueValidation method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug1-setenablesynchronizedcommandqueuevalidation)
-    fn set_enable_synchronized_command_queue_validation(&self, enable: bool);
-}
-
-/// Adds configurable levels of GPU-based validation to the debug layer.
-///
-/// For more information: [`ID3D12Debug2 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug2)
-pub trait IDebug2: IDebug1 {
-    /// This method configures the level of GPU-based validation that the debug device is to perform at runtime.
-    ///
-    /// For more information: [`ID3D12Debug2::SetGPUBasedValidationFlags method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug2-setgpubasedvalidationflags)
-    fn set_gpu_based_validation_flags(&self, flags: GpuBasedValidationFlags);
-}
-
-/// Adds the ability to disable the debug layer.
-///
-/// For more information: [`ID3D12Debug4 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug4)
-pub trait IDebug4: IDebug2 {
-    /// Disables the debug layer.
-    ///
-    /// For more information: [`ID3D12Debug4::DisableDebugLayer method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug4-disabledebuglayer)
-    fn disable_debug_layer(&self);
-}
-
-/// Adds to the debug layer the ability to configure the auto-naming of objects.
-///
-/// For more information: [`ID3D12Debug5 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug5)
-pub trait IDebug5: IDebug4 {
-    /// Configures the auto-naming of objects.
-    ///
-    /// For more information: [`ID3D12Debug5::SetEnableAutoName method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug5-setenableautoname)
-    fn set_enable_auto_name(&self, enable: bool);
-}
-
-/// Adds to the debug layer the ability to configure the auto-naming of objects.
-///
-/// For more information: [`ID3D12Debug5 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nn-d3d12sdklayers-id3d12debug5)
-pub trait IDebug6: IDebug5 {
-    /// TBD
-    ///
-    /// For more information: [`ID3D12Debug6::SetForceLegacyBarrierValidation method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug6-setforcelegacybarriervalidation)
-    fn set_force_legacy_barrier_validation(&self, enable: bool);
-}
 
 create_type! {
     /// An interface used to turn on the debug layer.
@@ -137,8 +64,7 @@ create_type! {
    Debug6 wrap ID3D12Debug6; decorator for Debug5, Debug4, Debug3, Debug1, Debug
 }
 
-impl_trait! {
-    impl IDebug =>
+impl_interface! {
     Debug,
     Debug1,
     Debug3,
@@ -146,78 +72,94 @@ impl_trait! {
     Debug5,
     Debug6;
 
-    fn enable_debug_layer(&self) {
+    /// Enables the debug layer.
+    ///
+    /// For more information: [`ID3D12Debug::EnableDebugLayer method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug-enabledebuglayer)
+    pub fn enable_debug_layer(&self) {
         unsafe {
             self.0.EnableDebugLayer();
         }
     }
 }
 
-impl_trait! {
-    impl IDebug1 =>
+impl_interface! {
     Debug1,
     Debug3,
     Debug4,
     Debug5,
     Debug6;
 
-    fn set_enable_gpu_based_validation(&self, enable: bool) {
+    /// This method enables or disables GPU-Based Validation (GBV) before creating a device with the debug layer enabled.
+    ///
+    /// For more information: [`ID3D12Debug1::SetEnableGPUBasedValidation method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug1-setenablegpubasedvalidation)
+    pub fn set_enable_gpu_based_validation(&self, enable: bool) {
         unsafe {
             self.0.SetEnableGPUBasedValidation(enable);
         }
     }
 
-    fn set_enable_synchronized_command_queue_validation(&self, enable: bool) {
+    /// Enables or disables dependent command queue synchronization when using a D3D12 device with the debug layer enabled.
+    ///
+    /// For more information: [`ID3D12Debug1::SetEnableSynchronizedCommandQueueValidation method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug1-setenablesynchronizedcommandqueuevalidation)
+    pub fn set_enable_synchronized_command_queue_validation(&self, enable: bool) {
         unsafe {
             self.0.SetEnableSynchronizedCommandQueueValidation(enable);
         }
     }
 }
 
-impl_trait! {
-    impl IDebug2 =>
+impl_interface! {
     Debug3,
     Debug4,
     Debug5,
     Debug6;
 
-    fn set_gpu_based_validation_flags(&self, flags: GpuBasedValidationFlags) {
+    /// This method configures the level of GPU-based validation that the debug device is to perform at runtime.
+    ///
+    /// For more information: [`ID3D12Debug2::SetGPUBasedValidationFlags method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug2-setgpubasedvalidationflags)
+    pub fn set_gpu_based_validation_flags(&self, flags: GpuBasedValidationFlags) {
         unsafe {
             self.0.SetGPUBasedValidationFlags(flags.as_raw());
         }
     }
 }
 
-impl_trait! {
-    impl IDebug4 =>
+impl_interface! {
     Debug4,
     Debug5,
     Debug6;
 
-    fn disable_debug_layer(&self) {
+    /// Disables the debug layer.
+    ///
+    /// For more information: [`ID3D12Debug4::DisableDebugLayer method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug4-disabledebuglayer)
+    pub fn disable_debug_layer(&self) {
         unsafe {
             self.0.DisableDebugLayer();
         }
     }
 }
 
-impl_trait! {
-    impl IDebug5 =>
+impl_interface! {
     Debug5,
     Debug6;
 
-    fn set_enable_auto_name(&self, enable: bool) {
+    /// Configures the auto-naming of objects.
+    ///
+    /// For more information: [`ID3D12Debug5::SetEnableAutoName method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug5-setenableautoname)
+    pub fn set_enable_auto_name(&self, enable: bool) {
         unsafe {
             self.0.SetEnableAutoName(enable);
         }
     }
 }
 
-impl_trait! {
-    impl IDebug6 =>
+impl_interface! {
     Debug6;
 
-    fn set_force_legacy_barrier_validation(&self, enable: bool) {
+    /// TBD
+    ///
+    /// For more information: [`ID3D12Debug6::SetForceLegacyBarrierValidation method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug6-setforcelegacybarriervalidation)
+    pub fn set_force_legacy_barrier_validation(&self, enable: bool) {
         unsafe {
             self.0.SetForceLegacyBarrierValidation(enable);
         }
@@ -225,8 +167,7 @@ impl_trait! {
 }
 
 #[cfg(feature = "callback")]
-impl_trait! {
-    impl IDebugExt =>
+impl_interface! {
     Debug,
     Debug1,
     Debug3,
@@ -234,7 +175,7 @@ impl_trait! {
     Debug5,
     Debug6;
 
-    fn set_callback(&self, callback: crate::types::CallbackData) {
+    pub fn set_callback(&self, callback: crate::types::CallbackData) {
         unsafe {
             let mut guard = CALLBACK_HANDLER.lock().unwrap();
 
@@ -247,7 +188,7 @@ impl_trait! {
         }
     }
 
-    fn take_callback(&self) {
+    pub fn take_callback(&self) {
         unsafe {
             let mut guard = CALLBACK_HANDLER.lock().unwrap();
             AddVectoredExceptionHandler(0, None);

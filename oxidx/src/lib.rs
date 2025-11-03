@@ -43,15 +43,4 @@ pub trait FeatureObject: __Sealed {
     const TYPE: types::FeatureType;
 }
 
-pub(crate) trait HasInterface {
-    type Raw;
-    type RawRef<'a>
-    where
-        Self: 'a;
-
-    fn new(raw: Self::Raw) -> Self;
-    fn as_raw(&self) -> &Self::Raw;
-    fn as_raw_ref(&self) -> Self::RawRef<'_>;
-}
-
 pub(crate) trait __Sealed {}

@@ -11,58 +11,7 @@ use windows::{
     },
 };
 
-use crate::{
-    create_type, error::DxError, impl_trait, reflection::ShaderReflection, types::*, HasInterface,
-};
-
-/// This interface is used to return data of arbitrary length.
-///
-/// For more information: [`ID3DBlob interface`](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/ff728743(v=vs.85))
-pub trait IBlob: HasInterface<Raw: Interface> {
-    /// Gets a pointer to the data.
-    ///
-    /// For more information: [`ID3D10Blob::GetBufferPointer method`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/nf-d3dcommon-id3d10blob-getbufferpointer)
-    fn get_buffer_ptr<T>(&self) -> std::ptr::NonNull<T>;
-
-    /// Gets the size.
-    ///
-    /// For more information: [`ID3D10Blob::GetBufferSize method`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/nf-d3dcommon-id3d10blob-getbuffersize)
-    fn get_buffer_size(&self) -> usize;
-}
-
-/// Additional methods
-pub trait IBlobExt: IBlob {
-    /// Compiles Microsoft High Level Shader Language (HLSL) code into bytecode for a given target.
-    ///
-    /// For more information: [`D3DCompileFromFile function`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcompiler/nf-d3dcompiler-d3dcompilefromfile)
-    fn compile_from_file(
-        filename: impl AsRef<Path>,
-        defines: &[ShaderMacro],
-        entry_point: impl AsRef<CStr>,
-        target: impl AsRef<CStr>,
-        flags1: u32,
-        flags2: u32,
-    ) -> Result<Self, DxError>
-    where
-        Self: Sized;
-
-    /// Create buffer
-    ///
-    /// For more information: [`D3DCreateBlob function`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcompiler/nf-d3dcompiler-d3dcreateblob)
-    fn create_blob(size: usize) -> Result<Self, DxError>
-    where
-        Self: Sized;
-
-    /// Create blob from bytes
-    fn from_bytes(bytes: &[u8]) -> Result<Self, DxError>
-    where
-        Self: Sized;
-
-    /// Gets a pointer to a reflection interface.
-    ///
-    /// For more information: [`D3DReflect function`]https://learn.microsoft.com/en-us/windows/win32/api/d3dcompiler/nf-d3dcompiler-d3dreflect
-    fn reflect(&self) -> Result<ShaderReflection, DxError>;
-}
+use crate::{create_type, error::DxError, impl_interface, reflection::ShaderReflection, types::*};
 
 create_type! {
     /// This interface is used to return data of arbitrary length.
@@ -87,28 +36,35 @@ impl Blob {
     }
 }
 
-impl_trait! {
-    impl IBlob =>
+impl_interface! {
     Blob;
 
-    fn get_buffer_ptr<T>(&self) -> std::ptr::NonNull<T> {
+    /// Gets a pointer to the data.
+    ///
+    /// For more information: [`ID3D10Blob::GetBufferPointer method`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/nf-d3dcommon-id3d10blob-getbufferpointer)
+    pub fn get_buffer_ptr<T>(&self) -> std::ptr::NonNull<T> {
         unsafe {
             std::ptr::NonNull::new(self.0.GetBufferPointer() as *mut T).expect("Expected valid pointer")
         }
     }
 
-    fn get_buffer_size(&self) -> usize {
+    /// Gets the size.
+    ///
+    /// For more information: [`ID3D10Blob::GetBufferSize method`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/nf-d3dcommon-id3d10blob-getbuffersize)
+    pub fn get_buffer_size(&self) -> usize {
         unsafe {
             self.0.GetBufferSize()
         }
     }
 }
 
-impl_trait! {
-    impl IBlobExt =>
+impl_interface! {
     Blob;
 
-    fn compile_from_file(
+    /// Compiles Microsoft High Level Shader Language (HLSL) code into bytecode for a given target.
+    ///
+    /// For more information: [`D3DCompileFromFile function`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcompiler/nf-d3dcompiler-d3dcompilefromfile)
+    pub fn compile_from_file(
         filename: impl AsRef<Path>,
         defines: &[ShaderMacro],
         entry_point: impl AsRef<CStr>,
@@ -165,21 +121,25 @@ impl_trait! {
             }
         }
 
-        Ok(Blob::new(shader.unwrap()))
+        Ok(Blob(shader.unwrap()))
     }
 
-    fn create_blob(size: usize) -> Result<Self, DxError>
+    /// Create buffer
+    ///
+    /// For more information: [`D3DCreateBlob function`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcompiler/nf-d3dcompiler-d3dcreateblob)
+    pub fn create_blob(size: usize) -> Result<Self, DxError>
     where
         Self: Sized
     {
         unsafe {
             D3DCreateBlob(size)
-                .map(Self::new)
+                .map(Self)
                 .map_err(DxError::from)
         }
     }
 
-    fn from_bytes(bytes: &[u8]) -> Result<Self, DxError>
+    /// Create blob from bytes
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, DxError>
     where
         Self: Sized
     {
@@ -194,7 +154,10 @@ impl_trait! {
         Ok(blob)
     }
 
-    fn reflect(&self) -> Result<ShaderReflection, DxError> {
+    /// Gets a pointer to a reflection interface.
+    ///
+    /// For more information: [`D3DReflect function`]https://learn.microsoft.com/en-us/windows/win32/api/d3dcompiler/nf-d3dcompiler-d3dreflect
+    pub fn reflect(&self) -> Result<ShaderReflection, DxError> {
         unsafe {
             let mut interface = std::ptr::null_mut();
             D3DReflect(
@@ -206,7 +169,7 @@ impl_trait! {
 
             let shader_reflection = ID3D12ShaderReflection::from_raw(interface);
 
-            Ok(ShaderReflection::new(shader_reflection))
+            Ok(ShaderReflection(shader_reflection))
         }
     }
 }

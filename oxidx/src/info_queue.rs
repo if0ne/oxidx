@@ -6,13 +6,13 @@ use std::{
 };
 
 use windows::{
-    core::{Param, PCSTR},
+    core::PCSTR,
     Win32::Graphics::Direct3D12::{
         ID3D12InfoQueue1, D3D12_MESSAGE_CATEGORY, D3D12_MESSAGE_ID, D3D12_MESSAGE_SEVERITY,
     },
 };
 
-use crate::{create_type, dx::DxError, impl_trait, types::*, HasInterface};
+use crate::{create_type, dx::DxError, impl_interface, types::*};
 
 static CALLBACK_MAP: LazyLock<Mutex<CallbackMap>> = LazyLock::new(Default::default);
 
@@ -39,19 +39,6 @@ impl Drop for CallbackMap {
     }
 }
 
-/// [`InfoQueue1`] inherits [`InfoQueue`]` and supports message callback with RegisterMessageCallback and UnregisterMessageCallback method.
-///
-/// For more information: [`ID3D12InfoQueue1 interface`](https://microsoft.github.io/DirectX-Specs/d3d/MessageCallback.htmle)
-pub trait IInfoQueue1: for<'a> HasInterface<RawRef<'a>: Param<ID3D12InfoQueue1>> {
-    fn register_message_callback(
-        &self,
-        callback: CallbackData,
-        flags: CallbackFlags,
-    ) -> Result<u32, DxError>;
-
-    fn unregister_message_callback(&self, callback_cookie: u32) -> Result<(), DxError>;
-}
-
 create_type! {
     /// [`InfoQueue1`] inherits [`InfoQueue`]` and supports message callback with RegisterMessageCallback and UnregisterMessageCallback method.
     ///
@@ -59,11 +46,10 @@ create_type! {
     InfoQueue1 wrap ID3D12InfoQueue1
 }
 
-impl_trait! {
-    impl IInfoQueue1 =>
+impl_interface! {
     InfoQueue1;
 
-    fn register_message_callback(
+    pub fn register_message_callback(
         &self,
         callback: CallbackData,
         flags: CallbackFlags
@@ -91,7 +77,7 @@ impl_trait! {
         }
     }
 
-    fn unregister_message_callback(&self, callback_cookie: u32) -> Result<(), DxError> {
+    pub fn unregister_message_callback(&self, callback_cookie: u32) -> Result<(), DxError> {
         unsafe {
             CALLBACK_MAP
                 .lock()

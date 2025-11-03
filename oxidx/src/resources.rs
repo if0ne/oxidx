@@ -1,79 +1,13 @@
 use std::ops::Range;
 
-use windows::{
-    core::{Interface, Param},
-    Win32::Graphics::Direct3D12::*,
-};
+use windows::Win32::Graphics::Direct3D12::*;
 
 use crate::{
     create_type,
     error::DxError,
-    impl_trait,
+    impl_interface,
     types::{DxBox, GpuVirtualAddress, HeapFlags, HeapProperties, ResourceDesc},
-    HasInterface,
 };
-
-/// Encapsulates a generalized ability of the CPU and GPU to read and write to physical memory, or heaps.
-/// It contains abstractions for organizing and manipulating simple arrays of data as well as multidimensional data optimized for shader sampling.
-///
-/// For more information: [`ID3D12Resource interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12resource)
-pub trait IResource:
-    for<'a> HasInterface<Raw: Interface, RawRef<'a>: Param<ID3D12Resource>>
-{
-    /// Gets the resource description.
-    ///
-    /// For more information: [`ID3D12Resource::GetDesc method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-getdesc)
-    fn get_desc(&self) -> ResourceDesc;
-
-    /// This method returns the GPU virtual address of a buffer resource.
-    ///
-    /// For more information: [`ID3D12Resource::GetGPUVirtualAddress method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-getgpuvirtualaddress)
-    fn get_gpu_virtual_address(&self) -> GpuVirtualAddress;
-
-    /// Retrieves the properties of the resource heap, for placed and committed resources.
-    ///
-    /// For more information: [`ID3D12Resource::GetHeapProperties method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-getheapproperties)
-    fn get_heap_properties(&self) -> Result<(HeapProperties, HeapFlags), DxError>;
-
-    /// Gets a CPU pointer to the specified subresource in the resource, but may not disclose the pointer value to applications.
-    /// Map also invalidates the CPU cache, when necessary, so that CPU reads to this address reflect any modifications made by the GPU.
-    ///
-    /// For more information: [`ID3D12Resource::Map method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-map)
-    fn map<T>(
-        &self,
-        subresource: u32,
-        read_range: Option<Range<usize>>,
-    ) -> Result<std::ptr::NonNull<T>, DxError>;
-
-    /// Uses the CPU to copy data from a subresource, enabling the CPU to read the contents of most textures with undefined layouts.
-    ///
-    /// For more information: [`ID3D12Resource::ReadFromSubresource method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-readfromsubresource)
-    fn read_from_subresource(
-        &self,
-        dst_data: &mut [u8],
-        dst_row_pitch: u32,
-        dst_depth_pitch: u32,
-        src_subresource: u32,
-        src_box: Option<&DxBox>,
-    ) -> Result<(), DxError>;
-
-    /// Invalidates the CPU pointer to the specified subresource in the resource.
-    ///
-    /// For more information: [`ID3D12Resource::Unmap method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-unmap)
-    fn unmap(&self, subresource: u32, written_range: Option<Range<usize>>);
-
-    /// Uses the CPU to copy data into a subresource, enabling the CPU to modify the contents of most textures with undefined layouts.
-    ///
-    /// For more information: [`ID3D12Resource::WriteToSubresource method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-writetosubresource)
-    fn write_to_subresource(
-        &self,
-        dst_subresource: u32,
-        dst_box: Option<&DxBox>,
-        src_data: &mut [u8],
-        src_row_pitch: u32,
-        src_depth_pitch: u32,
-    ) -> Result<(), DxError>;
-}
 
 create_type! {
     /// Encapsulates a generalized ability of the CPU and GPU to read and write to physical memory, or heaps.
@@ -83,17 +17,22 @@ create_type! {
     Resource wrap ID3D12Resource
 }
 
-impl_trait! {
-    impl IResource =>
+impl_interface! {
     Resource;
 
-    fn get_desc(&self) -> ResourceDesc {
+    /// Gets the resource description.
+    ///
+    /// For more information: [`ID3D12Resource::GetDesc method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-getdesc)
+    pub fn get_desc(&self) -> ResourceDesc {
         unsafe {
             ResourceDesc(self.0.GetDesc())
         }
     }
 
-    fn get_heap_properties(&self) -> Result<(HeapProperties, HeapFlags), DxError> {
+    /// Retrieves the properties of the resource heap, for placed and committed resources.
+    ///
+    /// For more information: [`ID3D12Resource::GetHeapProperties method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-getheapproperties)
+    pub fn get_heap_properties(&self) -> Result<(HeapProperties, HeapFlags), DxError> {
         unsafe {
             let mut properties = Default::default();
             let mut flags = Default::default();
@@ -104,13 +43,20 @@ impl_trait! {
         }
     }
 
-    fn get_gpu_virtual_address(&self) -> GpuVirtualAddress {
+    /// This method returns the GPU virtual address of a buffer resource.
+    ///
+    /// For more information: [`ID3D12Resource::GetGPUVirtualAddress method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-getgpuvirtualaddress)
+    pub fn get_gpu_virtual_address(&self) -> GpuVirtualAddress {
         unsafe {
             self.0.GetGPUVirtualAddress()
         }
     }
 
-    fn map<T>(&self, subresource: u32, read_range: Option<Range<usize>>) -> Result<std::ptr::NonNull<T>, DxError> {
+    /// Gets a CPU pointer to the specified subresource in the resource, but may not disclose the pointer value to applications.
+    /// Map also invalidates the CPU cache, when necessary, so that CPU reads to this address reflect any modifications made by the GPU.
+    ///
+    /// For more information: [`ID3D12Resource::Map method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-map)
+    pub fn map<T>(&self, subresource: u32, read_range: Option<Range<usize>>) -> Result<std::ptr::NonNull<T>, DxError> {
         unsafe {
             let mut ptr = std::ptr::null_mut();
             let range = read_range.map(|r| D3D12_RANGE {
@@ -130,7 +76,10 @@ impl_trait! {
         }
     }
 
-    fn read_from_subresource(
+    /// Uses the CPU to copy data from a subresource, enabling the CPU to read the contents of most textures with undefined layouts.
+    ///
+    /// For more information: [`ID3D12Resource::ReadFromSubresource method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-readfromsubresource)
+    pub fn read_from_subresource(
         &self,
         dst_data: &mut [u8],
         dst_row_pitch: u32,
@@ -151,7 +100,10 @@ impl_trait! {
         }
     }
 
-    fn unmap(&self, subresource: u32, written_range: Option<Range<usize>>) {
+    /// Invalidates the CPU pointer to the specified subresource in the resource.
+    ///
+    /// For more information: [`ID3D12Resource::Unmap method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-unmap)
+    pub fn unmap(&self, subresource: u32, written_range: Option<Range<usize>>) {
         unsafe {
             let range = written_range.map(|r| D3D12_RANGE {
                 Begin: r.start,
@@ -163,7 +115,10 @@ impl_trait! {
         }
     }
 
-    fn write_to_subresource(
+    /// Uses the CPU to copy data into a subresource, enabling the CPU to modify the contents of most textures with undefined layouts.
+    ///
+    /// For more information: [`ID3D12Resource::WriteToSubresource method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-writetosubresource)
+    pub fn write_to_subresource(
         &self,
         dst_subresource: u32,
         dst_box: Option<&DxBox>,

@@ -10,23 +10,9 @@ macro_rules! create_type {
         #[repr(transparent)]
         pub struct $name(pub $raw_type);
 
-        impl $crate::HasInterface for $name {
-            type Raw = $raw_type;
-            type RawRef<'a> = &'a $raw_type;
-
-            #[inline]
-            fn new(raw: Self::Raw) -> Self {
-                Self(raw)
-            }
-
-            #[inline]
-            fn as_raw(&self) -> &Self::Raw {
-                &self.0
-            }
-
-            #[inline]
-            fn as_raw_ref(&self) -> Self::RawRef<'_> {
-                &self.0
+        impl AsRef<$name> for $name {
+            fn as_ref(&self) -> &Self {
+                self
             }
         }
 
@@ -35,7 +21,13 @@ macro_rules! create_type {
             impl From<$name> for $base {
                 #[inline]
                 fn from(value: $name) -> Self {
-                    unsafe { <$base>::new(value.0.cast::<_>().unwrap_unchecked()) }
+                    unsafe { Self(value.0.cast::<_>().unwrap_unchecked()) }
+                }
+            }
+
+            impl AsRef<$base> for $name {
+                fn as_ref(&self) -> &$base {
+                    unsafe { &*(self as *const $name as *const $base) }
                 }
             }
 
@@ -52,7 +44,7 @@ macro_rules! create_type {
                                 std::any::type_name::<$name>()
                             ))?;
 
-                    Ok(<$name>::new(temp))
+                    Ok(Self(temp))
                 }
             }
         )*
@@ -61,15 +53,15 @@ macro_rules! create_type {
 
 #[doc(hidden)]
 #[macro_export]
-macro_rules! impl_trait {
-    (impl $interface:ty => $( $t:ty ),+; $( $func:item )* ) => {
-        impl_trait! { @impl_tuple impl $interface => $($t),+; ($($func),*) }
+macro_rules! impl_interface {
+    ($( $t:ty ),+; $( $func:item )* ) => {
+        impl_interface! { @impl_tuple $($t),+; ($($func),*) }
     };
-    (@impl_tuple impl $interface:ty => $( $t:ty ),*; $tuple:tt ) => {
-        $(impl_trait! { @impl_fn impl $interface => $t; $tuple } )+
+    (@impl_tuple $( $t:ty ),*; $tuple:tt ) => {
+        $(impl_interface! { @impl_fn $t; $tuple } )+
     };
-    (@impl_fn impl $interface:ty => $t:ty; ($($func:item),*)) => {
-        impl $interface for $t {
+    (@impl_fn $t:ty; ($($func:item),*)) => {
+        impl $t {
             $(
                 $func
             )*
@@ -125,24 +117,21 @@ macro_rules! impl_up_down_cast {
         impl From<$child> for $base {
             #[inline]
             fn from(value: $child) -> Self {
-                unsafe { <$base>::new(value.0.cast::<_>().unwrap_unchecked()) }
+                unsafe { Self(value.0.cast::<_>().unwrap_unchecked()) }
             }
         }
 
         /// Downcast
-        impl TryFrom<$base> for $child {
-            type Error = $crate::error::DxError;
-
+        impl From<$base> for $child {
             #[inline]
-            fn try_from(value: $base) -> Result<$child, Self::Error> {
-                let temp = value.0.cast::<_>().map_err(|_| {
-                    $crate::error::DxError::Cast(
-                        std::any::type_name::<$base>(),
-                        std::any::type_name::<$child>(),
-                    )
-                })?;
+            fn from(value: $base) -> Self {
+                let temp = value.0.cast::<_>().expect(&format!(
+                    "failed to cast from {} to {}",
+                    std::any::type_name::<$base>(),
+                    std::any::type_name::<$child>(),
+                ));
 
-                Ok(<$child>::new(temp))
+                Self(temp)
             }
         }
     };
