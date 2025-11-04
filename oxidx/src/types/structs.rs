@@ -3,7 +3,7 @@ use std::{ffi::CStr, marker::PhantomData, mem::ManuallyDrop, ops::Range};
 use windows::{
     core::PCSTR,
     Win32::{
-        Foundation::{CloseHandle, HANDLE, LUID, RECT},
+        Foundation::{CloseHandle, HANDLE, LUID, POINT, RECT},
         Graphics::Direct3D::D3D_SHADER_MACRO,
     },
 };
@@ -1649,6 +1649,50 @@ impl PlacedSubresourceFootprint {
     #[inline]
     pub fn footprint(&self) -> &SubresourceFootprint {
         unsafe { std::mem::transmute(&self.0.Footprint) }
+    }
+}
+
+/// The POINT structure defines the x- and y-coordinates of a point.
+///
+/// For more information: [`POINT structure`](https://learn.microsoft.com/en-us/windows/win32/api/windef/ns-windef-point)
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[repr(transparent)]
+pub struct Point(pub(crate) POINT);
+
+impl Point {
+    #[inline]
+    pub fn set_x(&mut self, x: i32) {
+        self.0.x = x;
+    }
+
+    #[inline]
+    pub fn set_y(&mut self, y: i32) {
+        self.0.y = y;
+    }
+}
+
+/// Describes information about present that helps the operating system optimize presentation.
+///
+/// For more information: [`DXGI_PRESENT_PARAMETERS structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/ns-dxgi1_2-dxgi_present_parameters)
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[repr(transparent)]
+pub struct PresentParameters<'a>(pub(crate) DXGI_PRESENT_PARAMETERS, PhantomData<&'a ()>);
+
+impl<'a> PresentParameters<'a> {
+    #[inline]
+    pub fn set_dirty_rects(&mut self, rects: &'a mut [Rect]) {
+        self.0.DirtyRectsCount = rects.len() as u32;
+        self.0.pDirtyRects = rects.as_mut_ptr() as *mut _;
+    }
+
+    #[inline]
+    pub fn set_scroll_rect(&mut self, rects: &'a mut [Rect]) {
+        self.0.pScrollRect = rects.as_mut_ptr() as *mut _;
+    }
+
+    #[inline]
+    pub fn set_scroll_offset(&mut self, points: &'a mut [Point]) {
+        self.0.pScrollOffset = points.as_mut_ptr() as *mut _;
     }
 }
 

@@ -1,8 +1,10 @@
+use std::num::NonZero;
+
 use windows::core::Interface;
 use windows::Win32::Foundation::HANDLE;
 use windows::Win32::Graphics::Direct3D12::ID3D12Resource;
 use windows::Win32::Graphics::Dxgi::{
-    IDXGIOutput1, IDXGISwapChain1, IDXGISwapChain2, IDXGISwapChain3,
+    IDXGIOutput1, IDXGISwapChain1, IDXGISwapChain2, IDXGISwapChain3, DXGI_RGBA,
 };
 
 use crate::dx::Resource;
@@ -42,6 +44,17 @@ impl_interface! {
     Swapchain1,
     Swapchain2,
     Swapchain3;
+
+    /// Retrieves the background color of the swap chain.
+    ///
+    /// For more information: [`IDXGISwapChain1::GetBackgroundColor method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgiswapchain1-getbackgroundcolor)
+    pub fn get_background_color(&self) -> Result<[f32; 4], DxError> {
+        unsafe {
+            let color = self.0.GetBackgroundColor().map_err(DxError::from)?;
+
+            Ok([color.r, color.g, color.b, color.a])
+        }
+    }
 
     /// Accesses one of the swap-chain's back buffers.
     ///
@@ -94,6 +107,17 @@ impl_interface! {
         }
     }
 
+    /// Gets a description of a full-screen swap chain.
+    ///
+    /// For more information: [`IDXGISwapChain1::GetFullscreenDesc method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgiswapchain1-getfullscreendesc)
+    pub fn get_fullscreen_desc(&self) -> Result<SwapchainFullscreenDesc, DxError> {
+        unsafe {
+            self.0.GetFullscreenDesc()
+                .map(SwapchainFullscreenDesc)
+                .map_err(DxError::from)
+        }
+    }
+
     /// Get the state associated with full-screen mode.
     ///
     /// For more information: [`IDXGISwapChain1::GetFullscreenState method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgiswapchain-getfullscreenstate)
@@ -120,6 +144,16 @@ impl_interface! {
         }
     }
 
+    /// Retrieves the underlying HWND for this swap-chain object.
+    ///
+    /// For more information: [`IDXGISwapChain1::GetHwnd method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgiswapchain1-gethwnd)
+    pub fn get_hwnd(&self) -> Result<NonZero<isize>, DxError> {
+        unsafe {
+            self.0.GetHwnd()
+                .map(|hwnd| NonZero::new_unchecked(hwnd.0 as isize))
+                .map_err(DxError::from)
+        }
+    }
 
     /// Gets the number of times that Present has been called.
     ///
@@ -131,12 +165,61 @@ impl_interface! {
         }
     }
 
+    /// Gets the output (the display monitor) to which you can restrict the contents of a present operation.
+    ///
+    /// For more information: [`IDXGISwapChain1::GetRestrictToOutput method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgiswapchain1-getrestricttooutput)
+    pub fn get_restrict_to_output(&self) -> Result<Output1, DxError> {
+        unsafe {
+            self.0.GetRestrictToOutput()
+                .map_err(DxError::from)
+                .and_then(|output| output.cast::<IDXGIOutput1>().map_err(|_| DxError::Cast(
+                    std::any::type_name::<windows::Win32::Graphics::Dxgi::IDXGIOutput>(),
+                    std::any::type_name::<windows::Win32::Graphics::Dxgi::IDXGIOutput1>()
+                )))
+                .map(Output1)
+        }
+    }
+
+    /// Gets the rotation of the back buffers for the swap chain.
+    ///
+    /// For more information: [`IDXGISwapChain1::GetRotation method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgiswapchain1-getrotation)
+    pub fn get_rotation(&self) -> Result<RotationMode, DxError> {
+        unsafe {
+            self.0.GetRotation()
+                .map(RotationMode::from)
+                .map_err(DxError::from)
+        }
+    }
+
+    /// Determines whether a swap chain supports “temporary mono.”
+    ///
+    /// For more information: [`IDXGISwapChain1::IsTemporaryMonoSupported method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgiswapchain1-istemporarymonosupported)
+    pub fn is_temporary_mono_supported(&self) -> bool {
+        unsafe {
+            self.0.IsTemporaryMonoSupported().as_bool()
+        }
+    }
+
     /// Presents a rendered image to the user.
     ///
     /// For more information: [`IDXGISwapChain::Present method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgiswapchain-present)
     pub fn present(&self, interval: u32, flags: PresentFlags) -> Result<(), DxError> {
         unsafe {
             self.0.Present(interval, flags.as_raw()).ok().map_err(DxError::from)
+        }
+    }
+
+    /// Presents a rendered image to the user.
+    ///
+    /// For more information: [`IDXGISwapChain1::Present1 method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgiswapchain1-present1)
+    pub fn present1(
+        &self,
+        interval: u32,
+        flags: PresentFlags,
+        present_params: &PresentParameters<'_>
+    ) -> Result<(), DxError> {
+        unsafe {
+            self.0.Present1(interval, flags.as_raw(), &present_params.0).ok().map_err(DxError::from)
         }
     }
 
@@ -174,6 +257,21 @@ impl_interface! {
         }
     }
 
+    /// Changes the background color of the swap chain.
+    ///
+    /// For more information: [`IDXGISwapChain1::SetBackgroundColor method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgiswapchain1-setbackgroundcolor)
+    pub fn set_background_color(&self, color: impl Into<[f32; 4]>) -> Result<(), DxError> {
+        unsafe {
+            let color = color.into();
+            self.0.SetBackgroundColor(&DXGI_RGBA {
+                r: color[0],
+                g: color[1],
+                b: color[2],
+                a: color[3]
+            }).map_err(DxError::from)
+        }
+    }
+
     /// Sets the display state to windowed or full screen.
     ///
     /// For more information: [`IDXGISwapChain::SetFullscreenState method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgiswapchain-setfullscreenstate)
@@ -192,9 +290,16 @@ impl_interface! {
                     .map_err(DxError::from)?;
             }
 
-
-
             Ok(())
+        }
+    }
+
+    /// Sets the rotation of the back buffers for the swap chain.
+    ///
+    /// For more information: [`IDXGISwapChain1::SetRotation method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgiswapchain1-setrotation)
+    pub fn set_rotation(&self, rotation: RotationMode) -> Result<(), DxError> {
+        unsafe {
+            self.0.SetRotation(rotation.as_raw()).map_err(DxError::from)
         }
     }
 }
