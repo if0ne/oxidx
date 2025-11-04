@@ -54,6 +54,83 @@ impl_interface! {
         }
     }
 
+    /// Get the output (the display monitor) that contains the majority of the client area of the target window.
+    ///
+    /// For more information: [`IDXGISwapChain::GetContainingOutput method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgiswapchain-getcontainingoutput)
+    pub fn get_containing_output(&self) -> Result<Output1, DxError> {
+        unsafe {
+            let output = self.0.GetContainingOutput().map_err(DxError::from)
+                .and_then(|out| out.cast::<IDXGIOutput1>().map_err(|_| DxError::Cast(
+                    std::any::type_name::<windows::Win32::Graphics::Dxgi::IDXGIOutput>(),
+                    std::any::type_name::<windows::Win32::Graphics::Dxgi::IDXGIOutput1>()
+                )))?;
+
+            Ok(Output1(output))
+        }
+    }
+
+    /// Gets a description of the swap chain.
+    ///
+    /// For more information: [`IDXGISwapChain1::GetDesc1 method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgiswapchain1-getdesc1)
+    pub fn get_desc1(&self) -> Result<SwapchainDesc1, DxError> {
+        unsafe {
+            self.0.GetDesc1()
+                .map(SwapchainDesc1)
+                .map_err(DxError::from)
+        }
+    }
+
+    /// Gets performance statistics about the last render frame.
+    ///
+    /// For more information: [`IDXGISwapChain1::GetFrameStatistics method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgiswapchain-getframestatistics)
+    pub fn get_frame_statistics(&self) -> Result<FrameStatistics, DxError> {
+        unsafe {
+            let mut res = Default::default();
+
+            self.0.GetFrameStatistics(&mut res)
+                .map_err(DxError::from)?;
+
+            Ok(FrameStatistics(res))
+        }
+    }
+
+    /// Get the state associated with full-screen mode.
+    ///
+    /// For more information: [`IDXGISwapChain1::GetFullscreenState method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgiswapchain-getfullscreenstate)
+    pub fn get_fullscreen_state(&self) -> Result<Option<Output1>, DxError> {
+        unsafe {
+            let mut fullscreen = Default::default();
+            let mut output: Option<windows::Win32::Graphics::Dxgi::IDXGIOutput> = None;
+
+            self.0.GetFullscreenState(Some(&mut fullscreen), Some(&mut output))
+                .map_err(DxError::from)?;
+
+            if fullscreen.as_bool() {
+                if let Some(output) = output {
+                    let output = output.cast::<IDXGIOutput1>().map_err(|_| DxError::Cast(
+                        std::any::type_name::<windows::Win32::Graphics::Dxgi::IDXGIOutput>(),
+                        std::any::type_name::<windows::Win32::Graphics::Dxgi::IDXGIOutput1>()
+                    ))?;
+
+                    return Ok(Some(Output1(output)))
+                }
+            }
+
+            Ok(None)
+        }
+    }
+
+
+    /// Gets the number of times that Present has been called.
+    ///
+    /// For more information: [`IDXGISwapChain::GetLastPresentCount method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgiswapchain-getlastpresentcount)
+    pub fn get_last_present_count(&self) -> Result<u32, DxError> {
+        unsafe {
+            self.0.GetLastPresentCount()
+                .map_err(DxError::from)
+        }
+    }
+
     /// Presents a rendered image to the user.
     ///
     /// For more information: [`IDXGISwapChain::Present method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgiswapchain-present)
@@ -82,6 +159,42 @@ impl_interface! {
                 new_format.as_raw(),
                 flags.as_raw()
             ).map_err(DxError::from)
+        }
+    }
+
+    /// Resizes the output target.
+    ///
+    /// For more information: [`IDXGISwapChain::ResizeTarget method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgiswapchain-resizetarget)
+    pub fn resize_target(&self, target_params: &ModeDesc) -> Result<(), DxError> {
+        unsafe {
+            self.0.ResizeTarget(&target_params.0)
+                .map_err(DxError::from)?;
+
+            Ok(())
+        }
+    }
+
+    /// Sets the display state to windowed or full screen.
+    ///
+    /// For more information: [`IDXGISwapChain::SetFullscreenState method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgiswapchain-setfullscreenstate)
+    pub fn set_fullscreen_state<'a>(&self, fullscreen: bool, output: impl Into<Option<&'a Output1>>) -> Result<(), DxError> {
+        unsafe {
+            if let Some(output) = output.into() {
+                let output: windows::Win32::Graphics::Dxgi::IDXGIOutput = output.0.cast().map_err(|_|  DxError::Cast(
+                    std::any::type_name::<windows::Win32::Graphics::Dxgi::IDXGIOutput1>(),
+                    std::any::type_name::<windows::Win32::Graphics::Dxgi::IDXGIOutput>()
+                ))?;
+
+                self.0.SetFullscreenState(fullscreen, Some(&output))
+                    .map_err(DxError::from)?;
+            } else {
+                self.0.SetFullscreenState(fullscreen, None)
+                    .map_err(DxError::from)?;
+            }
+
+
+
+            Ok(())
         }
     }
 }

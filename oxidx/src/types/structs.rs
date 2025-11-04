@@ -799,6 +799,40 @@ impl<'a> DiscardRegion<'a> {
     }
 }
 
+/// Describes timing and presentation statistics for a frame.
+///
+/// For more information: [`DXGI_FRAME_STATISTICS structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/ns-dxgi-dxgi_frame_statistics)
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[repr(transparent)]
+pub struct FrameStatistics(pub(crate) DXGI_FRAME_STATISTICS);
+
+impl FrameStatistics {
+    #[inline]
+    pub fn present_count(&self) -> u32 {
+        self.0.PresentCount
+    }
+
+    #[inline]
+    pub fn present_refresh_count(&self) -> u32 {
+        self.0.PresentRefreshCount
+    }
+
+    #[inline]
+    pub fn sync_refresh_count(&self) -> u32 {
+        self.0.SyncRefreshCount
+    }
+
+    #[inline]
+    pub fn sync_qpc_time(&self) -> i64 {
+        self.0.SyncQPCTime
+    }
+
+    #[inline]
+    pub fn sync_gpu_time(&self) -> i64 {
+        self.0.SyncGPUTime
+    }
+}
+
 /// Describes a GPU descriptor handle.
 ///
 /// For more information: [`D3D12_GPU_DESCRIPTOR_HANDLE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_gpu_descriptor_handle)
@@ -1363,6 +1397,75 @@ impl Luid {
     }
 }
 
+/// Describes a display mode.
+///
+/// For more information: [`DXGI_MODE_DESC structure`](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/bb173064(v=vs.85))
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[repr(transparent)]
+pub struct ModeDesc(pub(crate) DXGI_MODE_DESC);
+
+impl ModeDesc {
+    #[inline]
+    pub fn width(&self) -> u32 {
+        self.0.Width
+    }
+
+    #[inline]
+    pub fn height(&self) -> u32 {
+        self.0.Height
+    }
+
+    #[inline]
+    pub fn refresh_rate(&self) -> &Rational {
+        unsafe { std::mem::transmute(&self.0.RefreshRate) }
+    }
+
+    #[inline]
+    pub fn format(&self) -> Format {
+        self.0.Format.into()
+    }
+
+    #[inline]
+    pub fn scaling(&self) -> Scaling {
+        self.0.Scaling.into()
+    }
+
+    #[inline]
+    pub fn scanline_ordering(&self) -> ScanlineOrdering {
+        self.0.ScanlineOrdering.into()
+    }
+
+    #[inline]
+    pub fn set_width(&mut self, width: u32) {
+        self.0.Width = width;
+    }
+
+    #[inline]
+    pub fn set_height(&mut self, height: u32) {
+        self.0.Height = height;
+    }
+
+    #[inline]
+    pub fn set_refresh_rate(&mut self, refresh_rate: Rational) {
+        self.0.RefreshRate = refresh_rate.0;
+    }
+
+    #[inline]
+    pub fn set_format(&mut self, format: Format) {
+        self.0.Format = format.as_raw();
+    }
+
+    #[inline]
+    pub fn set_scaling(&mut self, scaling: ScalingMode) {
+        self.0.Scaling = scaling.as_raw();
+    }
+
+    #[inline]
+    pub fn set_scanline_ordering(&mut self, so: ScanlineOrdering) {
+        self.0.ScanlineOrdering = so.as_raw();
+    }
+}
+
 /// Describes a display mode and whether the display mode supports stereo.
 ///
 /// For more information: [`DXGI_MODE_DESC1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/ns-dxgi1_2-dxgi_mode_desc1)
@@ -1392,7 +1495,7 @@ impl ModeDesc1 {
     }
 
     #[inline]
-    pub fn scaling(&self) -> Scaling {
+    pub fn scaling(&self) -> ScalingMode {
         self.0.Scaling.into()
     }
 
