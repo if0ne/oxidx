@@ -121,6 +121,12 @@ macro_rules! impl_up_down_cast {
             }
         }
 
+        impl AsRef<$base> for $child {
+            fn as_ref(&self) -> &$base {
+                unsafe { &*(self as *const $child as *const $base) }
+            }
+        }
+
         /// Downcast
         impl From<$base> for $child {
             #[inline]
