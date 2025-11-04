@@ -7,7 +7,7 @@ use windows::Win32::Graphics::Dxgi::{
     IDXGIOutput1, IDXGISwapChain1, IDXGISwapChain2, IDXGISwapChain3, DXGI_RGBA,
 };
 
-use crate::dx::Resource;
+use crate::dx::{CommandQueue, Resource};
 use crate::error::DxError;
 use crate::types::*;
 use crate::{create_type, impl_interface};
@@ -401,12 +401,75 @@ impl_interface! {
 impl_interface! {
     Swapchain3;
 
+    /// Checks whether the swap chain currently supports the specified color space, based on the current adapter output (for example, what monitor the swap chain window is being displayed on).
+    ///
+    /// For more information: [`IDXGISwapChain3::CheckColorSpaceSupport method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_4/nf-dxgi1_4-idxgiswapchain3-checkcolorspacesupport)
+    pub fn check_color_space_support(&self, color_space: ColorSpaceType) -> Result<SwapchainColorSpaceSupportFlag, DxError> {
+        unsafe {
+            self.0.CheckColorSpaceSupport(color_space.as_raw())
+                .map(|v| SwapchainColorSpaceSupportFlag::from(
+                    windows::Win32::Graphics::Dxgi::DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG(v as i32)
+                ))
+                .map_err(DxError::from)
+        }
+    }
+
     /// Gets the index of the swap chain's current back buffer.
     ///
     /// For more information: [`IDXGISwapChain3::GetCurrentBackBufferIndex method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_4/nf-dxgi1_4-idxgiswapchain3-getcurrentbackbufferindex)
     pub fn get_current_back_buffer_index(&self) -> u32 {
         unsafe {
             self.0.GetCurrentBackBufferIndex()
+        }
+    }
+
+    /// Changes the swap chain's back buffer size, format, and number of buffers, where the swap chain was created using a D3D12 command queue as an input device. This should be called when the application window is resized.
+    ///
+    /// For more information: [`IDXGISwapChain3::ResizeBuffers1 method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_4/nf-dxgi1_4-idxgiswapchain3-resizebuffers1)
+    pub fn resize_buffers1(
+        &self,
+        buffer_count: u32,
+        width: u32,
+        height: u32,
+        format: Format,
+        flags: SwapchainFlags,
+        queues: Option<(&[u32], &[CommandQueue])>,
+    ) -> Result<(), DxError> {
+        unsafe {
+            if let Some((node_mask, queues)) = queues {
+                debug_assert_eq!(node_mask.len(), buffer_count as usize);
+                debug_assert_eq!(queues.len(), buffer_count as usize);
+
+                self.0.ResizeBuffers1(
+                    buffer_count,
+                    width,
+                    height,
+                    format.as_raw(),
+                    flags.as_raw(),
+                    node_mask.as_ptr(),
+                    queues.as_ptr() as *const _,
+                ).map_err(DxError::from)
+            } else {
+                self.0.ResizeBuffers1(
+                    buffer_count,
+                    width,
+                    height,
+                    format.as_raw(),
+                    flags.as_raw(),
+                    std::ptr::null(),
+                    std::ptr::null()
+                ).map_err(DxError::from)
+            }
+        }
+    }
+
+    /// Sets the color space used by the swap chain.
+    ///
+    /// For more information: [`IDXGISwapChain3::SetColorSpace1 method`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_4/nf-dxgi1_4-idxgiswapchain3-setcolorspace1)
+    pub fn set_color_space1(&self, color_space: ColorSpaceType) -> Result<(), DxError> {
+        unsafe {
+            self.0.SetColorSpace1(color_space.as_raw())
+                .map_err(DxError::from)
         }
     }
 }

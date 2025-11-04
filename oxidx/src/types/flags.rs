@@ -945,6 +945,20 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Specifies color space support for the swap chain.
+    ///
+    /// For more information: [`DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_4/ne-dxgi1_4-dxgi_swap_chain_color_space_support_flag)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct SwapchainColorSpaceSupportFlag: i32 {
+        /// Color space support is present.
+        const Present = DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_PRESENT.0;
+
+        /// Overlay color space support is present.
+        const OverlayPresent = DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_OVERLAY_PRESENT.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Options for swap-chain behavior.
     ///
     /// For more information: [`DXGI_SWAP_CHAIN_FLAG enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/ne-dxgi-dxgi_swap_chain_flag)

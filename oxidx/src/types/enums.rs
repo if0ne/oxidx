@@ -272,6 +272,91 @@ pub enum ConservativeRaster {
     On = D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON.0,
 }
 
+/// Specifies color space types.
+///
+/// For more information: [`DXGI_COLOR_SPACE_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/dxgicommon/ne-dxgicommon-dxgi_color_space_type)
+#[derive(Clone, Copy, Debug, FromRepr, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum ColorSpaceType {
+    /// This is the standard definition for sRGB.
+    RgbFullG22NoneP709 = DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709.0,
+
+    /// This is the standard definition for scRGB, and is usually used with 16 bit integer, 16 bit floating point, or 32 bit floating point color channels.
+    RgbFullG10NoneP709 = DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709.0,
+
+    /// This is the standard definition for ITU-R Recommendation BT.709. Note that due to the inclusion of a linear segment, the transfer curve looks similar to a pure exponential gamma of 1.9.
+    RgbStudioG22NoneP709 = DXGI_COLOR_SPACE_RGB_STUDIO_G22_NONE_P709.0,
+
+    /// This is usually used with 10 or 12 bit color channels.
+    RgbStudioG22NoneP2020 = DXGI_COLOR_SPACE_RGB_STUDIO_G22_NONE_P2020.0,
+
+    /// Reserved.
+    Reserved = DXGI_COLOR_SPACE_RESERVED.0,
+
+    /// This definition is commonly used for JPG, and is usually used with 8, 10, or 12 bit color channels.
+    YcbcrFullG22NoneP709X601 = DXGI_COLOR_SPACE_YCBCR_FULL_G22_NONE_P709_X601.0,
+
+    /// This definition is commonly used for MPEG2, and is usually used with 8, 10, or 12 bit color channels.
+    YcbcrStudioG22LeftP601 = DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P601.0,
+
+    /// This is sometimes used for H.264 camera capture, and is usually used with 8, 10, or 12 bit color channels.
+    YcbcrFullG22LeftP601 = DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P601.0,
+
+    /// This definition is commonly used for H.264 and HEVC, and is usually used with 8, 10, or 12 bit color channels.
+    YcbcrStudioG22LeftP709 = DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P709.0,
+
+    /// This is sometimes used for H.264 camera capture, and is usually used with 8, 10, or 12 bit color channels.
+    YcbcrFullG22LeftP709 = DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P709.0,
+
+    /// This definition may be used by HEVC, and is usually used with 10 or 12 bit color channels.
+    YcbcrStudioG22LeftP2020 = DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_LEFT_P2020.0,
+
+    /// This is usually used with 10 or 12 bit color channels.
+    YcbcrFullG22LeftP2020 = DXGI_COLOR_SPACE_YCBCR_FULL_G22_LEFT_P2020.0,
+
+    /// This is usually used with 10 or 12 bit color channels.
+    RgbFullG2084NoneP2020 = DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020.0,
+
+    /// This is usually used with 10 or 12 bit color channels.
+    YcbcrStudioG2084LeftP2020 = DXGI_COLOR_SPACE_YCBCR_STUDIO_G2084_LEFT_P2020.0,
+
+    /// This is usually used with 10 or 12 bit color channels.
+    RgbStudioG2084NoneP2020 = DXGI_COLOR_SPACE_RGB_STUDIO_G2084_NONE_P2020.0,
+
+    /// This is usually used with 10 or 12 bit color channels.
+    YcbcrStudioG22TopLeftP2020 = DXGI_COLOR_SPACE_YCBCR_STUDIO_G22_TOPLEFT_P2020.0,
+
+    /// This is usually used with 10 or 12 bit color channels.
+    YcbcrStudioG2084TopLeftP2020 = DXGI_COLOR_SPACE_YCBCR_STUDIO_G2084_TOPLEFT_P2020.0,
+
+    /// This is usually used with 10 or 12 bit color channels.
+    RgbFullG22NoneP2020 = DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P2020.0,
+
+    /// This is usually used with 10 or 12 bit color channels.
+    YcbcrStudioGhlgTopLeftP2020 = DXGI_COLOR_SPACE_YCBCR_STUDIO_GHLG_TOPLEFT_P2020.0,
+
+    /// This is usually used with 10 or 12 bit color channels.
+    YcbcrFullGhlgTopLeftP2020 = DXGI_COLOR_SPACE_YCBCR_FULL_GHLG_TOPLEFT_P2020.0,
+
+    /// This is usually used with 10 or 12 bit color channels.
+    RgbStudioG24NoneP709 = DXGI_COLOR_SPACE_RGB_STUDIO_G24_NONE_P709.0,
+
+    /// This is usually used with 10 or 12 bit color channels.
+    RgbStudioG24NoneP2020 = DXGI_COLOR_SPACE_RGB_STUDIO_G24_NONE_P2020.0,
+
+    /// This is usually used with 8, 10, or 12 bit color channels.
+    YcbcrStudioG24LeftP709 = DXGI_COLOR_SPACE_YCBCR_STUDIO_G24_LEFT_P709.0,
+
+    /// This is usually used with 10, or 12 bit color channels.
+    YcbcrStudioG24LeftP2020 = DXGI_COLOR_SPACE_YCBCR_STUDIO_G24_LEFT_P2020.0,
+
+    /// This is usually used with 10, or 12 bit color channels.
+    YcbcrStudioG24TopLeftP2020 = DXGI_COLOR_SPACE_YCBCR_STUDIO_G24_TOPLEFT_P2020.0,
+
+    /// A custom color definition is used.
+    Custom = DXGI_COLOR_SPACE_CUSTOM.0,
+}
+
 /// Identifies the tier level of conservative rasterization.
 ///
 /// For more information: [`D3D12_CONSERVATIVE_RASTERIZATION_TIER enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_conservative_rasterization_tier)

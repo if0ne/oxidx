@@ -12,6 +12,7 @@ conv_enum!(BorderColor to D3D12_STATIC_BORDER_COLOR);
 conv_enum!(CbufferType to D3D_CBUFFER_TYPE);
 conv_enum!(CommandListType to D3D12_COMMAND_LIST_TYPE);
 conv_enum!(ComparisonFunc to D3D12_COMPARISON_FUNC);
+conv_enum!(ColorSpaceType to DXGI_COLOR_SPACE_TYPE);
 conv_enum!(ConservativeRaster to D3D12_CONSERVATIVE_RASTERIZATION_MODE);
 conv_enum!(ConservativeRasterizationTier to D3D12_CONSERVATIVE_RASTERIZATION_TIER);
 conv_enum!(CpuPageProperty to D3D12_CPU_PAGE_PROPERTY);
