@@ -1,6 +1,6 @@
 [package]
 name = "oxidx"
-version = "0.9.0"
+version = "0.10.0"
 edition = "2021"
 authors = ["Pavel Agafonov <pavel.agafonov.al@gmail.com>"]
 description = """Low-level D3D12 wrapper for Rust."""
