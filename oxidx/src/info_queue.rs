@@ -40,7 +40,7 @@ impl Drop for CallbackMap {
 }
 
 create_type! {
-    /// [`InfoQueue1`] inherits [`InfoQueue`]` and supports message callback with RegisterMessageCallback and UnregisterMessageCallback method.
+    /// [`InfoQueue1`] inherits `InfoQueue` and supports message callback with RegisterMessageCallback and UnregisterMessageCallback method.
     ///
     /// For more information: [`ID3D12InfoQueue1 interface`](https://microsoft.github.io/DirectX-Specs/d3d/MessageCallback.html)
     InfoQueue1 wrap ID3D12InfoQueue1

@@ -36,7 +36,7 @@ pub trait Blobby {
 
     /// Gets a pointer to a reflection interface.
     ///
-    /// For more information: [`D3DReflect function`]https://learn.microsoft.com/en-us/windows/win32/api/d3dcompiler/nf-d3dcompiler-d3dreflect
+    /// For more information: [`D3DReflect function`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcompiler/nf-d3dcompiler-d3dreflect)
     fn reflect(&self) -> Result<ShaderReflection, DxError>;
 }
 

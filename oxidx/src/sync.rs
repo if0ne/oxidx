@@ -17,7 +17,7 @@ create_type! {
 }
 
 create_type! {
-    /// Represents a fence. This interface extends [`IFence1`], and supports the retrieval of the flags used to create the original fence.
+    /// Represents a fence. This interface extends [`Fence1`], and supports the retrieval of the flags used to create the original fence.
     /// This new feature is useful primarily for opening shared fences.
     ///
     /// For more information: [`ID3D12Fence1 interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12fence1)

@@ -676,7 +676,7 @@ impl_interface! {
     }
 
     /// Gets the reason that the device was removed, or [`Result::Ok`] if the device isn't removed.
-    /// To be called back when a device is removed, consider using [`IFence::set_event_on_completion`] with a value of [`u64::MAX`].
+    /// To be called back when a device is removed, consider using [`Fence::set_event_on_completion`] with a value of [`u64::MAX`].
     /// That's because device removal causes all fences to be signaled to that value (which also implies completing all events waited on, because they'll all be less than [`u64::MAX`]).
     ///
     /// For more information: [`ID3D12Device::GetDeviceRemovedReason method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getdeviceremovedreason)

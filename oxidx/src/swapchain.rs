@@ -30,7 +30,7 @@ create_type! {
 }
 
 create_type! {
-    /// Extends [`ISwapchain1`] with methods to support swap back buffer scaling and lower-latency swap chains.
+    /// Extends [`Swapchain1`] with methods to support swap back buffer scaling and lower-latency swap chains.
     ///
     /// For more information: [`IDXGISwapChain2 interface`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_3/nn-dxgi1_3-idxgiswapchain2)
     Swapchain2 wrap IDXGISwapChain2; decorator for Swapchain1
@@ -475,9 +475,9 @@ impl_interface! {
 }
 
 create_type! {
-    /// An [`IOutput`] interface represents an adapter output (such as a monitor).
+    /// An [`Output1`] interface represents an adapter output (such as a monitor).
     ///
-    /// For more information: [`IDXGIOutput interface`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nn-dxgi-idxgioutput)
+    /// For more information: [`IDXGIOutput interface`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/nn-dxgi1_2-idxgioutput1)
     Output1 wrap IDXGIOutput1
 }
 

@@ -131,7 +131,7 @@ impl FeatureObject for ArchitectureFeature {
     const TYPE: FeatureType = FeatureType::Architecture;
 }
 
-/// Describes info about the [`FeatureLevels`] supported by the current graphics driver.
+/// Describes info about the [`feature levels`](https://learn.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-devices-downlevel-intro) supported by the current graphics driver.
 ///
 /// For more information: [`D3D12_FEATURE_DATA_FEATURE_LEVELS structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_feature_levels)
 #[derive(Clone, Copy, Debug, PartialEq)]

@@ -16,7 +16,7 @@ use crate::{
 
 create_type!(
     /// An interface from which other core interfaces inherit from, including (but not limited to)
-    /// ID3D12PipelineLibrary, [`ICommandList`](crate::command_list::ICommandList), [`IPageable`](crate::pageable::IPageable), and [`IRootSignature`](crate::root_signature::IRootSignature).
+    /// ID3D12PipelineLibrary, [`GraphicsCommandList`](crate::command_list::GraphicsCommandList), [`Pageable`](crate::pageable::Pageable), and [`RootSignature`](crate::root_signature::RootSignature).
     /// It provides a method to get back to the device object it was created against.
     ///
     /// For more information: [`ID3D12DeviceChild interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nn-d3d12-id3d12devicechild)

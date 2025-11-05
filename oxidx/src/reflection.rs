@@ -348,7 +348,7 @@ create_type! {
 impl_interface! {
     ShaderReflectionType;
 
-    /// Gets an [`IShaderReflectionType`] Interface interface containing the variable base class type.
+    /// Gets an [`ShaderReflectionType`] Interface interface containing the variable base class type.
     ///
     /// For more information: [`ID3D12ShaderReflectionType::GetBaseClass function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nf-d3d12shader-id3d12shaderreflectiontype-getbaseclass)
     pub fn get_base_class(&self) -> Option<ShaderReflectionType> {
