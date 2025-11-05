@@ -31,6 +31,13 @@ impl_interface! {
         .map(|()| signature.unwrap())
         .map_err(DxError::from)?;
 
-        Ok(Blob(signature))
+        let bytes = unsafe {
+            std::slice::from_raw_parts(
+                signature.GetBufferPointer() as *const _,
+                signature.GetBufferSize()
+            ).to_vec()
+        };
+
+        Ok(bytes.into())
     }
 }

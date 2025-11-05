@@ -18,7 +18,12 @@ impl_interface! {
     pub fn get_cached_blob(&self) -> Result<Blob, DxError> {
         unsafe {
             self.0.GetCachedBlob()
-                .map(Blob)
+                .map(|blob| {
+                    let bytes =
+                        std::slice::from_raw_parts(blob.GetBufferPointer() as *const _, blob.GetBufferSize()).to_vec();
+
+                    bytes.into()
+                })
                 .map_err(DxError::from)
         }
     }

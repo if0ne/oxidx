@@ -8,7 +8,12 @@ use windows::{
     },
 };
 
-use crate::{blob::Blob, dx::Resource, error::DxError, root_signature::RootSignature};
+use crate::{
+    blob::Blob,
+    dx::{BlobbyInternal, Resource},
+    error::DxError,
+    root_signature::RootSignature,
+};
 
 use super::*;
 

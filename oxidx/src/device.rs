@@ -485,8 +485,8 @@ impl_interface! {
             self.create_root_signature(
                 node_mask,
                 std::slice::from_raw_parts(
-                    blob.get_buffer_ptr().as_ptr() as _,
-                    blob.get_buffer_size(),
+                    blob.as_ptr() as _,
+                    blob.len(),
                 )
             )
         }
