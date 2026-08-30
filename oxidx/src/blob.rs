@@ -5,7 +5,7 @@ use windows::{
     core::{Interface, HSTRING, PCSTR},
     Win32::Graphics::{
         Direct3D::{
-            Fxc::{D3DCompileFromFile, D3DReflect},
+            Fxc::{D3DCompile, D3DCompileFromFile, D3DReflect},
             ID3DInclude,
         },
         Direct3D12::{ID3D12ShaderReflection, D3D12_CACHED_PIPELINE_STATE, D3D12_SHADER_BYTECODE},
@@ -20,6 +20,22 @@ pub type Blob = Bytes;
 ///
 ///  For more information: [`ID3DBlob interface`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcommon/nn-d3dcommon-id3d10blob)
 pub trait Blobby {
+    /// Compile HLSL code or an effect file into bytecode for a given target.
+    ///
+    /// For more information: [`D3DCompile function`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcompiler/nf-d3dcompiler-d3dcompile)
+    fn compile(
+        &self,
+        data: &[u8],
+        defines: &[ShaderMacro],
+        source_name: Option<&CStr>,
+        entry_point: impl AsRef<CStr>,
+        target: impl AsRef<CStr>,
+        flags1: u32,
+        flags2: u32,
+    ) -> Result<Self, DxError>
+    where
+        Self: Sized;
+
     /// Compiles Microsoft High Level Shader Language (HLSL) code into bytecode for a given target.
     ///
     /// For more information: [`D3DCompileFromFile function`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcompiler/nf-d3dcompiler-d3dcompilefromfile)
@@ -62,6 +78,81 @@ impl BlobbyInternal for Blob {
 }
 
 impl Blobby for Blob {
+    fn compile(
+        &self,
+        data: &[u8],
+        defines: &[ShaderMacro],
+        source_name: Option<&CStr>,
+        entry_point: impl AsRef<CStr>,
+        target: impl AsRef<CStr>,
+        flags1: u32,
+        flags2: u32,
+    ) -> Result<Self, DxError>
+    where
+        Self: Sized,
+    {
+        let data_ptr = data.as_ptr() as *const _;
+        let data_len = data.len();
+        let source_name = source_name
+            .map(|n| PCSTR::from_raw(n.as_ptr() as *const _))
+            .unwrap_or_default();
+        let entry_point = PCSTR::from_raw(entry_point.as_ref().as_ptr() as *const _);
+        let target = PCSTR::from_raw(target.as_ref().as_ptr() as *const _);
+
+        let mut shader = None;
+
+        let defines = if !defines.is_empty() {
+            Some(defines.as_ptr() as *const _)
+        } else {
+            None
+        };
+
+        let mut error_msg = None;
+
+        unsafe {
+            let res = D3DCompile(
+                data_ptr,
+                data_len,
+                source_name,
+                defines,
+                Some(&std::mem::transmute::<isize, ID3DInclude>(1isize)),
+                entry_point,
+                target,
+                flags1,
+                flags2,
+                &mut shader,
+                Some(&mut error_msg),
+            )
+            .map_err(DxError::from);
+
+            if let Err(err) = res {
+                if let Some(error_msg) = error_msg {
+                    let pointer = error_msg.GetBufferPointer() as *mut u8;
+                    let size = error_msg.GetBufferSize();
+
+                    let slice = std::slice::from_raw_parts(pointer, size);
+
+                    return Err(DxError::ShaderCompilationError(
+                        std::str::from_utf8(slice).unwrap_or_default().to_string(),
+                    ));
+                } else {
+                    return Err(DxError::ShaderCompilationError(err.to_string()));
+                }
+            }
+        }
+
+        let shader = shader.unwrap();
+        let bytes = unsafe {
+            std::slice::from_raw_parts(
+                shader.GetBufferPointer() as *const u8,
+                shader.GetBufferSize(),
+            )
+            .to_vec()
+        };
+
+        Ok(bytes.into())
+    }
+
     fn compile_from_file(
         filename: impl AsRef<Path>,
         defines: &[ShaderMacro],
