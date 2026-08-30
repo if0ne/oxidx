@@ -24,7 +24,6 @@ pub trait Blobby {
     ///
     /// For more information: [`D3DCompile function`](https://learn.microsoft.com/en-us/windows/win32/api/d3dcompiler/nf-d3dcompiler-d3dcompile)
     fn compile(
-        &self,
         data: &[u8],
         defines: &[ShaderMacro],
         source_name: Option<&CStr>,
@@ -79,7 +78,6 @@ impl BlobbyInternal for Blob {
 
 impl Blobby for Blob {
     fn compile(
-        &self,
         data: &[u8],
         defines: &[ShaderMacro],
         source_name: Option<&CStr>,
