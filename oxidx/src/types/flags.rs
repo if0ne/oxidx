@@ -799,6 +799,50 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Specifies the volatility of both descriptors and the data they reference in a descriptor range, for a root signature version 1.1.
+    ///
+    /// Empty flag - Default behavior, equivalent to descriptors and data being volatile (as in root signature version 1.0).
+    ///
+    /// For more information: [`D3D12_DESCRIPTOR_RANGE_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_descriptor_range_flags)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct DescriptorRangeFlags: i32 {
+        /// The descriptors are volatile.
+        const DescriptorsVolatile = D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE.0;
+
+        /// The data referenced by the descriptors is volatile.
+        const DataVolatile = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE.0;
+
+        /// The data referenced by the descriptors is static while set at execute.
+        const DataStaticWhileSetAtExecute = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE.0;
+
+        /// The data referenced by the descriptors is static.
+        const DataStatic = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC.0;
+
+        /// The descriptors are static, keeping the buffer bounds checks that would otherwise be dropped.
+        const DescriptorsStaticKeepingBufferBoundsChecks = D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS.0;
+    }
+}
+
+bitflags::bitflags! {
+    /// Specifies the volatility of the data referenced by a root descriptor, for a root signature version 1.1.
+    ///
+    /// Empty flag - Default behavior, equivalent to the data being volatile (as in root signature version 1.0).
+    ///
+    /// For more information: [`D3D12_ROOT_DESCRIPTOR_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_root_descriptor_flags)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct RootDescriptorFlags: i32 {
+        /// The data referenced by the descriptor is volatile.
+        const DataVolatile = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE.0;
+
+        /// The data referenced by the descriptor is static while set at execute.
+        const DataStaticWhileSetAtExecute = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE.0;
+
+        /// The data referenced by the descriptor is static.
+        const DataStatic = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Specifies how to copy a tile.
     ///
     /// Empty flag - No tile-copy flags are specified.

@@ -782,6 +782,91 @@ impl DescriptorRange {
     }
 }
 
+/// Describes a descriptor range, with flags to determine their volatility, for a root signature version 1.1.
+///
+/// For more information: [`D3D12_DESCRIPTOR_RANGE1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_descriptor_range1)
+#[derive(Clone, Copy, Debug, PartialEq)]
+#[repr(transparent)]
+pub struct DescriptorRange1(pub(crate) D3D12_DESCRIPTOR_RANGE1);
+
+impl DescriptorRange1 {
+    #[inline]
+    pub fn new(ty: DescriptorRangeType, num: u32) -> Self {
+        Self(D3D12_DESCRIPTOR_RANGE1 {
+            RangeType: ty.as_raw(),
+            NumDescriptors: num,
+            ..Default::default()
+        })
+    }
+
+    #[inline]
+    pub fn cbv(num: u32, base_shader_register: u32) -> Self {
+        Self(D3D12_DESCRIPTOR_RANGE1 {
+            RangeType: D3D12_DESCRIPTOR_RANGE_TYPE_CBV,
+            NumDescriptors: num,
+            BaseShaderRegister: base_shader_register,
+            ..Default::default()
+        })
+    }
+
+    #[inline]
+    pub fn srv(num: u32, base_shader_register: u32) -> Self {
+        Self(D3D12_DESCRIPTOR_RANGE1 {
+            RangeType: D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+            NumDescriptors: num,
+            BaseShaderRegister: base_shader_register,
+            ..Default::default()
+        })
+    }
+
+    #[inline]
+    pub fn sampler(num: u32, base_shader_register: u32) -> Self {
+        Self(D3D12_DESCRIPTOR_RANGE1 {
+            RangeType: D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER,
+            NumDescriptors: num,
+            BaseShaderRegister: base_shader_register,
+            ..Default::default()
+        })
+    }
+
+    #[inline]
+    pub fn uav(num: u32, base_shader_register: u32) -> Self {
+        Self(D3D12_DESCRIPTOR_RANGE1 {
+            RangeType: D3D12_DESCRIPTOR_RANGE_TYPE_UAV,
+            NumDescriptors: num,
+            BaseShaderRegister: base_shader_register,
+            ..Default::default()
+        })
+    }
+
+    #[inline]
+    pub fn with_base_shader_register(mut self, base_shader_register: u32) -> Self {
+        self.0.BaseShaderRegister = base_shader_register;
+        self
+    }
+
+    #[inline]
+    pub fn with_register_space(mut self, register_space: u32) -> Self {
+        self.0.RegisterSpace = register_space;
+        self
+    }
+
+    #[inline]
+    pub fn with_flags(mut self, flags: DescriptorRangeFlags) -> Self {
+        self.0.Flags = flags.as_raw();
+        self
+    }
+
+    #[inline]
+    pub fn with_offset_in_descriptors_from_table_start(
+        mut self,
+        offset_in_descriptors_from_table_start: u32,
+    ) -> Self {
+        self.0.OffsetInDescriptorsFromTableStart = offset_in_descriptors_from_table_start;
+        self
+    }
+}
+
 /// Describes details for the discard-resource operation.
 ///
 /// For more information: [`D3D12_DISCARD_REGION structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_discard_region)
@@ -2473,6 +2558,122 @@ impl<'a> RootParameter<'a> {
     }
 }
 
+/// Describes the slot of a root signature version 1.1.
+///
+/// For more information: [`D3D12_ROOT_PARAMETER1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_root_parameter1)
+#[derive(Clone, Copy)]
+#[repr(transparent)]
+pub struct RootParameter1<'a>(pub(crate) D3D12_ROOT_PARAMETER1, PhantomData<&'a ()>);
+
+impl<'a> RootParameter1<'a> {
+    #[inline]
+    pub fn descriptor_table(ranges: &'a [DescriptorRange1]) -> Self {
+        Self(
+            D3D12_ROOT_PARAMETER1 {
+                ParameterType: D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+                Anonymous: D3D12_ROOT_PARAMETER1_0 {
+                    DescriptorTable: D3D12_ROOT_DESCRIPTOR_TABLE1 {
+                        NumDescriptorRanges: ranges.len() as u32,
+                        pDescriptorRanges: ranges.as_ptr() as *const _,
+                    },
+                },
+                ..Default::default()
+            },
+            Default::default(),
+        )
+    }
+
+    #[inline]
+    pub fn constant_32bit(
+        shader_register: u32,
+        register_space: u32,
+        num_32bit_values: u32,
+    ) -> Self {
+        Self(
+            D3D12_ROOT_PARAMETER1 {
+                ParameterType: D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
+                Anonymous: D3D12_ROOT_PARAMETER1_0 {
+                    Constants: D3D12_ROOT_CONSTANTS {
+                        ShaderRegister: shader_register,
+                        RegisterSpace: register_space,
+                        Num32BitValues: num_32bit_values,
+                    },
+                },
+                ..Default::default()
+            },
+            Default::default(),
+        )
+    }
+
+    #[inline]
+    pub fn cbv(shader_register: u32, register_space: u32) -> Self {
+        Self(
+            D3D12_ROOT_PARAMETER1 {
+                ParameterType: D3D12_ROOT_PARAMETER_TYPE_CBV,
+                Anonymous: D3D12_ROOT_PARAMETER1_0 {
+                    Descriptor: D3D12_ROOT_DESCRIPTOR1 {
+                        ShaderRegister: shader_register,
+                        RegisterSpace: register_space,
+                        ..Default::default()
+                    },
+                },
+                ..Default::default()
+            },
+            Default::default(),
+        )
+    }
+
+    #[inline]
+    pub fn srv(shader_register: u32, register_space: u32) -> Self {
+        Self(
+            D3D12_ROOT_PARAMETER1 {
+                ParameterType: D3D12_ROOT_PARAMETER_TYPE_SRV,
+                Anonymous: D3D12_ROOT_PARAMETER1_0 {
+                    Descriptor: D3D12_ROOT_DESCRIPTOR1 {
+                        ShaderRegister: shader_register,
+                        RegisterSpace: register_space,
+                        ..Default::default()
+                    },
+                },
+                ..Default::default()
+            },
+            Default::default(),
+        )
+    }
+
+    #[inline]
+    pub fn uav(shader_register: u32, register_space: u32) -> Self {
+        Self(
+            D3D12_ROOT_PARAMETER1 {
+                ParameterType: D3D12_ROOT_PARAMETER_TYPE_UAV,
+                Anonymous: D3D12_ROOT_PARAMETER1_0 {
+                    Descriptor: D3D12_ROOT_DESCRIPTOR1 {
+                        ShaderRegister: shader_register,
+                        RegisterSpace: register_space,
+                        ..Default::default()
+                    },
+                },
+                ..Default::default()
+            },
+            Default::default(),
+        )
+    }
+
+    /// Sets the flags of the root descriptor. Only meaningful for [`RootParameter1::cbv`],
+    /// [`RootParameter1::srv`] and [`RootParameter1::uav`] parameters.
+    #[inline]
+    pub fn with_flags(mut self, flags: RootDescriptorFlags) -> Self {
+        self.0.Anonymous.Descriptor.Flags = flags.as_raw();
+        self
+    }
+
+    #[inline]
+    pub fn with_visibility(mut self, visibility: ShaderVisibility) -> Self {
+        self.0.ShaderVisibility = visibility.as_raw();
+        self
+    }
+}
+
 /// Describes the layout of a root signature version 1.0.
 ///
 /// For more information: [`D3D12_ROOT_SIGNATURE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_root_signature_desc)
@@ -2505,6 +2706,77 @@ impl<'a> RootSignatureDesc<'a> {
     pub fn with_flags(mut self, flags: RootSignatureFlags) -> Self {
         self.0.Flags = flags.as_raw();
         self
+    }
+}
+
+/// Describes the layout of a root signature version 1.1.
+///
+/// For more information: [`D3D12_ROOT_SIGNATURE_DESC1 structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_root_signature_desc1)
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[repr(transparent)]
+pub struct RootSignatureDesc1<'a>(pub(crate) D3D12_ROOT_SIGNATURE_DESC1, PhantomData<&'a ()>);
+
+impl<'a> RootSignatureDesc1<'a> {
+    #[inline]
+    pub fn with_parameters<'b>(mut self, parameters: &'a [RootParameter1<'b>]) -> Self
+    where
+        'a: 'b,
+    {
+        self.0.NumParameters = parameters.len() as u32;
+        self.0.pParameters = parameters.as_ptr() as *const _;
+        self
+    }
+
+    #[inline]
+    pub fn with_samplers<'b>(mut self, samplers: &'a [StaticSamplerDesc]) -> Self
+    where
+        'a: 'b,
+    {
+        self.0.NumStaticSamplers = samplers.len() as u32;
+        self.0.pStaticSamplers = samplers.as_ptr() as *const _;
+        self
+    }
+
+    #[inline]
+    pub fn with_flags(mut self, flags: RootSignatureFlags) -> Self {
+        self.0.Flags = flags.as_raw();
+        self
+    }
+}
+
+/// Holds any version of a root signature description, and is designed to be used with serialization/deserialization functions.
+///
+/// For more information: [`D3D12_VERSIONED_ROOT_SIGNATURE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_versioned_root_signature_desc)
+#[derive(Clone, Copy)]
+#[repr(transparent)]
+pub struct VersionedRootSignatureDesc<'a>(
+    pub(crate) D3D12_VERSIONED_ROOT_SIGNATURE_DESC,
+    PhantomData<&'a ()>,
+);
+
+impl<'a> VersionedRootSignatureDesc<'a> {
+    /// Wraps a root signature version 1.0 description.
+    #[inline]
+    pub fn desc_1_0(desc: RootSignatureDesc<'a>) -> Self {
+        Self(
+            D3D12_VERSIONED_ROOT_SIGNATURE_DESC {
+                Version: D3D_ROOT_SIGNATURE_VERSION_1_0,
+                Anonymous: D3D12_VERSIONED_ROOT_SIGNATURE_DESC_0 { Desc_1_0: desc.0 },
+            },
+            Default::default(),
+        )
+    }
+
+    /// Wraps a root signature version 1.1 description.
+    #[inline]
+    pub fn desc_1_1(desc: RootSignatureDesc1<'a>) -> Self {
+        Self(
+            D3D12_VERSIONED_ROOT_SIGNATURE_DESC {
+                Version: D3D_ROOT_SIGNATURE_VERSION_1_1,
+                Anonymous: D3D12_VERSIONED_ROOT_SIGNATURE_DESC_0 { Desc_1_1: desc.0 },
+            },
+            Default::default(),
+        )
     }
 }
 

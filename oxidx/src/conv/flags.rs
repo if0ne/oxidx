@@ -14,6 +14,7 @@ conv_flags!(CommandListSupportFlags to D3D12_COMMAND_LIST_SUPPORT_FLAGS);
 conv_flags!(CommandQueueFlags to D3D12_COMMAND_QUEUE_FLAGS);
 conv_flags!(DepthWriteMask to D3D12_DEPTH_WRITE_MASK);
 conv_flags!(DescriptorHeapFlags to D3D12_DESCRIPTOR_HEAP_FLAGS);
+conv_flags!(DescriptorRangeFlags to D3D12_DESCRIPTOR_RANGE_FLAGS);
 conv_flags!(DsvFlags to D3D12_DSV_FLAGS);
 conv_flags!(EnumModeFlags to DXGI_ENUM_MODES);
 conv_flags!(FactoryCreationFlags to DXGI_CREATE_FACTORY_FLAGS);
@@ -30,6 +31,7 @@ conv_flags!(ProtectedResourceSessionSupportFlags to D3D12_PROTECTED_RESOURCE_SES
 conv_flags!(ResourceBarrierFlags to D3D12_RESOURCE_BARRIER_FLAGS);
 conv_flags!(ResourceFlags to D3D12_RESOURCE_FLAGS);
 conv_flags!(ResourceStates to D3D12_RESOURCE_STATES);
+conv_flags!(RootDescriptorFlags to D3D12_ROOT_DESCRIPTOR_FLAGS);
 conv_flags!(RootSignatureFlags to D3D12_ROOT_SIGNATURE_FLAGS);
 conv_flags!(ShaderVariableFlags to D3D_SHADER_VARIABLE_FLAGS);
 conv_flags!(SwapchainColorSpaceSupportFlag to DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG);

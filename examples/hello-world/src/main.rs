@@ -361,11 +361,12 @@ fn get_hardware_adapter(factory: &Factory4) -> Adapter3 {
 }
 
 fn create_root_signature(device: &Device) -> RootSignature {
-    let desc =
-        RootSignatureDesc::default().with_flags(RootSignatureFlags::AllowInputAssemblerInputLayout);
+    let desc = VersionedRootSignatureDesc::desc_1_0(
+        RootSignatureDesc::default().with_flags(RootSignatureFlags::AllowInputAssemblerInputLayout),
+    );
 
     device
-        .serialize_and_create_root_signature(&desc, RootSignatureVersion::V1_0, 0)
+        .serialize_and_create_root_signature(&desc, 0)
         .unwrap()
 }
 

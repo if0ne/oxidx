@@ -475,12 +475,11 @@ impl_interface! {
     /// Serializes and creates a root signature layout.
     pub fn serialize_and_create_root_signature(
         &self,
-        desc: &RootSignatureDesc<'_>,
-        version: RootSignatureVersion,
+        desc: &VersionedRootSignatureDesc<'_>,
         node_mask: u32,
     ) -> Result<RootSignature, DxError> {
         unsafe {
-            let blob = RootSignature::serialize(desc, version)?;
+            let blob = RootSignature::serialize_versioned(desc)?;
 
             self.create_root_signature(
                 node_mask,

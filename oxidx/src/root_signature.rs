@@ -40,4 +40,30 @@ impl_interface! {
 
         Ok(bytes.into())
     }
+
+    /// Serializes a root signature of any version, so that it can be passed to [`Device::create_root_signature`](crate::device::Device::create_root_signature).
+    ///
+    /// For more information: [`D3D12SerializeVersionedRootSignature function`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-d3d12serializeversionedrootsignature)
+    pub fn serialize_versioned(desc: &VersionedRootSignatureDesc<'_>) -> Result<Blob, DxError> {
+        let mut signature = None;
+
+        let signature = unsafe {
+            D3D12SerializeVersionedRootSignature(
+                &desc.0,
+                &mut signature,
+                None,
+            )
+        }
+        .map(|()| signature.unwrap())
+        .map_err(DxError::from)?;
+
+        let bytes = unsafe {
+            std::slice::from_raw_parts(
+                signature.GetBufferPointer() as *const _,
+                signature.GetBufferSize()
+            ).to_vec()
+        };
+
+        Ok(bytes.into())
+    }
 }
