@@ -6,6 +6,8 @@ use super::*;
 
 conv_enum!(AddressMode to D3D12_TEXTURE_ADDRESS_MODE);
 conv_enum!(AlphaMode to DXGI_ALPHA_MODE);
+conv_enum!(BarrierLayout to D3D12_BARRIER_LAYOUT);
+conv_enum!(BarrierType to D3D12_BARRIER_TYPE);
 conv_enum!(Blend to D3D12_BLEND);
 conv_enum!(BlendOp to D3D12_BLEND_OP);
 conv_enum!(BorderColor to D3D12_STATIC_BORDER_COLOR);

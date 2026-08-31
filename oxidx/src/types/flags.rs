@@ -607,6 +607,183 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Specifies synchronization scopes for enhanced barriers.
+    ///
+    /// Empty flag - No synchronization is performed.
+    ///
+    /// For more information: [`D3D12_BARRIER_SYNC enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_barrier_sync)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct BarrierSync: i32 {
+        /// Synchronize against all work.
+        const All = D3D12_BARRIER_SYNC_ALL.0;
+
+        /// Synchronize against draw (graphics) work.
+        const Draw = D3D12_BARRIER_SYNC_DRAW.0;
+
+        /// Synchronize against the index input stage.
+        const IndexInput = D3D12_BARRIER_SYNC_INDEX_INPUT.0;
+
+        /// Synchronize against vertex shading.
+        const VertexShading = D3D12_BARRIER_SYNC_VERTEX_SHADING.0;
+
+        /// Synchronize against pixel shading.
+        const PixelShading = D3D12_BARRIER_SYNC_PIXEL_SHADING.0;
+
+        /// Synchronize against depth/stencil operations.
+        const DepthStencil = D3D12_BARRIER_SYNC_DEPTH_STENCIL.0;
+
+        /// Synchronize against render target writes.
+        const RenderTarget = D3D12_BARRIER_SYNC_RENDER_TARGET.0;
+
+        /// Synchronize against compute shading.
+        const ComputeShading = D3D12_BARRIER_SYNC_COMPUTE_SHADING.0;
+
+        /// Synchronize against raytracing.
+        const Raytracing = D3D12_BARRIER_SYNC_RAYTRACING.0;
+
+        /// Synchronize against copy operations.
+        const Copy = D3D12_BARRIER_SYNC_COPY.0;
+
+        /// Synchronize against resolve operations.
+        const Resolve = D3D12_BARRIER_SYNC_RESOLVE.0;
+
+        /// Synchronize against `ExecuteIndirect` and predication.
+        const ExecuteIndirect = D3D12_BARRIER_SYNC_EXECUTE_INDIRECT.0;
+
+        /// Synchronize against predication.
+        const Predication = D3D12_BARRIER_SYNC_PREDICATION.0;
+
+        /// Synchronize against all shading.
+        const AllShading = D3D12_BARRIER_SYNC_ALL_SHADING.0;
+
+        /// Synchronize against all non-pixel shading.
+        const NonPixelShading = D3D12_BARRIER_SYNC_NON_PIXEL_SHADING.0;
+
+        /// Synchronize against raytracing acceleration structure postbuild-info emission.
+        const EmitRaytracingAccelerationStructurePostbuildInfo = D3D12_BARRIER_SYNC_EMIT_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO.0;
+
+        /// Synchronize against clearing an unordered-access view.
+        const ClearUnorderedAccessView = D3D12_BARRIER_SYNC_CLEAR_UNORDERED_ACCESS_VIEW.0;
+
+        /// Synchronize against building a raytracing acceleration structure.
+        const BuildRaytracingAccelerationStructure = D3D12_BARRIER_SYNC_BUILD_RAYTRACING_ACCELERATION_STRUCTURE.0;
+
+        /// Synchronize against copying a raytracing acceleration structure.
+        const CopyRaytracingAccelerationStructure = D3D12_BARRIER_SYNC_COPY_RAYTRACING_ACCELERATION_STRUCTURE.0;
+
+        /// Synchronize against video decode.
+        const VideoDecode = D3D12_BARRIER_SYNC_VIDEO_DECODE.0;
+
+        /// Synchronize against video process.
+        const VideoProcess = D3D12_BARRIER_SYNC_VIDEO_PROCESS.0;
+
+        /// Synchronize against video encode.
+        const VideoEncode = D3D12_BARRIER_SYNC_VIDEO_ENCODE.0;
+
+        /// Marks a split barrier. Combine with another sync scope to begin or end a split barrier.
+        const Split = D3D12_BARRIER_SYNC_SPLIT.0;
+    }
+}
+
+bitflags::bitflags! {
+    /// Specifies how a resource is accessed with enhanced barriers.
+    ///
+    /// Empty flag - [`BarrierAccess::Common`], all compatible access is allowed.
+    ///
+    /// For more information: [`D3D12_BARRIER_ACCESS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_barrier_access)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct BarrierAccess: i32 {
+        /// The resource is accessed as a vertex buffer.
+        const VertexBuffer = D3D12_BARRIER_ACCESS_VERTEX_BUFFER.0;
+
+        /// The resource is accessed as a constant buffer.
+        const ConstantBuffer = D3D12_BARRIER_ACCESS_CONSTANT_BUFFER.0;
+
+        /// The resource is accessed as an index buffer.
+        const IndexBuffer = D3D12_BARRIER_ACCESS_INDEX_BUFFER.0;
+
+        /// The resource is accessed as a render target.
+        const RenderTarget = D3D12_BARRIER_ACCESS_RENDER_TARGET.0;
+
+        /// The resource is accessed as an unordered-access resource.
+        const UnorderedAccess = D3D12_BARRIER_ACCESS_UNORDERED_ACCESS.0;
+
+        /// The resource is accessed for depth/stencil writing.
+        const DepthStencilWrite = D3D12_BARRIER_ACCESS_DEPTH_STENCIL_WRITE.0;
+
+        /// The resource is accessed for depth/stencil reading.
+        const DepthStencilRead = D3D12_BARRIER_ACCESS_DEPTH_STENCIL_READ.0;
+
+        /// The resource is accessed as a shader resource.
+        const ShaderResource = D3D12_BARRIER_ACCESS_SHADER_RESOURCE.0;
+
+        /// The resource is accessed as a stream-output target.
+        const StreamOutput = D3D12_BARRIER_ACCESS_STREAM_OUTPUT.0;
+
+        /// The resource is accessed as an indirect argument.
+        const IndirectArgument = D3D12_BARRIER_ACCESS_INDIRECT_ARGUMENT.0;
+
+        /// The resource is accessed as a predication buffer.
+        const Predication = D3D12_BARRIER_ACCESS_PREDICATION.0;
+
+        /// The resource is accessed as a copy destination.
+        const CopyDest = D3D12_BARRIER_ACCESS_COPY_DEST.0;
+
+        /// The resource is accessed as a copy source.
+        const CopySource = D3D12_BARRIER_ACCESS_COPY_SOURCE.0;
+
+        /// The resource is accessed as a resolve destination.
+        const ResolveDest = D3D12_BARRIER_ACCESS_RESOLVE_DEST.0;
+
+        /// The resource is accessed as a resolve source.
+        const ResolveSource = D3D12_BARRIER_ACCESS_RESOLVE_SOURCE.0;
+
+        /// The resource is accessed for reading a raytracing acceleration structure.
+        const RaytracingAccelerationStructureRead = D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_READ.0;
+
+        /// The resource is accessed for writing a raytracing acceleration structure.
+        const RaytracingAccelerationStructureWrite = D3D12_BARRIER_ACCESS_RAYTRACING_ACCELERATION_STRUCTURE_WRITE.0;
+
+        /// The resource is accessed as a shading-rate source.
+        const ShadingRateSource = D3D12_BARRIER_ACCESS_SHADING_RATE_SOURCE.0;
+
+        /// The resource is accessed for video decode reading.
+        const VideoDecodeRead = D3D12_BARRIER_ACCESS_VIDEO_DECODE_READ.0;
+
+        /// The resource is accessed for video decode writing.
+        const VideoDecodeWrite = D3D12_BARRIER_ACCESS_VIDEO_DECODE_WRITE.0;
+
+        /// The resource is accessed for video process reading.
+        const VideoProcessRead = D3D12_BARRIER_ACCESS_VIDEO_PROCESS_READ.0;
+
+        /// The resource is accessed for video process writing.
+        const VideoProcessWrite = D3D12_BARRIER_ACCESS_VIDEO_PROCESS_WRITE.0;
+
+        /// The resource is accessed for video encode reading.
+        const VideoEncodeRead = D3D12_BARRIER_ACCESS_VIDEO_ENCODE_READ.0;
+
+        /// The resource is accessed for video encode writing.
+        const VideoEncodeWrite = D3D12_BARRIER_ACCESS_VIDEO_ENCODE_WRITE.0;
+
+        /// The resource has no compatible access. Used to complete a split barrier or discard resource contents.
+        const NoAccess = D3D12_BARRIER_ACCESS_NO_ACCESS.0;
+    }
+}
+
+bitflags::bitflags! {
+    /// Specifies flags for a texture barrier.
+    ///
+    /// Empty flag - No flags.
+    ///
+    /// For more information: [`D3D12_TEXTURE_BARRIER_FLAGS enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_texture_barrier_flags)
+    #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct TextureBarrierFlags: i32 {
+        /// Discards the previous contents of the resource during the barrier.
+        const Discard = D3D12_TEXTURE_BARRIER_FLAG_DISCARD.0;
+    }
+}
+
+bitflags::bitflags! {
     /// Flags for setting split resource barriers.
     ///
     /// Empty flag - No flags.

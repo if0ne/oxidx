@@ -2285,6 +2285,209 @@ impl<'a> ResourceBarrier<'a> {
     }
 }
 
+/// Specifies a range of subresources within a texture for use with a texture barrier.
+///
+/// For more information: [`D3D12_BARRIER_SUBRESOURCE_RANGE structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_barrier_subresource_range)
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[repr(transparent)]
+pub struct BarrierSubresourceRange(pub(crate) D3D12_BARRIER_SUBRESOURCE_RANGE);
+
+impl BarrierSubresourceRange {
+    /// Creates a range described by first/count values for mips, array slices and planes.
+    #[inline]
+    pub fn new(
+        first_mip_level: u32,
+        num_mip_levels: u32,
+        first_array_slice: u32,
+        num_array_slices: u32,
+        first_plane: u32,
+        num_planes: u32,
+    ) -> Self {
+        Self(D3D12_BARRIER_SUBRESOURCE_RANGE {
+            IndexOrFirstMipLevel: first_mip_level,
+            NumMipLevels: num_mip_levels,
+            FirstArraySlice: first_array_slice,
+            NumArraySlices: num_array_slices,
+            FirstPlane: first_plane,
+            NumPlanes: num_planes,
+        })
+    }
+
+    /// Creates a range that references a single subresource by its flat index.
+    ///
+    /// Leaving `NumMipLevels` at zero signals to the runtime that the index form is used.
+    #[inline]
+    pub fn subresource(index: u32) -> Self {
+        Self(D3D12_BARRIER_SUBRESOURCE_RANGE {
+            IndexOrFirstMipLevel: index,
+            ..Default::default()
+        })
+    }
+}
+
+/// Describes a global barrier that synchronizes access to all resource memory.
+///
+/// For more information: [`D3D12_GLOBAL_BARRIER structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_global_barrier)
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[repr(transparent)]
+pub struct GlobalBarrier(pub(crate) D3D12_GLOBAL_BARRIER);
+
+impl GlobalBarrier {
+    #[inline]
+    pub fn new(
+        sync_before: BarrierSync,
+        sync_after: BarrierSync,
+        access_before: BarrierAccess,
+        access_after: BarrierAccess,
+    ) -> Self {
+        Self(D3D12_GLOBAL_BARRIER {
+            SyncBefore: sync_before.as_raw(),
+            SyncAfter: sync_after.as_raw(),
+            AccessBefore: access_before.as_raw(),
+            AccessAfter: access_after.as_raw(),
+        })
+    }
+}
+
+/// Describes a texture barrier (enhanced barriers), which transitions synchronization,
+/// access, and layout for a texture resource.
+///
+/// For more information: [`D3D12_TEXTURE_BARRIER structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_texture_barrier)
+#[derive(Clone)]
+#[repr(transparent)]
+pub struct TextureBarrier<'a>(pub(crate) D3D12_TEXTURE_BARRIER, PhantomData<&'a ()>);
+
+impl<'a> TextureBarrier<'a> {
+    #[inline]
+    pub fn new(
+        resource: &'a Resource,
+        sync_before: BarrierSync,
+        sync_after: BarrierSync,
+        access_before: BarrierAccess,
+        access_after: BarrierAccess,
+        layout_before: BarrierLayout,
+        layout_after: BarrierLayout,
+    ) -> Self {
+        Self(
+            D3D12_TEXTURE_BARRIER {
+                SyncBefore: sync_before.as_raw(),
+                SyncAfter: sync_after.as_raw(),
+                AccessBefore: access_before.as_raw(),
+                AccessAfter: access_after.as_raw(),
+                LayoutBefore: layout_before.as_raw(),
+                LayoutAfter: layout_after.as_raw(),
+                pResource: unsafe { std::mem::transmute_copy(&resource.0) },
+                Subresources: D3D12_BARRIER_SUBRESOURCE_RANGE::default(),
+                Flags: D3D12_TEXTURE_BARRIER_FLAG_NONE,
+            },
+            Default::default(),
+        )
+    }
+
+    #[inline]
+    pub fn with_subresources(mut self, range: BarrierSubresourceRange) -> Self {
+        self.0.Subresources = range.0;
+        self
+    }
+
+    #[inline]
+    pub fn with_flags(mut self, flags: TextureBarrierFlags) -> Self {
+        self.0.Flags = flags.as_raw();
+        self
+    }
+}
+
+/// Describes a buffer barrier (enhanced barriers), which transitions synchronization
+/// and access for a buffer resource.
+///
+/// For more information: [`D3D12_BUFFER_BARRIER structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_buffer_barrier)
+#[derive(Clone)]
+#[repr(transparent)]
+pub struct BufferBarrier<'a>(pub(crate) D3D12_BUFFER_BARRIER, PhantomData<&'a ()>);
+
+impl<'a> BufferBarrier<'a> {
+    /// Creates a barrier that covers the entire buffer.
+    #[inline]
+    pub fn new(
+        resource: &'a Resource,
+        sync_before: BarrierSync,
+        sync_after: BarrierSync,
+        access_before: BarrierAccess,
+        access_after: BarrierAccess,
+    ) -> Self {
+        Self(
+            D3D12_BUFFER_BARRIER {
+                SyncBefore: sync_before.as_raw(),
+                SyncAfter: sync_after.as_raw(),
+                AccessBefore: access_before.as_raw(),
+                AccessAfter: access_after.as_raw(),
+                pResource: unsafe { std::mem::transmute_copy(&resource.0) },
+                Offset: 0,
+                Size: u64::MAX,
+            },
+            Default::default(),
+        )
+    }
+
+    #[inline]
+    pub fn with_range(mut self, offset: u64, size: u64) -> Self {
+        self.0.Offset = offset;
+        self.0.Size = size;
+        self
+    }
+}
+
+/// A group of enhanced barriers of a single type, passed to [`GraphicsCommandList7::barrier`].
+///
+/// For more information: [`D3D12_BARRIER_GROUP structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_barrier_group)
+#[derive(Clone)]
+#[repr(transparent)]
+pub struct BarrierGroup<'a>(pub(crate) D3D12_BARRIER_GROUP, PhantomData<&'a ()>);
+
+impl<'a> BarrierGroup<'a> {
+    #[inline]
+    pub fn global(barriers: &'a [GlobalBarrier]) -> Self {
+        Self(
+            D3D12_BARRIER_GROUP {
+                Type: D3D12_BARRIER_TYPE_GLOBAL,
+                NumBarriers: barriers.len() as u32,
+                Anonymous: D3D12_BARRIER_GROUP_0 {
+                    pGlobalBarriers: barriers.as_ptr() as *const _,
+                },
+            },
+            Default::default(),
+        )
+    }
+
+    #[inline]
+    pub fn texture(barriers: &'a [TextureBarrier<'a>]) -> Self {
+        Self(
+            D3D12_BARRIER_GROUP {
+                Type: D3D12_BARRIER_TYPE_TEXTURE,
+                NumBarriers: barriers.len() as u32,
+                Anonymous: D3D12_BARRIER_GROUP_0 {
+                    pTextureBarriers: barriers.as_ptr() as *const _,
+                },
+            },
+            Default::default(),
+        )
+    }
+
+    #[inline]
+    pub fn buffer(barriers: &'a [BufferBarrier<'a>]) -> Self {
+        Self(
+            D3D12_BARRIER_GROUP {
+                Type: D3D12_BARRIER_TYPE_BUFFER,
+                NumBarriers: barriers.len() as u32,
+                Anonymous: D3D12_BARRIER_GROUP_0 {
+                    pBufferBarriers: barriers.as_ptr() as *const _,
+                },
+            },
+            Default::default(),
+        )
+    }
+}
+
 /// Describes a resource, such as a texture. This structure is used extensively.
 ///
 /// For more information: [`D3D12_RESOURCE_DESC structure`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_resource_desc)

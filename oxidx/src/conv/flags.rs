@@ -4,6 +4,8 @@ use crate::conv_flags;
 
 use super::*;
 
+conv_flags!(BarrierAccess to D3D12_BARRIER_ACCESS);
+conv_flags!(BarrierSync to D3D12_BARRIER_SYNC);
 conv_flags!(BufferSrvFlags to D3D12_BUFFER_SRV_FLAGS);
 conv_flags!(BufferUavFlags to D3D12_BUFFER_UAV_FLAGS);
 conv_flags!(CacheSupportFlags to D3D12_SHADER_CACHE_SUPPORT_FLAGS);
@@ -36,6 +38,7 @@ conv_flags!(RootSignatureFlags to D3D12_ROOT_SIGNATURE_FLAGS);
 conv_flags!(ShaderVariableFlags to D3D_SHADER_VARIABLE_FLAGS);
 conv_flags!(SwapchainColorSpaceSupportFlag to DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG);
 conv_flags!(SwapchainFlags to DXGI_SWAP_CHAIN_FLAG);
+conv_flags!(TextureBarrierFlags to D3D12_TEXTURE_BARRIER_FLAGS);
 conv_flags!(TileCopyFlags to D3D12_TILE_COPY_FLAGS);
 conv_flags!(TileRangeFlags to D3D12_TILE_RANGE_FLAGS);
 conv_flags!(WindowAssociationFlags to DXGI_MWA_FLAGS);

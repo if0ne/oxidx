@@ -53,6 +53,118 @@ pub enum AlphaMode {
     Ignore = DXGI_ALPHA_MODE_IGNORE.0,
 }
 
+/// Specifies the type of a barrier used with enhanced barriers.
+///
+/// For more information: [`D3D12_BARRIER_TYPE enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_barrier_type)
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum BarrierType {
+    /// Global barrier that applies to all resource memory.
+    #[default]
+    Global = D3D12_BARRIER_TYPE_GLOBAL.0,
+
+    /// Barrier that applies to a texture resource.
+    Texture = D3D12_BARRIER_TYPE_TEXTURE.0,
+
+    /// Barrier that applies to a buffer resource.
+    Buffer = D3D12_BARRIER_TYPE_BUFFER.0,
+}
+
+/// Specifies the layout of a texture resource used with enhanced barriers.
+///
+/// For more information: [`D3D12_BARRIER_LAYOUT enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_barrier_layout)
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum BarrierLayout {
+    /// The layout is undefined, used for discarding the previous contents of a resource.
+    #[default]
+    Undefined = D3D12_BARRIER_LAYOUT_UNDEFINED.0,
+
+    /// A commonly-accessible layout, compatible with any queue type.
+    Common = D3D12_BARRIER_LAYOUT_COMMON.0,
+
+    /// A read-only layout accessible from any engine type.
+    GenericRead = D3D12_BARRIER_LAYOUT_GENERIC_READ.0,
+
+    /// A layout suitable for use as a render target.
+    RenderTarget = D3D12_BARRIER_LAYOUT_RENDER_TARGET.0,
+
+    /// A layout suitable for unordered access.
+    UnorderedAccess = D3D12_BARRIER_LAYOUT_UNORDERED_ACCESS.0,
+
+    /// A layout suitable for writing depth/stencil data.
+    DepthStencilWrite = D3D12_BARRIER_LAYOUT_DEPTH_STENCIL_WRITE.0,
+
+    /// A layout suitable for reading depth/stencil data.
+    DepthStencilRead = D3D12_BARRIER_LAYOUT_DEPTH_STENCIL_READ.0,
+
+    /// A layout suitable for reading as a shader resource.
+    ShaderResource = D3D12_BARRIER_LAYOUT_SHADER_RESOURCE.0,
+
+    /// A layout suitable for use as a copy source.
+    CopySource = D3D12_BARRIER_LAYOUT_COPY_SOURCE.0,
+
+    /// A layout suitable for use as a copy destination.
+    CopyDest = D3D12_BARRIER_LAYOUT_COPY_DEST.0,
+
+    /// A layout suitable for use as a resolve source.
+    ResolveSource = D3D12_BARRIER_LAYOUT_RESOLVE_SOURCE.0,
+
+    /// A layout suitable for use as a resolve destination.
+    ResolveDest = D3D12_BARRIER_LAYOUT_RESOLVE_DEST.0,
+
+    /// A layout suitable for use as a shading-rate source.
+    ShadingRateSource = D3D12_BARRIER_LAYOUT_SHADING_RATE_SOURCE.0,
+
+    /// A commonly-accessible layout for the direct queue.
+    DirectQueueCommon = D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_COMMON.0,
+
+    /// A read-only layout for the direct queue.
+    DirectQueueGenericRead = D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_GENERIC_READ.0,
+
+    /// An unordered-access layout for the direct queue.
+    DirectQueueUnorderedAccess = D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_UNORDERED_ACCESS.0,
+
+    /// A shader-resource layout for the direct queue.
+    DirectQueueShaderResource = D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_SHADER_RESOURCE.0,
+
+    /// A copy-source layout for the direct queue.
+    DirectQueueCopySource = D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_COPY_SOURCE.0,
+
+    /// A copy-destination layout for the direct queue.
+    DirectQueueCopyDest = D3D12_BARRIER_LAYOUT_DIRECT_QUEUE_COPY_DEST.0,
+
+    /// A commonly-accessible layout for the compute queue.
+    ComputeQueueCommon = D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_COMMON.0,
+
+    /// A read-only layout for the compute queue.
+    ComputeQueueGenericRead = D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_GENERIC_READ.0,
+
+    /// An unordered-access layout for the compute queue.
+    ComputeQueueUnorderedAccess = D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_UNORDERED_ACCESS.0,
+
+    /// A shader-resource layout for the compute queue.
+    ComputeQueueShaderResource = D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_SHADER_RESOURCE.0,
+
+    /// A copy-source layout for the compute queue.
+    ComputeQueueCopySource = D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_COPY_SOURCE.0,
+
+    /// A copy-destination layout for the compute queue.
+    ComputeQueueCopyDest = D3D12_BARRIER_LAYOUT_COMPUTE_QUEUE_COPY_DEST.0,
+
+    /// A commonly-accessible layout for the video queue.
+    VideoQueueCommon = D3D12_BARRIER_LAYOUT_VIDEO_QUEUE_COMMON.0,
+}
+
+impl BarrierLayout {
+    /// A layout suitable for presenting to the display.
+    ///
+    /// This shares the same underlying value as [`BarrierLayout::Common`], matching
+    /// `D3D12_BARRIER_LAYOUT_PRESENT`.
+    #[allow(non_upper_case_globals)]
+    pub const Present: BarrierLayout = BarrierLayout::Common;
+}
+
 /// Specifies blend factors, which modulate values for the pixel shader and render target.
 ///
 /// For more information: [`D3D12_BLEND enumeration`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_blend)

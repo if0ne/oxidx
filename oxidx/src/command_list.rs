@@ -1,5 +1,6 @@
 use std::ops::Range;
 
+use windows::core::Interface;
 use windows::Win32::Graphics::Direct3D12::*;
 
 use crate::{
@@ -16,9 +17,11 @@ use crate::{
 };
 
 create_type! { GraphicsCommandList wrap ID3D12GraphicsCommandList }
+create_type! { GraphicsCommandList7 wrap ID3D12GraphicsCommandList7; decorator for GraphicsCommandList }
 
 impl_interface! {
-    GraphicsCommandList;
+    GraphicsCommandList,
+    GraphicsCommandList7;
     /// Gets the type of the command list, such as direct, bundle, compute, or copy.
     ///
     /// For more information: [`ID3D12CommandList::GetType method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12commandlist-gettype)
@@ -30,7 +33,8 @@ impl_interface! {
 }
 
 impl_interface! {
-    GraphicsCommandList;
+    GraphicsCommandList,
+    GraphicsCommandList7;
 
     /// Marks the start of a user-defined region of work.
     #[cfg(feature = "pix")]
@@ -1077,5 +1081,23 @@ impl_interface! {
             &row_sizes,
             src_data
         )
+    }
+}
+
+impl_interface! {
+    GraphicsCommandList7;
+
+    /// Adds a collection of barriers into a graphics command list recording (enhanced barriers).
+    ///
+    /// For more information: [`ID3D12GraphicsCommandList7::Barrier method`](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist7-barrier)
+    pub fn barrier(&self, barrier_groups: &[BarrierGroup<'_>]) {
+        unsafe {
+            let barrier_groups = std::slice::from_raw_parts(
+                barrier_groups.as_ptr() as *const _,
+                barrier_groups.len()
+            );
+
+            self.0.Barrier(barrier_groups);
+        }
     }
 }
