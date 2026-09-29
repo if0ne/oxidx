@@ -14,6 +14,10 @@ pub mod debug;
 pub mod descriptor_heap;
 pub mod device;
 pub mod device_child;
+
+#[cfg(feature = "dxc")]
+pub mod dxc;
+
 pub mod entry;
 pub mod error;
 pub mod ext;

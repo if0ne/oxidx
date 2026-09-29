@@ -31,6 +31,34 @@ pub const PACK_MATRIX_ROW_MAJOR: u32 = D3DCOMPILE_PACK_MATRIX_ROW_MAJOR;
 
 pub const DESCRIPTOR_RANGE_OFFSET_APPEND: u32 = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
+/// Command line arguments understood by the DXC compiler, as taken by
+/// [`DxcCompiler3::compile`](crate::dxc::DxcCompiler3::compile).
+#[cfg(feature = "dxc")]
+mod dxc_args {
+    pub const DXC_ARG_DEBUG: &str = "-Zi";
+    pub const DXC_ARG_SKIP_VALIDATION: &str = "-Vd";
+    pub const DXC_ARG_SKIP_OPTIMIZATIONS: &str = "-Od";
+    pub const DXC_ARG_PACK_MATRIX_ROW_MAJOR: &str = "-Zpr";
+    pub const DXC_ARG_PACK_MATRIX_COLUMN_MAJOR: &str = "-Zpc";
+    pub const DXC_ARG_AVOID_FLOW_CONTROL: &str = "-Gfa";
+    pub const DXC_ARG_PREFER_FLOW_CONTROL: &str = "-Gfp";
+    pub const DXC_ARG_ENABLE_STRICTNESS: &str = "-Ges";
+    pub const DXC_ARG_ENABLE_BACKWARDS_COMPATIBILITY: &str = "-Gec";
+    pub const DXC_ARG_IEEE_STRICTNESS: &str = "-Gis";
+    pub const DXC_ARG_OPTIMIZATION_LEVEL0: &str = "-O0";
+    pub const DXC_ARG_OPTIMIZATION_LEVEL1: &str = "-O1";
+    pub const DXC_ARG_OPTIMIZATION_LEVEL2: &str = "-O2";
+    pub const DXC_ARG_OPTIMIZATION_LEVEL3: &str = "-O3";
+    pub const DXC_ARG_WARNINGS_ARE_ERRORS: &str = "-WX";
+    pub const DXC_ARG_RESOURCES_MAY_ALIAS: &str = "-res_may_alias";
+    pub const DXC_ARG_ALL_RESOURCES_BOUND: &str = "-all_resources_bound";
+    pub const DXC_ARG_DEBUG_NAME_FOR_SOURCE: &str = "-Zss";
+    pub const DXC_ARG_DEBUG_NAME_FOR_BINARY: &str = "-Zsb";
+}
+
+#[cfg(feature = "dxc")]
+pub use dxc_args::*;
+
 pub const ADAPTER_NONE: Option<&Adapter3> = None;
 pub const PSO_NONE: Option<&PipelineState> = None;
 pub const OUTPUT_NONE: Option<&Output1> = None;

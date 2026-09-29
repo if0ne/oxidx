@@ -73,10 +73,13 @@ macro_rules! impl_interface {
 #[macro_export]
 macro_rules! conv_enum {
     ($h:ident to $l:ident) => {
+        $crate::conv_enum! { $h to $l as i32 }
+    };
+    ($h:ident to $l:ident as $repr:ty) => {
         impl $h {
             #[inline]
             pub(crate) fn as_raw(&self) -> $l {
-                $l(*self as i32)
+                $l(*self as $repr)
             }
         }
 

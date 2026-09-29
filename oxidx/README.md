@@ -9,6 +9,7 @@ This project provides low-level wrapper for D3D12 API.
 * No library/runtime validation, only driver validation.
 * PIX methods.
 * D3D12 and DXGI prefixes have been stripped from all types.
+* DirectX Shader Compiler (`IDxcCompiler3`) behind the optional `dxc` feature, loading `dxcompiler.dll` at runtime from a path of your choosing.
 
 ## Minimum supported Rust version
 

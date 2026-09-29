@@ -3,6 +3,13 @@ use std::ffi::CStr;
 use strum::FromRepr;
 use windows::Win32::Graphics::{Direct3D::*, Direct3D12::*};
 
+#[cfg(feature = "dxc")]
+use windows::Win32::Graphics::Direct3D::Dxc::{
+    DXC_CP_ACP, DXC_CP_UTF16, DXC_CP_UTF8, DXC_OUT_DISASSEMBLY, DXC_OUT_ERRORS,
+    DXC_OUT_EXTRA_OUTPUTS, DXC_OUT_HLSL, DXC_OUT_NONE, DXC_OUT_OBJECT, DXC_OUT_PDB,
+    DXC_OUT_REFLECTION, DXC_OUT_ROOT_SIGNATURE, DXC_OUT_SHADER_HASH, DXC_OUT_TEXT,
+};
+
 #[allow(unused_imports)]
 use super::*;
 
@@ -598,6 +605,66 @@ pub enum DescriptorRangeType {
 
     /// Specifies a range of samplers.
     Sampler = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER.0,
+}
+
+/// Specifies the code page of a text buffer handed to, or returned by, the DXC compiler.
+///
+/// For more information: [`DXC_CP`](https://github.com/microsoft/DirectXShaderCompiler/blob/main/include/dxc/dxcapi.h)
+#[cfg(feature = "dxc")]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
+#[repr(u32)]
+pub enum DxcCodePage {
+    /// Use the encoding of the byte order mark, or the system code page when there is no mark.
+    #[default]
+    Acp = DXC_CP_ACP.0,
+
+    /// The buffer holds UTF-16 encoded text.
+    Utf16 = DXC_CP_UTF16.0,
+
+    /// The buffer holds UTF-8 encoded text.
+    Utf8 = DXC_CP_UTF8.0,
+}
+
+/// Identifies a single output of a DXC compilation.
+///
+/// For more information: [`DXC_OUT_KIND enumeration`](https://github.com/microsoft/DirectXShaderCompiler/blob/main/include/dxc/dxcapi.h)
+#[cfg(feature = "dxc")]
+#[derive(Clone, Copy, Debug, Default, FromRepr, Hash, PartialEq, Eq)]
+#[repr(i32)]
+pub enum DxcOutKind {
+    /// Not an output.
+    #[default]
+    None = DXC_OUT_NONE.0,
+
+    /// The compiled shader object, as a [`DxcBlob`](crate::dxc::DxcBlob).
+    Object = DXC_OUT_OBJECT.0,
+
+    /// The compiler warnings and errors, as a [`DxcBlobUtf8`](crate::dxc::DxcBlobUtf8).
+    Errors = DXC_OUT_ERRORS.0,
+
+    /// The debug information database, as a [`DxcBlob`](crate::dxc::DxcBlob).
+    Pdb = DXC_OUT_PDB.0,
+
+    /// The hash of the shader object, as a [`DxcBlob`](crate::dxc::DxcBlob) holding a [`DxcShaderHash`].
+    ShaderHash = DXC_OUT_SHADER_HASH.0,
+
+    /// The disassembled shader object, as a [`DxcBlobUtf8`](crate::dxc::DxcBlobUtf8).
+    Disassembly = DXC_OUT_DISASSEMBLY.0,
+
+    /// The rewritten HLSL source, as a [`DxcBlobUtf8`](crate::dxc::DxcBlobUtf8).
+    Hlsl = DXC_OUT_HLSL.0,
+
+    /// The compiler output that would have gone to the console, as a [`DxcBlobUtf8`](crate::dxc::DxcBlobUtf8).
+    Text = DXC_OUT_TEXT.0,
+
+    /// The reflection data, as a [`DxcBlob`](crate::dxc::DxcBlob).
+    Reflection = DXC_OUT_REFLECTION.0,
+
+    /// The serialized root signature, as a [`DxcBlob`](crate::dxc::DxcBlob).
+    RootSignature = DXC_OUT_ROOT_SIGNATURE.0,
+
+    /// The extra outputs added by a compiler pass, as an `IDxcExtraOutputs`.
+    ExtraOutputs = DXC_OUT_EXTRA_OUTPUTS.0,
 }
 
 /// Describes the set of features targeted by a Direct3D device.

@@ -8,6 +8,11 @@ use windows::{
     },
 };
 
+#[cfg(feature = "dxc")]
+use windows::Win32::Graphics::Direct3D::Dxc::{
+    DxcBuffer as DXC_BUFFER, DxcShaderHash as DXC_SHADER_HASH, DXC_CP, DXC_HASHFLAG_INCLUDES_SOURCE,
+};
+
 use crate::{
     blob::Blob,
     dx::{BlobbyInternal, Resource},
@@ -886,6 +891,74 @@ impl<'a> DiscardRegion<'a> {
             },
             Default::default(),
         )
+    }
+}
+
+/// Describes a buffer of text or binary data handed to the DXC compiler.
+///
+/// The buffer borrows the memory it points at, so it can never outlive its source.
+///
+/// For more information: [`DxcBuffer structure`](https://github.com/microsoft/DirectXShaderCompiler/blob/main/include/dxc/dxcapi.h)
+#[cfg(feature = "dxc")]
+#[derive(Clone, Copy, Debug, PartialEq)]
+#[repr(transparent)]
+pub struct DxcBuffer<'a>(pub(crate) DXC_BUFFER, PhantomData<&'a ()>);
+
+#[cfg(feature = "dxc")]
+impl<'a> DxcBuffer<'a> {
+    /// Creates a buffer over `data` that is tagged with the given code page.
+    ///
+    /// Pass [`DxcCodePage::Acp`] for binary data, and for text whose encoding should be
+    /// deduced from its byte order mark.
+    #[inline]
+    pub fn new(data: &'a [u8], encoding: DxcCodePage) -> Self {
+        Self(
+            DXC_BUFFER {
+                Ptr: data.as_ptr() as *const _,
+                Size: data.len(),
+                Encoding: encoding.as_raw().0,
+            },
+            Default::default(),
+        )
+    }
+
+    /// Creates a buffer over UTF-8 encoded HLSL source.
+    #[inline]
+    pub fn from_utf8(source: &'a str) -> Self {
+        Self::new(source.as_bytes(), DxcCodePage::Utf8)
+    }
+
+    #[inline]
+    pub fn encoding(&self) -> DxcCodePage {
+        DXC_CP(self.0.Encoding).into()
+    }
+
+    /// Returns the bytes the buffer points at.
+    #[inline]
+    pub fn as_bytes(&self) -> &'a [u8] {
+        unsafe { std::slice::from_raw_parts(self.0.Ptr as *const u8, self.0.Size) }
+    }
+}
+
+/// Describes the hash of a DXIL container, as returned by the [`DxcOutKind::ShaderHash`] output.
+///
+/// For more information: [`DxcShaderHash structure`](https://github.com/microsoft/DirectXShaderCompiler/blob/main/include/dxc/dxcapi.h)
+#[cfg(feature = "dxc")]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[repr(transparent)]
+pub struct DxcShaderHash(pub(crate) DXC_SHADER_HASH);
+
+#[cfg(feature = "dxc")]
+impl DxcShaderHash {
+    /// `true` when the hash was computed over the shader source rather than over the compiled object.
+    #[inline]
+    pub fn includes_source(&self) -> bool {
+        self.0.Flags & DXC_HASHFLAG_INCLUDES_SOURCE != 0
+    }
+
+    #[inline]
+    pub fn digest(&self) -> &[u8; 16] {
+        &self.0.HashDigest
     }
 }
 

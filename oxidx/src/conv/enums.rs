@@ -1,5 +1,8 @@
 use windows::Win32::Graphics::Direct3D12::*;
 
+#[cfg(feature = "dxc")]
+use windows::Win32::Graphics::Direct3D::Dxc::{DXC_CP, DXC_OUT_KIND};
+
 use crate::conv_enum;
 
 use super::*;
@@ -22,6 +25,10 @@ conv_enum!(CrossNodeSharingTier to D3D12_CROSS_NODE_SHARING_TIER);
 conv_enum!(CullMode to D3D12_CULL_MODE);
 conv_enum!(DescriptorHeapType to D3D12_DESCRIPTOR_HEAP_TYPE);
 conv_enum!(DescriptorRangeType to D3D12_DESCRIPTOR_RANGE_TYPE);
+#[cfg(feature = "dxc")]
+conv_enum!(DxcCodePage to DXC_CP as u32);
+#[cfg(feature = "dxc")]
+conv_enum!(DxcOutKind to DXC_OUT_KIND);
 conv_enum!(FeatureLevel to D3D_FEATURE_LEVEL);
 conv_enum!(FeatureType to D3D12_FEATURE);
 conv_enum!(FillMode to D3D12_FILL_MODE);
